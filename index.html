@@ -376,20 +376,6 @@ level:nlv
 },450);
 
 }
-/* אנימציית בקיעה */
-if(hatched && img){
-img.classList.add("hatch");
-setTimeout(()=>img.classList.remove("hatch"),800);
-}
-
-setTimeout(()=>{
-db.ref('students/'+id).update({
-xp:nxp,
-level:nlv
-});
-},450);
-
-}
 
 function updateView(){
 
@@ -450,4 +436,5 @@ onclick="addXP('${s.id}',${s.xp},${s.level})">
 
 </body>
 </html>
+
 
