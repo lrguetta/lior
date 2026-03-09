@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>חוות הטמגוצ'י - גרסת ה-XP SHOW</title>
+    <title>חוות הטמגוצ'י - STAR SHOW</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
@@ -21,6 +21,9 @@
             border: 2px solid #81c784;
         }
 
+        input, select { padding: 8px; border-radius: 10px; border: 1px solid #ccc; }
+        button { padding: 8px 15px; border-radius: 10px; border: none; background: #2e7d32; color: white; font-weight: bold; cursor: pointer; }
+
         #farm-grid { 
             display: grid; 
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); 
@@ -30,59 +33,69 @@
         .student-card {
             background: white; border-radius: 20px; padding: 15px; text-align: center;
             position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
+            overflow: visible; /* מאפשר לכוכבים לצאת מגבולות הכרטיס */
         }
 
-        /* יצור במצב רגיל - שקט לגמרי */
         .creature-img { 
-            width: 95px; height: 95px; cursor: pointer; 
+            width: 100px; height: 100px; cursor: pointer; 
             object-fit: contain;
-            transition: all 0.1s ease;
+            transition: transform 0.1s ease-out, filter 0.1s ease-out;
+            position: relative; z-index: 1;
         }
 
-        /* ה-SHOW בזמן לחיצה בלבד */
+        /* זהירה וגדילה בזמן לחיצה */
         .creature-img:active {
-            transform: scale(1.4) !important;
-            filter: brightness(1.4) drop-shadow(0 0 20px #ffeb3b) !important;
+            transform: scale(1.3) !important;
+            filter: brightness(1.3) drop-shadow(0 0 15px #ffeb3b) !important;
         }
 
-        /* רעידה רק לביצה כמעט מוכנה */
-        .egg-shake { animation: intense-shake 0.5s infinite; }
-        @keyframes intense-shake {
+        /* רעידה רק לביצים כמעט מוכנות */
+        .egg-shake { animation: shake-intense 0.5s infinite; }
+        @keyframes shake-intense {
             0%, 100% { transform: rotate(0); }
-            25% { transform: rotate(6deg); }
-            75% { transform: rotate(-6deg); }
+            25% { transform: rotate(5deg); }
+            75% { transform: rotate(-5deg); }
+        }
+
+        /* --- אנימציית הכוכבים (STAR SHOW) --- */
+        .star-particle {
+            position: absolute;
+            color: #ffd700; /* צבע זהב */
+            font-size: 20px;
+            opacity: 0;
+            pointer-events: none; /* לא מפריע ללחיצות */
+            z-index: 10;
+            animation: star-burst 0.6s ease-out forwards;
+        }
+
+        @keyframes star-burst {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--dx), var(--dy)) scale(1.2) rotate(var(--rot));
+                opacity: 0;
+            }
         }
 
         .xp-container { background: #eee; border-radius: 10px; height: 14px; margin: 10px 0; overflow: hidden; border: 1px solid #ccc; }
-        
-        /* אנימציה לפס ה-XP כשהוא גדל */
         .xp-bar { 
             background: linear-gradient(90deg, #fbc02d, #ffeb3b); 
             height: 100%; 
-            transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: width 0.4s ease-in-out; 
         }
 
-        /* הבהוב קטן לכרטיס בלחיצה */
-        .card-pulse { animation: pulse-bg 0.3s ease-out; }
-        @keyframes pulse-bg {
-            0% { background: white; }
-            50% { background: #fffde7; }
-            100% { background: white; }
-        }
-
-        .level-badge { position: absolute; top: 8px; right: 10px; font-weight: bold; color: #2e7d32; font-size: 1.1em; }
-        .remove-btn { position: absolute; top: 5px; left: 5px; background: #ff5252; color: white; border: none; border-radius: 50%; width: 18px; height: 18px; cursor: pointer; font-size: 10px; opacity: 0.3; }
+        .level-badge { position: absolute; top: 10px; right: 12px; font-weight: bold; color: #2e7d32; font-size: 1.1em; }
+        .remove-btn { position: absolute; top: 5px; left: 5px; background: #ff5252; color: white; border: none; border-radius: 50%; width: 18px; height: 18px; cursor: pointer; font-size: 10px; opacity: 0.2; }
         .remove-btn:hover { opacity: 1; }
-        
-        button { padding: 8px 15px; border-radius: 10px; border: none; background: #2e7d32; color: white; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="control-panel">
-    <input type="text" id="sName" placeholder="שם">
-    <select id="sClass"><option value="ה1">ה'1</option><option value="ה2">ה'2</option></select>
+    <input type="text" id="nameIn" placeholder="שם">
+    <select id="classIn"><option value="ה1">ה'1</option><option value="ה2">ה'2</option></select>
     <button onclick="add()">הוסף ✨</button>
     <button onclick="document.getElementById('f').click()" style="background:#ff9800">⬆️ ייבוא</button>
     <input type="file" id="f" style="display:none" onchange="importData(this)">
@@ -113,25 +126,60 @@
     });
 
     function add() {
-        const name = document.getElementById('sName').value;
+        const name = document.getElementById('nameIn').value;
         if (!name) return;
         const id = Date.now().toString();
         db.ref('students/' + id).set({
-            id, name, className: document.getElementById('sClass').value,
+            id, name, className: document.getElementById('classIn').value,
             xp: 0, level: 0,
             type: CREATURES[Math.floor(Math.random() * CREATURES.length)],
             egg: Math.floor(Math.random() * EGGS.length)
         });
-        document.getElementById('sName').value = '';
+        document.getElementById('nameIn').value = '';
+    }
+
+    // פונקציה ליצירת אפקט הכוכבים
+    function createStarBurst(cardElement) {
+        const numStars = 8;
+        const cardRect = cardElement.getBoundingClientRect();
+        const centerX = cardRect.width / 2;
+        const centerY = cardRect.height / 3; // מיקום מעל הדמות
+
+        for (let i = 0; i < numStars; i++) {
+            const star = document.createElement('div');
+            star.className = 'star-particle';
+            star.innerHTML = '★'; // סמל של כוכב
+
+            // חישוב כיוון אקראי לכל כוכב
+            const angle = (i / numStars) * Math.PI * 2;
+            const velocity = 50 + Math.random() * 50; // מהירות פיזור
+            const dx = Math.cos(angle) * velocity;
+            const dy = Math.sin(angle) * velocity;
+            const rot = Math.random() * 360; // זווית סיבוב אקראית
+
+            // הגדרת משתני CSS עבור האנימציה
+            star.style.setProperty('--dx', `${dx}px`);
+            star.style.setProperty('--dy', `${dy}px`);
+            star.style.setProperty('--rot', `${rot}deg`);
+
+            // מיקום התחלתי במרכז הכרטיס
+            star.style.left = `${centerX}px`;
+            star.style.top = `${centerY}px`;
+
+            cardElement.appendChild(star);
+
+            // הסרת הכוכב אחרי שהאנימציה מסתיימת
+            setTimeout(() => {
+                star.remove();
+            }, 600);
+        }
     }
 
     function addXP(id, xp, lvl) {
-        // הוספת אפקט לכרטיס בלחיצה
+        // הפעלת אפקט הכוכבים על הכרטיס המתאים
         const card = document.getElementById('card-' + id);
         if(card) {
-            card.classList.remove('card-pulse');
-            void card.offsetWidth;
-            card.classList.add('card-pulse');
+            createStarBurst(card);
         }
 
         let nxp = xp + 10;
