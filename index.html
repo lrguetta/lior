@@ -2,34 +2,35 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>חוות הטמגוצ'י - גרסת המשימות וההעלאה</title>
+    <title>חוות הטמגוצ'י - גרסה פדגוגית מתקדמת</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
-        /* CSS קיים עם תוספות קלות */
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #e0f7fa url('images/background.png') no-repeat center center fixed; background-size: cover; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         #control-panel { background: rgba(255, 255, 255, 0.95); padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); margin-bottom: 30px; width: 90%; max-width: 900px; display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; border: 2px solid #81c784; }
-        input, select, button { padding: 12px; border-radius: 10px; border: 1px solid #ddd; font-size: 15px; }
-        button { background-color: #2e7d32; color: white; cursor: pointer; border: none; font-weight: bold; }
+        input, select, button, textarea { padding: 10px; border-radius: 10px; border: 1px solid #ddd; font-size: 15px; font-family: inherit; }
+        button { background-color: #2e7d32; color: white; cursor: pointer; border: none; font-weight: bold; transition: opacity 0.2s; }
+        button:hover { opacity: 0.9; }
         #farm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; width: 100%; max-width: 1200px; }
         .student-card { background: rgba(255, 255, 255, 0.9); border-radius: 25px; padding: 20px; text-align: center; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-bottom: 5px solid #81c784; }
         .level-text-badge { position: absolute; top: 5px; right: 15px; font-family: 'Arial Black', sans-serif; font-size: 1.4em; font-weight: 900; color: #2e7d32; z-index: 10; text-shadow: -1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff, 0 2px 4px rgba(0,0,0,0.3); }
-        .creature-img { width: 120px; height: 120px; cursor: pointer; object-fit: contain; margin-bottom: 10px; transition: transform 0.1s; }
+        .creature-img { width: 120px; height: 120px; cursor: pointer; object-fit: contain; margin-bottom: 10px; }
         .xp-container { background: #eee; border-radius: 10px; height: 18px; margin: 10px 0; overflow: hidden; border: 1px solid #ccc; }
         .xp-bar { background: linear-gradient(90deg, #ffeb3b, #fbc02d); height: 100%; transition: width 0.4s ease-out; }
-        .remove-btn { position: absolute; top: 10px; left: 10px; background: #ff5252; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .remove-btn { position: absolute; top: 10px; left: 10px; background: #ff5252; color: white; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         #login-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; align-items: center; justify-content: center; }
         .login-box { background: white; padding: 40px; border-radius: 20px; text-align: center; display: flex; flex-direction: column; gap: 15px; width: 300px; }
-        .task-btn { position: absolute; bottom: 10px; right: 10px; background: #fb8c00; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; color: white; font-size: 20px; }
+        .task-btn { position: absolute; bottom: 10px; right: 10px; background: #fb8c00; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; font-size: 20px; }
         #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; z-index: 500; align-items: center; justify-content: center; }
-        .modal { background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; position: relative; text-align: right; }
+        .modal { background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 480px; position: relative; text-align: right; max-height: 80vh; overflow-y: auto; }
         .close-modal { position: absolute; top: 10px; left: 10px; cursor: pointer; font-size: 20px; }
-        .task-item { background: #f9f9f9; padding: 12px; border-radius: 10px; margin-top: 10px; border-right: 4px solid #fb8c00; }
+        .task-item { background: #f9f9f9; padding: 15px; border-radius: 12px; margin-top: 15px; border-right: 5px solid #fb8c00; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .status-tag { font-size: 0.8em; padding: 3px 8px; border-radius: 5px; float: left; }
         .pending { background: #fff3e0; color: #e65100; }
         .submitted { background: #e8f5e9; color: #2e7d32; }
-        .magicode-helper { background: #e3f2fd; border: 1px dashed #2196f3; padding: 10px; border-radius: 10px; margin-bottom: 10px; font-size: 0.9em; text-align: center; }
+        .helper-box { background: #e3f2fd; border: 1px dashed #2196f3; padding: 10px; border-radius: 10px; margin: 10px 0; font-size: 0.85em; text-align: center; }
+        .deadline-info { color: #d32f2f; font-weight: bold; font-size: 0.9em; display: block; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -85,12 +86,12 @@
 
     function loginAs(role) {
         if(role === 'admin') {
-            if(document.getElementById('adminPass').value !== '1234') { alert("קוד שגוי"); return; }
+            if(document.getElementById('adminPass').value !== 'rabenu247') { alert("קוד שגוי"); return; }
             document.getElementById('control-panel').style.display = 'flex';
         }
         userRole = role;
         document.getElementById('login-overlay').style.display = 'none';
-        updateView(); // עדכון מיידי להצגת הכפתורים
+        updateView();
     }
 
     db.ref('students').on('value', (snap) => {
@@ -133,20 +134,34 @@
                         submissionsHtml += `
                             <div class="task-item">
                                 <b>הגשה: ${t.title}</b><br>
-                                <div style="background:white; padding:10px; margin:5px 0; border:1px solid #ddd;">
-                                    ${isLink ? `<a href="${t.submission}" target="_blank">🔗 לחץ לצפייה בעבודה</a>` : `📝 ${t.submission}`}
+                                <div style="background:white; padding:10px; margin:5px 0; border:1px solid #ddd; font-size:14px;">
+                                    ${isLink ? `<a href="${t.submission}" target="_blank">🔗 פתח קישור לעבודה</a>` : `📝 ${t.submission}`}
                                 </div>
-                                <button onclick="approveTask('${s.id}','${t.taskId}',${t.rewardXP})" style="background:#2e7d32; font-size:12px;">אשר ושלם ${t.rewardXP} XP ✅</button>
+                                <div style="display:flex; gap:5px;">
+                                    <button onclick="approveTask('${s.id}','${t.taskId}',${t.rewardXP}, 1)" style="flex:1; background:#2e7d32; font-size:12px;">אישור מלא (100%) ✅</button>
+                                    <button onclick="approveTask('${s.id}','${t.taskId}',${t.rewardXP}, 0.5)" style="flex:1; background:#fb8c00; font-size:12px;">אישור חלקי (50%) ⚠️</button>
+                                </div>
                             </div>`;
                     }
                 });
             }
             content.innerHTML = `
                 <h3>ניהול משימות: ${s.name}</h3>
-                <input type="text" id="tTitle" placeholder="שם המשימה" style="width:90%; margin-bottom:5px;">
-                <input type="number" id="tXP" placeholder="XP כפרס" style="width:90%; margin-bottom:10px;">
-                <button onclick="saveTask('${studentId}')" style="width:100%">שלח משימה 📤</button>
-                <div id="admin-subs" style="margin-top:10px;">${submissionsHtml || '<p style="font-size:12px; color:gray;">אין הגשות</p>'}</div>`;
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <input type="text" id="tTitle" placeholder="שם המשימה">
+                    <input type="number" id="tXP" placeholder="כמות XP (פרס מלא)">
+                    <input type="text" id="tDeadline" placeholder="מועד הגשה (למשל: יום ג', 12:00)">
+                    <div class="helper-box">
+                        <p style="margin:0 0 5px 0">להעלאת קובץ משימה עבור התלמיד:</p>
+                        <button onclick="window.open('https://send.magicode.me/', '_blank')" style="background:#2196f3; padding:5px 10px; font-size:12px;">העלאה ל-Magicode 📤</button>
+                        <input type="text" id="tFile" placeholder="הדבק כאן את הקישור לקובץ (אופציונלי)" style="width:90%; margin-top:5px; font-size:12px;">
+                    </div>
+                    <button onclick="saveTask('${studentId}')" style="width:100%; padding:15px;">שלח משימה לתלמיד 📤</button>
+                </div>
+                <div id="admin-subs" style="margin-top:15px;">
+                    <h4>הגשות שממתינות לבדיקה:</h4>
+                    ${submissionsHtml || '<p style="font-size:12px; color:gray;">אין הגשות כרגע</p>'}
+                </div>`;
         } else {
             let tasksHtml = '';
             if(s.tasks) {
@@ -154,28 +169,40 @@
                     tasksHtml += `
                         <div class="task-item">
                             <span class="status-tag ${t.submission ? 'submitted' : 'pending'}">${t.submission ? 'הוגש' : 'ממתין'}</span>
-                            <b>${t.title}</b> (פרס: ${t.rewardXP} XP)
+                            <b>${t.title}</b><br>
+                            <small>פרס: ${t.rewardXP} XP</small>
+                            ${t.deadline ? `<span class="deadline-info">⏰ להגשה עד: ${t.deadline}</span>` : ''}
+                            ${t.fileLink ? `<p><a href="${t.fileLink}" target="_blank" style="color:#2196f3; font-weight:bold;">📥 לחץ כאן להורדת קובץ המשימה</a></p>` : ''}
+                            
                             ${!t.submission ? `
-                                <div class="magicode-helper">
-                                    <p>צריכים להעלות קובץ? לחצו כאן:</p>
-                                    <button onclick="window.open('https://send.magicode.me/', '_blank')" style="background:#2196f3; padding:5px 15px;">העלאת קובץ ל-Magicode 📤</button>
-                                    <p style="font-size:11px; margin-top:5px;">אחרי ההעלאה, העתיקו את הקישור והדביקו למטה 👇</p>
+                                <div class="helper-box">
+                                    <p style="margin:0 0 5px 0">צריכים להעלות קובץ?</p>
+                                    <button onclick="window.open('https://send.magicode.me/', '_blank')" style="background:#2196f3; padding:5px 10px; font-size:12px;">העלאה ל-Magicode 📤</button>
                                 </div>
                                 <textarea id="input-${t.taskId}" placeholder="הדבק קישור או כתוב תשובה..." style="width:95%; height:50px;"></textarea>
-                                <button onclick="submitWork('${s.id}','${t.taskId}')" style="width:100%; margin-top:5px;">שלח הגשה 🚀</button>` : ''}
+                                <button onclick="submitWork('${s.id}','${t.taskId}')" style="width:100%; margin-top:5px;">שלח הגשה למורה 🚀</button>` : `<p style="color:green; font-weight:bold; margin-top:10px;">העבודה נשלחה לבדיקה!</p>`}
                         </div>`;
                 });
             }
-            content.innerHTML = `<h3>המשימות שלי - ${s.name}</h3>` + (tasksHtml || '<p>אין משימות.</p>');
+            content.innerHTML = `<h3>המשימות שלי - ${s.name}</h3>` + (tasksHtml || '<p>אין משימות חדשות כרגע.</p>');
         }
     }
 
     function saveTask(sid) {
         const title = document.getElementById('tTitle').value;
         const xp = parseInt(document.getElementById('tXP').value);
-        if(!title || !xp) return;
+        const deadline = document.getElementById('tDeadline').value;
+        const file = document.getElementById('tFile').value;
+        if(!title || !xp) { alert("חובה למלא שם משימה ו-XP"); return; }
         const tid = Date.now().toString();
-        db.ref(`students/${sid}/tasks/${tid}`).set({ taskId: tid, title, rewardXP: xp });
+        db.ref(`students/${sid}/tasks/${tid}`).set({ 
+            taskId: tid, 
+            title, 
+            rewardXP: xp, 
+            deadline: deadline, 
+            fileLink: file 
+        });
+        alert("המשימה נשלחה!");
         closeModal();
     }
 
@@ -183,15 +210,18 @@
         const val = document.getElementById('input-' + tid).value;
         if(!val.trim()) return;
         db.ref(`students/${sid}/tasks/${tid}`).update({ submission: val });
-        alert("נשלח!"); closeModal();
+        alert("העבודה הוגשה בהצלחה!"); 
+        closeModal();
     }
 
-    function approveTask(sid, tid, reward) {
+    function approveTask(sid, tid, reward, multiplier) {
         const s = allStudents.find(x => x.id === sid);
-        let nxp = s.xp + reward, nlv = s.level;
+        const finalReward = Math.floor(reward * multiplier);
+        let nxp = s.xp + finalReward, nlv = s.level;
         while(nxp >= 100) { nlv++; nxp -= 100; }
         db.ref(`students/${sid}`).update({ xp: nxp, level: nlv });
         db.ref(`students/${sid}/tasks/${tid}`).remove();
+        alert(`המשימה אושרה! הוענקו ${finalReward} נקודות XP.`);
         closeModal();
     }
 
@@ -211,7 +241,7 @@
                     <img id="img-${s.id}" src="${imgPath}" class="creature-img" onclick="addXP('${s.id}',${s.xp},${s.level})">
                     <div style="font-weight:bold;">${s.name}</div>
                     <div class="xp-container"><div class="xp-bar" style="width:${s.xp}%"></div></div>
-                    ${userRole==='admin' ? `<button class="task-btn" onclick="openTaskModal('${s.id}')">📋</button>` : ''}
+                    <button class="task-btn" onclick="openTaskModal('${s.id}')">📋</button>
                 </div>`;
         }).join('');
     }
