@@ -2,13 +2,13 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>חוות הטמגוצ'י - גרסה יציבה וחלקה</title>
+    <title>חוות הטמגוצ'י - גרסה מעוצבת</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
     <style>
         body {
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #e0f7fa url('images/background.png') no-repeat center center fixed;
             background-size: cover; margin: 0; padding: 20px;
             display: flex; flex-direction: column; align-items: center;
@@ -16,46 +16,56 @@
 
         #control-panel {
             background: rgba(255, 255, 255, 0.95); padding: 20px; border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-bottom: 30px; 
-            display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1); margin-bottom: 30px; 
+            display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;
+            border: 2px solid #81c784; width: fit-content;
         }
 
-        input, select { padding: 10px; border-radius: 10px; border: 1px solid #ccc; }
-        button { padding: 10px 20px; border-radius: 10px; border: none; background: #2e7d32; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        button:hover { transform: translateY(-2px); background: #1b5e20; }
+        input, select, button { padding: 10px 15px; border-radius: 10px; border: 1px solid #ddd; font-size: 14px; }
+        button { background-color: #2e7d32; color: white; cursor: pointer; border: none; font-weight: bold; transition: 0.2s; }
+        button:hover { background-color: #1b5e20; transform: translateY(-2px); }
 
-        #farm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; width: 100%; max-width: 1200px; }
+        /* סידור הגריד כדי שלא יהיה מרוח */
+        #farm-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
+            gap: 20px; 
+            width: 100%; 
+            max-width: 1100px; 
+            padding: 10px;
+        }
 
         .student-card {
             background: white; border-radius: 20px; padding: 15px; text-align: center;
             position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
+            border-bottom: 4px solid #81c784;
         }
 
-        .creature-img { width: 110px; height: 110px; cursor: pointer; transition: 0.2s; z-index: 2; position: relative; }
-        
-        /* אפקט Glow ממוקד */
-        .glow-active { animation: glow-flash 0.4s ease-out; }
-        @keyframes glow-flash {
+        .creature-img { 
+            width: 100px; height: 100px; cursor: pointer; 
+            object-fit: contain; transition: transform 0.1s;
+        }
+
+        /* אנימציית Glow מתוקנת */
+        .glow-effect { animation: glow-pulse 0.5s ease-out; }
+        @keyframes glow-pulse {
             0% { filter: brightness(1); transform: scale(1); }
-            50% { filter: brightness(1.3) drop-shadow(0 0 15px gold); transform: scale(1.05); }
+            50% { filter: brightness(1.5) drop-shadow(0 0 20px #ffeb3b); transform: scale(1.1); }
             100% { filter: brightness(1); transform: scale(1); }
         }
 
-        /* רעידת ביצה */
-        .egg-shake { animation: shake-egg 0.6s infinite; }
-        @keyframes shake-egg {
+        .egg-shake { animation: shake 0.6s infinite; }
+        @keyframes shake {
             0%, 100% { transform: rotate(0); }
-            25% { transform: rotate(3deg); }
-            75% { transform: rotate(-3deg); }
+            25% { transform: rotate(5deg); }
+            75% { transform: rotate(-5deg); }
         }
 
-        .xp-container { background: #eee; border-radius: 10px; height: 14px; margin: 10px 0; overflow: hidden; border: 1px solid #ddd; }
-        .xp-bar { background: linear-gradient(90deg, #ffeb3b, #fbc02d); height: 100%; transition: width 0.3s; }
+        .xp-container { background: #eee; border-radius: 10px; height: 14px; margin: 10px 0; overflow: hidden; border: 1px solid #ccc; }
+        .xp-bar { background: linear-gradient(90deg, #ffeb3b, #fbc02d); height: 100%; transition: width 0.4s ease-out; }
         
         .level-badge { position: absolute; top: 10px; right: 10px; font-weight: bold; color: #2e7d32; font-size: 1.1em; }
-        .remove-btn { position: absolute; top: 5px; left: 5px; background: #ff5252; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 12px; opacity: 0.3; transition: 0.3s; }
-        .remove-btn:hover { opacity: 1; }
+        .remove-btn { position: absolute; top: 5px; left: 5px; background: #ff5252; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-size: 10px; }
     </style>
 </head>
 <body>
@@ -67,8 +77,8 @@
         <option value="ה2">כיתה ה'2</option>
     </select>
     <button onclick="addStudent()">הוסף יצור ✨</button>
-    <button onclick="document.getElementById('fileInput').click()" style="background:#ff9800">⬆️ ייבוא גיבוי</button>
-    <input type="file" id="fileInput" style="display:none" onchange="importToCloud(this)">
+    <button onclick="document.getElementById('fileIn').click()" style="background:#ff9800">⬆️ ייבוא גיבוי</button>
+    <input type="file" id="fileIn" style="display:none" onchange="importData(this)">
 </div>
 
 <div id="farm-grid"></div>
@@ -90,10 +100,9 @@
     const CREATURES = ['trt', 'snk', 'hnd', 'cat', 'crw', 'fsh', 'chk', 'fox', 'zbr', 'mnk', 'shp', 'cow', 'ost', 'rbt', 'dnk', 'duk', 'snl', 'owl', 'spd'];
     const EGGS = ['images/egg1.png', 'images/egg2.png', 'images/egg3.png', 'images/egg4.png', 'images/egg5.png'];
 
-    database.ref('students').on('value', (snapshot) => {
-        const data = snapshot.val();
-        const list = data ? Object.values(data) : [];
-        renderFarm(list);
+    database.ref('students').on('value', (snap) => {
+        const data = snap.val();
+        render(data ? Object.values(data) : []);
     });
 
     function addStudent() {
@@ -109,22 +118,42 @@
         document.getElementById('studentName').value = '';
     }
 
-    function addXP(id, currentXp, currentLevel) {
-        // האנימציה עובדת רק על התמונה הספציפית
+    function addXP(id, xp, lvl) {
+        // הפעלת האנימציה מיד בלחיצה
         const img = document.getElementById('img-' + id);
         if(img) {
-            img.classList.remove('glow-active');
-            void img.offsetWidth; // Restart animation
-            img.classList.add('glow-active');
+            img.classList.remove('glow-effect');
+            void img.offsetWidth; 
+            img.classList.add('glow-effect');
         }
 
-        let nxp = currentXp + 10;
-        let nlv = currentLevel;
+        let nxp = xp + 10;
+        let nlv = lvl;
         if (nxp >= 100) { nlv++; nxp = 0; }
         database.ref('students/' + id).update({ xp: nxp, level: nlv });
     }
 
-    function importToCloud(input) {
+    function render(list) {
+        document.getElementById('farm-grid').innerHTML = list.map(s => {
+            const isShaking = (s.level === 0 && s.xp >= 90) ? 'egg-shake' : '';
+            const imgPath = s.level === 0 ? EGGS[s.egg] : `images/${s.type}${s.level >= 20 ? 3 : (s.level >= 10 ? 2 : 1)}.png`;
+            
+            return `
+                <div class="student-card">
+                    <div class="level-badge">Lv.${s.level}</div>
+                    <button class="remove-btn" onclick="delS('${s.id}')">×</button>
+                    <img id="img-${s.id}" src="${imgPath}" class="creature-img ${isShaking}" onclick="addXP('${s.id}', ${s.xp}, ${s.level})">
+                    <div style="font-weight:bold; margin-top:5px;">${s.name}</div>
+                    <div style="font-size:12px; color:#777;">כיתה ${s.className}</div>
+                    <div class="xp-container"><div class="xp-bar" style="width:${s.xp}%"></div></div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function delS(id) { if(confirm("למחוק?")) database.ref('students/' + id).remove(); }
+
+    function importData(input) {
         const reader = new FileReader();
         reader.onload = function() {
             try {
@@ -138,33 +167,9 @@
                         egg: s.egg !== undefined ? s.egg : (s.eggIndex || 0)
                     });
                 });
-                alert("הנתונים הועלו!");
-            } catch(e) { alert("שגיאה"); }
+            } catch(e) { alert("שגיאה בייבוא"); }
         };
         reader.readAsText(input.files[0]);
-    }
-
-    function deleteStudent(id) {
-        if(confirm("למחוק?")) database.ref('students/' + id).remove();
-    }
-
-    function renderFarm(list) {
-        const grid = document.getElementById('farm-grid');
-        grid.innerHTML = list.map(s => {
-            const isShaking = (s.level === 0 && s.xp >= 90) ? 'egg-shake' : '';
-            const imgPath = s.level === 0 ? EGGS[s.egg] : `images/${s.type}${s.level >= 20 ? 3 : (s.level >= 10 ? 2 : 1)}.png`;
-            
-            return `
-                <div class="student-card" id="card-${s.id}">
-                    <div class="level-badge">Lv.${s.level}</div>
-                    <button class="remove-btn" onclick="deleteStudent('${s.id}')">×</button>
-                    <img id="img-${s.id}" src="${imgPath}" class="creature-img ${isShaking}" onclick="addXP('${s.id}', ${s.xp}, ${s.level})">
-                    <div style="font-weight:bold; margin-top:10px; font-size:1.1em;">${s.name}</div>
-                    <div style="font-size:12px; color:#666; margin-bottom:5px;">כיתה ${s.className}</div>
-                    <div class="xp-container"><div class="xp-bar" style="width:${s.xp}%"></div></div>
-                </div>
-            `;
-        }).join('');
     }
 </script>
 </body>
