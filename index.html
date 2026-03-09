@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>חוות הטמגוצ'י - גרסה מעוצבת וסופית 🐾</title>
+    <title>חוות הטמגוצ'י - גרסה מלאה ומתוקנת 🐾</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -11,147 +11,81 @@
             font-family: 'Segoe UI', Tahoma, sans-serif; 
             background: #e0f7fa url('images/background.png') no-repeat center center fixed; 
             background-size: cover; 
-            margin: 0; 
-            padding: 20px; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            min-height: 100vh;
+            margin: 0; padding: 20px; 
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh;
         }
         
         #control-panel { 
-            background: rgba(255, 255, 255, 0.92); 
-            padding: 20px; 
-            border-radius: 20px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
-            margin-bottom: 30px; 
-            width: 95%; 
-            max-width: 1000px; 
-            display: none; 
-            flex-wrap: wrap; 
-            gap: 12px; 
-            justify-content: center; 
-            border: 2px solid #81c784;
+            background: rgba(255, 255, 255, 0.95); padding: 20px; border-radius: 20px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); margin-bottom: 30px; 
+            width: 95%; max-width: 1000px; display: none; flex-wrap: wrap; gap: 12px; 
+            justify-content: center; border: 2px solid #81c784;
         }
 
         #farm-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
-            gap: 25px; 
-            width: 100%; 
-            max-width: 1200px; 
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+            gap: 25px; width: 100%; max-width: 1200px; 
         }
 
         .student-card { 
-            background: rgba(255, 255, 255, 0.9); 
-            border-radius: 25px; 
-            padding: 20px; 
-            text-align: center; 
-            position: relative; 
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15); 
-            border-bottom: 6px solid #81c784; 
-            transition: transform 0.2s;
+            background: rgba(255, 255, 255, 0.9); border-radius: 25px; padding: 20px; 
+            text-align: center; position: relative; box-shadow: 0 8px 20px rgba(0,0,0,0.15); 
+            border-bottom: 6px solid #81c784; transition: transform 0.2s;
         }
-        .student-card:hover { transform: translateY(-5px); }
         
-        /* כפתור ה-X האדום להסרת תלמיד */
         .remove-student-btn { 
-            position: absolute; 
-            top: 10px; 
-            left: 10px; 
-            background: #ff5252; 
-            color: white; 
-            border: none; 
-            border-radius: 50%; 
-            width: 28px; 
-            height: 28px; 
-            cursor: pointer; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            z-index: 5;
+            position: absolute; top: 10px; left: 10px; background: #ff5252; 
+            color: white; border: none; border-radius: 50%; width: 28px; height: 28px; 
+            cursor: pointer; font-weight: bold; z-index: 5;
         }
 
-        .level-badge { 
-            position: absolute; 
-            top: 10px; 
-            right: 15px; 
-            font-size: 1.3em; 
-            font-weight: 900; 
-            color: #2e7d32; 
-            text-shadow: 1px 1px 0 white;
-        }
-
+        .level-badge { position: absolute; top: 10px; right: 15px; font-size: 1.3em; font-weight: 900; color: #2e7d32; }
         .creature-img { width: 120px; height: 120px; cursor: pointer; object-fit: contain; }
         
         /* אנימציות */
         .glow-effect { animation: glow-pulse 0.6s ease-out; }
         @keyframes glow-pulse { 50% { filter: brightness(1.5) drop-shadow(0 0 15px gold); transform: scale(1.1); } }
-        
-        .xp-float { 
-            position: absolute; 
-            font-weight: bold; 
-            color: #fbc02d; 
-            font-size: 1.5em; 
-            animation: floatUp 1s forwards; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            top: 40px; 
-            z-index: 100;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-        }
+        .xp-float { position: absolute; font-weight: bold; color: #fbc02d; font-size: 1.5em; animation: floatUp 1s forwards; left: 50%; transform: translateX(-50%); top: 40px; z-index: 100; }
         @keyframes floatUp { 100% { opacity: 0; transform: translate(-50%, -60px); } }
 
         .xp-container { background: #eee; border-radius: 10px; height: 16px; margin: 15px 0; overflow: hidden; border: 1px solid #ccc; }
-        .xp-bar { background: linear-gradient(90deg, #ffeb3b, #fbc02d); height: 100%; transition: width 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .xp-bar { background: linear-gradient(90deg, #ffeb3b, #fbc02d); height: 100%; transition: width 0.6s; }
         
-        .task-btn { 
-            position: absolute; 
-            bottom: 12px; 
-            right: 12px; 
-            background: #fb8c00; 
-            border-radius: 50%; 
-            width: 38px; 
-            height: 38px; 
-            color: white; 
-            border: none; 
-            cursor: pointer; 
-            font-size: 20px;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
-        }
+        .task-btn { position: absolute; bottom: 12px; right: 12px; background: #fb8c00; border-radius: 50%; width: 38px; height: 38px; color: white; border: none; cursor: pointer; font-size: 20px; }
 
         #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; z-index: 500; align-items: center; justify-content: center; }
-        .modal { background: white; padding: 25px; border-radius: 25px; width: 90%; max-width: 450px; position: relative; text-align: right; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        .modal { background: white; padding: 25px; border-radius: 25px; width: 90%; max-width: 450px; position: relative; text-align: right; max-height: 80vh; overflow-y: auto; }
         
-        #login-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1000; display: flex; align-items: center; justify-content: center; }
-        .login-box { background: white; padding: 35px; border-radius: 25px; text-align: center; width: 340px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        #login-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        .login-box { background: white; padding: 35px; border-radius: 25px; text-align: center; width: 340px; }
         
         input, select, button, textarea { padding: 12px; border-radius: 10px; border: 1px solid #ddd; width: 100%; margin-top: 10px; font-family: inherit; }
         button { cursor: pointer; font-weight: bold; border: none; }
+        .magicode-btn { background: #2196f3; color: white; padding: 5px; font-size: 12px; margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
 <div id="login-overlay">
     <div class="login-box">
-        <h2 style="margin-top:0">ברוכים הבאים לחווה 🐾</h2>
-        <p>מי נכנס היום?</p>
+        <h2>ברוכים הבאים לחווה 🐾</h2>
         <select id="studentSelector"><option value="">טוען רשימה...</option></select>
         <button onclick="loginAsStudent()" style="background:#2e7d32; color:white;">כניסת תלמיד/ה</button>
-        <div style="margin:20px 0; border-top:1px solid #eee; padding-top:15px;">
-            <input type="password" id="adminPass" placeholder="קוד סודי למורים">
-            <button onclick="loginAsAdmin()" style="background:#1565c0; color:white;">כניסת מנהל</button>
-        </div>
+        <hr>
+        <input type="password" id="adminPass" placeholder="קוד סודי">
+        <button onclick="loginAsAdmin()" style="background:#1565c0; color:white;">כניסת מנהל</button>
     </div>
 </div>
 
 <div id="control-panel">
-    <input type="text" id="newStudentName" placeholder="שם תלמיד חדש" style="width:180px">
-    <button onclick="addStudent()" style="width:130px; background:#2e7d32; color:white;">הוסף יצור ✨</button>
-    <button onclick="openGlobalTaskModal()" style="width:160px; background:#fb8c00; color:white;">📢 משימה לכולם</button>
-    <input type="text" id="search" placeholder="חיפוש תלמיד..." oninput="updateView()" style="width:180px">
+    <input type="text" id="newStudentName" placeholder="שם תלמיד" style="width:120px">
+    <button onclick="addStudent()" style="width:100px; background:#2e7d32; color:white;">הוסף ✨</button>
+    <button onclick="openGlobalTaskModal()" style="width:130px; background:#fb8c00; color:white;">📢 לכולם</button>
+    <input type="text" id="search" placeholder="חיפוש..." oninput="updateView()" style="width:120px">
+    <select id="sortBy" onchange="updateView()" style="width:120px">
+        <option value="name">מיין לפי שם</option>
+        <option value="level">מיין לפי רמה</option>
+    </select>
 </div>
 
 <div id="farm-grid"></div>
@@ -197,6 +131,7 @@
         if (!currentUserId) { alert("אנא בחר שם!"); return; }
         userRole = 'student';
         document.getElementById('login-overlay').style.display = 'none';
+        updateView();
     }
 
     function loginAsAdmin() {
@@ -204,19 +139,25 @@
         userRole = 'admin';
         document.getElementById('login-overlay').style.display = 'none';
         document.getElementById('control-panel').style.display = 'flex';
+        updateView();
     }
 
     function updateView() {
         const grid = document.getElementById('farm-grid');
         const search = document.getElementById('search').value.toLowerCase();
-        grid.innerHTML = allStudents.filter(s => s.name.toLowerCase().includes(search)).map(s => {
+        const sortBy = document.getElementById('sortBy')?.value || 'name';
+        
+        let filtered = allStudents.filter(s => s.name.toLowerCase().includes(search));
+        filtered.sort((a,b) => sortBy === 'name' ? a.name.localeCompare(b.name) : b.level - a.level);
+
+        grid.innerHTML = filtered.map(s => {
             const imgPath = s.level===0 ? `images/egg${(s.egg||0)+1}.png` : `images/${s.type}${s.level>=20?3:(s.level>=10?2:1)}.png`;
             return `
                 <div class="student-card" data-id="${s.id}">
                     <div class="level-badge">Lv.${s.level}</div>
                     ${userRole === 'admin' ? `<button class="remove-student-btn" onclick="removeStudent('${s.id}')">✖</button>` : ''}
                     <img id="img-${s.id}" src="${imgPath}" class="creature-img" onclick="handleCreatureClick('${s.id}')">
-                    <div style="font-weight:bold; margin-top:10px; font-size:1.1em;">${s.name}</div>
+                    <div style="font-weight:bold; margin-top:10px;">${s.name}</div>
                     <div class="xp-container"><div class="xp-bar" style="width:${s.xp}%"></div></div>
                     <button class="task-btn" onclick="openTaskModal('${s.id}')">📋</button>
                 </div>`;
@@ -243,47 +184,71 @@
             if(s.tasks) {
                 Object.values(s.tasks).forEach(t => {
                     tasksHtml += `
-                        <div class="task-item" style="border-right-color: #ff5252;">
-                            <button style="position:absolute; left:5px; top:5px; width:30px; background:none; color:red;" onclick="deleteTask('${s.id}','${t.taskId}')">🗑️</button>
+                        <div style="background:#f9f9f9; padding:10px; border-radius:10px; margin-top:10px; position:relative; border-right:4px solid #fb8c00;">
+                            <button style="position:absolute; left:5px; top:5px; color:red; background:none;" onclick="deleteTask('${s.id}','${t.taskId}')">🗑️</button>
                             <b>${t.title}</b><br>
                             ${t.submission ? `
-                                <div style="font-size:13px; background:#fff; padding:8px; margin:8px 0; border:1px solid #eee; border-radius:8px;">
-                                    ${t.submission.startsWith('http') ? `<a href="${t.submission}" target="_blank">🔗 פתח קישור להגשה</a>` : t.submission}
-                                </div>
-                                <div style="display:flex; gap:10px;">
-                                    <button onclick="approveTask('${s.id}','${t.taskId}',${t.rewardXP}, 1)" style="background:#2e7d32; color:white;">אשר 100%</button>
-                                    <button onclick="approveTask('${s.id}','${t.taskId}',${t.rewardXP}, 0.5)" style="background:#fb8c00; color:white;">חלקית 50%</button>
-                                </div>
-                            ` : '<small style="color:gray;">עדיין לא הוגש</small>'}
+                                <div style="font-size:12px; background:white; padding:5px; margin:5px 0;">${t.submission.startsWith('http') ? `<a href="${t.submission}" target="_blank">🔗 קישור להגשה</a>` : t.submission}</div>
+                                <button onclick="approveTask('${s.id}','${t.taskId}',${t.rewardXP}, 1)" style="background:#2e7d32; color:white; width:45%;">100%</button>
+                                <button onclick="approveTask('${s.id}','${t.taskId}',${t.rewardXP}, 0.5)" style="background:#fb8c00; color:white; width:45%;">50%</button>
+                            ` : '<small>טרם הוגש</small>'}
                         </div>`;
                 });
             }
-            content.innerHTML = `<h3>ניהול משימות: ${s.name}</h3>
+            content.innerHTML = `<h3>ניהול: ${s.name}</h3>
+                <button class="magicode-btn" onclick="window.open('https://send.magicode.me/','_blank')">העלאת קובץ ל-Magicode 📤</button>
                 <input type="text" id="tTitle" placeholder="שם המשימה">
                 <input type="number" id="tXP" placeholder="כמות XP">
-                <button onclick="saveTask('${s.id}')" style="background:#1565c0; color:white;">שלח משימה אישית</button>
-                <div style="margin-top:15px; max-height:200px; overflow-y:auto;">${tasksHtml || 'אין משימות פתוחות'}</div>`;
+                <input type="text" id="tFile" placeholder="קישור לקובץ (אופציונלי)">
+                <button onclick="saveTask('${s.id}')" style="background:#1565c0; color:white;">שלח משימה</button>
+                ${tasksHtml}`;
         } else {
             let tasksHtml = '';
             if(s.tasks) {
                 Object.values(s.tasks).forEach(t => {
                     tasksHtml += `
-                        <div class="task-item">
+                        <div style="background:#f4f4f4; padding:10px; border-radius:10px; margin-top:10px; border-right:4px solid #fb8c00;">
                             <b>${t.title}</b> (${t.rewardXP} XP)
+                            ${t.fileLink ? `<br><a href="${t.fileLink}" target="_blank">📥 הורד קובץ משימה</a>` : ''}
                             ${!t.submission ? `
-                                <textarea id="in-${t.taskId}" placeholder="הדבק קישור או כתוב תשובה..." style="height:50px; margin-top:8px;"></textarea>
-                                <button onclick="submitWork('${s.id}','${t.taskId}')" style="background:#fb8c00; color:white; margin-top:5px;">שלח הגשה למורה 🚀</button>
-                            ` : '<p style="color:#2e7d32; font-weight:bold; margin-top:10px;">✅ המשימה הוגשה!</p>'}
+                                <button class="magicode-btn" onclick="window.open('https://send.magicode.me/','_blank')" style="margin-top:10px;">העלאת הגשה ל-Magicode 📤</button>
+                                <textarea id="in-${t.taskId}" placeholder="הדבק קישור או כתוב תשובה..."></textarea>
+                                <button onclick="submitWork('${s.id}','${t.taskId}')" style="background:#fb8c00; color:white;">שלח הגשה 🚀</button>
+                            ` : '<p style="color:green; font-weight:bold;">הוגש! מחכה לבדיקה.</p>'}
                         </div>`;
                 });
             }
-            content.innerHTML = `<h3>המשימות שלי (${s.name})</h3>${tasksHtml || '<p>כל הכבוד! אין משימות כרגע.</p>'}`;
+            content.innerHTML = `<h3>המשימות שלי (${s.name})</h3>${tasksHtml || 'אין משימות כרגע'}`;
         }
     }
 
-    function triggerAnims(id, amount, isLevelUp) {
+    function saveTask(sid) {
+        const title = document.getElementById('tTitle').value;
+        const xp = parseInt(document.getElementById('tXP').value);
+        const file = document.getElementById('tFile').value;
+        if(!title || !xp) return;
+        const tid = "task_" + Date.now();
+        db.ref(`students/${sid}/tasks/${tid}`).set({ taskId: tid, title, rewardXP: xp, fileLink: file });
+        closeModal();
+    }
+
+    function sendGlobalTask() {
+        const title = document.getElementById('gtTitle').value;
+        const xp = parseInt(document.getElementById('gtXP').value);
+        const file = document.getElementById('gtFile').value;
+        if(!title || !xp) return;
+        const timeKey = Date.now();
+        allStudents.forEach(s => {
+            const tid = "global_" + timeKey + "_" + s.id;
+            db.ref(`students/${s.id}/tasks/${tid}`).set({ taskId: tid, title, rewardXP: xp, fileLink: file });
+        });
+        alert("נשלח לכולם!"); closeModal();
+    }
+
+    function triggerAnims(id, amount) {
         const card = document.querySelector(`.student-card[data-id="${id}"]`);
         const img = document.getElementById('img-'+id);
+        if(!img) return;
         img.classList.remove('glow-effect'); void img.offsetWidth; img.classList.add('glow-effect');
         const f = document.createElement('div');
         f.className = 'xp-float'; f.innerText = `+${amount} XP`;
@@ -294,27 +259,15 @@
     function addXP(id, xp, lvl) {
         let nxp = xp+10, nlv = lvl;
         if(nxp >= 100) { nlv++; nxp = 0; }
-        triggerAnims(id, 10, false);
+        triggerAnims(id, 10);
         db.ref('students/'+id).update({ xp: nxp, level: nlv });
-    }
-
-    function sendGlobalTask() {
-        const title = document.getElementById('gtTitle').value;
-        const xp = parseInt(document.getElementById('gtXP').value);
-        if(!title || !xp) return;
-        const timeKey = Date.now();
-        allStudents.forEach(s => {
-            const tid = "global_" + timeKey + "_" + s.id;
-            db.ref(`students/${s.id}/tasks/${tid}`).set({ taskId: tid, title, rewardXP: xp });
-        });
-        alert("נשלח לכל הכיתה!"); closeModal();
     }
 
     function submitWork(sid, tid) {
         const val = document.getElementById('in-' + tid).value;
         if(!val.trim()) return;
         db.ref(`students/${sid}/tasks/${tid}`).update({ submission: val });
-        alert("הוגש בהצלחה!"); closeModal();
+        alert("נשלח!"); closeModal();
     }
 
     function approveTask(sid, tid, reward, mult) {
@@ -322,7 +275,7 @@
         const finalReward = Math.floor(reward * mult);
         let nxp = s.xp + finalReward, nlv = s.level;
         while(nxp >= 100) { nlv++; nxp -= 100; }
-        triggerAnims(sid, finalReward, false);
+        triggerAnims(sid, finalReward);
         db.ref(`students/${sid}/tasks/${tid}`).remove();
         setTimeout(() => db.ref(`students/${sid}`).update({ xp: nxp, level: nlv }), 400);
         closeModal();
@@ -332,28 +285,22 @@
         const name = document.getElementById('newStudentName').value;
         if(!name) return;
         const id = Date.now().toString();
-        const types = ['fox','chk','cat','hnd','snk'];
-        db.ref('students/'+id).set({ id, name, xp:0, level:0, type: types[Math.floor(Math.random()*5)], egg:Math.floor(Math.random()*4) });
+        db.ref('students/'+id).set({ id, name, xp:0, level:0, type:'fox', egg:Math.floor(Math.random()*4) });
         document.getElementById('newStudentName').value = '';
     }
 
-    function removeStudent(id) { if(confirm('למחוק את התלמיד/ה מהחווה?')) db.ref('students/'+id).remove(); }
-    function deleteTask(sid, tid) { if(confirm('למחוק את המשימה?')) db.ref(`students/${sid}/tasks/${tid}`).remove(); closeModal(); }
-    function saveTask(sid) {
-        const title = document.getElementById('tTitle').value;
-        const xp = parseInt(document.getElementById('tXP').value);
-        if(!title || !xp) return;
-        const tid = "task_" + Date.now();
-        db.ref(`students/${sid}/tasks/${tid}`).set({ taskId: tid, title, rewardXP: xp });
-        closeModal();
-    }
+    function removeStudent(id) { if(confirm('למחוק?')) db.ref('students/'+id).remove(); }
+    function deleteTask(sid, tid) { db.ref(`students/${sid}/tasks/${tid}`).remove(); closeModal(); }
+    
     function openGlobalTaskModal() {
         document.getElementById('modal-overlay').style.display = 'flex';
         document.getElementById('modal-content').innerHTML = `
-            <h3>📢 משימה לכל הכיתה</h3>
-            <input type="text" id="gtTitle" placeholder="שם המשימה (למשל: דף עבודה בחשבון)">
-            <input type="number" id="gtXP" placeholder="כמות XP כפרס">
-            <button onclick="sendGlobalTask()" style="background:#fb8c00; color:white; margin-top:15px;">שלח לכולם! 🚀</button>`;
+            <h3>📢 משימה לכולם</h3>
+            <button class="magicode-btn" onclick="window.open('https://send.magicode.me/','_blank')">העלאת קובץ ל-Magicode 📤</button>
+            <input type="text" id="gtTitle" placeholder="שם המשימה">
+            <input type="number" id="gtXP" placeholder="XP">
+            <input type="text" id="gtFile" placeholder="קישור לקובץ">
+            <button onclick="sendGlobalTask()" style="background:#fb8c00; color:white;">שלח לכל הכיתה</button>`;
     }
     function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
 </script>
