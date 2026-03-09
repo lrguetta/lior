@@ -195,6 +195,39 @@ animation:levelPop 1s ease-out forwards;
 100%{transform:translateX(50%) scale(1);opacity:0;}
 }
 
+  /* אפקט בקיעה אמיתי */
+
+.hatch-crack{
+animation:eggCrack 0.9s ease-out forwards;
+}
+
+@keyframes eggCrack{
+0%{transform:scale(1) rotate(0);}
+20%{transform:scale(1.1) rotate(-8deg);}
+40%{transform:scale(1.15) rotate(8deg);}
+60%{transform:scale(1.2) rotate(-6deg);}
+80%{transform:scale(1.25) rotate(6deg);filter:brightness(1.6);}
+100%{transform:scale(0);opacity:0;}
+}
+
+.hatch-flash{
+position:absolute;
+width:120px;
+height:120px;
+background:white;
+border-radius:50%;
+top:40px;
+left:50%;
+transform:translateX(-50%);
+animation:hatchFlash 0.4s ease-out forwards;
+pointer-events:none;
+}
+
+@keyframes hatchFlash{
+0%{opacity:0;transform:translateX(-50%) scale(0.5);}
+40%{opacity:1;transform:translateX(-50%) scale(1.4);}
+100%{opacity:0;transform:translateX(-50%) scale(2);}
+}
 </style>
 </head>
 
@@ -280,10 +313,7 @@ img.style.pointerEvents="none";
 setTimeout(()=>img.style.pointerEvents="auto",400);
 
 img.classList.remove('glow-effect');
-
-requestAnimationFrame(()=>{
-img.classList.add('glow-effect');
-});
+requestAnimationFrame(()=>img.classList.add('glow-effect'));
 
 if(card){
 const xpFloat=document.createElement('div');
@@ -298,25 +328,54 @@ setTimeout(()=>xpFloat.remove(),800);
 let nxp=xp+10;
 let nlv=lvl;
 let levelUp=false;
-let hatched=false;
+let hatch=false;
 
 if(nxp>=100){
 nlv++;
 nxp=0;
 levelUp=true;
-if(lvl===0) hatched=true;
+
+if(lvl===0){
+hatch=true;
+}
 }
 
 if(levelUp && card){
-
 const levelTag=document.createElement('div');
 levelTag.className='levelup';
 levelTag.innerText='LEVEL UP!';
 card.appendChild(levelTag);
 setTimeout(()=>levelTag.remove(),1000);
-
 }
 
+if(hatch && img && card){
+
+img.classList.add("hatch-crack");
+
+const flash=document.createElement("div");
+flash.className="hatch-flash";
+card.appendChild(flash);
+
+setTimeout(()=>{
+db.ref('students/'+id).update({
+xp:nxp,
+level:nlv
+});
+},900);
+
+setTimeout(()=>flash.remove(),500);
+
+return;
+}
+
+setTimeout(()=>{
+db.ref('students/'+id).update({
+xp:nxp,
+level:nlv
+});
+},450);
+
+}
 /* אנימציית בקיעה */
 if(hatched && img){
 img.classList.add("hatch");
@@ -391,3 +450,4 @@ onclick="addXP('${s.id}',${s.xp},${s.level})">
 
 </body>
 </html>
+
