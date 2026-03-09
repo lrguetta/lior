@@ -2,9 +2,9 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>חוות הטמגוצ'י - גרסת האנימציות</title>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <title>חוות הטמגוצ'י - גרסה יציבה וחלקה</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
     <style>
         body {
@@ -20,7 +20,8 @@
             display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
         }
 
-        button { padding: 10px 20px; border-radius: 10px; border: none; background: #2e7d32; color: white; font-weight: bold; cursor: pointer; }
+        input, select { padding: 10px; border-radius: 10px; border: 1px solid #ccc; }
+        button { padding: 10px 20px; border-radius: 10px; border: none; background: #2e7d32; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; }
         button:hover { transform: translateY(-2px); background: #1b5e20; }
 
         #farm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; width: 100%; max-width: 1200px; }
@@ -28,50 +29,46 @@
         .student-card {
             background: white; border-radius: 20px; padding: 15px; text-align: center;
             position: relative; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
         }
 
-        /* --- אנימציות --- */
-        .pop { animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes pop-in { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-
-        .creature-img { width: 100px; height: 100px; cursor: pointer; transition: transform 0.2s; }
+        .creature-img { width: 110px; height: 110px; cursor: pointer; transition: 0.2s; z-index: 2; position: relative; }
         
-        /* אפקט זהירה בלחיצה */
-        .glow-active { animation: glow-flash 0.5s ease-out; }
+        /* אפקט Glow ממוקד */
+        .glow-active { animation: glow-flash 0.4s ease-out; }
         @keyframes glow-flash {
-            0% { filter: brightness(1) drop-shadow(0 0 0px yellow); transform: scale(1); }
-            50% { filter: brightness(1.5) drop-shadow(0 0 15px yellow); transform: scale(1.1); }
-            100% { filter: brightness(1) drop-shadow(0 0 0px yellow); transform: scale(1); }
+            0% { filter: brightness(1); transform: scale(1); }
+            50% { filter: brightness(1.3) drop-shadow(0 0 15px gold); transform: scale(1.05); }
+            100% { filter: brightness(1); transform: scale(1); }
         }
 
-        /* רעידת ביצה לפני בקיעה */
-        .egg-shake { animation: shake-egg 0.5s infinite; }
+        /* רעידת ביצה */
+        .egg-shake { animation: shake-egg 0.6s infinite; }
         @keyframes shake-egg {
-            0% { transform: rotate(0deg); }
-            20% { transform: rotate(3deg); }
-            40% { transform: rotate(-3deg); }
-            60% { transform: rotate(2deg); }
-            100% { transform: rotate(0deg); }
+            0%, 100% { transform: rotate(0); }
+            25% { transform: rotate(3deg); }
+            75% { transform: rotate(-3deg); }
         }
 
-        .xp-container { background: #eee; border-radius: 10px; height: 12px; margin: 10px 0; overflow: hidden; }
+        .xp-container { background: #eee; border-radius: 10px; height: 14px; margin: 10px 0; overflow: hidden; border: 1px solid #ddd; }
         .xp-bar { background: linear-gradient(90deg, #ffeb3b, #fbc02d); height: 100%; transition: width 0.3s; }
         
-        .level-badge { position: absolute; top: 10px; right: 10px; font-weight: 900; color: #2e7d32; background: white; padding: 2px 8px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .remove-btn { position: absolute; top: 10px; left: 10px; background: #ff5252; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 12px; }
+        .level-badge { position: absolute; top: 10px; right: 10px; font-weight: bold; color: #2e7d32; font-size: 1.1em; }
+        .remove-btn { position: absolute; top: 5px; left: 5px; background: #ff5252; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 12px; opacity: 0.3; transition: 0.3s; }
+        .remove-btn:hover { opacity: 1; }
     </style>
 </head>
 <body>
 
 <div id="control-panel">
-    <input type="text" id="studentName" placeholder="שם התלמיד" style="padding:10px; border-radius:10px; border:1px solid #ccc;">
-    <select id="studentClass" style="padding:10px; border-radius:10px; border:1px solid #ccc;">
+    <input type="text" id="studentName" placeholder="שם התלמיד">
+    <select id="studentClass">
         <option value="ה1">כיתה ה'1</option>
         <option value="ה2">כיתה ה'2</option>
     </select>
     <button onclick="addStudent()">הוסף יצור ✨</button>
-    <button onclick="document.getElementById('fileIn').click()" style="background:#ff9800">⬆️ העלה גיבוי ישן</button>
-    <input type="file" id="fileIn" style="display:none" onchange="importData(this)">
+    <button onclick="document.getElementById('fileInput').click()" style="background:#ff9800">⬆️ ייבוא גיבוי</button>
+    <input type="file" id="fileInput" style="display:none" onchange="importToCloud(this)">
 </div>
 
 <div id="farm-grid"></div>
@@ -88,23 +85,22 @@
     };
 
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const studentsRef = db.ref('students');
+    const database = firebase.database();
 
     const CREATURES = ['trt', 'snk', 'hnd', 'cat', 'crw', 'fsh', 'chk', 'fox', 'zbr', 'mnk', 'shp', 'cow', 'ost', 'rbt', 'dnk', 'duk', 'snl', 'owl', 'spd'];
     const EGGS = ['images/egg1.png', 'images/egg2.png', 'images/egg3.png', 'images/egg4.png', 'images/egg5.png'];
 
-    studentsRef.on('value', (snap) => {
-        const data = snap.val();
+    database.ref('students').on('value', (snapshot) => {
+        const data = snapshot.val();
         const list = data ? Object.values(data) : [];
-        render(list);
+        renderFarm(list);
     });
 
     function addStudent() {
         const name = document.getElementById('studentName').value;
         if (!name) return;
         const id = Date.now().toString();
-        db.ref('students/' + id).set({
+        database.ref('students/' + id).set({
             id, name, className: document.getElementById('studentClass').value,
             xp: 0, level: 0,
             type: CREATURES[Math.floor(Math.random() * CREATURES.length)],
@@ -114,56 +110,61 @@
     }
 
     function addXP(id, currentXp, currentLevel) {
-        // הפעלת האנימציה מיד בלחיצה
-        const img = document.getElementById(`img-${id}`);
-        img.classList.remove('glow-active');
-        void img.offsetWidth; 
-        img.classList.add('glow-active');
+        // האנימציה עובדת רק על התמונה הספציפית
+        const img = document.getElementById('img-' + id);
+        if(img) {
+            img.classList.remove('glow-active');
+            void img.offsetWidth; // Restart animation
+            img.classList.add('glow-active');
+        }
 
         let nxp = currentXp + 10;
         let nlv = currentLevel;
         if (nxp >= 100) { nlv++; nxp = 0; }
-        db.ref('students/' + id).update({ xp: nxp, level: nlv });
+        database.ref('students/' + id).update({ xp: nxp, level: nlv });
     }
 
-    function render(list) {
-        document.getElementById('farm-grid').innerHTML = list.map(s => {
+    function importToCloud(input) {
+        const reader = new FileReader();
+        reader.onload = function() {
+            try {
+                const data = JSON.parse(reader.result);
+                const list = Array.isArray(data) ? data : (JSON.parse(data.farmData) || []);
+                list.forEach(s => {
+                    database.ref('students/' + s.id).set({
+                        id: s.id, name: s.name, className: s.className,
+                        xp: s.xp, level: s.level,
+                        type: s.type || s.creatureType,
+                        egg: s.egg !== undefined ? s.egg : (s.eggIndex || 0)
+                    });
+                });
+                alert("הנתונים הועלו!");
+            } catch(e) { alert("שגיאה"); }
+        };
+        reader.readAsText(input.files[0]);
+    }
+
+    function deleteStudent(id) {
+        if(confirm("למחוק?")) database.ref('students/' + id).remove();
+    }
+
+    function renderFarm(list) {
+        const grid = document.getElementById('farm-grid');
+        grid.innerHTML = list.map(s => {
             const isShaking = (s.level === 0 && s.xp >= 90) ? 'egg-shake' : '';
-            let imgPath = s.level === 0 ? EGGS[s.egg] : `images/${s.type}${s.level >= 20 ? 3 : (s.level >= 10 ? 2 : 1)}.png`;
+            const imgPath = s.level === 0 ? EGGS[s.egg] : `images/${s.type}${s.level >= 20 ? 3 : (s.level >= 10 ? 2 : 1)}.png`;
             
             return `
-                <div class="student-card pop">
+                <div class="student-card" id="card-${s.id}">
                     <div class="level-badge">Lv.${s.level}</div>
-                    <button class="remove-btn" onclick="removeS('${s.id}')">×</button>
+                    <button class="remove-btn" onclick="deleteStudent('${s.id}')">×</button>
                     <img id="img-${s.id}" src="${imgPath}" class="creature-img ${isShaking}" onclick="addXP('${s.id}', ${s.xp}, ${s.level})">
-                    <div style="font-weight:bold; margin-top:5px;">${s.name}</div>
-                    <div style="font-size:12px; color:#666;">כיתה ${s.className}</div>
+                    <div style="font-weight:bold; margin-top:10px; font-size:1.1em;">${s.name}</div>
+                    <div style="font-size:12px; color:#666; margin-bottom:5px;">כיתה ${s.className}</div>
                     <div class="xp-container"><div class="xp-bar" style="width:${s.xp}%"></div></div>
                 </div>
             `;
         }).join('');
-    }
-
-    function removeS(id) { if(confirm("למחוק מהענן?")) db.ref('students/' + id).remove(); }
-
-    function importData(input) {
-        const reader = new FileReader();
-        reader.onload = function() {
-            const data = JSON.parse(reader.result);
-            const list = Array.isArray(data) ? data : (JSON.parse(data.farmData) || []);
-            list.forEach(s => {
-                // התאמת שמות שדות אם צריך (type/creatureType)
-                const studentData = {
-                    id: s.id, name: s.name, className: s.className,
-                    xp: s.xp, level: s.level,
-                    type: s.type || s.creatureType,
-                    egg: s.egg !== undefined ? s.egg : s.eggIndex
-                };
-                db.ref('students/' + s.id).set(studentData);
-            });
-            alert("הכל עלה לענן!");
-        };
-        reader.readAsText(input.files[0]);
     }
 </script>
 </body>
