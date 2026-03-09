@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>חוות הטמגוצ'י - גרסה מתוקנת</title>
+    <title>חוות הטמגוצ'י - גרסה סופית ומסונכרנת</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -18,11 +18,8 @@
         .level-text-badge { position: absolute; top: 5px; right: 15px; font-family: 'Arial Black', sans-serif; font-size: 1.4em; font-weight: 900; color: #2e7d32; z-index: 10; text-shadow: -1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff, 0 2px 4px rgba(0,0,0,0.3); }
         .creature-img { width: 120px; height: 120px; cursor: pointer; object-fit: contain; margin-bottom: 10px; transition: transform 0.2s; }
         
-        /* תיקון אנימציות */
         .xp-float { position: absolute; font-weight: bold; color: #fbc02d; font-size: 1.8em; animation: floatUp 1.2s forwards; left: 50%; top: 40%; transform: translateX(-50%); z-index: 100; pointer-events: none; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
         @keyframes floatUp { 0% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -80px); } }
-        .lvl-up { animation: rainbow 0.5s infinite; }
-        @keyframes rainbow { 0% { filter: hue-rotate(0deg) scale(1.1); } 100% { filter: hue-rotate(360deg) scale(1.1); } }
 
         .xp-container { background: #eee; border-radius: 10px; height: 18px; margin: 10px 0; overflow: hidden; border: 1px solid #ccc; }
         .xp-bar { background: linear-gradient(90deg, #ffeb3b, #fbc02d); height: 100%; transition: width 0.5s ease-in-out; }
@@ -102,8 +99,19 @@
         updateView();
     }
 
+    // תיקון קריטי לסנכרון מסד הנתונים
     db.ref('students').on('value', (snap) => {
-        allStudents = snap.val() ? Object.values(snap.val()) : [];
+        const data = snap.val();
+        if (data) {
+            allStudents = Object.keys(data).map(key => {
+                return {
+                    ...data[key],
+                    id: data[key].id || key // הבטחה שיש ID תקין לכל תלמיד
+                };
+            });
+        } else {
+            allStudents = [];
+        }
         updateView();
     });
 
@@ -112,11 +120,11 @@
         const searchTerm = document.getElementById('search').value.toLowerCase();
         const sortBy = document.getElementById('sortBy').value;
         
-        let filtered = allStudents.filter(s => s.name.toLowerCase().includes(searchTerm));
+        let filtered = allStudents.filter(s => s.name && s.name.toLowerCase().includes(searchTerm));
         filtered.sort((a,b) => {
             if(sortBy === 'name') return a.name.localeCompare(b.name);
             if(sortBy === 'level') return b.level - a.level;
-            return a.className.localeCompare(b.className);
+            return (a.className || "").localeCompare(b.className || "");
         });
 
         grid.innerHTML = filtered.map(s => {
@@ -140,13 +148,11 @@
 
     function addXP(id, amount) {
         const s = allStudents.find(x => x.id === id);
+        if(!s) return;
         let nxp = s.xp + amount, nlv = s.level;
         let leveledUp = false;
         if(nxp >= 100) { nlv++; nxp = 0; leveledUp = true; }
-        
-        // אנימציה מקומית לפני העדכון
         showXPAnim(id, amount, leveledUp);
-        
         db.ref('students/'+id).update({ xp: nxp, level: nlv });
     }
 
@@ -162,6 +168,7 @@
 
     function openTaskModal(studentId) {
         const s = allStudents.find(x => x.id === studentId);
+        if(!s) return;
         const content = document.getElementById('modal-content');
         document.getElementById('modal-overlay').style.display = 'flex';
 
