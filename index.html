@@ -2,75 +2,163 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>חוות הטמגוצ'י - גרסת המורה הסופית</title>
+    <title>חוות הטמגוצ'י - גרסה מעוצבת וסופית 🐾</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #e0f7fa; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        #control-panel { background: rgba(255, 255, 255, 0.95); padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); margin-bottom: 30px; width: 90%; max-width: 900px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; border: 2px solid #81c784; }
-        input, select, button, textarea { padding: 10px; border-radius: 10px; border: 1px solid #ddd; font-size: 15px; font-family: inherit; }
-        button { background-color: #2e7d32; color: white; cursor: pointer; border: none; font-weight: bold; transition: transform 0.1s; }
-        button:active { transform: scale(0.95); }
-        #farm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; width: 100%; max-width: 1200px; }
-        .student-card { background: white; border-radius: 25px; padding: 20px; text-align: center; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-bottom: 5px solid #81c784; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, sans-serif; 
+            background: #e0f7fa url('images/background.png') no-repeat center center fixed; 
+            background-size: cover; 
+            margin: 0; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            min-height: 100vh;
+        }
+        
+        #control-panel { 
+            background: rgba(255, 255, 255, 0.92); 
+            padding: 20px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+            margin-bottom: 30px; 
+            width: 95%; 
+            max-width: 1000px; 
+            display: none; 
+            flex-wrap: wrap; 
+            gap: 12px; 
+            justify-content: center; 
+            border: 2px solid #81c784;
+        }
+
+        #farm-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+            gap: 25px; 
+            width: 100%; 
+            max-width: 1200px; 
+        }
+
+        .student-card { 
+            background: rgba(255, 255, 255, 0.9); 
+            border-radius: 25px; 
+            padding: 20px; 
+            text-align: center; 
+            position: relative; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15); 
+            border-bottom: 6px solid #81c784; 
+            transition: transform 0.2s;
+        }
+        .student-card:hover { transform: translateY(-5px); }
+        
+        /* כפתור ה-X האדום להסרת תלמיד */
+        .remove-student-btn { 
+            position: absolute; 
+            top: 10px; 
+            left: 10px; 
+            background: #ff5252; 
+            color: white; 
+            border: none; 
+            border-radius: 50%; 
+            width: 28px; 
+            height: 28px; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 5;
+        }
+
+        .level-badge { 
+            position: absolute; 
+            top: 10px; 
+            right: 15px; 
+            font-size: 1.3em; 
+            font-weight: 900; 
+            color: #2e7d32; 
+            text-shadow: 1px 1px 0 white;
+        }
+
+        .creature-img { width: 120px; height: 120px; cursor: pointer; object-fit: contain; }
         
         /* אנימציות */
-        .creature-img { width: 120px; height: 120px; cursor: pointer; object-fit: contain; margin-bottom: 10px; }
         .glow-effect { animation: glow-pulse 0.6s ease-out; }
-        @keyframes glow-pulse { 0% { transform: scale(1); } 50% { filter: brightness(1.5) drop-shadow(0 0 10px gold); transform: scale(1.1); } 100% { transform: scale(1); } }
-        .xp-float { position: absolute; font-weight: bold; color: #fbc02d; font-size: 1.4em; animation: floatUp 1s forwards; left: 50%; top: 40px; transform: translateX(-50%); z-index: 100; }
-        @keyframes floatUp { 0% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -50px); } }
-        .levelup { position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%); background: gold; color: #333; padding: 5px 15px; border-radius: 20px; animation: levelPop 1.5s forwards; z-index: 101; }
-        @keyframes levelPop { 0% { opacity: 0; } 30% { opacity: 1; transform: translate(-50%, -20px); } 100% { opacity: 0; } }
-
-        .level-text-badge { position: absolute; top: 5px; right: 15px; font-size: 1.4em; font-weight: 900; color: #2e7d32; }
-        .xp-container { background: #eee; border-radius: 10px; height: 18px; margin: 10px 0; overflow: hidden; }
-        .xp-bar { background: linear-gradient(90deg, #ffeb3b, #fbc02d); height: 100%; transition: width 0.5s; }
-        .task-btn { position: absolute; bottom: 10px; right: 10px; background: #fb8c00; border-radius: 50%; width: 35px; height: 35px; color: white; cursor: pointer; border: none; font-size: 18px; }
-        .remove-btn { position: absolute; top: 10px; left: 10px; background: #ff5252; color: white; border-radius: 50%; width: 25px; height: 25px; border: none; cursor: pointer; }
+        @keyframes glow-pulse { 50% { filter: brightness(1.5) drop-shadow(0 0 15px gold); transform: scale(1.1); } }
         
-        #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; z-index: 500; align-items: center; justify-content: center; }
-        .modal { background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; position: relative; text-align: right; max-height: 85vh; overflow-y: auto; }
-        .close-modal { position: absolute; top: 10px; left: 10px; cursor: pointer; font-size: 22px; }
-        .task-item { background: #f4f4f4; padding: 15px; border-radius: 12px; margin-top: 15px; border-right: 5px solid #fb8c00; position: relative; }
-        .delete-task-btn { position: absolute; top: 5px; left: 5px; background: none; color: #ff5252; border: none; cursor: pointer; font-size: 16px; }
-        .helper-box { background: #e3f2fd; padding: 10px; border-radius: 10px; margin: 10px 0; font-size: 0.8em; text-align: center; border: 1px dashed #2196f3; }
-        #login-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; align-items: center; justify-content: center; }
-        .login-box { background: white; padding: 40px; border-radius: 20px; text-align: center; width: 300px; }
+        .xp-float { 
+            position: absolute; 
+            font-weight: bold; 
+            color: #fbc02d; 
+            font-size: 1.5em; 
+            animation: floatUp 1s forwards; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            top: 40px; 
+            z-index: 100;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        @keyframes floatUp { 100% { opacity: 0; transform: translate(-50%, -60px); } }
+
+        .xp-container { background: #eee; border-radius: 10px; height: 16px; margin: 15px 0; overflow: hidden; border: 1px solid #ccc; }
+        .xp-bar { background: linear-gradient(90deg, #ffeb3b, #fbc02d); height: 100%; transition: width 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        
+        .task-btn { 
+            position: absolute; 
+            bottom: 12px; 
+            right: 12px; 
+            background: #fb8c00; 
+            border-radius: 50%; 
+            width: 38px; 
+            height: 38px; 
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            font-size: 20px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+        }
+
+        #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; z-index: 500; align-items: center; justify-content: center; }
+        .modal { background: white; padding: 25px; border-radius: 25px; width: 90%; max-width: 450px; position: relative; text-align: right; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        
+        #login-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        .login-box { background: white; padding: 35px; border-radius: 25px; text-align: center; width: 340px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
+        input, select, button, textarea { padding: 12px; border-radius: 10px; border: 1px solid #ddd; width: 100%; margin-top: 10px; font-family: inherit; }
+        button { cursor: pointer; font-weight: bold; border: none; }
     </style>
 </head>
 <body>
 
 <div id="login-overlay">
     <div class="login-box">
-        <h2>הכניסה לחווה 🐾</h2>
-        <button onclick="loginAs('student')">אני תלמיד/ה</button>
-        <hr style="width:100%">
-        <input type="password" id="adminPass" placeholder="קוד סודי">
-        <button onclick="loginAs('admin')" style="background:#1565c0">כניסת מנהל</button>
+        <h2 style="margin-top:0">ברוכים הבאים לחווה 🐾</h2>
+        <p>מי נכנס היום?</p>
+        <select id="studentSelector"><option value="">טוען רשימה...</option></select>
+        <button onclick="loginAsStudent()" style="background:#2e7d32; color:white;">כניסת תלמיד/ה</button>
+        <div style="margin:20px 0; border-top:1px solid #eee; padding-top:15px;">
+            <input type="password" id="adminPass" placeholder="קוד סודי למורים">
+            <button onclick="loginAsAdmin()" style="background:#1565c0; color:white;">כניסת מנהל</button>
+        </div>
     </div>
 </div>
 
-<div id="control-panel" style="display:none">
-    <input type="text" id="studentName" placeholder="שם התלמיד">
-    <select id="studentClass"><option value="ה1">כיתה ה'1</option><option value="ה2">כיתה ה'2</option></select>
-    <button onclick="addStudent()">הוסף יצור ✨</button>
-    <button onclick="openGlobalTaskModal()" style="background:#fb8c00">📢 משימה לכולם</button>
-    <div style="width:100%; display:flex; gap:10px; margin-top:10px;">
-        <input type="text" id="search" placeholder="חיפוש..." oninput="updateView()" style="flex:2;">
-        <select id="sortBy" onchange="updateView()" style="flex:1;">
-            <option value="name">לפי שם</option>
-            <option value="level">לפי רמה</option>
-        </select>
-    </div>
+<div id="control-panel">
+    <input type="text" id="newStudentName" placeholder="שם תלמיד חדש" style="width:180px">
+    <button onclick="addStudent()" style="width:130px; background:#2e7d32; color:white;">הוסף יצור ✨</button>
+    <button onclick="openGlobalTaskModal()" style="width:160px; background:#fb8c00; color:white;">📢 משימה לכולם</button>
+    <input type="text" id="search" placeholder="חיפוש תלמיד..." oninput="updateView()" style="width:180px">
 </div>
 
 <div id="farm-grid"></div>
 
 <div id="modal-overlay">
     <div class="modal">
-        <span class="close-modal" onclick="closeModal()">✖</span>
+        <span onclick="closeModal()" style="cursor:pointer; float:left; font-size:24px;">✖</span>
         <div id="modal-content"></div>
     </div>
 </div>
@@ -89,89 +177,64 @@
     const db = firebase.database();
 
     let userRole = ''; 
+    let currentUserId = ''; 
     let allStudents = [];
-    const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
-
-    function loginAs(role) {
-        if(role === 'admin') {
-            if(document.getElementById('adminPass').value !== 'rabenu247') { alert("קוד שגוי"); return; }
-            document.getElementById('control-panel').style.display = 'flex';
-        }
-        userRole = role;
-        document.getElementById('login-overlay').style.display = 'none';
-        updateView();
-    }
 
     db.ref('students').on('value', (snap) => {
         allStudents = snap.val() ? Object.values(snap.val()) : [];
+        const selector = document.getElementById('studentSelector');
+        const currentVal = selector.value;
+        selector.innerHTML = '<option value="">בחר שם מהרשימה...</option>';
+        allStudents.forEach(s => {
+            selector.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+        });
+        selector.value = currentVal;
         updateView();
     });
 
-    function triggerAnims(id, amount, isLevelUp) {
-        const card = document.querySelector(`.student-card[data-id="${id}"]`);
-        const img = document.getElementById('img-'+id);
-        if(!card || !img) return;
-        img.classList.remove('glow-effect');
-        void img.offsetWidth;
-        img.classList.add('glow-effect');
-        const f = document.createElement('div');
-        f.className = 'xp-float'; f.innerText = `+${amount} XP`;
-        card.appendChild(f);
-        setTimeout(() => f.remove(), 1000);
-        if(isLevelUp) {
-            const l = document.createElement('div');
-            l.className = 'levelup'; l.innerText = 'LEVEL UP! ✨';
-            card.appendChild(l);
-            setTimeout(() => l.remove(), 1500);
+    function loginAsStudent() {
+        currentUserId = document.getElementById('studentSelector').value;
+        if (!currentUserId) { alert("אנא בחר שם!"); return; }
+        userRole = 'student';
+        document.getElementById('login-overlay').style.display = 'none';
+    }
+
+    function loginAsAdmin() {
+        if(document.getElementById('adminPass').value !== 'rabenu247') { alert("קוד שגוי"); return; }
+        userRole = 'admin';
+        document.getElementById('login-overlay').style.display = 'none';
+        document.getElementById('control-panel').style.display = 'flex';
+    }
+
+    function updateView() {
+        const grid = document.getElementById('farm-grid');
+        const search = document.getElementById('search').value.toLowerCase();
+        grid.innerHTML = allStudents.filter(s => s.name.toLowerCase().includes(search)).map(s => {
+            const imgPath = s.level===0 ? `images/egg${(s.egg||0)+1}.png` : `images/${s.type}${s.level>=20?3:(s.level>=10?2:1)}.png`;
+            return `
+                <div class="student-card" data-id="${s.id}">
+                    <div class="level-badge">Lv.${s.level}</div>
+                    ${userRole === 'admin' ? `<button class="remove-student-btn" onclick="removeStudent('${s.id}')">✖</button>` : ''}
+                    <img id="img-${s.id}" src="${imgPath}" class="creature-img" onclick="handleCreatureClick('${s.id}')">
+                    <div style="font-weight:bold; margin-top:10px; font-size:1.1em;">${s.name}</div>
+                    <div class="xp-container"><div class="xp-bar" style="width:${s.xp}%"></div></div>
+                    <button class="task-btn" onclick="openTaskModal('${s.id}')">📋</button>
+                </div>`;
+        }).join('');
+    }
+
+    function handleCreatureClick(id) {
+        if(userRole === 'admin') {
+            const s = allStudents.find(x => x.id === id);
+            addXP(id, s.xp, s.level);
+        } else {
+            openTaskModal(id);
         }
     }
 
-    function addStudent() {
-        const nameInput = document.getElementById('studentName');
-        if(!nameInput.value.trim()) return;
-        const id = Date.now().toString();
-        db.ref('students/'+id).set({
-            id, name: nameInput.value, className: document.getElementById('studentClass').value,
-            xp: 0, level: 0, type: CREATURE_TYPES[Math.floor(Math.random()*CREATURE_TYPES.length)], egg: Math.floor(Math.random()*5)
-        });
-        nameInput.value = '';
-    }
-
-    function openGlobalTaskModal() {
-        const content = document.getElementById('modal-content');
-        document.getElementById('modal-overlay').style.display = 'flex';
-        content.innerHTML = `
-            <h3>📢 משימה לכל הכיתה</h3>
-            <div style="display:flex; flex-direction:column; gap:8px;">
-                <input type="text" id="gtTitle" placeholder="שם המשימה">
-                <input type="number" id="gtXP" placeholder="כמות XP">
-                <input type="text" id="gtDeadline" placeholder="מועד הגשה">
-                <div class="helper-box">
-                    <button onclick="window.open('https://send.magicode.me/', '_blank')" style="background:#2196f3; padding:5px; font-size:12px;">העלאה ל-Magicode 📤</button>
-                    <input type="text" id="gtFile" placeholder="הדבק כאן את הקישור" style="width:90%; margin-top:5px;">
-                </div>
-                <button onclick="sendGlobalTask()" style="background:#fb8c00; padding:15px;">שלח לכולם! 🚀</button>
-            </div>`;
-    }
-
-    function sendGlobalTask() {
-        const title = document.getElementById('gtTitle').value;
-        const xp = parseInt(document.getElementById('gtXP').value);
-        if(!title || !xp) return;
-        const timeKey = Date.now();
-        allStudents.forEach(s => {
-            const tid = "task_" + timeKey + "_" + s.id; // מזהה ייחודי פר תלמיד
-            db.ref(`students/${s.id}/tasks/${tid}`).set({
-                taskId: tid, title, rewardXP: xp, 
-                deadline: document.getElementById('gtDeadline').value,
-                fileLink: document.getElementById('gtFile').value
-            });
-        });
-        alert("נשלח לכולם!"); closeModal();
-    }
-
-    function openTaskModal(studentId) {
-        const s = allStudents.find(x => x.id === studentId);
+    function openTaskModal(clickedId) {
+        const targetId = (userRole === 'admin') ? clickedId : currentUserId;
+        const s = allStudents.find(x => x.id === targetId);
         const content = document.getElementById('modal-content');
         document.getElementById('modal-overlay').style.display = 'flex';
 
@@ -180,49 +243,102 @@
             if(s.tasks) {
                 Object.values(s.tasks).forEach(t => {
                     tasksHtml += `
-                        <div class="task-item">
-                            <button class="delete-task-btn" onclick="deleteTask('${s.id}','${t.taskId}')">🗑️</button>
+                        <div class="task-item" style="border-right-color: #ff5252;">
+                            <button style="position:absolute; left:5px; top:5px; width:30px; background:none; color:red;" onclick="deleteTask('${s.id}','${t.taskId}')">🗑️</button>
                             <b>${t.title}</b><br>
                             ${t.submission ? `
-                                <div style="background:white; padding:8px; margin:5px 0; border:1px solid #ddd; font-size:13px;">
-                                    ${t.submission.startsWith('http') ? `<a href="${t.submission}" target="_blank">🔗 קישור להגשה</a>` : `📝 ${t.submission}`}
+                                <div style="font-size:13px; background:#fff; padding:8px; margin:8px 0; border:1px solid #eee; border-radius:8px;">
+                                    ${t.submission.startsWith('http') ? `<a href="${t.submission}" target="_blank">🔗 פתח קישור להגשה</a>` : t.submission}
                                 </div>
-                                <div style="display:flex; gap:5px;">
-                                    <button onclick="approveTask('${s.id}','${t.taskId}',${t.rewardXP}, 1)" style="flex:1; font-size:12px;">100%</button>
-                                    <button onclick="approveTask('${s.id}','${t.taskId}',${t.rewardXP}, 0.5)" style="flex:1; background:#fb8c00; font-size:12px;">50%</button>
-                                </div>` : `<small style="color:gray;">טרם הוגש</small>`}
+                                <div style="display:flex; gap:10px;">
+                                    <button onclick="approveTask('${s.id}','${t.taskId}',${t.rewardXP}, 1)" style="background:#2e7d32; color:white;">אשר 100%</button>
+                                    <button onclick="approveTask('${s.id}','${t.taskId}',${t.rewardXP}, 0.5)" style="background:#fb8c00; color:white;">חלקית 50%</button>
+                                </div>
+                            ` : '<small style="color:gray;">עדיין לא הוגש</small>'}
                         </div>`;
                 });
             }
-            content.innerHTML = `<h3>ניהול: ${s.name}</h3>
-                <input type="text" id="tTitle" placeholder="שם משימה" style="width:90%; margin-bottom:5px;">
-                <input type="number" id="tXP" placeholder="XP" style="width:90%; margin-bottom:10px;">
-                <button onclick="saveTask('${studentId}')" style="width:100%">שלח משימה אישית</button>
-                <div style="margin-top:15px;">${tasksHtml || '<p>אין משימות</p>'}</div>`;
+            content.innerHTML = `<h3>ניהול משימות: ${s.name}</h3>
+                <input type="text" id="tTitle" placeholder="שם המשימה">
+                <input type="number" id="tXP" placeholder="כמות XP">
+                <button onclick="saveTask('${s.id}')" style="background:#1565c0; color:white;">שלח משימה אישית</button>
+                <div style="margin-top:15px; max-height:200px; overflow-y:auto;">${tasksHtml || 'אין משימות פתוחות'}</div>`;
         } else {
             let tasksHtml = '';
             if(s.tasks) {
                 Object.values(s.tasks).forEach(t => {
                     tasksHtml += `
                         <div class="task-item">
-                            <b>${t.title}</b> (${t.rewardXP} XP)<br>
-                            ${t.deadline ? `<small style="color:red">עד: ${t.deadline}</small>` : ''}
-                            ${t.fileLink ? `<p><a href="${t.fileLink}" target="_blank">📥 הורד דף עבודה</a></p>` : ''}
+                            <b>${t.title}</b> (${t.rewardXP} XP)
                             ${!t.submission ? `
-                                <div class="helper-box">
-                                    <button onclick="window.open('https://send.magicode.me/', '_blank')" style="background:#2196f3; padding:5px; font-size:11px;">העלאה ל-Magicode 📤</button>
-                                </div>
-                                <textarea id="input-${t.taskId}" placeholder="הדבק קישור או כתוב תשובה..." style="width:95%; height:40px;"></textarea>
-                                <button onclick="submitWork('${s.id}','${t.taskId}')" style="width:100%; margin-top:5px;">שלח הגשה 🚀</button>` : `<p style="color:green; font-weight:bold;">הוגש! מחכה לבדיקה.</p>`}
+                                <textarea id="in-${t.taskId}" placeholder="הדבק קישור או כתוב תשובה..." style="height:50px; margin-top:8px;"></textarea>
+                                <button onclick="submitWork('${s.id}','${t.taskId}')" style="background:#fb8c00; color:white; margin-top:5px;">שלח הגשה למורה 🚀</button>
+                            ` : '<p style="color:#2e7d32; font-weight:bold; margin-top:10px;">✅ המשימה הוגשה!</p>'}
                         </div>`;
                 });
             }
-            content.innerHTML = `<h3>המשימות שלי</h3>` + (tasksHtml || '<p>אין משימות.</p>');
+            content.innerHTML = `<h3>המשימות שלי (${s.name})</h3>${tasksHtml || '<p>כל הכבוד! אין משימות כרגע.</p>'}`;
         }
     }
 
-    function deleteTask(sid, tid) { if(confirm('למחוק את המשימה?')) { db.ref(`students/${sid}/tasks/${tid}`).remove(); closeModal(); } }
+    function triggerAnims(id, amount, isLevelUp) {
+        const card = document.querySelector(`.student-card[data-id="${id}"]`);
+        const img = document.getElementById('img-'+id);
+        img.classList.remove('glow-effect'); void img.offsetWidth; img.classList.add('glow-effect');
+        const f = document.createElement('div');
+        f.className = 'xp-float'; f.innerText = `+${amount} XP`;
+        card.appendChild(f);
+        setTimeout(() => f.remove(), 1000);
+    }
 
+    function addXP(id, xp, lvl) {
+        let nxp = xp+10, nlv = lvl;
+        if(nxp >= 100) { nlv++; nxp = 0; }
+        triggerAnims(id, 10, false);
+        db.ref('students/'+id).update({ xp: nxp, level: nlv });
+    }
+
+    function sendGlobalTask() {
+        const title = document.getElementById('gtTitle').value;
+        const xp = parseInt(document.getElementById('gtXP').value);
+        if(!title || !xp) return;
+        const timeKey = Date.now();
+        allStudents.forEach(s => {
+            const tid = "global_" + timeKey + "_" + s.id;
+            db.ref(`students/${s.id}/tasks/${tid}`).set({ taskId: tid, title, rewardXP: xp });
+        });
+        alert("נשלח לכל הכיתה!"); closeModal();
+    }
+
+    function submitWork(sid, tid) {
+        const val = document.getElementById('in-' + tid).value;
+        if(!val.trim()) return;
+        db.ref(`students/${sid}/tasks/${tid}`).update({ submission: val });
+        alert("הוגש בהצלחה!"); closeModal();
+    }
+
+    function approveTask(sid, tid, reward, mult) {
+        const s = allStudents.find(x => x.id === sid);
+        const finalReward = Math.floor(reward * mult);
+        let nxp = s.xp + finalReward, nlv = s.level;
+        while(nxp >= 100) { nlv++; nxp -= 100; }
+        triggerAnims(sid, finalReward, false);
+        db.ref(`students/${sid}/tasks/${tid}`).remove();
+        setTimeout(() => db.ref(`students/${sid}`).update({ xp: nxp, level: nlv }), 400);
+        closeModal();
+    }
+
+    function addStudent() {
+        const name = document.getElementById('newStudentName').value;
+        if(!name) return;
+        const id = Date.now().toString();
+        const types = ['fox','chk','cat','hnd','snk'];
+        db.ref('students/'+id).set({ id, name, xp:0, level:0, type: types[Math.floor(Math.random()*5)], egg:Math.floor(Math.random()*4) });
+        document.getElementById('newStudentName').value = '';
+    }
+
+    function removeStudent(id) { if(confirm('למחוק את התלמיד/ה מהחווה?')) db.ref('students/'+id).remove(); }
+    function deleteTask(sid, tid) { if(confirm('למחוק את המשימה?')) db.ref(`students/${sid}/tasks/${tid}`).remove(); closeModal(); }
     function saveTask(sid) {
         const title = document.getElementById('tTitle').value;
         const xp = parseInt(document.getElementById('tXP').value);
@@ -231,51 +347,15 @@
         db.ref(`students/${sid}/tasks/${tid}`).set({ taskId: tid, title, rewardXP: xp });
         closeModal();
     }
-
-    function submitWork(sid, tid) {
-        const val = document.getElementById('input-' + tid).value;
-        if(!val.trim()) return;
-        db.ref(`students/${sid}/tasks/${tid}`).update({ submission: val });
-        alert("נשלח בהצלחה!"); closeModal();
-    }
-
-    function approveTask(sid, tid, reward, mult) {
-        const s = allStudents.find(x => x.id === sid);
-        const finalReward = Math.floor(reward * mult);
-        let nxp = s.xp + finalReward, nlv = s.level, up = false;
-        while(nxp >= 100) { nlv++; nxp -= 100; up = true; }
-        triggerAnims(sid, finalReward, up);
-        db.ref(`students/${sid}/tasks/${tid}`).remove();
-        setTimeout(() => db.ref(`students/${sid}`).update({ xp: nxp, level: nlv }), 400);
-        closeModal();
-    }
-
-    function updateView() {
-        const grid = document.getElementById('farm-grid');
-        const searchTerm = document.getElementById('search').value.toLowerCase();
-        const sortBy = document.getElementById('sortBy').value;
-        let filtered = allStudents.filter(s => s.name.toLowerCase().includes(searchTerm));
-        filtered.sort((a,b) => sortBy==='name' ? a.name.localeCompare(b.name) : b.level - a.level);
-        grid.innerHTML = filtered.map(s => {
-            const imgPath = s.level===0 ? `images/egg${(s.egg||0)+1}.png` : `images/${s.type}${s.level>=20?3:(s.level>=10?2:1)}.png`;
-            return `<div class="student-card" data-id="${s.id}">
-                <div class="level-text-badge">Lv.${s.level}</div>
-                ${userRole==='admin' ? `<button class="remove-btn" onclick="if(confirm('למחוק?')) db.ref('students/${s.id}').remove()">✖</button>` : ''}
-                <img id="img-${s.id}" src="${imgPath}" class="creature-img" onclick="addXP('${s.id}',${s.xp},${s.level})">
-                <div style="font-weight:bold;">${s.name}</div>
-                <div class="xp-container"><div class="xp-bar" style="width:${s.xp}%"></div></div>
-                <button class="task-btn" onclick="openTaskModal('${s.id}')">📋</button>
-            </div>`;
-        }).join('');
+    function openGlobalTaskModal() {
+        document.getElementById('modal-overlay').style.display = 'flex';
+        document.getElementById('modal-content').innerHTML = `
+            <h3>📢 משימה לכל הכיתה</h3>
+            <input type="text" id="gtTitle" placeholder="שם המשימה (למשל: דף עבודה בחשבון)">
+            <input type="number" id="gtXP" placeholder="כמות XP כפרס">
+            <button onclick="sendGlobalTask()" style="background:#fb8c00; color:white; margin-top:15px;">שלח לכולם! 🚀</button>`;
     }
     function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
-    function addXP(id, xp, lvl) {
-        if(userRole !== 'admin') { openTaskModal(id); return; }
-        let nxp = xp+10, nlv = lvl, up = false;
-        if(nxp >= 100) { nlv++; nxp = 0; up = true; }
-        triggerAnims(id, 10, up);
-        setTimeout(() => db.ref('students/'+id).update({ xp: nxp, level: nlv }), 400);
-    }
 </script>
 </body>
 </html>
