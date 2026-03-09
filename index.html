@@ -1,170 +1,372 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <title>חוות הטמגוצ'י - הגרסה המלאה והעובדת</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            background: #e0f7fa url('images/background.png') no-repeat center center fixed;
-            background-size: cover; margin: 0; padding: 20px;
-            display: flex; flex-direction: column; align-items: center;
-        }
+<meta charset="UTF-8">
+<title>חוות הטמגוצ'י - הגרסה המלאה והעובדת</title>
 
-        #control-panel {
-            background: rgba(255, 255, 255, 0.95); padding: 25px; border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15); margin-bottom: 30px;
-            width: 90%; max-width: 900px; display: flex; flex-wrap: wrap; gap: 15px;
-            justify-content: center; border: 2px solid #81c784;
-        }
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-        input, select, button { padding: 12px; border-radius: 10px; border: 1px solid #ddd; font-size: 15px; }
-        button { background-color: #2e7d32; color: white; cursor: pointer; border: none; font-weight: bold; }
+<style>
 
-        #farm-grid { 
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
-            gap: 25px; width: 100%; max-width: 1200px; 
-        }
+body{
+font-family:'Segoe UI',Tahoma,sans-serif;
+background:#e0f7fa url('images/background.png') no-repeat center center fixed;
+background-size:cover;
+margin:0;
+padding:20px;
+display:flex;
+flex-direction:column;
+align-items:center;
+}
 
-        .student-card {
-            background: rgba(255, 255, 255, 0.9); border-radius: 25px; padding: 20px;
-            text-align: center; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            border-bottom: 5px solid #81c784;
-        }
+#control-panel{
+background:rgba(255,255,255,0.95);
+padding:25px;
+border-radius:20px;
+box-shadow:0 10px 30px rgba(0,0,0,0.15);
+margin-bottom:30px;
+width:90%;
+max-width:900px;
+display:flex;
+flex-wrap:wrap;
+gap:15px;
+justify-content:center;
+border:2px solid #81c784;
+}
 
-        .level-text-badge {
-            position: absolute; top: 5px; right: 15px; font-family: 'Arial Black', sans-serif;
-            font-size: 1.4em; font-weight: 900; color: #2e7d32; z-index: 10;
-            text-shadow: -1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff, 0 2px 4px rgba(0,0,0,0.3);
-        }
+input,select,button{
+padding:12px;
+border-radius:10px;
+border:1px solid #ddd;
+font-size:15px;
+}
 
-        .creature-img { width: 120px; height: 120px; cursor: pointer; object-fit: contain; margin-bottom: 10px; transition: transform 0.1s; }
+button{
+background-color:#2e7d32;
+color:white;
+cursor:pointer;
+border:none;
+font-weight:bold;
+}
 
-        /* האנימציות המקוריות שאהבת */
-        .glow-effect { animation: glow-pulse 0.6s ease-out !important; }
-        @keyframes glow-pulse {
-            0% { filter: brightness(1); transform: scale(1); }
-            50% { filter: brightness(1.6) drop-shadow(0 0 15px gold); transform: scale(1.25); }
-            100% { filter: brightness(1); transform: scale(1); }
-        }
+#farm-grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+gap:25px;
+width:100%;
+max-width:1200px;
+}
 
-        .shake { animation: shake 0.5s infinite; }
-        @keyframes shake {
-            0%, 100% { transform: translate(1px, 1px) rotate(0deg); }
-            25% { transform: translate(-1px, -2px) rotate(-1deg); }
-            75% { transform: translate(1px, -2px) rotate(1deg); }
-        }
+.student-card{
+background:rgba(255,255,255,0.9);
+border-radius:25px;
+padding:20px;
+text-align:center;
+position:relative;
+box-shadow:0 5px 15px rgba(0,0,0,0.1);
+border-bottom:5px solid #81c784;
+}
 
-        .xp-container { background: #eee; border-radius: 10px; height: 18px; margin: 10px 0; overflow: hidden; border: 1px solid #ccc; }
-        .xp-bar { background: linear-gradient(90deg, #ffeb3b, #fbc02d); height: 100%; transition: width 0.4s ease-out; }
-        .remove-btn { position: absolute; top: 10px; left: 10px; background: #ff5252; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer; font-size: 14px; }
-    </style>
+.level-text-badge{
+position:absolute;
+top:5px;
+right:15px;
+font-family:'Arial Black',sans-serif;
+font-size:1.4em;
+font-weight:900;
+color:#2e7d32;
+z-index:10;
+text-shadow:-1.5px -1.5px 0 #fff,1.5px -1.5px 0 #fff,0 2px 4px rgba(0,0,0,0.3);
+}
+
+.creature-img{
+width:120px;
+height:120px;
+cursor:pointer;
+object-fit:contain;
+margin-bottom:10px;
+transition:transform 0.1s;
+}
+
+/* אנימציית זוהר */
+.glow-effect{
+animation:glow-pulse 0.6s ease-out;
+}
+
+@keyframes glow-pulse{
+0%{filter:brightness(1);transform:scale(1);}
+50%{filter:brightness(1.6) drop-shadow(0 0 15px gold);transform:scale(1.25);}
+100%{filter:brightness(1);transform:scale(1);}
+}
+
+.shake{animation:shake 0.5s infinite;}
+
+@keyframes shake{
+0%,100%{transform:translate(1px,1px) rotate(0deg);}
+25%{transform:translate(-1px,-2px) rotate(-1deg);}
+75%{transform:translate(1px,-2px) rotate(1deg);}
+}
+
+.xp-container{
+background:#eee;
+border-radius:10px;
+height:18px;
+margin:10px 0;
+overflow:hidden;
+border:1px solid #ccc;
+}
+
+.xp-bar{
+background:linear-gradient(90deg,#ffeb3b,#fbc02d);
+height:100%;
+transition:width 0.4s ease-out;
+}
+
+.remove-btn{
+position:absolute;
+top:10px;
+left:10px;
+background:#ff5252;
+color:white;
+border:none;
+border-radius:50%;
+width:25px;
+height:25px;
+cursor:pointer;
+font-size:14px;
+}
+
+/* XP קופץ */
+.xp-float{
+position:absolute;
+font-weight:bold;
+color:gold;
+font-size:1.2em;
+animation:floatUp 0.8s ease-out forwards;
+pointer-events:none;
+left:50%;
+top:60px;
+transform:translateX(-50%);
+}
+
+@keyframes floatUp{
+0%{opacity:1;transform:translate(-50%,0);}
+100%{opacity:0;transform:translate(-50%,-40px);}
+}
+
+/* LEVEL UP */
+.levelup{
+position:absolute;
+top:40px;
+right:50%;
+transform:translateX(50%);
+background:gold;
+color:#333;
+font-weight:bold;
+padding:4px 10px;
+border-radius:10px;
+animation:levelPop 1s ease-out forwards;
+}
+
+@keyframes levelPop{
+0%{transform:translateX(50%) scale(0.5);opacity:0;}
+40%{transform:translateX(50%) scale(1.3);opacity:1;}
+100%{transform:translateX(50%) scale(1);opacity:0;}
+}
+
+</style>
 </head>
+
 <body>
 
 <div id="control-panel">
-    <input type="text" id="studentName" placeholder="שם התלמיד">
-    <select id="studentClass"><option value="ה1">כיתה ה'1</option><option value="ה2">כיתה ה'2</option></select>
-    <button onclick="addStudent()">צרף יצור לחווה 🐾</button>
-    
-    <div style="width: 100%; display: flex; gap: 10px; margin-top: 10px;">
-        <input type="text" id="search" placeholder="חפש לפי שם..." oninput="updateView()" style="flex: 2;">
-        <select id="sortBy" onchange="updateView()" style="flex: 1;">
-            <option value="name">מיין לפי שם</option>
-            <option value="level">מיין לפי רמה</option>
-            <option value="class">מיין לפי כיתה</option>
-        </select>
-    </div>
+
+<input type="text" id="studentName" placeholder="שם התלמיד">
+
+<select id="studentClass">
+<option value="ה1">כיתה ה'1</option>
+<option value="ה2">כיתה ה'2</option>
+</select>
+
+<button onclick="addStudent()">צרף יצור לחווה 🐾</button>
+
+<div style="width:100%;display:flex;gap:10px;margin-top:10px;">
+<input type="text" id="search" placeholder="חפש לפי שם..." oninput="updateView()" style="flex:2;">
+<select id="sortBy" onchange="updateView()" style="flex:1;">
+<option value="name">מיין לפי שם</option>
+<option value="level">מיין לפי רמה</option>
+<option value="class">מיין לפי כיתה</option>
+</select>
+</div>
+
 </div>
 
 <div id="farm-grid"></div>
 
 <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCtS0Gf9oNiRg6OTd3jyNaPxuWBFlWGIsE",
-      authDomain: "liorfarm.firebaseapp.com",
-      databaseURL: "https://liorfarm-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "liorfarm",
-      storageBucket: "liorfarm.firebasestorage.app",
-      messagingSenderId: "436063422896",
-      appId: "1:436063422896:web:4cb14fbcc036ba97676e75"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
 
-    const CREATURE_TYPES = ['trt', 'snk', 'hnd', 'cat', 'crw', 'fsh', 'chk', 'fox', 'zbr', 'mnk', 'shp', 'cow', 'ost', 'rbt', 'dnk', 'duk', 'snl', 'owl', 'spd'];
-    const EGG_IMAGES = ['images/egg1.png', 'images/egg2.png', 'images/egg3.png', 'images/egg4.png', 'images/egg5.png'];
+const firebaseConfig={
+apiKey:"AIzaSyCtS0Gf9oNiRg6OTd3jyNaPxuWBFlWGIsE",
+authDomain:"liorfarm.firebaseapp.com",
+databaseURL:"https://liorfarm-default-rtdb.europe-west1.firebasedatabase.app",
+projectId:"liorfarm",
+storageBucket:"liorfarm.firebasestorage.app",
+messagingSenderId:"436063422896",
+appId:"1:436063422896:web:4cb14fbcc036ba97676e75"
+};
 
-    let allStudents = [];
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
 
-    db.ref('students').on('value', (snap) => {
-        allStudents = snap.val() ? Object.values(snap.val()) : [];
-        updateView();
-    });
+const CREATURE_TYPES=['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
+const EGG_IMAGES=['images/egg1.png','images/egg2.png','images/egg3.png','images/egg4.png','images/egg5.png'];
 
-    function addStudent() {
-        const nameInput = document.getElementById('studentName');
-        if (!nameInput.value.trim()) return;
-        const id = Date.now().toString();
-        db.ref('students/' + id).set({
-            id, name: nameInput.value, className: document.getElementById('studentClass').value,
-            xp: 0, level: 0,
-            type: CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)],
-            egg: Math.floor(Math.random() * 5)
-        });
-        nameInput.value = '';
-    }
+let allStudents=[];
 
-    function addXP(id, xp, lvl) {
-        // אנימציה חזקה ומידית
-        const img = document.getElementById('img-' + id);
-        if (img) {
-            img.classList.remove('glow-effect');
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    img.classList.add('glow-effect');
-                });
-            });
-        }
+db.ref('students').on('value',(snap)=>{
+allStudents=snap.val()?Object.values(snap.val()):[];
+updateView();
+});
 
-        let nxp = xp + 10;
-        let nlv = lvl;
-        if (nxp >= 100) { nlv++; nxp = 0; }
-        db.ref('students/' + id).update({ xp: nxp, level: nlv });
-    }
+function addStudent(){
 
-    function updateView() {
-        const grid = document.getElementById('farm-grid');
-        const searchTerm = document.getElementById('search').value.toLowerCase();
-        const sortBy = document.getElementById('sortBy').value;
+const nameInput=document.getElementById('studentName');
+if(!nameInput.value.trim())return;
 
-        let filtered = allStudents.filter(s => s.name.toLowerCase().includes(searchTerm));
-        filtered.sort((a, b) => {
-            if (sortBy === 'name') return a.name.localeCompare(b.name);
-            if (sortBy === 'level') return b.level - a.level;
-            return a.className.localeCompare(b.className);
-        });
+const id=Date.now().toString();
 
-        grid.innerHTML = filtered.map(s => {
-            const isShaking = (s.level === 0 && s.xp >= 90) ? 'shake' : '';
-            const eggNum = (s.egg !== undefined) ? s.egg + 1 : 1;
-            const imgPath = s.level === 0 ? `images/egg${eggNum}.png` : `images/${s.type}${s.level >= 20 ? 3 : (s.level >= 10 ? 2 : 1)}.png`;
-            
-            return `
-                <div class="student-card">
-                    <div class="level-text-badge">Lv.${s.level}</div>
-                    <button class="remove-btn" onclick="if(confirm('למחוק?')) db.ref('students/${s.id}').remove()">×</button>
-                    <img id="img-${s.id}" src="${imgPath}" class="creature-img ${isShaking}" 
-                         onclick="addXP('${s.id}', ${s.xp}, ${s.level})">
-                    <div style="font-weight:bold; font-size:1.2em; margin-top:5px;">${s.name}</div>
-                    <div style="color:#555; font-size:0.9em;">כיתה ${s.className}</div>
-                    <div class="xp-container"><div class="xp-bar" style="width:${s.xp}%"></div></div>
-                </div>`;
-        }).join('');
-    }
+db.ref('students/'+id).set({
+id,
+name:nameInput.value,
+className:document.getElementById('studentClass').value,
+xp:0,
+level:0,
+type:CREATURE_TYPES[Math.floor(Math.random()*CREATURE_TYPES.length)],
+egg:Math.floor(Math.random()*5)
+});
+
+nameInput.value='';
+
+}
+
+function addXP(id,xp,lvl){
+
+const img=document.getElementById('img-'+id);
+const card=img?.closest('.student-card');
+
+if(img){
+
+img.style.pointerEvents="none";
+setTimeout(()=>img.style.pointerEvents="auto",400);
+
+img.classList.remove('glow-effect');
+
+requestAnimationFrame(()=>{
+img.classList.add('glow-effect');
+});
+
+if(card){
+
+const xpFloat=document.createElement('div');
+xpFloat.className='xp-float';
+xpFloat.innerText='+10 XP';
+
+card.appendChild(xpFloat);
+
+setTimeout(()=>xpFloat.remove(),800);
+
+}
+
+}
+
+let nxp=xp+10;
+let nlv=lvl;
+let levelUp=false;
+
+if(nxp>=100){
+nlv++;
+nxp=0;
+levelUp=true;
+}
+
+if(levelUp && card){
+
+const levelTag=document.createElement('div');
+levelTag.className='levelup';
+levelTag.innerText='LEVEL UP!';
+
+card.appendChild(levelTag);
+
+setTimeout(()=>levelTag.remove(),1000);
+
+}
+
+setTimeout(()=>{
+db.ref('students/'+id).update({
+xp:nxp,
+level:nlv
+});
+},450);
+
+}
+
+function updateView(){
+
+const grid=document.getElementById('farm-grid');
+
+const searchTerm=document.getElementById('search').value.toLowerCase();
+const sortBy=document.getElementById('sortBy').value;
+
+let filtered=allStudents.filter(s=>s.name.toLowerCase().includes(searchTerm));
+
+filtered.sort((a,b)=>{
+
+if(sortBy==='name')return a.name.localeCompare(b.name);
+if(sortBy==='level')return b.level-a.level;
+return a.className.localeCompare(b.className);
+
+});
+
+grid.innerHTML=filtered.map(s=>{
+
+const isShaking=(s.level===0 && s.xp>=90)?'shake':'';
+
+const eggNum=(s.egg!==undefined)?s.egg+1:1;
+
+const imgPath=
+s.level===0
+?`images/egg${eggNum}.png`
+:`images/${s.type}${s.level>=20?3:(s.level>=10?2:1)}.png`;
+
+return`
+
+<div class="student-card">
+
+<div class="level-text-badge">Lv.${s.level}</div>
+
+<button class="remove-btn" onclick="if(confirm('למחוק?')) db.ref('students/${s.id}').remove()">×</button>
+
+<img id="img-${s.id}" src="${imgPath}" class="creature-img ${isShaking}"
+onclick="addXP('${s.id}',${s.xp},${s.level})">
+
+<div style="font-weight:bold;font-size:1.2em;margin-top:5px;">${s.name}</div>
+
+<div style="color:#555;font-size:0.9em;">כיתה ${s.className}</div>
+
+<div class="xp-container">
+<div class="xp-bar" style="width:${s.xp}%"></div>
+</div>
+
+</div>
+
+`;
+
+}).join('');
+
+}
+
 </script>
+
 </body>
 </html>
