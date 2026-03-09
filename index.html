@@ -2,12 +2,12 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>חוות הטמגוצ'י - גרסת המשימות (קישורים)</title>
+    <title>חוות הטמגוצ'י - גרסת המשימות וההעלאה</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
-        /* --- כל ה-CSS הקיים שלך נשמר כאן --- */
+        /* CSS קיים עם תוספות קלות */
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #e0f7fa url('images/background.png') no-repeat center center fixed; background-size: cover; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         #control-panel { background: rgba(255, 255, 255, 0.95); padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); margin-bottom: 30px; width: 90%; max-width: 900px; display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; border: 2px solid #81c784; }
         input, select, button { padding: 12px; border-radius: 10px; border: 1px solid #ddd; font-size: 15px; }
@@ -16,37 +16,20 @@
         .student-card { background: rgba(255, 255, 255, 0.9); border-radius: 25px; padding: 20px; text-align: center; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-bottom: 5px solid #81c784; }
         .level-text-badge { position: absolute; top: 5px; right: 15px; font-family: 'Arial Black', sans-serif; font-size: 1.4em; font-weight: 900; color: #2e7d32; z-index: 10; text-shadow: -1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff, 0 2px 4px rgba(0,0,0,0.3); }
         .creature-img { width: 120px; height: 120px; cursor: pointer; object-fit: contain; margin-bottom: 10px; transition: transform 0.1s; }
-        
-        /* אפקטים */
-        .glow-effect { animation: glow-pulse 0.6s ease-out; }
-        @keyframes glow-pulse { 0% { filter: brightness(1); transform: scale(1); } 50% { filter: brightness(1.6) drop-shadow(0 0 15px gold); transform: scale(1.25); } 100% { filter: brightness(1); transform: scale(1); } }
-        .shake { animation: shake 0.5s infinite; }
-        @keyframes shake { 0%, 100% { transform: translate(1px, 1px) rotate(0deg); } 25% { transform: translate(-1px,-2px) rotate(-1deg); } 75% { transform: translate(1px,-2px) rotate(1deg); } }
-        
         .xp-container { background: #eee; border-radius: 10px; height: 18px; margin: 10px 0; overflow: hidden; border: 1px solid #ccc; }
         .xp-bar { background: linear-gradient(90deg, #ffeb3b, #fbc02d); height: 100%; transition: width 0.4s ease-out; }
         .remove-btn { position: absolute; top: 10px; left: 10px; background: #ff5252; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-
-        /* כניסה ומודאל */
         #login-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; align-items: center; justify-content: center; }
         .login-box { background: white; padding: 40px; border-radius: 20px; text-align: center; display: flex; flex-direction: column; gap: 15px; width: 300px; }
-        
         .task-btn { position: absolute; bottom: 10px; right: 10px; background: #fb8c00; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; color: white; font-size: 20px; }
-        
         #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; z-index: 500; align-items: center; justify-content: center; }
-        .modal { background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; position: relative; text-align: right; }
+        .modal { background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 450px; position: relative; text-align: right; }
         .close-modal { position: absolute; top: 10px; left: 10px; cursor: pointer; font-size: 20px; }
-        
         .task-item { background: #f9f9f9; padding: 12px; border-radius: 10px; margin-top: 10px; border-right: 4px solid #fb8c00; }
         .status-tag { font-size: 0.8em; padding: 3px 8px; border-radius: 5px; float: left; }
         .pending { background: #fff3e0; color: #e65100; }
         .submitted { background: #e8f5e9; color: #2e7d32; }
-
-        /* XP ורמות */
-        .xp-float { position: absolute; font-weight: bold; color: gold; font-size: 1.2em; animation: floatUp 0.8s ease-out forwards; pointer-events: none; left: 50%; top: 60px; transform: translateX(-50%); }
-        @keyframes floatUp { 0% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -40px); } }
-        .levelup { position: absolute; top: 40px; right: 50%; transform: translateX(50%); background: gold; color: #333; font-weight: bold; padding: 4px 10px; border-radius: 10px; animation: levelPop 1s ease-out forwards; z-index: 100; }
-        @keyframes levelPop { 0% { transform: translateX(50%) scale(0.5); opacity: 0; } 40% { transform: translateX(50%) scale(1.3); opacity: 1; } 100% { transform: translateX(50%) scale(1); opacity: 0; } }
+        .magicode-helper { background: #e3f2fd; border: 1px dashed #2196f3; padding: 10px; border-radius: 10px; margin-bottom: 10px; font-size: 0.9em; text-align: center; }
     </style>
 </head>
 <body>
@@ -107,6 +90,7 @@
         }
         userRole = role;
         document.getElementById('login-overlay').style.display = 'none';
+        updateView(); // עדכון מיידי להצגת הכפתורים
     }
 
     db.ref('students').on('value', (snap) => {
@@ -129,25 +113,9 @@
 
     function addXP(id, xp, lvl) {
         if(userRole !== 'admin') { openTaskModal(id); return; }
-
-        const img = document.getElementById('img-'+id);
-        const card = img?.closest('.student-card');
-        if(img) {
-            img.style.pointerEvents="none";
-            setTimeout(()=>img.style.pointerEvents="auto",400);
-            img.classList.remove('glow-effect');
-            requestAnimationFrame(()=>img.classList.add('glow-effect'));
-            if(card) {
-                const f = document.createElement('div'); f.className='xp-float'; f.innerText='+10 XP';
-                card.appendChild(f); setTimeout(()=>f.remove(),800);
-            }
-        }
-
         let nxp = xp+10, nlv = lvl;
-        if(nxp>=100){ nlv++; nxp=0; 
-            if(card){ const t = document.createElement('div'); t.className='levelup'; t.innerText='LEVEL UP!'; card.appendChild(t); setTimeout(()=>t.remove(),1000); }
-        }
-        setTimeout(() => db.ref('students/'+id).update({ xp: nxp, level: nlv }), 450);
+        if(nxp>=100){ nlv++; nxp=0; }
+        db.ref('students/'+id).update({ xp: nxp, level: nlv });
     }
 
     function openTaskModal(studentId) {
@@ -160,44 +128,45 @@
             let submissionsHtml = '';
             if(s.tasks) {
                 Object.values(s.tasks).forEach(t => {
-                    if(t.link && !t.approved) {
+                    if(t.submission && !t.approved) {
+                        const isLink = t.submission.trim().startsWith('http');
                         submissionsHtml += `
                             <div class="task-item">
                                 <b>הגשה: ${t.title}</b><br>
-                                <a href="${t.link}" target="_blank">🔗 לחץ לצפייה בעבודה</a><br>
-                                <button onclick="approveTask('${s.id}','${t.taskId}',${t.rewardXP})" style="margin-top:5px; background:#2e7d32; font-size:12px;">אשר ושלם ${t.rewardXP} XP ✅</button>
+                                <div style="background:white; padding:10px; margin:5px 0; border:1px solid #ddd;">
+                                    ${isLink ? `<a href="${t.submission}" target="_blank">🔗 לחץ לצפייה בעבודה</a>` : `📝 ${t.submission}`}
+                                </div>
+                                <button onclick="approveTask('${s.id}','${t.taskId}',${t.rewardXP})" style="background:#2e7d32; font-size:12px;">אשר ושלם ${t.rewardXP} XP ✅</button>
                             </div>`;
                     }
                 });
             }
-
             content.innerHTML = `
                 <h3>ניהול משימות: ${s.name}</h3>
-                <div style="background:#f0f0f0; padding:15px; border-radius:10px;">
-                    <input type="text" id="tTitle" placeholder="שם המשימה (למשל: דף עבודה)" style="width:90%; margin-bottom:10px;">
-                    <input type="number" id="tXP" placeholder="כמות XP כפרס" style="width:90%; margin-bottom:10px;">
-                    <button onclick="saveTask('${studentId}')" style="width:100%">שלח משימה לתלמיד 📤</button>
-                </div>
-                <div id="admin-subs">${submissionsHtml || '<p style="font-size:13px; color:grey;">אין הגשות חדשות כרגע</p>'}</div>
-            `;
+                <input type="text" id="tTitle" placeholder="שם המשימה" style="width:90%; margin-bottom:5px;">
+                <input type="number" id="tXP" placeholder="XP כפרס" style="width:90%; margin-bottom:10px;">
+                <button onclick="saveTask('${studentId}')" style="width:100%">שלח משימה 📤</button>
+                <div id="admin-subs" style="margin-top:10px;">${submissionsHtml || '<p style="font-size:12px; color:gray;">אין הגשות</p>'}</div>`;
         } else {
             let tasksHtml = '';
             if(s.tasks) {
                 Object.values(s.tasks).forEach(t => {
                     tasksHtml += `
                         <div class="task-item">
-                            <span class="status-tag ${t.link ? 'submitted' : 'pending'}">${t.link ? 'הוגש' : 'ממתין'}</span>
-                            <b>${t.title}</b><br>
-                            <small>פרס: ${t.rewardXP} XP</small>
-                            ${!t.link ? `
-                                <div style="margin-top:10px;">
-                                    <input type="text" id="link-${t.taskId}" placeholder="הדבק כאן קישור לעבודה..." style="width:70%; padding:5px;">
-                                    <button onclick="submitLink('${s.id}','${t.taskId}')" style="padding:5px 10px; font-size:12px;">הגש 🚀</button>
-                                </div>` : ''}
+                            <span class="status-tag ${t.submission ? 'submitted' : 'pending'}">${t.submission ? 'הוגש' : 'ממתין'}</span>
+                            <b>${t.title}</b> (פרס: ${t.rewardXP} XP)
+                            ${!t.submission ? `
+                                <div class="magicode-helper">
+                                    <p>צריכים להעלות קובץ? לחצו כאן:</p>
+                                    <button onclick="window.open('https://send.magicode.me/', '_blank')" style="background:#2196f3; padding:5px 15px;">העלאת קובץ ל-Magicode 📤</button>
+                                    <p style="font-size:11px; margin-top:5px;">אחרי ההעלאה, העתיקו את הקישור והדביקו למטה 👇</p>
+                                </div>
+                                <textarea id="input-${t.taskId}" placeholder="הדבק קישור או כתוב תשובה..." style="width:95%; height:50px;"></textarea>
+                                <button onclick="submitWork('${s.id}','${t.taskId}')" style="width:100%; margin-top:5px;">שלח הגשה 🚀</button>` : ''}
                         </div>`;
                 });
             }
-            content.innerHTML = `<h3>המשימות שלי - ${s.name}</h3>` + (tasksHtml || '<p>אין משימות חדשות כרגע. כל הכבוד!</p>');
+            content.innerHTML = `<h3>המשימות שלי - ${s.name}</h3>` + (tasksHtml || '<p>אין משימות.</p>');
         }
     }
 
@@ -206,16 +175,15 @@
         const xp = parseInt(document.getElementById('tXP').value);
         if(!title || !xp) return;
         const tid = Date.now().toString();
-        db.ref(`students/${sid}/tasks/${tid}`).set({ taskId: tid, title, rewardXP: xp, approved: false });
+        db.ref(`students/${sid}/tasks/${tid}`).set({ taskId: tid, title, rewardXP: xp });
         closeModal();
     }
 
-    function submitLink(sid, tid) {
-        const url = document.getElementById('link-' + tid).value;
-        if(!url) return;
-        db.ref(`students/${sid}/tasks/${tid}`).update({ link: url });
-        alert("העבודה הוגשה למורה!");
-        closeModal();
+    function submitWork(sid, tid) {
+        const val = document.getElementById('input-' + tid).value;
+        if(!val.trim()) return;
+        db.ref(`students/${sid}/tasks/${tid}`).update({ submission: val });
+        alert("נשלח!"); closeModal();
     }
 
     function approveTask(sid, tid, reward) {
@@ -224,7 +192,6 @@
         while(nxp >= 100) { nlv++; nxp -= 100; }
         db.ref(`students/${sid}`).update({ xp: nxp, level: nlv });
         db.ref(`students/${sid}/tasks/${tid}`).remove();
-        alert("המשימה אושרה!");
         closeModal();
     }
 
@@ -236,14 +203,13 @@
         filtered.sort((a,b) => sortBy==='name' ? a.name.localeCompare(b.name) : b.level - a.level);
 
         grid.innerHTML = filtered.map(s => {
-            const isShaking = (s.level===0 && s.xp>=90)?'shake':'';
             const imgPath = s.level===0 ? `images/egg${(s.egg||0)+1}.png` : `images/${s.type}${s.level>=20?3:(s.level>=10?2:1)}.png`;
             return `
                 <div class="student-card">
                     <div class="level-text-badge">Lv.${s.level}</div>
                     ${userRole==='admin' ? `<button class="remove-btn" onclick="if(confirm('למחוק?')) db.ref('students/${s.id}').remove()">✖</button>` : ''}
-                    <img id="img-${s.id}" src="${imgPath}" class="creature-img ${isShaking}" onclick="addXP('${s.id}',${s.xp},${s.level})">
-                    <div style="font-weight:bold;font-size:1.2em;">${s.name}</div>
+                    <img id="img-${s.id}" src="${imgPath}" class="creature-img" onclick="addXP('${s.id}',${s.xp},${s.level})">
+                    <div style="font-weight:bold;">${s.name}</div>
                     <div class="xp-container"><div class="xp-bar" style="width:${s.xp}%"></div></div>
                     ${userRole==='admin' ? `<button class="task-btn" onclick="openTaskModal('${s.id}')">📋</button>` : ''}
                 </div>`;
