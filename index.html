@@ -89,7 +89,7 @@ margin-bottom:10px;
 transition:transform 0.1s;
 }
 
-/* אנימציית זוהר */
+/* זוהר */
 .glow-effect{
 animation:glow-pulse 0.6s ease-out;
 }
@@ -100,12 +100,26 @@ animation:glow-pulse 0.6s ease-out;
 100%{filter:brightness(1);transform:scale(1);}
 }
 
+/* רעידה לביצה */
 .shake{animation:shake 0.5s infinite;}
 
 @keyframes shake{
 0%,100%{transform:translate(1px,1px) rotate(0deg);}
 25%{transform:translate(-1px,-2px) rotate(-1deg);}
 75%{transform:translate(1px,-2px) rotate(1deg);}
+}
+
+/* בקיעה */
+.hatch{
+animation:hatch 0.8s ease-out;
+}
+
+@keyframes hatch{
+0%{transform:scale(1) rotate(0deg);}
+25%{transform:scale(1.2) rotate(-10deg);}
+50%{transform:scale(0.8) rotate(10deg);}
+75%{transform:scale(1.3);}
+100%{transform:scale(1);}
 }
 
 .xp-container{
@@ -123,6 +137,7 @@ height:100%;
 transition:width 0.4s ease-out;
 }
 
+/* כפתור מחיקה מתוקן */
 .remove-btn{
 position:absolute;
 top:10px;
@@ -131,10 +146,15 @@ background:#ff5252;
 color:white;
 border:none;
 border-radius:50%;
-width:25px;
-height:25px;
+width:28px;
+height:28px;
 cursor:pointer;
-font-size:14px;
+font-size:18px;
+display:flex;
+align-items:center;
+justify-content:center;
+line-height:1;
+padding:0;
 }
 
 /* XP קופץ */
@@ -220,7 +240,6 @@ firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 
 const CREATURE_TYPES=['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
-const EGG_IMAGES=['images/egg1.png','images/egg2.png','images/egg3.png','images/egg4.png','images/egg5.png'];
 
 let allStudents=[];
 
@@ -267,15 +286,11 @@ img.classList.add('glow-effect');
 });
 
 if(card){
-
 const xpFloat=document.createElement('div');
 xpFloat.className='xp-float';
 xpFloat.innerText='+10 XP';
-
 card.appendChild(xpFloat);
-
 setTimeout(()=>xpFloat.remove(),800);
-
 }
 
 }
@@ -283,11 +298,13 @@ setTimeout(()=>xpFloat.remove(),800);
 let nxp=xp+10;
 let nlv=lvl;
 let levelUp=false;
+let hatched=false;
 
 if(nxp>=100){
 nlv++;
 nxp=0;
 levelUp=true;
+if(lvl===0) hatched=true;
 }
 
 if(levelUp && card){
@@ -295,11 +312,15 @@ if(levelUp && card){
 const levelTag=document.createElement('div');
 levelTag.className='levelup';
 levelTag.innerText='LEVEL UP!';
-
 card.appendChild(levelTag);
-
 setTimeout(()=>levelTag.remove(),1000);
 
+}
+
+/* אנימציית בקיעה */
+if(hatched && img){
+img.classList.add("hatch");
+setTimeout(()=>img.classList.remove("hatch"),800);
 }
 
 setTimeout(()=>{
@@ -345,7 +366,7 @@ return`
 
 <div class="level-text-badge">Lv.${s.level}</div>
 
-<button class="remove-btn" onclick="if(confirm('למחוק?')) db.ref('students/${s.id}').remove()">×</button>
+<button class="remove-btn" onclick="if(confirm('למחוק?')) db.ref('students/${s.id}').remove()">✖</button>
 
 <img id="img-${s.id}" src="${imgPath}" class="creature-img ${isShaking}"
 onclick="addXP('${s.id}',${s.xp},${s.level})">
