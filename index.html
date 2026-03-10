@@ -297,6 +297,7 @@ const db = firebase.database();
 const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
 let allStudents = [];
 let currentUser = null;
+let allSubmissions = {};
 
 db.ref('students').on('value', (snap) => {
     const data = snap.val();
@@ -444,30 +445,28 @@ function renderTasks() {
         const div = document.createElement('div');
         div.className = 'task-card';
 
-        div.innerHTML = `
-            <div class="task-info">
-              <h4>${task.title}</h4>
-
-${task.link ? `
-<div style="margin-top:4px;">
-📎 <a href="${task.link}" target="_blank" style="color:#1976d2; font-weight:bold;">
-פתח את המטלה
-</a>
-</div>
-` : ''}
-
-<div style="font-size:0.85em;color:#555;">
-🎁 פרס: ${task.xp || 20} XP
-${task.deadline ? `<br>⏰ להגשה עד: ${task.deadline}` : ''}
-</div>
+     div.innerHTML = `
+    <div class="task-info">
+        <h4>${task.title}</h4>
+        ${task.link ? `
+            <div style="margin-top:4px;">
+                📎 <a href="${task.link}" target="_blank" style="color:#1976d2; font-weight:bold;">
+                    פתח את המטלה
+                </a>
             </div>
-            <div>
-                ${currentUser === 'admin'
-                    ? `<button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק</button>`
-                    : `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2;">הגש מטלה ✍️</button>`
-                }
-            </div>
-        `;
+        ` : ''}
+        <div style="font-size:0.85em;color:#555; margin-top:4px;">
+            🎁 פרס: ${task.xp || 20} XP
+            ${task.deadline ? `<br>⏰ להגשה עד: ${task.deadline}` : ''}
+        </div>
+    </div>
+    <div>
+        ${currentUser === 'admin'
+            ? `<button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק</button>`
+            : `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2;">הגש מטלה ✍️</button>`
+        }
+    </div>
+`;
 
         list.appendChild(div);
 
@@ -539,6 +538,7 @@ function initAdminSubmissions() {
         if (!container) return;
 
         const subs = snap.val();
+        allSubmissions = subs || {}; // עכשיו כל ההגשות מאוחסנות בזיכרון
         container.innerHTML = '';
 
         if (subs) {
@@ -627,6 +627,7 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
 
 
 
