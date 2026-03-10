@@ -9,6 +9,7 @@
 
 <style>
 
+#control-panel, #farm-grid { display: none; } /* מוסתר כברירת מחדל */
 body{
 font-family:'Segoe UI',Tahoma,sans-serif;
 background:#e0f7fa url('images/background.png') no-repeat center center fixed;
@@ -19,6 +20,25 @@ display:flex;
 flex-direction:column;
 align-items:center;
 }
+
+<div id="login-screen" style="background:white; padding:30px; border-radius:20px; box-shadow:0 10px 30px rgba(0,0,0,0.2); text-align:center; z-index:1000; width:300px; margin-top:50px;">
+    <h2>ברוכים הבאים לחווה!</h2>
+    
+    <div id="admin-login-area">
+        <input type="password" id="adminPass" placeholder="סיסמת מנהל" style="width:80%; margin-bottom:10px;">
+        <button onclick="checkAdmin()" style="width:90%;">כניסת מנהל 🔑</button>
+    </div>
+    
+    <hr style="margin:20px 0;">
+    
+    <div id="student-login-area">
+        <p>כניסת תלמיד:</p>
+        <select id="studentSelect" style="width:90%; margin-bottom:10px;">
+            <option value="">בחר שם...</option>
+        </select>
+        <button onclick="studentLogin()" style="width:90%; background-color:#1976d2;">כניסה לחווה 🐾</button>
+    </div>
+</div>
 
 #control-panel{
 background:rgba(255,255,255,0.95);
@@ -274,12 +294,58 @@ const db=firebase.database();
 
 const CREATURE_TYPES=['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
 
-let allStudents=[];
+let allStudents = [];
+let currentUser = null; // ישמור את ה-ID של התלמיד או 'admin'
 
-db.ref('students').on('value',(snap)=>{
-allStudents=snap.val()?Object.values(snap.val()):[];
-updateView();
+// האזנה לנתונים ועדכון הרשימות
+db.ref('students').on('value', (snap) => {
+    const data = snap.val();
+    allStudents = data ? Object.values(data) : [];
+    
+    // עדכון הרשימה הנגללת במסך הכניסה
+    const select = document.getElementById('studentSelect');
+    const currentVal = select.value;
+    select.innerHTML = '<option value="">בחר שם...</option>';
+    allStudents.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = s.name + " (" + s.className + ")";
+        select.appendChild(opt);
+    });
+    select.value = currentVal;
+
+    updateView();
 });
+
+function checkAdmin() {
+    const pass = document.getElementById('adminPass').value;
+    if (pass === 'rabenu247') {
+        currentUser = 'admin';
+        enterFarm();
+    } else {
+        alert('סיסמה שגויה');
+    }
+}
+
+function studentLogin() {
+    const studentId = document.getElementById('studentSelect').value;
+    if (!studentId) return alert('נא לבחור תלמיד');
+    currentUser = studentId;
+    enterFarm();
+}
+
+function enterFarm() {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('farm-grid').style.display = 'grid';
+    
+    // אם זה מנהל, נציג את לוח הבקרה. אם תלמיד - נסתיר.
+    if (currentUser === 'admin') {
+        document.getElementById('control-panel').style.display = 'flex';
+    } else {
+        document.getElementById('control-panel').style.display = 'none';
+    }
+    updateView();
+}
 
 function addStudent(){
 
@@ -394,40 +460,36 @@ return a.className.localeCompare(b.className);
 
 });
 
-grid.innerHTML=filtered.map(s=>{
+grid.innerHTML = filtered.map(s => {
+    const isShaking = (s.level === 0 && s.xp >= 90) ? 'shake' : '';
+    const eggNum = (s.egg !== undefined) ? s.egg + 1 : 1;
+    
+    // הצגת כפתור מחיקה רק למנהל
+    const deleteBtn = (currentUser === 'admin') 
+        ? `<button class="remove-btn" onclick="if(confirm('למחוק?')) db.ref('students/${s.id}').remove()">✖</button>` 
+        : '';
 
-const isShaking=(s.level===0 && s.xp>=90)?'shake':'';
+    // תלמיד יכול ללחוץ רק על עצמו, מנהל על כולם
+    const canClick = (currentUser === 'admin' || currentUser === s.id);
+    const clickAction = canClick ? `onclick="addXP('${s.id}',${s.xp},${s.level})"` : '';
+    const cursorStyle = canClick ? 'cursor:pointer' : 'cursor:default';
 
-const eggNum=(s.egg!==undefined)?s.egg+1:1;
+    const imgPath = s.level === 0
+        ? `images/egg${eggNum}.png`
+        : `images/${s.type}${s.level >= 20 ? 3 : (s.level >= 10 ? 2 : 1)}.png`;
 
-const imgPath=
-s.level===0
-?`images/egg${eggNum}.png`
-:`images/${s.type}${s.level>=20?3:(s.level>=10?2:1)}.png`;
-
-return`
-
-<div class="student-card">
-
-<div class="level-text-badge">Lv.${s.level}</div>
-
-<button class="remove-btn" onclick="if(confirm('למחוק?')) db.ref('students/${s.id}').remove()">✖</button>
-
-<img id="img-${s.id}" src="${imgPath}" class="creature-img ${isShaking}"
-onclick="addXP('${s.id}',${s.xp},${s.level})">
-
-<div style="font-weight:bold;font-size:1.2em;margin-top:5px;">${s.name}</div>
-
-<div style="color:#555;font-size:0.9em;">כיתה ${s.className}</div>
-
-<div class="xp-container">
-<div class="xp-bar" style="width:${s.xp}%"></div>
-</div>
-
-</div>
-
-`;
-
+    return `
+    <div class="student-card" style="${currentUser === s.id ? 'border: 3px solid #2e7d32; transform: scale(1.05);' : ''}">
+        <div class="level-text-badge">Lv.${s.level}</div>
+        ${deleteBtn}
+        <img id="img-${s.id}" src="${imgPath}" class="creature-img ${isShaking}" 
+             style="${cursorStyle}" ${clickAction}>
+        <div style="font-weight:bold;font-size:1.2em;margin-top:5px;">${s.name}</div>
+        <div style="color:#555;font-size:0.9em;">כיתה ${s.className}</div>
+        <div class="xp-container">
+            <div class="xp-bar" style="width:${s.xp}%"></div>
+        </div>
+    </div>`;
 }).join('');
 
 }
