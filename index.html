@@ -330,8 +330,10 @@ function startApp() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('farm-grid').style.display = 'grid';
     document.getElementById('tasks-area').style.display = 'block';
+    
     if (currentUser === 'admin') {
         document.getElementById('control-panel').style.display = 'flex';
+        initAdminSubmissions(); // זה השורה שמוסיפה את התיקון
     }
     updateView();
 }
@@ -480,41 +482,38 @@ function sendSubmission() {
     alert("המטלה נשלחה בהצלחה! 🎉");
     closeModal();
 }
+// פונקציה חדשה שמרכזת את ההאזנה להגשות למורה - תיקון ה-BUG
+function initAdminSubmissions() {
+    db.ref('submissions').on('value', (snap) => {
+        const container = document.getElementById('submissions-list');
+        if (!container) return;
 
-db.ref('submissions').on('value', (snap) => {
-    const container = document.getElementById('submissions-list');
-
-    // אם אין עדיין currentUser, תחכה
-    if (!currentUser) return;
-
-    if (currentUser !== 'admin') {
+        const subs = snap.val();
         container.innerHTML = '';
-        return;
-    }
 
-    const subs = snap.val();
-    container.innerHTML = '';
+        if (subs) {
+            Object.values(subs).forEach(sub => {
+                const d = document.createElement('div');
+                d.style = "background:white; padding:10px; margin:5px 0; border-radius:8px; border-right:4px solid gold; color: black; text-align: right; box-shadow: 0 2px 4px rgba(0,0,0,0.1);";
+                d.innerHTML = `
+                    <div style="font-weight:bold; color:#2e7d32;">מאת: ${sub.studentName}</div>
+                    <div style="margin: 5px 0; font-size: 0.95em;">${sub.content}</div>
+                    <button onclick="approveSub('${sub.id}', '${sub.studentId}')" style="background:#4caf50; color:white; border:none; border-radius:5px; padding:8px; cursor:pointer; width:100%; font-weight:bold;">
+                        אשר ושלח 20 XP ✅
+                    </button>
+                `;
+                container.appendChild(d);
+            });
+        } else {
+            container.innerHTML = '<div style="color:#666; text-align:center;">אין הגשות חדשות כרגע</div>';
+        }
+    });
+}
 
-    if (subs) {
-        Object.values(subs).forEach(sub => {
-            const d = document.createElement('div');
-            d.style = "background:white; padding:10px; margin:5px 0; border-radius:8px; border-right:4px solid gold;";
-            d.innerHTML = `
-                <b>${sub.studentName}</b><br>
-${sub.content}<br>
-                <button onclick="approveSub('${sub.id}', '${sub.studentId}')" style="background:#4caf50; padding:5px; margin-top:5px;">
-                אשר ושלח 20 XP ✅</button>
-            `;
-            container.appendChild(d);
-        });
-    } else {
-        container.innerText = 'אין הגשות חדשות';
-    }
-});
+// פונקציית אישור הגשה מתוקנת
 function approveSub(subId, studentId) {
     const s = allStudents.find(st => st.id === studentId);
     if (s) {
-        // הוספת 20 XP (פעמיים addXP של 10)
         addXP(studentId, s.xp, s.level);
         setTimeout(() => {
             const updatedS = allStudents.find(st => st.id === studentId);
@@ -526,6 +525,7 @@ function approveSub(subId, studentId) {
 </script>
 </body>
 </html>
+
 
 
 
