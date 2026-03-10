@@ -424,7 +424,7 @@ db.ref('tasks').on('value', (snap) => {
         Object.values(tasks).reverse().forEach(task => {
             const div = document.createElement('div');
             div.className = 'task-card';
-          div.innerHTML = `
+            div.innerHTML = `
                 <div class="task-info" style="flex: 1; text-align: right;">
                     <h4 style="margin:0;">${task.title}</h4>
                     ${task.link ? `<a href="${task.link}" target="_blank" style="display:block; margin-top:5px;">קישור למטלה 🔗</a>` : ''}
@@ -435,7 +435,11 @@ db.ref('tasks').on('value', (snap) => {
                         `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2; color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer;">הגש מטלה ✍️</button>`
                     }
                 </div>`;
-    } else { list.innerHTML = 'אין מטלות כרגע.'; }
+            list.appendChild(div); // השורה שחסרה והחזירה את הכל לחיים
+        });
+    } else { 
+        list.innerHTML = 'אין מטלות כרגע.'; 
+    }
 });
 
 function addTask() {
@@ -525,7 +529,6 @@ function approveSub(subId, studentId) {
 </script>
 </body>
 </html>
-
 
 
 
