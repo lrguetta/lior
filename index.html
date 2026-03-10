@@ -606,14 +606,16 @@ function approveSub(subId, studentId, multiplier = 1) {
         db.ref('submissions/' + subId).remove();
     });
 }
-    function rejectSub(subId) {
-    if(confirm("לדחות את ההגשה?")) {
+    window.rejectSub = function(subId) {
+    if (confirm("לדחות את ההגשה?")) {
         db.ref('submissions/' + subId).remove();
     }
+};
 }
 </script>
 </body>
 </html>
+
 
 
 
