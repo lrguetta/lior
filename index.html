@@ -251,9 +251,11 @@ button {
     <hr style="width:100%; margin: 15px 0;">
     
     <div style="width:100%; display:flex; flex-wrap:wrap; gap:10px;">
-        <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="flex:1;">
-        <input type="text" id="taskLink" placeholder="קישור למטלה (אופציונלי)" style="flex:1;">
-        <button onclick="addTask()" style="background-color:#1976d2;">פרסם מטלה חדשה 📋</button>
+       <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="flex:1;">
+    <input type="text" id="taskLink" placeholder="קישור למטלה (אופציונלי)" style="flex:1;">
+    <input type="date" id="taskDeadline" style="flex:1;">
+    <input type="number" id="taskXP" placeholder="XP למטלה" value="20" style="width:120px;">
+<button onclick="addTask()" style="background-color:#1976d2;">פרסם מטלה חדשה 📋</button>
     </div>
 
     <div id="admin-submissions" style="width:100%; margin-top:20px; background:#f1f8e9; padding:15px; border-radius:10px; border:1px dashed #2e7d32; text-align:right;">
@@ -444,8 +446,11 @@ function renderTasks() {
 
         div.innerHTML = `
             <div class="task-info">
-                <h4>${task.title}</h4>
-                ${task.link ? `<a href="${task.link}" target="_blank">קישור למטלה 🔗</a>` : ''}
+               <h4>${task.title}</h4>
+                    <div style="font-size:0.85em;color:#555;">
+                    🎁 פרס: ${task.xp || 20} XP
+                    ${task.deadline ? `<br>⏰ להגשה עד: ${task.deadline}` : ''}
+                </div>
             </div>
             <div>
                 ${currentUser === 'admin'
@@ -461,13 +466,27 @@ function renderTasks() {
 }
 
 function addTask() {
+
     const title = document.getElementById('taskTitle').value;
     const link = document.getElementById('taskLink').value;
+    const deadline = document.getElementById('taskDeadline').value;
+    const xp = parseInt(document.getElementById('taskXP').value) || 20;
+
     if (!title) return alert("הזן כותרת");
+
     const id = Date.now().toString();
-    db.ref('tasks/' + id).set({ id, title, link });
+
+    db.ref('tasks/' + id).set({
+        id,
+        title,
+        link,
+        deadline,
+        xp
+    });
+
     document.getElementById('taskTitle').value = '';
     document.getElementById('taskLink').value = '';
+    document.getElementById('taskDeadline').value = '';
 }
 
 function deleteTask(id) { if(confirm('למחוק?')) db.ref('tasks/' + id).remove(); }
@@ -534,19 +553,36 @@ function initAdminSubmissions() {
 
 // פונקציית אישור הגשה מתוקנת
 function approveSub(subId, studentId) {
-    const s = allStudents.find(st => st.id === studentId);
-    if (s) {
+
+    const submissionRef = db.ref('submissions/' + subId);
+
+    submissionRef.once('value').then(snap => {
+
+        const sub = snap.val();
+        if (!sub) return;
+
+        const task = allTasks.find(t => t.id === sub.taskId);
+        const xpReward = task ? (task.xp || 20) : 20;
+
+        const s = allStudents.find(st => st.id === studentId);
+        if (!s) return;
+
         addXP(studentId, s.xp, s.level);
-        setTimeout(() => {
-            const updatedS = allStudents.find(st => st.id === studentId);
-            addXP(studentId, updatedS.xp, updatedS.level);
-        }, 500);
+
+        if (xpReward > 10) {
+            setTimeout(() => {
+                const updatedS = allStudents.find(st => st.id === studentId);
+                addXP(studentId, updatedS.xp, updatedS.level);
+            }, 500);
+        }
+
         db.ref('submissions/' + subId).remove();
-    }
+    });
 }
 </script>
 </body>
 </html>
+
 
 
 
