@@ -11,7 +11,8 @@
 
 body{
 font-family:'Segoe UI',Tahoma,sans-serif;
-background:#e0f7fa;
+background:#e0f7fa url('images/background.png') no-repeat center center fixed;
+background-size:cover;
 margin:0;
 padding:20px;
 display:flex;
@@ -20,44 +21,89 @@ align-items:center;
 }
 
 #control-panel{
-background:white;
-padding:20px;
-border-radius:15px;
-margin-bottom:25px;
+background:rgba(255,255,255,0.95);
+padding:25px;
+border-radius:20px;
+box-shadow:0 10px 30px rgba(0,0,0,0.15);
+margin-bottom:30px;
+width:90%;
+max-width:900px;
 display:flex;
 flex-wrap:wrap;
-gap:10px;
+gap:15px;
 justify-content:center;
+border:2px solid #81c784;
+}
+
+input,select,button{
+padding:12px;
+border-radius:10px;
+border:1px solid #ddd;
+font-size:15px;
+}
+
+button{
+background-color:#2e7d32;
+color:white;
+cursor:pointer;
+border:none;
+font-weight:bold;
 }
 
 #farm-grid{
 display:grid;
 grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
-gap:20px;
+gap:25px;
 width:100%;
-max-width:1100px;
+max-width:1200px;
 }
 
 .student-card{
-background:white;
-border-radius:20px;
-padding:15px;
+background:rgba(255,255,255,0.9);
+border-radius:25px;
+padding:20px;
 text-align:center;
 position:relative;
-box-shadow:0 4px 10px rgba(0,0,0,0.1);
-}
-
-.creature-img{
-width:120px;
-cursor:pointer;
+box-shadow:0 5px 15px rgba(0,0,0,0.1);
+border-bottom:5px solid #81c784;
 }
 
 .level-text-badge{
 position:absolute;
 top:5px;
-right:10px;
-font-weight:bold;
+right:15px;
+font-family:'Arial Black',sans-serif;
+font-size:1.4em;
+font-weight:900;
 color:#2e7d32;
+z-index:10;
+}
+
+.creature-img{
+width:120px;
+height:120px;
+cursor:pointer;
+object-fit:contain;
+margin-bottom:10px;
+transition:transform 0.1s;
+}
+
+.glow-effect{
+animation:glow-pulse 0.6s ease-out;
+}
+
+@keyframes glow-pulse{
+0%{filter:brightness(1);transform:scale(1);}
+50%{filter:brightness(1.6) drop-shadow(0 0 15px gold);transform:scale(1.25);}
+100%{filter:brightness(1);transform:scale(1);}
+}
+
+.shake{animation:shake 0.5s infinite;}
+
+@keyframes shake{
+0%,100%{transform:translate(1px,1px);}
+25%{transform:translate(-1px,-2px);}
+75%{transform:translate(1px,-2px);}
 }
 
 .xp-container{
@@ -66,49 +112,58 @@ border-radius:10px;
 height:18px;
 margin:10px 0;
 overflow:hidden;
+border:1px solid #ccc;
 }
 
 .xp-bar{
 background:linear-gradient(90deg,#ffeb3b,#fbc02d);
 height:100%;
-transition:width 0.4s;
+transition:width 0.4s ease-out;
 }
 
 .remove-btn{
 position:absolute;
-top:5px;
-left:5px;
+top:10px;
+left:10px;
 background:#ff5252;
 color:white;
 border:none;
 border-radius:50%;
-width:25px;
-height:25px;
+width:28px;
+height:28px;
 cursor:pointer;
 }
 
-.submitted-icon{
+.xp-float{
 position:absolute;
-bottom:8px;
-right:8px;
+font-weight:bold;
+color:gold;
+font-size:1.2em;
+animation:floatUp 0.8s ease-out forwards;
+pointer-events:none;
+left:50%;
+top:60px;
+transform:translateX(-50%);
+}
+
+@keyframes floatUp{
+0%{opacity:1;transform:translate(-50%,0);}
+100%{opacity:0;transform:translate(-50%,-40px);}
+}
+
+.submission-icon{
+position:absolute;
+bottom:10px;
+right:10px;
 background:#4caf50;
 color:white;
-width:22px;
-height:22px;
+width:24px;
+height:24px;
 border-radius:50%;
 display:flex;
 align-items:center;
 justify-content:center;
-font-size:14px;
-}
-
-#login-screen{
-position:fixed;
-inset:0;
-background:#e0f7fa;
-display:flex;
-align-items:center;
-justify-content:center;
+cursor:pointer;
 }
 
 .modal{
@@ -118,6 +173,7 @@ background:rgba(0,0,0,0.5);
 display:none;
 align-items:center;
 justify-content:center;
+z-index:999;
 }
 
 .modal-content{
@@ -127,6 +183,16 @@ border-radius:15px;
 width:400px;
 max-height:80vh;
 overflow:auto;
+}
+
+#login-screen{
+position:fixed;
+inset:0;
+background:#e0f7fa;
+display:flex;
+align-items:center;
+justify-content:center;
+z-index:9999;
 }
 
 </style>
@@ -164,7 +230,7 @@ overflow:auto;
 <option value="ה2">כיתה ה'2</option>
 </select>
 
-<button onclick="addStudent()">צרף יצור</button>
+<button onclick="addStudent()">צרף יצור לחווה</button>
 
 <button onclick="openTaskCreator()">משימה חדשה</button>
 
@@ -206,8 +272,17 @@ overflow:auto;
 </div>
 
 
-<script>
+<div id="submissionModal" class="modal">
+<div class="modal-content">
 
+<h3>בדיקת משימה</h3>
+
+<div id="submissionContent"></div>
+
+</div>
+</div>
+
+<script>
 const firebaseConfig={
 apiKey:"AIzaSyCtS0Gf9oNiRg6OTd3jyNaPxuWBFlWGIsE",
 authDomain:"liorfarm.firebaseapp.com",
@@ -218,6 +293,8 @@ projectId:"liorfarm"
 firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 
+const CREATURE_TYPES=['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
+
 let allStudents=[];
 let tasks=[];
 let submissions={};
@@ -226,12 +303,9 @@ let currentUser=null;
 let isAdmin=false;
 
 db.ref('students').on('value',(snap)=>{
-
 allStudents=snap.val()?Object.values(snap.val()):[];
-
 updateView();
 populateStudentLogin();
-
 });
 
 db.ref('tasks').on('value',(snap)=>{
@@ -241,7 +315,6 @@ tasks=snap.val()?Object.values(snap.val()):[];
 db.ref('submissions').on('value',(snap)=>{
 submissions=snap.val()||{};
 });
-
 
 function login(){
 
@@ -269,7 +342,6 @@ document.getElementById("login-screen").style.display="none";
 
 }
 
-
 function populateStudentLogin(){
 
 const select=document.getElementById("studentSelect");
@@ -282,7 +354,6 @@ select.innerHTML+=`<option value="${s.id}">${s.name}</option>`;
 
 }
 
-
 function addStudent(){
 
 const name=document.getElementById('studentName').value;
@@ -292,17 +363,15 @@ if(!name)return;
 const id=Date.now().toString();
 
 db.ref('students/'+id).set({
-
 id,
 name,
 className:document.getElementById('studentClass').value,
 xp:0,
-level:0
-
+level:0,
+type:CREATURE_TYPES[Math.floor(Math.random()*CREATURE_TYPES.length)]
 });
 
 }
-
 
 function creatureClick(id,xp,lvl){
 
@@ -323,8 +392,14 @@ openTasks();
 
 }
 
-
 function addXP(id,xp,lvl){
+
+const img=document.getElementById('img-'+id);
+
+if(img){
+img.classList.remove('glow-effect');
+requestAnimationFrame(()=>img.classList.add('glow-effect'));
+}
 
 let nxp=xp+10;
 let nlv=lvl;
@@ -341,12 +416,16 @@ level:nlv
 
 }
 
-
 function openTasks(){
 
 let html="";
 
 tasks.forEach(t=>{
+
+if(submissions[currentUser] && submissions[currentUser][t.id]){
+html+=`<div>✔ ${t.title} (הוגש)</div>`;
+return;
+}
 
 html+=`
 
@@ -375,48 +454,112 @@ document.getElementById("tasksWindow").style.display="flex";
 
 }
 
-
 function submitTask(taskId){
 
 const link=document.getElementById("sub-"+taskId).value;
 
 db.ref(`submissions/${currentUser}/${taskId}`).set({
-
 link,
 status:"pending"
-
 });
 
 alert("המשימה נשלחה");
 
 }
 
-
 function openTaskCreator(){
-
 document.getElementById("taskModal").style.display="flex";
-
 }
-
 
 function createTask(){
 
 const id=Date.now().toString();
 
 db.ref("tasks/"+id).set({
-
 id,
 title:document.getElementById("taskTitle").value,
 xp:parseInt(document.getElementById("taskXP").value),
 due:document.getElementById("taskDue").value,
 fileLink:document.getElementById("taskLink").value
-
 });
 
 document.getElementById("taskModal").style.display="none";
 
 }
 
+function openSubmission(studentId){
+
+if(!isAdmin)return;
+
+const studentSubs=submissions[studentId];
+
+let html="";
+
+for(const taskId in studentSubs){
+
+const sub=studentSubs[taskId];
+
+const task=tasks.find(t=>t.id===taskId);
+
+if(!task)continue;
+
+html+=`
+
+<div style="border-bottom:1px solid #ddd;padding:10px">
+
+<b>${task.title}</b><br><br>
+
+<a href="${sub.link}" target="_blank">פתח קובץ</a>
+
+<br><br>
+
+<button onclick="approveTask('${studentId}','${taskId}',1)">
+אישור מלא
+</button>
+
+<button onclick="approveTask('${studentId}','${taskId}',0.5)">
+אישור חלקי
+</button>
+
+</div>
+
+`;
+
+}
+
+document.getElementById("submissionContent").innerHTML=html;
+document.getElementById("submissionModal").style.display="flex";
+
+}
+
+function approveTask(studentId,taskId,ratio){
+
+const task=tasks.find(t=>t.id===taskId);
+
+const xpEarned=Math.floor(task.xp*ratio);
+
+db.ref('students/'+studentId).once('value').then(snap=>{
+
+const s=snap.val();
+
+let nxp=s.xp+xpEarned;
+let nlv=s.level;
+
+while(nxp>=100){
+nxp-=100;
+nlv++;
+}
+
+db.ref('students/'+studentId).update({
+xp:nxp,
+level:nlv
+});
+
+});
+
+db.ref(`submissions/${studentId}/${taskId}/status`).set("approved");
+
+}
 
 function updateView(){
 
@@ -424,11 +567,9 @@ const grid=document.getElementById('farm-grid');
 
 grid.innerHTML=allStudents.map(s=>{
 
-let submitted=false;
+const submitted=submissions[s.id];
 
-if(submissions[s.id]){
-submitted=true;
-}
+const imgPath=`images/${s.type}${s.level>=20?3:(s.level>=10?2:1)}.png`;
 
 return`
 
@@ -436,7 +577,7 @@ return`
 
 <div class="level-text-badge">Lv.${s.level}</div>
 
-<img src="images/egg1.png"
+<img id="img-${s.id}" src="${imgPath}"
 class="creature-img"
 onclick="creatureClick('${s.id}',${s.xp},${s.level})">
 
@@ -446,7 +587,7 @@ onclick="creatureClick('${s.id}',${s.xp},${s.level})">
 <div class="xp-bar" style="width:${s.xp}%"></div>
 </div>
 
-${submitted?'<div class="submitted-icon">✔</div>':''}
+${submitted?`<div class="submission-icon" onclick="openSubmission('${s.id}')">✔</div>`:''}
 
 </div>
 
