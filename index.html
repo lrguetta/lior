@@ -236,6 +236,11 @@ button {
             <option value="ה2">כיתה ה'2</option>
         </select>
         <button onclick="addStudent()">צרף יצור לחווה 🐾</button>
+          <!-- כפתור להציג/להסתיר -->
+<button onclick="toggleTaskPanel()" 
+        style="background:#4caf50; color:white; padding:8px 12px; border:none; border-radius:6px; cursor:pointer; margin-bottom:10px;">
+    פרסום מטלה חדשה 📋
+</button>
     </div>
 
     <div style="width:100%; display:flex; gap:10px; margin-top:10px;">
@@ -249,15 +254,9 @@ button {
     </div>
 
     <hr style="width:100%; margin: 15px 0;">
-    
-  <!-- כפתור להציג/להסתיר -->
-<button onclick="toggleTaskPanel()" 
-        style="background:#4caf50; color:white; padding:8px 12px; border:none; border-radius:6px; cursor:pointer; margin-bottom:10px;">
-    פרסום מטלה חדשה 📋
-</button>
 
 <!-- כל השדות לכאן -->
-<div id="task-panel" style="display:none; width:100%; display:flex; align-items:center; gap:10px; flex-wrap:nowrap; margin-bottom:10px;">
+<div id="task-panel" style="display:none; width:100%;  align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
     <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="flex:2;">
       <button onclick="window.open('https://send.magicode.me/', '_blank')" 
             style="background:#ff9800; color:white; padding:8px 8px; border:none; border-radius:6px; cursor:pointer;">
@@ -663,6 +662,7 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
 
 
 
