@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>חוות הטמגוצ'י - הגרסה המלאה והעובדת</title>
+<title>חוות הטמגוצ'י</title>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -11,8 +11,7 @@
 
 body{
 font-family:'Segoe UI',Tahoma,sans-serif;
-background:#e0f7fa url('images/background.png') no-repeat center center fixed;
-background-size:cover;
+background:#e0f7fa;
 margin:0;
 padding:20px;
 display:flex;
@@ -21,105 +20,44 @@ align-items:center;
 }
 
 #control-panel{
-background:rgba(255,255,255,0.95);
-padding:25px;
-border-radius:20px;
-box-shadow:0 10px 30px rgba(0,0,0,0.15);
-margin-bottom:30px;
-width:90%;
-max-width:900px;
+background:white;
+padding:20px;
+border-radius:15px;
+margin-bottom:25px;
 display:flex;
 flex-wrap:wrap;
-gap:15px;
+gap:10px;
 justify-content:center;
-border:2px solid #81c784;
-}
-
-input,select,button{
-padding:12px;
-border-radius:10px;
-border:1px solid #ddd;
-font-size:15px;
-}
-
-button{
-background-color:#2e7d32;
-color:white;
-cursor:pointer;
-border:none;
-font-weight:bold;
 }
 
 #farm-grid{
 display:grid;
 grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
-gap:25px;
+gap:20px;
 width:100%;
-max-width:1200px;
+max-width:1100px;
 }
 
 .student-card{
-background:rgba(255,255,255,0.9);
-border-radius:25px;
-padding:20px;
+background:white;
+border-radius:20px;
+padding:15px;
 text-align:center;
 position:relative;
-box-shadow:0 5px 15px rgba(0,0,0,0.1);
-border-bottom:5px solid #81c784;
+box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+
+.creature-img{
+width:120px;
+cursor:pointer;
 }
 
 .level-text-badge{
 position:absolute;
 top:5px;
-right:15px;
-font-family:'Arial Black',sans-serif;
-font-size:1.4em;
-font-weight:900;
+right:10px;
+font-weight:bold;
 color:#2e7d32;
-z-index:10;
-text-shadow:-1.5px -1.5px 0 #fff,1.5px -1.5px 0 #fff,0 2px 4px rgba(0,0,0,0.3);
-}
-
-.creature-img{
-width:120px;
-height:120px;
-cursor:pointer;
-object-fit:contain;
-margin-bottom:10px;
-transition:transform 0.1s;
-}
-
-/* זוהר */
-.glow-effect{
-animation:glow-pulse 0.6s ease-out;
-}
-
-@keyframes glow-pulse{
-0%{filter:brightness(1);transform:scale(1);}
-50%{filter:brightness(1.6) drop-shadow(0 0 15px gold);transform:scale(1.25);}
-100%{filter:brightness(1);transform:scale(1);}
-}
-
-/* רעידה לביצה */
-.shake{animation:shake 0.5s infinite;}
-
-@keyframes shake{
-0%,100%{transform:translate(1px,1px) rotate(0deg);}
-25%{transform:translate(-1px,-2px) rotate(-1deg);}
-75%{transform:translate(1px,-2px) rotate(1deg);}
-}
-
-/* בקיעה */
-.hatch{
-animation:hatch 0.8s ease-out;
-}
-
-@keyframes hatch{
-0%{transform:scale(1) rotate(0deg);}
-25%{transform:scale(1.2) rotate(-10deg);}
-50%{transform:scale(0.8) rotate(10deg);}
-75%{transform:scale(1.3);}
-100%{transform:scale(1);}
 }
 
 .xp-container{
@@ -128,110 +66,94 @@ border-radius:10px;
 height:18px;
 margin:10px 0;
 overflow:hidden;
-border:1px solid #ccc;
 }
 
 .xp-bar{
 background:linear-gradient(90deg,#ffeb3b,#fbc02d);
 height:100%;
-transition:width 0.4s ease-out;
+transition:width 0.4s;
 }
 
-/* כפתור מחיקה מתוקן */
 .remove-btn{
 position:absolute;
-top:10px;
-left:10px;
+top:5px;
+left:5px;
 background:#ff5252;
 color:white;
 border:none;
 border-radius:50%;
-width:28px;
-height:28px;
+width:25px;
+height:25px;
 cursor:pointer;
-font-size:18px;
+}
+
+.submitted-icon{
+position:absolute;
+bottom:8px;
+right:8px;
+background:#4caf50;
+color:white;
+width:22px;
+height:22px;
+border-radius:50%;
 display:flex;
 align-items:center;
 justify-content:center;
-line-height:1;
-padding:0;
+font-size:14px;
 }
 
-/* XP קופץ */
-.xp-float{
-position:absolute;
-font-weight:bold;
-color:gold;
-font-size:1.2em;
-animation:floatUp 0.8s ease-out forwards;
-pointer-events:none;
-left:50%;
-top:60px;
-transform:translateX(-50%);
+#login-screen{
+position:fixed;
+inset:0;
+background:#e0f7fa;
+display:flex;
+align-items:center;
+justify-content:center;
 }
 
-@keyframes floatUp{
-0%{opacity:1;transform:translate(-50%,0);}
-100%{opacity:0;transform:translate(-50%,-40px);}
+.modal{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.5);
+display:none;
+align-items:center;
+justify-content:center;
 }
 
-/* LEVEL UP */
-.levelup{
-position:absolute;
-top:40px;
-right:50%;
-transform:translateX(50%);
-background:gold;
-color:#333;
-font-weight:bold;
-padding:4px 10px;
-border-radius:10px;
-animation:levelPop 1s ease-out forwards;
-}
-
-@keyframes levelPop{
-0%{transform:translateX(50%) scale(0.5);opacity:0;}
-40%{transform:translateX(50%) scale(1.3);opacity:1;}
-100%{transform:translateX(50%) scale(1);opacity:0;}
-}
-
-  /* אפקט בקיעה אמיתי */
-
-.hatch-crack{
-animation:eggCrack 0.9s ease-out forwards;
-}
-
-@keyframes eggCrack{
-0%{transform:scale(1) rotate(0);}
-20%{transform:scale(1.1) rotate(-8deg);}
-40%{transform:scale(1.15) rotate(8deg);}
-60%{transform:scale(1.2) rotate(-6deg);}
-80%{transform:scale(1.25) rotate(6deg);filter:brightness(1.6);}
-100%{transform:scale(0);opacity:0;}
-}
-
-.hatch-flash{
-position:absolute;
-width:120px;
-height:120px;
+.modal-content{
 background:white;
-border-radius:50%;
-top:40px;
-left:50%;
-transform:translateX(-50%);
-animation:hatchFlash 0.4s ease-out forwards;
-pointer-events:none;
+padding:25px;
+border-radius:15px;
+width:400px;
+max-height:80vh;
+overflow:auto;
 }
 
-@keyframes hatchFlash{
-0%{opacity:0;transform:translateX(-50%) scale(0.5);}
-40%{opacity:1;transform:translateX(-50%) scale(1.4);}
-100%{opacity:0;transform:translateX(-50%) scale(2);}
-}
 </style>
 </head>
 
 <body>
+
+<div id="login-screen">
+<div class="modal-content">
+
+<h2>כניסה לחווה</h2>
+
+<select id="studentSelect">
+<option value="">בחר תלמיד</option>
+</select>
+
+<br><br>
+
+<input type="password" id="adminPass" placeholder="סיסמת מנהל">
+
+<br><br>
+
+<button onclick="login()">כניסה</button>
+
+</div>
+</div>
+
 
 <div id="control-panel">
 
@@ -242,20 +164,47 @@ pointer-events:none;
 <option value="ה2">כיתה ה'2</option>
 </select>
 
-<button onclick="addStudent()">צרף יצור לחווה 🐾</button>
+<button onclick="addStudent()">צרף יצור</button>
 
-<div style="width:100%;display:flex;gap:10px;margin-top:10px;">
-<input type="text" id="search" placeholder="חפש לפי שם..." oninput="updateView()" style="flex:2;">
-<select id="sortBy" onchange="updateView()" style="flex:1;">
-<option value="name">מיין לפי שם</option>
-<option value="level">מיין לפי רמה</option>
-<option value="class">מיין לפי כיתה</option>
-</select>
-</div>
+<button onclick="openTaskCreator()">משימה חדשה</button>
 
 </div>
+
 
 <div id="farm-grid"></div>
+
+
+<div id="tasksWindow" class="modal">
+<div class="modal-content">
+
+<h3>משימות</h3>
+
+<div id="tasksList"></div>
+
+</div>
+</div>
+
+
+<div id="taskModal" class="modal">
+<div class="modal-content">
+
+<h3>משימה חדשה</h3>
+
+<input id="taskTitle" placeholder="שם משימה"><br><br>
+
+<input id="taskXP" type="number" placeholder="XP"><br><br>
+
+<input id="taskDue" type="date"><br><br>
+
+<a href="https://send.magicode.me/" target="_blank">העלה קובץ משימה</a><br><br>
+
+<input id="taskLink" placeholder="הדבק לינק למשימה"><br><br>
+
+<button onclick="createTask()">שמור</button>
+
+</div>
+</div>
+
 
 <script>
 
@@ -263,147 +212,223 @@ const firebaseConfig={
 apiKey:"AIzaSyCtS0Gf9oNiRg6OTd3jyNaPxuWBFlWGIsE",
 authDomain:"liorfarm.firebaseapp.com",
 databaseURL:"https://liorfarm-default-rtdb.europe-west1.firebasedatabase.app",
-projectId:"liorfarm",
-storageBucket:"liorfarm.firebasestorage.app",
-messagingSenderId:"436063422896",
-appId:"1:436063422896:web:4cb14fbcc036ba97676e75"
+projectId:"liorfarm"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 
-const CREATURE_TYPES=['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
-
 let allStudents=[];
+let tasks=[];
+let submissions={};
+
+let currentUser=null;
+let isAdmin=false;
 
 db.ref('students').on('value',(snap)=>{
+
 allStudents=snap.val()?Object.values(snap.val()):[];
+
 updateView();
+populateStudentLogin();
+
 });
+
+db.ref('tasks').on('value',(snap)=>{
+tasks=snap.val()?Object.values(snap.val()):[];
+});
+
+db.ref('submissions').on('value',(snap)=>{
+submissions=snap.val()||{};
+});
+
+
+function login(){
+
+const pass=document.getElementById("adminPass").value;
+
+if(pass==="rabenu247"){
+isAdmin=true;
+currentUser="admin";
+}
+
+else{
+
+const id=document.getElementById("studentSelect").value;
+
+if(!id){
+alert("בחר תלמיד");
+return;
+}
+
+currentUser=id;
+
+}
+
+document.getElementById("login-screen").style.display="none";
+
+}
+
+
+function populateStudentLogin(){
+
+const select=document.getElementById("studentSelect");
+
+select.innerHTML='<option value="">בחר תלמיד</option>';
+
+allStudents.forEach(s=>{
+select.innerHTML+=`<option value="${s.id}">${s.name}</option>`;
+});
+
+}
+
 
 function addStudent(){
 
-const nameInput=document.getElementById('studentName');
-if(!nameInput.value.trim())return;
+const name=document.getElementById('studentName').value;
+
+if(!name)return;
 
 const id=Date.now().toString();
 
 db.ref('students/'+id).set({
+
 id,
-name:nameInput.value,
+name,
 className:document.getElementById('studentClass').value,
 xp:0,
-level:0,
-type:CREATURE_TYPES[Math.floor(Math.random()*CREATURE_TYPES.length)],
-egg:Math.floor(Math.random()*5)
+level:0
+
 });
 
-nameInput.value='';
+}
+
+
+function creatureClick(id,xp,lvl){
+
+if(isAdmin){
+addXP(id,xp,lvl);
+}
+
+else{
+
+if(id!==currentUser){
+alert("זו לא הדמות שלך");
+return;
+}
+
+openTasks();
 
 }
+
+}
+
 
 function addXP(id,xp,lvl){
 
-const img=document.getElementById('img-'+id);
-const card=img?.closest('.student-card');
-
-if(img){
-
-img.style.pointerEvents="none";
-setTimeout(()=>img.style.pointerEvents="auto",400);
-
-img.classList.remove('glow-effect');
-requestAnimationFrame(()=>img.classList.add('glow-effect'));
-
-if(card){
-const xpFloat=document.createElement('div');
-xpFloat.className='xp-float';
-xpFloat.innerText='+10 XP';
-card.appendChild(xpFloat);
-setTimeout(()=>xpFloat.remove(),800);
-}
-
-}
-
 let nxp=xp+10;
 let nlv=lvl;
-let levelUp=false;
-let hatch=false;
 
 if(nxp>=100){
 nlv++;
 nxp=0;
-levelUp=true;
-
-if(lvl===0){
-hatch=true;
-}
 }
 
-if(levelUp && card){
-const levelTag=document.createElement('div');
-levelTag.className='levelup';
-levelTag.innerText='LEVEL UP!';
-card.appendChild(levelTag);
-setTimeout(()=>levelTag.remove(),1000);
-}
-
-if(hatch && img && card){
-
-img.classList.add("hatch-crack");
-
-const flash=document.createElement("div");
-flash.className="hatch-flash";
-card.appendChild(flash);
-
-setTimeout(()=>{
 db.ref('students/'+id).update({
 xp:nxp,
 level:nlv
 });
-},900);
 
-setTimeout(()=>flash.remove(),500);
-
-return;
 }
 
-setTimeout(()=>{
-db.ref('students/'+id).update({
-xp:nxp,
-level:nlv
+
+function openTasks(){
+
+let html="";
+
+tasks.forEach(t=>{
+
+html+=`
+
+<div style="border-bottom:1px solid #ddd;padding:10px">
+
+<b>${t.title}</b><br>
+XP: ${t.xp}<br>
+עד: ${t.due}<br>
+
+<a href="${t.fileLink}" target="_blank">הורד משימה</a><br><br>
+
+<a href="https://send.magicode.me/" target="_blank">העלה קובץ</a><br>
+
+<input id="sub-${t.id}" placeholder="הדבק לינק להגשה"><br>
+
+<button onclick="submitTask('${t.id}')">הגש</button>
+
+</div>
+
+`;
+
 });
-},450);
+
+document.getElementById("tasksList").innerHTML=html;
+document.getElementById("tasksWindow").style.display="flex";
 
 }
+
+
+function submitTask(taskId){
+
+const link=document.getElementById("sub-"+taskId).value;
+
+db.ref(`submissions/${currentUser}/${taskId}`).set({
+
+link,
+status:"pending"
+
+});
+
+alert("המשימה נשלחה");
+
+}
+
+
+function openTaskCreator(){
+
+document.getElementById("taskModal").style.display="flex";
+
+}
+
+
+function createTask(){
+
+const id=Date.now().toString();
+
+db.ref("tasks/"+id).set({
+
+id,
+title:document.getElementById("taskTitle").value,
+xp:parseInt(document.getElementById("taskXP").value),
+due:document.getElementById("taskDue").value,
+fileLink:document.getElementById("taskLink").value
+
+});
+
+document.getElementById("taskModal").style.display="none";
+
+}
+
 
 function updateView(){
 
 const grid=document.getElementById('farm-grid');
 
-const searchTerm=document.getElementById('search').value.toLowerCase();
-const sortBy=document.getElementById('sortBy').value;
+grid.innerHTML=allStudents.map(s=>{
 
-let filtered=allStudents.filter(s=>s.name.toLowerCase().includes(searchTerm));
+let submitted=false;
 
-filtered.sort((a,b)=>{
-
-if(sortBy==='name')return a.name.localeCompare(b.name);
-if(sortBy==='level')return b.level-a.level;
-return a.className.localeCompare(b.className);
-
-});
-
-grid.innerHTML=filtered.map(s=>{
-
-const isShaking=(s.level===0 && s.xp>=90)?'shake':'';
-
-const eggNum=(s.egg!==undefined)?s.egg+1:1;
-
-const imgPath=
-s.level===0
-?`images/egg${eggNum}.png`
-:`images/${s.type}${s.level>=20?3:(s.level>=10?2:1)}.png`;
+if(submissions[s.id]){
+submitted=true;
+}
 
 return`
 
@@ -411,18 +436,17 @@ return`
 
 <div class="level-text-badge">Lv.${s.level}</div>
 
-<button class="remove-btn" onclick="if(confirm('למחוק?')) db.ref('students/${s.id}').remove()">✖</button>
+<img src="images/egg1.png"
+class="creature-img"
+onclick="creatureClick('${s.id}',${s.xp},${s.level})">
 
-<img id="img-${s.id}" src="${imgPath}" class="creature-img ${isShaking}"
-onclick="addXP('${s.id}',${s.xp},${s.level})">
-
-<div style="font-weight:bold;font-size:1.2em;margin-top:5px;">${s.name}</div>
-
-<div style="color:#555;font-size:0.9em;">כיתה ${s.className}</div>
+<div style="font-weight:bold">${s.name}</div>
 
 <div class="xp-container">
 <div class="xp-bar" style="width:${s.xp}%"></div>
 </div>
+
+${submitted?'<div class="submitted-icon">✔</div>':''}
 
 </div>
 
@@ -436,6 +460,3 @@ onclick="addXP('${s.id}',${s.xp},${s.level})">
 
 </body>
 </html>
-
-
-
