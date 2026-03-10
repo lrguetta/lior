@@ -560,21 +560,20 @@ function initAdminSubmissions() {
             Object.values(subs).forEach(sub => {
                 const d = document.createElement('div');
                 d.style = "background:white; padding:10px; margin:5px 0; border-radius:8px; border-right:4px solid gold; color: black; text-align: right; box-shadow: 0 2px 4px rgba(0,0,0,0.1);";
-              d.innerHTML = `
+             d.innerHTML = `
     <div style="font-weight:bold; color:#2e7d32;">מאת: ${sub.studentName}</div>
     <div style="margin: 5px 0; font-size: 0.95em;">
-       ${sub.fileURL 
-    ? `<a href="${sub.fileURL}" target="_blank" download style="background:#4caf50; color:white; padding:5px 10px; border-radius:5px; text-decoration:none; font-weight:bold;">
-           הורד קובץ: ${sub.fileName}
-       </a>` 
-    : `<span>${sub.content}</span>`}
+        <a href="${sub.content}" target="_blank" 
+           style="background:#4caf50; color:white; padding:5px 10px; border-radius:5px; text-decoration:none; font-weight:bold;">
+           פתח/הורד את המטלה
+        </a>
     </div>
     <div style="display:flex; gap:5px; margin-top:5px;">
         <button onclick="approveSub('${sub.id}', '${sub.studentId}', 1)" style="background:#4caf50;">אשר מלא ✅</button>
         <button onclick="approveSub('${sub.id}', '${sub.studentId}', 0.5)" style="background:#ffc107;">אשר חלקי 🟡</button>
         <button onclick="rejectSub('${sub.id}')" style="background:#f44336;">דחה ❌</button>
     </div>
-                `;
+`;
                 container.appendChild(d);
             });
         } else {
@@ -631,6 +630,7 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
 
 
 
