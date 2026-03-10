@@ -482,8 +482,10 @@ function sendSubmission() {
 }
 
 db.ref('submissions').on('value', (snap) => {
-
     const container = document.getElementById('submissions-list');
+
+    // אם אין עדיין currentUser, תחכה
+    if (!currentUser) return;
 
     if (currentUser !== 'admin') {
         container.innerHTML = '';
@@ -508,9 +510,7 @@ ${sub.content}<br>
     } else {
         container.innerText = 'אין הגשות חדשות';
     }
-
 });
-
 function approveSub(subId, studentId) {
     const s = allStudents.find(st => st.id === studentId);
     if (s) {
@@ -526,5 +526,6 @@ function approveSub(subId, studentId) {
 </script>
 </body>
 </html>
+
 
 
