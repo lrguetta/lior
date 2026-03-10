@@ -2,13 +2,13 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>חוות הטמגוצ'י - גרסת ניהול ותלמידים</title>
+<title>חוות הטמגוצ'י - הגרסה המלאה והעובדת</title>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <style>
-/* --- עיצוב קיים (לא שונה) --- */
+
 body{
 font-family:'Segoe UI',Tahoma,sans-serif;
 background:#e0f7fa url('images/background.png') no-repeat center center fixed;
@@ -28,7 +28,7 @@ box-shadow:0 10px 30px rgba(0,0,0,0.15);
 margin-bottom:30px;
 width:90%;
 max-width:900px;
-display:none; /* מוסתר בהתחלה */
+display:flex;
 flex-wrap:wrap;
 gap:15px;
 justify-content:center;
@@ -89,18 +89,37 @@ margin-bottom:10px;
 transition:transform 0.1s;
 }
 
-.glow-effect{ animation:glow-pulse 0.6s ease-out; }
+/* זוהר */
+.glow-effect{
+animation:glow-pulse 0.6s ease-out;
+}
+
 @keyframes glow-pulse{
 0%{filter:brightness(1);transform:scale(1);}
 50%{filter:brightness(1.6) drop-shadow(0 0 15px gold);transform:scale(1.25);}
 100%{filter:brightness(1);transform:scale(1);}
 }
 
+/* רעידה לביצה */
 .shake{animation:shake 0.5s infinite;}
+
 @keyframes shake{
 0%,100%{transform:translate(1px,1px) rotate(0deg);}
 25%{transform:translate(-1px,-2px) rotate(-1deg);}
 75%{transform:translate(1px,-2px) rotate(1deg);}
+}
+
+/* בקיעה */
+.hatch{
+animation:hatch 0.8s ease-out;
+}
+
+@keyframes hatch{
+0%{transform:scale(1) rotate(0deg);}
+25%{transform:scale(1.2) rotate(-10deg);}
+50%{transform:scale(0.8) rotate(10deg);}
+75%{transform:scale(1.3);}
+100%{transform:scale(1);}
 }
 
 .xp-container{
@@ -118,6 +137,7 @@ height:100%;
 transition:width 0.4s ease-out;
 }
 
+/* כפתור מחיקה מתוקן */
 .remove-btn{
 position:absolute;
 top:10px;
@@ -133,8 +153,11 @@ font-size:18px;
 display:flex;
 align-items:center;
 justify-content:center;
+line-height:1;
+padding:0;
 }
 
+/* XP קופץ */
 .xp-float{
 position:absolute;
 font-weight:bold;
@@ -152,6 +175,7 @@ transform:translateX(-50%);
 100%{opacity:0;transform:translate(-50%,-40px);}
 }
 
+/* LEVEL UP */
 .levelup{
 position:absolute;
 top:40px;
@@ -171,104 +195,70 @@ animation:levelPop 1s ease-out forwards;
 100%{transform:translateX(50%) scale(1);opacity:0;}
 }
 
-/* --- אלמנטים חדשים לכניסה ומשימות --- */
+  /* אפקט בקיעה אמיתי */
 
-#login-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.8);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
+.hatch-crack{
+animation:eggCrack 0.9s ease-out forwards;
 }
 
-.login-box {
-    background: white;
-    padding: 30px;
-    border-radius: 20px;
-    text-align: center;
-    box-shadow: 0 0 20px rgba(255,255,255,0.2);
+@keyframes eggCrack{
+0%{transform:scale(1) rotate(0);}
+20%{transform:scale(1.1) rotate(-8deg);}
+40%{transform:scale(1.15) rotate(8deg);}
+60%{transform:scale(1.2) rotate(-6deg);}
+80%{transform:scale(1.25) rotate(6deg);filter:brightness(1.6);}
+100%{transform:scale(0);opacity:0;}
 }
 
-#modal-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.6);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 900;
+.hatch-flash{
+position:absolute;
+width:120px;
+height:120px;
+background:white;
+border-radius:50%;
+top:40px;
+left:50%;
+transform:translateX(-50%);
+animation:hatchFlash 0.4s ease-out forwards;
+pointer-events:none;
 }
 
-.modal-content {
-    background: white;
-    padding: 25px;
-    border-radius: 20px;
-    width: 80%;
-    max-width: 400px;
-    position: relative;
-    text-align: center;
+@keyframes hatchFlash{
+0%{opacity:0;transform:translateX(-50%) scale(0.5);}
+40%{opacity:1;transform:translateX(-50%) scale(1.4);}
+100%{opacity:0;transform:translateX(-50%) scale(2);}
 }
-
-.close-modal {
-    position: absolute;
-    top: 10px; left: 10px;
-    cursor: pointer;
-    font-size: 20px;
-    font-weight: bold;
-}
-
 </style>
 </head>
 
 <body>
 
-<div id="login-overlay">
-    <div class="login-box">
-        <h2 style="margin-top:0;">ברוכים הבאים לחווה 🐾</h2>
-        <button onclick="enterAs('student')" style="width:100%; margin-bottom:10px; background:#1976d2;">כניסת תלמיד/ה</button>
-        <div style="border-top: 1px solid #ccc; margin: 15px 0; padding-top: 15px;">
-            <input type="password" id="adminPass" placeholder="קוד מנהל" style="width:80%; margin-bottom:10px;">
-            <button onclick="enterAs('admin')" style="width:100%; background:#455a64;">כניסת מנהל</button>
-        </div>
-    </div>
-</div>
-
-<div id="modal-overlay">
-    <div class="modal-content">
-        <span class="close-modal" onclick="closeModal()">✖</span>
-        <h2 id="modal-title">המשימות שלי</h2>
-        <div id="task-list" style="text-align:right; margin-top:15px;">
-            <p>✅ הכן שיעורי בית בחשבון (10 XP)</p>
-            <p>✅ קרא 10 דקות ביום (10 XP)</p>
-            <p>✅ עזור לחבר בכיתה (20 XP)</p>
-        </div>
-        <button onclick="closeModal()" style="margin-top:20px;">סגור</button>
-    </div>
-</div>
-
 <div id="control-panel">
-    <input type="text" id="studentName" placeholder="שם התלמיד">
-    <select id="studentClass">
-        <option value="ה1">כיתה ה'1</option>
-        <option value="ה2">כיתה ה'2</option>
-    </select>
-    <button onclick="addStudent()">צרף יצור לחווה 🐾</button>
-    <div style="width:100%;display:flex;gap:10px;margin-top:10px;">
-        <input type="text" id="search" placeholder="חפש לפי שם..." oninput="updateView()" style="flex:2;">
-        <select id="sortBy" onchange="updateView()" style="flex:1;">
-            <option value="name">מיין לפי שם</option>
-            <option value="level">מיין לפי רמה</option>
-            <option value="class">מיין לפי כיתה</option>
-        </select>
-    </div>
+
+<input type="text" id="studentName" placeholder="שם התלמיד">
+
+<select id="studentClass">
+<option value="ה1">כיתה ה'1</option>
+<option value="ה2">כיתה ה'2</option>
+</select>
+
+<button onclick="addStudent()">צרף יצור לחווה 🐾</button>
+
+<div style="width:100%;display:flex;gap:10px;margin-top:10px;">
+<input type="text" id="search" placeholder="חפש לפי שם..." oninput="updateView()" style="flex:2;">
+<select id="sortBy" onchange="updateView()" style="flex:1;">
+<option value="name">מיין לפי שם</option>
+<option value="level">מיין לפי רמה</option>
+<option value="class">מיין לפי כיתה</option>
+</select>
+</div>
+
 </div>
 
 <div id="farm-grid"></div>
 
 <script>
-// --- הגדרות Firebase ---
+
 const firebaseConfig={
 apiKey:"AIzaSyCtS0Gf9oNiRg6OTd3jyNaPxuWBFlWGIsE",
 authDomain:"liorfarm.firebaseapp.com",
@@ -283,135 +273,169 @@ firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 
 const CREATURE_TYPES=['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
+
 let allStudents=[];
-let currentUserRole = ''; // 'admin' או 'student'
 
-// פונקציית כניסה
-function enterAs(role) {
-    if (role === 'admin') {
-        const pass = document.getElementById('adminPass').value;
-        if (pass !== 'rabenu247') {
-            alert('קוד שגוי!');
-            return;
-        }
-        document.getElementById('control-panel').style.display = 'flex';
-    }
-    currentUserRole = role;
-    document.getElementById('login-overlay').style.display = 'none';
-    updateView();
-}
-
-db.ref('students').on('value', (snap) => {
-    allStudents = snap.val() ? Object.values(snap.val()) : [];
-    updateView();
+db.ref('students').on('value',(snap)=>{
+allStudents=snap.val()?Object.values(snap.val()):[];
+updateView();
 });
 
-function addStudent() {
-    const nameInput = document.getElementById('studentName');
-    if (!nameInput.value.trim()) return;
-    const id = Date.now().toString();
-    db.ref('students/' + id).set({
-        id,
-        name: nameInput.value,
-        className: document.getElementById('studentClass').value,
-        xp: 0,
-        level: 0,
-        type: CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)],
-        egg: Math.floor(Math.random() * 5)
-    });
-    nameInput.value = '';
+function addStudent(){
+
+const nameInput=document.getElementById('studentName');
+if(!nameInput.value.trim())return;
+
+const id=Date.now().toString();
+
+db.ref('students/'+id).set({
+id,
+name:nameInput.value,
+className:document.getElementById('studentClass').value,
+xp:0,
+level:0,
+type:CREATURE_TYPES[Math.floor(Math.random()*CREATURE_TYPES.length)],
+egg:Math.floor(Math.random()*5)
+});
+
+nameInput.value='';
+
 }
 
-// פונקציית לחיצה מאוחדת
-function handleCreatureClick(id, xp, lvl, name) {
-    if (currentUserRole === 'admin') {
-        addXP(id, xp, lvl);
-    } else {
-        openTasks(name);
-    }
+function addXP(id,xp,lvl){
+
+const img=document.getElementById('img-'+id);
+const card=img?.closest('.student-card');
+
+if(img){
+
+img.style.pointerEvents="none";
+setTimeout(()=>img.style.pointerEvents="auto",400);
+
+img.classList.remove('glow-effect');
+requestAnimationFrame(()=>img.classList.add('glow-effect'));
+
+if(card){
+const xpFloat=document.createElement('div');
+xpFloat.className='xp-float';
+xpFloat.innerText='+10 XP';
+card.appendChild(xpFloat);
+setTimeout(()=>xpFloat.remove(),800);
 }
 
-function openTasks(name) {
-    document.getElementById('modal-title').innerText = "המשימות של " + name;
-    document.getElementById('modal-overlay').style.display = 'flex';
 }
 
-function closeModal() {
-    document.getElementById('modal-overlay').style.display = 'none';
+let nxp=xp+10;
+let nlv=lvl;
+let levelUp=false;
+let hatch=false;
+
+if(nxp>=100){
+nlv++;
+nxp=0;
+levelUp=true;
+
+if(lvl===0){
+hatch=true;
+}
 }
 
-function addXP(id, xp, lvl) {
-    const img = document.getElementById('img-' + id);
-    const card = img?.closest('.student-card');
-
-    if (img) {
-        img.style.pointerEvents = "none";
-        setTimeout(() => img.style.pointerEvents = "auto", 400);
-        img.classList.remove('glow-effect');
-        requestAnimationFrame(() => img.classList.add('glow-effect'));
-
-        if (card) {
-            const xpFloat = document.createElement('div');
-            xpFloat.className = 'xp-float';
-            xpFloat.innerText = '+10 XP';
-            card.appendChild(xpFloat);
-            setTimeout(() => xpFloat.remove(), 800);
-        }
-    }
-
-    let nxp = xp + 10;
-    let nlv = lvl;
-    let levelUp = false;
-
-    if (nxp >= 100) {
-        nlv++;
-        nxp = 0;
-        levelUp = true;
-    }
-
-    if (levelUp && card) {
-        const levelTag = document.createElement('div');
-        levelTag.className = 'levelup';
-        levelTag.innerText = 'LEVEL UP!';
-        card.appendChild(levelTag);
-        setTimeout(() => levelTag.remove(), 1000);
-    }
-
-    db.ref('students/' + id).update({ xp: nxp, level: nlv });
+if(levelUp && card){
+const levelTag=document.createElement('div');
+levelTag.className='levelup';
+levelTag.innerText='LEVEL UP!';
+card.appendChild(levelTag);
+setTimeout(()=>levelTag.remove(),1000);
 }
 
-function updateView() {
-    const grid = document.getElementById('farm-grid');
-    const searchTerm = document.getElementById('search').value.toLowerCase();
-    const sortBy = document.getElementById('sortBy').value;
+if(hatch && img && card){
 
-    let filtered = allStudents.filter(s => s.name.toLowerCase().includes(searchTerm));
-    filtered.sort((a, b) => {
-        if (sortBy === 'name') return a.name.localeCompare(b.name);
-        if (sortBy === 'level') return b.level - a.level;
-        return a.className.localeCompare(b.className);
-    });
+img.classList.add("hatch-crack");
 
-    grid.innerHTML = filtered.map(s => {
-        const isShaking = (s.level === 0 && s.xp >= 90) ? 'shake' : '';
-        const eggNum = (s.egg !== undefined) ? s.egg + 1 : 1;
-        const imgPath = s.level === 0 ? `images/egg${eggNum}.png` : `images/${s.type}${s.level >= 20 ? 3 : (s.level >= 10 ? 2 : 1)}.png`;
+const flash=document.createElement("div");
+flash.className="hatch-flash";
+card.appendChild(flash);
 
-        return `
-            <div class="student-card">
-                <div class="level-text-badge">Lv.${s.level}</div>
-                ${currentUserRole === 'admin' ? `<button class="remove-btn" onclick="if(confirm('למחוק?')) db.ref('students/${s.id}').remove()">✖</button>` : ''}
-                <img id="img-${s.id}" src="${imgPath}" class="creature-img ${isShaking}" 
-                onclick="handleCreatureClick('${s.id}', ${s.xp}, ${s.level}, '${s.name}')">
-                <div style="font-weight:bold;font-size:1.2em;margin-top:5px;">${s.name}</div>
-                <div style="color:#555;font-size:0.9em;">כיתה ${s.className}</div>
-                <div class="xp-container">
-                    <div class="xp-bar" style="width:${s.xp}%"></div>
-                </div>
-            </div>`;
-    }).join('');
+setTimeout(()=>{
+db.ref('students/'+id).update({
+xp:nxp,
+level:nlv
+});
+},900);
+
+setTimeout(()=>flash.remove(),500);
+
+return;
 }
+
+setTimeout(()=>{
+db.ref('students/'+id).update({
+xp:nxp,
+level:nlv
+});
+},450);
+
+}
+
+function updateView(){
+
+const grid=document.getElementById('farm-grid');
+
+const searchTerm=document.getElementById('search').value.toLowerCase();
+const sortBy=document.getElementById('sortBy').value;
+
+let filtered=allStudents.filter(s=>s.name.toLowerCase().includes(searchTerm));
+
+filtered.sort((a,b)=>{
+
+if(sortBy==='name')return a.name.localeCompare(b.name);
+if(sortBy==='level')return b.level-a.level;
+return a.className.localeCompare(b.className);
+
+});
+
+grid.innerHTML=filtered.map(s=>{
+
+const isShaking=(s.level===0 && s.xp>=90)?'shake':'';
+
+const eggNum=(s.egg!==undefined)?s.egg+1:1;
+
+const imgPath=
+s.level===0
+?`images/egg${eggNum}.png`
+:`images/${s.type}${s.level>=20?3:(s.level>=10?2:1)}.png`;
+
+return`
+
+<div class="student-card">
+
+<div class="level-text-badge">Lv.${s.level}</div>
+
+<button class="remove-btn" onclick="if(confirm('למחוק?')) db.ref('students/${s.id}').remove()">✖</button>
+
+<img id="img-${s.id}" src="${imgPath}" class="creature-img ${isShaking}"
+onclick="addXP('${s.id}',${s.xp},${s.level})">
+
+<div style="font-weight:bold;font-size:1.2em;margin-top:5px;">${s.name}</div>
+
+<div style="color:#555;font-size:0.9em;">כיתה ${s.className}</div>
+
+<div class="xp-container">
+<div class="xp-bar" style="width:${s.xp}%"></div>
+</div>
+
+</div>
+
+`;
+
+}).join('');
+
+}
+
 </script>
 
 </body>
 </html>
+
+
+
