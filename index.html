@@ -563,9 +563,11 @@ function initAdminSubmissions() {
               d.innerHTML = `
     <div style="font-weight:bold; color:#2e7d32;">מאת: ${sub.studentName}</div>
     <div style="margin: 5px 0; font-size: 0.95em;">
-        ${sub.fileURL 
-            ? `<a href="${sub.fileURL}" target="_blank" style="color:#1976d2; font-weight:bold;">פתח קובץ מטלה: ${sub.fileName}</a>` 
-            : `<span>${sub.content}</span>`}
+       ${sub.fileURL 
+    ? `<a href="${sub.fileURL}" target="_blank" download style="background:#4caf50; color:white; padding:5px 10px; border-radius:5px; text-decoration:none; font-weight:bold;">
+           הורד קובץ: ${sub.fileName}
+       </a>` 
+    : `<span>${sub.content}</span>`}
     </div>
     <div style="display:flex; gap:5px; margin-top:5px;">
         <button onclick="approveSub('${sub.id}', '${sub.studentId}', 1)" style="background:#4caf50;">אשר מלא ✅</button>
@@ -629,6 +631,7 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
 
 
 
