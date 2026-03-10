@@ -255,13 +255,13 @@ button {
     <input type="text" id="taskLink" placeholder="קישור למטלה (אופציונלי)" style="flex:1;">
     <input type="date" id="taskDeadline" style="flex:1;">
     <input type="number" id="taskXP" placeholder="XP למטלה" value="20" style="width:120px;">
-<button onclick="addTask()" style="background-color:#1976d2;">פרסם מטלה חדשה 📋</button>
+
     </div>
-    <div style="width:100%; margin-bottom:10px; text-align:right;">
+    <div style="width:100%; margin-bottom:10px; text-align:right; display:flex; justify-content: space-between;">
     <button onclick="window.open('https://send.magicode.me/', '_blank')" 
             style="background:#ff9800; color:white; padding:10px 15px; border:none; border-radius:8px; cursor:pointer;">
         העלאת קובץ מטלה 📤
-    </button>
+    </button><button onclick="addTask()" style="background-color:#1976d2;">פרסם מטלה חדשה 📋</button>
 </div>
 
     <div id="admin-submissions" style="width:100%; margin-top:20px; background:#f1f8e9; padding:15px; border-radius:10px; border:1px dashed #2e7d32; text-align:right;">
@@ -630,6 +630,7 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
 
 
 
