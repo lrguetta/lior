@@ -381,9 +381,8 @@ function addStudent() {
     nameInput.value = '';
 }
 
-function addXP(id, xp, lvl) {
-   // רק המנהל יכול לתת XP
-if (currentUser !== 'admin') return;
+function addXP(id, xp, lvl, xpAmount = 10) {
+    if (currentUser !== 'admin') return;
 
     const img = document.getElementById('img-' + id);
     const card = img?.closest('.student-card');
@@ -393,15 +392,16 @@ if (currentUser !== 'admin') return;
         requestAnimationFrame(() => img.classList.add('glow-effect'));
         const xpFloat = document.createElement('div');
         xpFloat.className = 'xp-float';
-        xpFloat.innerText = '+10 XP';
+        xpFloat.innerText = `+${xpAmount} XP`;
         card.appendChild(xpFloat);
         setTimeout(() => xpFloat.remove(), 800);
     }
 
-    let nxp = xp + 10;
+    let nxp = xp + xpAmount;
     let nlv = lvl;
     if (nxp >= 100) {
-        nlv++; nxp = 0;
+        nlv++;
+        nxp = nxp - 100;
         if (card) {
             const levelTag = document.createElement('div');
             levelTag.className = 'levelup';
@@ -410,11 +410,11 @@ if (currentUser !== 'admin') return;
             setTimeout(() => levelTag.remove(), 2000);
         }
     }
-    setTimeout(() => {
-    db.ref('students/' + id).update({ xp: nxp, level: nlv });
-}, 500);
-}
 
+    setTimeout(() => {
+        db.ref('students/' + id).update({ xp: nxp, level: nlv });
+    }, 500);
+}
 function updateView() {
     const grid = document.getElementById('farm-grid');
     if (!currentUser) return;
@@ -537,12 +537,15 @@ function initAdminSubmissions() {
             Object.values(subs).forEach(sub => {
                 const d = document.createElement('div');
                 d.style = "background:white; padding:10px; margin:5px 0; border-radius:8px; border-right:4px solid gold; color: black; text-align: right; box-shadow: 0 2px 4px rgba(0,0,0,0.1);";
+
                 d.innerHTML = `
                     <div style="font-weight:bold; color:#2e7d32;">מאת: ${sub.studentName}</div>
                     <div style="margin: 5px 0; font-size: 0.95em;">${sub.content}</div>
-                    <button onclick="approveSub('${sub.id}', '${sub.studentId}')" style="background:#4caf50; color:white; border:none; border-radius:5px; padding:8px; cursor:pointer; width:100%; font-weight:bold;">
-                        אשר ושלח 20 XP ✅
-                    </button>
+                    <div style="display:flex; gap:5px; margin-top:5px;">
+                        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 1)" style="background:#4caf50; color:white; border:none; border-radius:5px; padding:6px; flex:1; cursor:pointer;">אשר מלא ✅</button>
+                        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 0.5)" style="background:#ffc107; color:black; border:none; border-radius:5px; padding:6px; flex:1; cursor:pointer;">חצי 🟡</button>
+                        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 0)" style="background:#f44336; color:white; border:none; border-radius:5px; padding:6px; flex:1; cursor:pointer;">בטל ❌</button>
+                    </div>
                 `;
                 container.appendChild(d);
             });
@@ -551,22 +554,28 @@ function initAdminSubmissions() {
         }
     });
 }
-
 // פונקציית אישור הגשה מתוקנת
-function approveSub(subId, studentId) {
+function approveSub(subId, studentId, factor = 1) {
     const s = allStudents.find(st => st.id === studentId);
-    if (s) {
-        addXP(studentId, s.xp, s.level);
-        setTimeout(() => {
-            const updatedS = allStudents.find(st => st.id === studentId);
-            addXP(studentId, updatedS.xp, updatedS.level);
-        }, 500);
-        db.ref('submissions/' + subId).remove();
+    if (!s) {
+        alert("שגיאה בזיהוי תלמיד");
+        return;
     }
+
+    // אם factor = 0 → בטל, רק מוחק את ההגשה
+    if (factor > 0) {
+        const xpToAdd = Math.round(20 * factor); // 20 XP מלא × factor
+        addXP(studentId, s.xp, s.level, xpToAdd);
+    }
+
+    // מוחק את ההגשה מהמערכת
+    db.ref('submissions/' + subId).remove();
+}
 }
 </script>
 </body>
 </html>
+
 
 
 
