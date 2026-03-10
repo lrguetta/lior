@@ -458,14 +458,26 @@ function openSubmitModal(id, title) {
 function closeModal() { document.getElementById('submit-modal').style.display = 'none'; }
 
 function sendSubmission() {
+
     const content = document.getElementById('submit-content').value;
-    if (!content) return;
+    if (!content) return alert("כתוב תשובה או קישור");
+
     const student = allStudents.find(s => s.id === currentUser);
+    if (!student) return alert("שגיאה בזיהוי תלמיד");
+
     const subId = Date.now().toString();
+
     db.ref('submissions/' + subId).set({
-        id: subId, studentName: student.name, studentId: student.id, content: content
+        id: subId,
+        studentName: student.name,
+        studentId: student.id,
+        taskId: currentTaskToSubmit,
+        content: content,
+        time: Date.now()
     });
-    alert("נשלח!");
+
+    document.getElementById('submit-content').value = "";
+    alert("המטלה נשלחה בהצלחה! 🎉");
     closeModal();
 }
 
@@ -486,7 +498,8 @@ db.ref('submissions').on('value', (snap) => {
             const d = document.createElement('div');
             d.style = "background:white; padding:10px; margin:5px 0; border-radius:8px; border-right:4px solid gold;";
             d.innerHTML = `
-                <b>${sub.studentName}:</b> ${sub.content}<br>
+                <b>${sub.studentName}</b><br>
+${sub.content}<br>
                 <button onclick="approveSub('${sub.id}', '${sub.studentId}')" style="background:#4caf50; padding:5px; margin-top:5px;">
                 אשר ושלח 20 XP ✅</button>
             `;
@@ -513,4 +526,5 @@ function approveSub(subId, studentId) {
 </script>
 </body>
 </html>
+
 
