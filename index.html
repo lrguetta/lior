@@ -255,6 +255,10 @@ button {
 </div>
     </div>
 </div>
+<div id="tasks-area">
+    <h3>משימות להשלמה 📝</h3>
+    <div id="tasks-list"></div>
+</div>    
 
 <div id="farm-grid"></div>
 
@@ -446,10 +450,73 @@ function updateView() {
         </div>`;
     }).join('');
 }
+
+// --- ניהול מטלות ---
+
+// פונקציה להוספת מטלה (למורה)
+function addTask() {
+    const title = document.getElementById('taskTitle').value;
+    const link = document.getElementById('taskLink').value;
+    if (!title) return alert("חובה להזין כותרת");
+
+    const taskId = Date.now().toString();
+    db.ref('tasks/' + taskId).set({
+        id: taskId,
+        title: title,
+        link: link,
+        timestamp: Date.now()
+    });
+
+    document.getElementById('taskTitle').value = '';
+    document.getElementById('taskLink').value = '';
+}
+
+// פונקציה למחיקת מטלה (למורה)
+function deleteTask(id) {
+    if(confirm('למחוק את המטלה?')) {
+        db.ref('tasks/' + id).remove();
+    }
+}
+
+// האזנה למטלות ועדכון התצוגה
+db.ref('tasks').on('value', (snap) => {
+    const tasks = snap.val();
+    const tasksList = document.getElementById('tasks-list');
+    tasksList.innerHTML = '';
+    
+    if (tasks) {
+        Object.values(tasks).reverse().forEach(task => {
+            const card = document.createElement('div');
+            card.className = 'task-card';
+            card.innerHTML = `
+                <div class="task-info">
+                    <h4>${task.title}</h4>
+                    ${task.link ? `<a href="${task.link}" target="_blank">לחץ כאן למעבר למטלה 🔗</a>` : ''}
+                </div>
+                <div>
+                    ${currentUser === 'admin' ? 
+                        `<button onclick="deleteTask('${task.id}')" style="background:#ff5252; padding:5px 10px;">מחק</button>` : 
+                        `<button onclick="alert('בהצלחה במשימה!')" style="background:#4caf50;">בוצע!</button>`}
+                </div>
+            `;
+            tasksList.appendChild(card);
+        });
+    } else {
+        tasksList.innerHTML = '<p>אין מטלות כרגע. אפשר לנוח! 🌴</p>';
+    }
+});
+
+// עדכון פונקציית startApp הקיימת כדי להציג את אזור המטלות
+const originalStartApp = startApp;
+startApp = function() {
+    originalStartApp();
+    document.getElementById('tasks-area').style.display = 'block';
+}    
 </script>
 
 </body>
 </html>
+
 
 
 
