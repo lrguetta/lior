@@ -435,34 +435,42 @@ function updateView() {
     }).join('');
 }
 
-// לוגיקת מטלות
-db.ref('tasks').on('value', (snap) => {
-    const tasks = snap.val();
+// =====================
+// פונקציות מטלות מתוקנות
+// =====================
+
+// פונקציה שמעדכנת את רשימת המטלות בהתאם ל-currentUser
+function updateTasksList(tasks) {
     const list = document.getElementById('tasks-list');
     list.innerHTML = '';
-    if (tasks) {
-        Object.values(tasks).reverse().forEach(task => {
-            const div = document.createElement('div');
-            div.className = 'task-card';
-           //כפתור המחיקה של המטלות
-div.innerHTML = `
-    <div class="task-info">
-        <h4 style="margin:0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${task.title}</h4>
-        ${task.link ? `<a href="${task.link}" target="_blank" style="font-size:0.8em;">קישור 🔗</a>` : ''}
-    </div>
-    <div class="task-actions">
-        ${currentUser === 'admin' ? 
-            `<button onclick="deleteTask('${task.id}')" style="background:#ff5252; padding: 5px 12px; font-size: 0.85em; border-radius: 6px;">מחק 🗑️</button>` : 
-            `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2; padding: 5px 12px; font-size: 0.85em; border-radius: 6px;">הגש ✍️</button>`
-        }
-    </div>`;
-            list.appendChild(div); // השורה שחסרה והחזירה את הכל לחיים
-        });
-    } else { 
+    if (!tasks) { 
         list.innerHTML = 'אין מטלות כרגע.'; 
+        return; 
     }
-});
 
+    Object.values(tasks).reverse().forEach(task => {
+        const div = document.createElement('div');
+        div.className = 'task-card';
+        div.innerHTML = `
+            <div class="task-info">
+                <h4 style="margin:0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${task.title}</h4>
+                ${task.link ? `<a href="${task.link}" target="_blank" style="font-size:0.8em;">קישור 🔗</a>` : ''}
+            </div>
+            <div class="task-actions">
+                ${currentUser === 'admin' ?
+                  `<button onclick="deleteTask('${task.id}')" style="background:#ff5252; padding:5px 12px; font-size:0.85em; border-radius:6px;">מחק 🗑️</button>` :
+                  `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2; padding:5px 12px; font-size:0.85em; border-radius:6px;">הגש ✍️</button>`
+                }
+            </div>`;
+        list.appendChild(div);
+    });
+}
+
+// האזנה ל-Firebase
+db.ref('tasks').on('value', (snap) => {
+    if (!currentUser) return; // מחכים לכניסה של מנהל/תלמיד
+    updateTasksList(snap.val());
+});
 function addTask() {
     const title = document.getElementById('taskTitle').value;
     const link = document.getElementById('taskLink').value;
@@ -550,6 +558,7 @@ function approveSub(subId, studentId) {
 </script>
 </body>
 </html>
+
 
 
 
