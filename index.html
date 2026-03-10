@@ -8,26 +8,6 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <style>
-
-.task-card {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    direction: rtl; /* מבטיח כיווניות נכונה */
-    gap: 15px; /* יוצר רווח קבוע בין הטקסט לכפתור */
-}
-
-.task-info {
-    flex: 1; /* נותן לטקסט למלא את כל המקום שנשאר */
-    min-width: 0; /* מונע מהטקסט לדחוף אלמנטים אחרים החוצה */
-    text-align: right;
-}
-
-.task-actions {
-    flex-shrink: 0; /* פקודה קריטית: מונעת מהכפתור להתכווץ! */
-    display: flex;
-    gap: 8px;
-}
 body {
     font-family: 'Segoe UI', Tahoma, sans-serif;
     background: #e0f7fa url('images/background.png') no-repeat center center fixed;
@@ -347,23 +327,14 @@ function studentLogin() {
 }
 
 function startApp() {
-    // מסתירים מסך התחברות
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('farm-grid').style.display = 'grid';
     document.getElementById('tasks-area').style.display = 'block';
     
-    // מציגים לוח בקרה אם המנהל
     if (currentUser === 'admin') {
         document.getElementById('control-panel').style.display = 'flex';
-        initAdminSubmissions(); // האזנה להגשות הממתינות לבדיקה
+        initAdminSubmissions(); // זה השורה שמוסיפה את התיקון
     }
-
-    // בונים מחדש את רשימת המטלות עכשיו שהמשתמש מוגדר
-    db.ref('tasks').once('value', (snap) => {
-        updateTasksList(snap.val());
-    });
-
-    // רינדור היצורים בחווה
     updateView();
 }
 
@@ -381,8 +352,9 @@ function addStudent() {
     nameInput.value = '';
 }
 
-function addXP(id, xp, lvl, xpAmount = 10) {
-    if (currentUser !== 'admin') return;
+function addXP(id, xp, lvl) {
+   // רק המנהל יכול לתת XP
+if (currentUser !== 'admin') return;
 
     const img = document.getElementById('img-' + id);
     const card = img?.closest('.student-card');
@@ -392,16 +364,15 @@ function addXP(id, xp, lvl, xpAmount = 10) {
         requestAnimationFrame(() => img.classList.add('glow-effect'));
         const xpFloat = document.createElement('div');
         xpFloat.className = 'xp-float';
-        xpFloat.innerText = `+${xpAmount} XP`;
+        xpFloat.innerText = '+10 XP';
         card.appendChild(xpFloat);
         setTimeout(() => xpFloat.remove(), 800);
     }
 
-    let nxp = xp + xpAmount;
+    let nxp = xp + 10;
     let nlv = lvl;
     if (nxp >= 100) {
-        nlv++;
-        nxp = nxp - 100;
+        nlv++; nxp = 0;
         if (card) {
             const levelTag = document.createElement('div');
             levelTag.className = 'levelup';
@@ -410,11 +381,11 @@ function addXP(id, xp, lvl, xpAmount = 10) {
             setTimeout(() => levelTag.remove(), 2000);
         }
     }
-
     setTimeout(() => {
-        db.ref('students/' + id).update({ xp: nxp, level: nlv });
-    }, 500);
+    db.ref('students/' + id).update({ xp: nxp, level: nlv });
+}, 500);
 }
+
 function updateView() {
     const grid = document.getElementById('farm-grid');
     if (!currentUser) return;
@@ -444,42 +415,29 @@ function updateView() {
     }).join('');
 }
 
-// =====================
-// פונקציות מטלות מתוקנות
-// =====================
-
-// פונקציה שמעדכנת את רשימת המטלות בהתאם ל-currentUser
-function updateTasksList(tasks) {
+// לוגיקת מטלות
+db.ref('tasks').on('value', (snap) => {
+    const tasks = snap.val();
     const list = document.getElementById('tasks-list');
     list.innerHTML = '';
-    if (!tasks) { 
-        list.innerHTML = 'אין מטלות כרגע.'; 
-        return; 
-    }
-
-    Object.values(tasks).reverse().forEach(task => {
-        const div = document.createElement('div');
-        div.className = 'task-card';
-        div.innerHTML = `
-            <div class="task-info">
-                <h4 style="margin:0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${task.title}</h4>
-                ${task.link ? `<a href="${task.link}" target="_blank" style="font-size:0.8em;">קישור 🔗</a>` : ''}
-            </div>
-            <div class="task-actions">
-                ${currentUser === 'admin' ?
-                  `<button onclick="deleteTask('${task.id}')" style="background:#ff5252; padding:5px 12px; font-size:0.85em; border-radius:6px;">מחק 🗑️</button>` :
-                  `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2; padding:5px 12px; font-size:0.85em; border-radius:6px;">הגש ✍️</button>`
-                }
-            </div>`;
-        list.appendChild(div);
-    });
-}
-
-// האזנה ל-Firebase
-db.ref('tasks').on('value', (snap) => {
-    if (!currentUser) return; // מחכים לכניסה של מנהל/תלמיד
-    updateTasksList(snap.val());
+    if (tasks) {
+        Object.values(tasks).reverse().forEach(task => {
+            const div = document.createElement('div');
+            div.className = 'task-card';
+            div.innerHTML = `
+                <div class="task-info">
+                    <h4>${task.title}</h4>
+                    ${task.link ? `<a href="${task.link}" target="_blank">קישור למטלה 🔗</a>` : ''}
+                </div>
+                <div>
+                    ${currentUser === 'admin' ? `<button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק</button>` : 
+                    `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2;">הגש מטלה ✍️</button>`}
+                </div>`;
+            list.appendChild(div);
+        });
+    } else { list.innerHTML = 'אין מטלות כרגע.'; }
 });
+
 function addTask() {
     const title = document.getElementById('taskTitle').value;
     const link = document.getElementById('taskLink').value;
@@ -537,15 +495,12 @@ function initAdminSubmissions() {
             Object.values(subs).forEach(sub => {
                 const d = document.createElement('div');
                 d.style = "background:white; padding:10px; margin:5px 0; border-radius:8px; border-right:4px solid gold; color: black; text-align: right; box-shadow: 0 2px 4px rgba(0,0,0,0.1);";
-
                 d.innerHTML = `
                     <div style="font-weight:bold; color:#2e7d32;">מאת: ${sub.studentName}</div>
                     <div style="margin: 5px 0; font-size: 0.95em;">${sub.content}</div>
-                    <div style="display:flex; gap:5px; margin-top:5px;">
-                        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 1)" style="background:#4caf50; color:white; border:none; border-radius:5px; padding:6px; flex:1; cursor:pointer;">אשר מלא ✅</button>
-                        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 0.5)" style="background:#ffc107; color:black; border:none; border-radius:5px; padding:6px; flex:1; cursor:pointer;">חצי 🟡</button>
-                        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 0)" style="background:#f44336; color:white; border:none; border-radius:5px; padding:6px; flex:1; cursor:pointer;">בטל ❌</button>
-                    </div>
+                    <button onclick="approveSub('${sub.id}', '${sub.studentId}')" style="background:#4caf50; color:white; border:none; border-radius:5px; padding:8px; cursor:pointer; width:100%; font-weight:bold;">
+                        אשר ושלח 20 XP ✅
+                    </button>
                 `;
                 container.appendChild(d);
             });
@@ -554,31 +509,22 @@ function initAdminSubmissions() {
         }
     });
 }
+
 // פונקציית אישור הגשה מתוקנת
-function approveSub(subId, studentId, factor = 1) {
+function approveSub(subId, studentId) {
     const s = allStudents.find(st => st.id === studentId);
-    if (!s) {
-        alert("שגיאה בזיהוי תלמיד");
-        return;
+    if (s) {
+        addXP(studentId, s.xp, s.level);
+        setTimeout(() => {
+            const updatedS = allStudents.find(st => st.id === studentId);
+            addXP(studentId, updatedS.xp, updatedS.level);
+        }, 500);
+        db.ref('submissions/' + subId).remove();
     }
-
-    // אם factor = 0 → בטל, רק מוחק את ההגשה
-    if (factor > 0) {
-        const xpToAdd = Math.round(20 * factor); // 20 XP מלא × factor
-        addXP(studentId, s.xp, s.level, xpToAdd);
-    }
-
-    // מוחק את ההגשה מהמערכת
-    db.ref('submissions/' + subId).remove();
-}
 }
 </script>
 </body>
 </html>
-
-
-
-
 
 
 
