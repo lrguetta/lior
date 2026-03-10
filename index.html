@@ -224,6 +224,12 @@ button {
             <option value="class">מיין לפי כיתה</option>
         </select>
         <button onclick="location.reload()" style="background:#555;">יציאה</button>
+        <hr style="width:100%; margin: 15px 0;">
+<div style="width:100%; display:flex; flex-wrap:wrap; gap:10px;">
+    <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="flex:1;">
+    <input type="text" id="taskLink" placeholder="קישור למטלה (אופציונלי)" style="flex:1;">
+    <button onclick="addTask()" style="background-color:#1976d2;">פרסם מטלה חדשה 📋</button>
+</div>
     </div>
 </div>
 
@@ -421,4 +427,5 @@ function updateView() {
 
 </body>
 </html>
+
 
