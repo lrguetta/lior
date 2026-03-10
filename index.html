@@ -19,7 +19,6 @@ body {
     align-items: center;
 }
 
-/* מסך כניסה */
 #login-screen {
     background: rgba(255, 255, 255, 0.95);
     padding: 30px;
@@ -32,7 +31,7 @@ body {
 }
 
 #control-panel {
-    display: none; /* מוסתר בהתחלה */
+    display: none; 
     background: rgba(255, 255, 255, 0.95);
     padding: 25px;
     border-radius: 20px;
@@ -40,7 +39,6 @@ body {
     margin-bottom: 30px;
     width: 90%;
     max-width: 900px;
-    display: none; 
     flex-wrap: wrap;
     gap: 15px;
     justify-content: center;
@@ -63,7 +61,7 @@ button {
 }
 
 #farm-grid {
-    display: none; /* מוסתר בהתחלה */
+    display: none;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 25px;
     width: 100%;
@@ -100,7 +98,6 @@ button {
     height: 120px;
     object-fit: contain;
     margin-bottom: 10px;
-    transition: transform 0.1s;
 }
 
 /* אנימציות */
@@ -175,6 +172,7 @@ button {
     80% { opacity: 1; transform: translate(-50%, -40px) scale(1); }
     100% { opacity: 0; transform: translate(-50%, -60px) scale(0.8); }
 }
+
 .hatch-flash {
     position: absolute;
     width: 120px;
@@ -192,7 +190,7 @@ button {
     width: 90%;
     max-width: 1200px;
     margin-bottom: 20px;
-    display: none; /* יוצג רק אחרי כניסה */
+    display: none;
 }
 
 .task-card {
@@ -209,12 +207,6 @@ button {
 
 .task-info h4 { margin: 0; color: #333; }
 .task-info a { color: #1976d2; font-size: 0.9em; }
-
-<div id="admin-submissions" style="width:100%; margin-top:20px; background:#f1f8e9; padding:10px; border-radius:10px; border:1px dashed #2e7d32;">
-    <h4>הגשות שממתינות לבדיקה 📥</h4>
-    <div id="submissions-list">אין הגשות חדשות</div>
-</div>
-    
 </style>
 </head>
 
@@ -237,12 +229,14 @@ button {
 </div>
 
 <div id="control-panel">
-    <input type="text" id="studentName" placeholder="שם התלמיד">
-    <select id="studentClass">
-        <option value="ה1">כיתה ה'1</option>
-        <option value="ה2">כיתה ה'2</option>
-    </select>
-    <button onclick="addStudent()">צרף יצור לחווה 🐾</button>
+    <div style="display:flex; gap:10px; width:100%; flex-wrap:wrap; justify-content:center;">
+        <input type="text" id="studentName" placeholder="שם התלמיד">
+        <select id="studentClass">
+            <option value="ה1">כיתה ה'1</option>
+            <option value="ה2">כיתה ה'2</option>
+        </select>
+        <button onclick="addStudent()">צרף יצור לחווה 🐾</button>
+    </div>
 
     <div style="width:100%; display:flex; gap:10px; margin-top:10px;">
         <input type="text" id="search" placeholder="חפש לפי שם..." oninput="updateView()" style="flex:2;">
@@ -252,20 +246,37 @@ button {
             <option value="class">מיין לפי כיתה</option>
         </select>
         <button onclick="location.reload()" style="background:#555;">יציאה</button>
-        <hr style="width:100%; margin: 15px 0;">
-<div style="width:100%; display:flex; flex-wrap:wrap; gap:10px;">
-    <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="flex:1;">
-    <input type="text" id="taskLink" placeholder="קישור למטלה (אופציונלי)" style="flex:1;">
-    <button onclick="addTask()" style="background-color:#1976d2;">פרסם מטלה חדשה 📋</button>
-</div>
+    </div>
+
+    <hr style="width:100%; margin: 15px 0;">
+    
+    <div style="width:100%; display:flex; flex-wrap:wrap; gap:10px;">
+        <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="flex:1;">
+        <input type="text" id="taskLink" placeholder="קישור למטלה (אופציונלי)" style="flex:1;">
+        <button onclick="addTask()" style="background-color:#1976d2;">פרסם מטלה חדשה 📋</button>
+    </div>
+
+    <div id="admin-submissions" style="width:100%; margin-top:20px; background:#f1f8e9; padding:15px; border-radius:10px; border:1px dashed #2e7d32; text-align:right;">
+        <h4 style="margin:0 0 10px 0;">הגשות שממתינות לבדיקה 📥</h4>
+        <div id="submissions-list">אין הגשות חדשות</div>
     </div>
 </div>
+
 <div id="tasks-area">
     <h3>משימות להשלמה 📝</h3>
     <div id="tasks-list"></div>
-</div>    
+</div>
 
 <div id="farm-grid"></div>
+
+<div id="submit-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:25px; border-radius:15px; box-shadow:0 0 20px rgba(0,0,0,0.5); z-index:1000; width:300px; text-align:center; border:3px solid #1976d2;">
+    <h3 id="modal-task-title">הגשת מטלה</h3>
+    <textarea id="submit-content" placeholder="הדבק כאן קישור או כתוב תשובה..." style="width:100%; height:80px; margin-bottom:10px; padding:5px;"></textarea>
+    <div style="display:flex; gap:10px;">
+        <button onclick="sendSubmission()" style="flex:1; background:#4caf50;">שלח הגשה 🚀</button>
+        <button onclick="closeModal()" style="flex:1; background:#999;">ביטול</button>
+    </div>
+</div>
 
 <script>
 const firebaseConfig = {
@@ -283,14 +294,11 @@ const db = firebase.database();
 
 const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
 let allStudents = [];
-let currentUser = null; // 'admin' או ID של תלמיד
+let currentUser = null;
 
-// האזנה לנתונים
 db.ref('students').on('value', (snap) => {
     const data = snap.val();
     allStudents = data ? Object.values(data) : [];
-    
-    // עדכון הרשימה הנגללת בכניסה
     const select = document.getElementById('studentSelect');
     const currentVal = select.value;
     select.innerHTML = '<option value="">בחר את שמך...</option>';
@@ -301,7 +309,6 @@ db.ref('students').on('value', (snap) => {
         select.appendChild(opt);
     });
     select.value = currentVal;
-
     updateView();
 });
 
@@ -322,6 +329,7 @@ function studentLogin() {
 function startApp() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('farm-grid').style.display = 'grid';
+    document.getElementById('tasks-area').style.display = 'block';
     if (currentUser === 'admin') {
         document.getElementById('control-panel').style.display = 'flex';
     }
@@ -333,8 +341,7 @@ function addStudent() {
     if (!nameInput.value.trim()) return;
     const id = Date.now().toString();
     db.ref('students/' + id).set({
-        id,
-        name: nameInput.value,
+        id, name: nameInput.value,
         className: document.getElementById('studentClass').value,
         xp: 0, level: 0,
         type: CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)],
@@ -344,29 +351,15 @@ function addStudent() {
 }
 
 function addXP(id, xp, lvl) {
-    // 1. אם זה תלמיד שלוחץ על מישהו אחר
-    if (currentUser !== 'admin' && currentUser !== id) {
-        alert("ואהבת לרעך כמוך! ❤️ (רק המורה יכול לתת XP)");
-        return;
-    }
-
-    // 2. אם זה תלמיד שלוחץ על עצמו - נחסום הוספת XP (רק המורה נותן)
-    if (currentUser !== 'admin' && currentUser === id) {
-        // אפשר להוסיף כאן הודעה קטנה או פשוט לא לעשות כלום
-        return; 
-    }
-
-    // --- מכאן והלאה: רק המנהל (admin) מגיע לקוד הזה ---
+    if (currentUser !== 'admin' && currentUser !== id) return;
+    if (currentUser !== 'admin' && currentUser === id) return;
 
     const img = document.getElementById('img-' + id);
     const card = img?.closest('.student-card');
 
     if (img) {
-        img.style.pointerEvents = "none";
-        setTimeout(() => img.style.pointerEvents = "auto", 400);
         img.classList.remove('glow-effect');
         requestAnimationFrame(() => img.classList.add('glow-effect'));
-
         const xpFloat = document.createElement('div');
         xpFloat.className = 'xp-float';
         xpFloat.innerText = '+10 XP';
@@ -376,47 +369,24 @@ function addXP(id, xp, lvl) {
 
     let nxp = xp + 10;
     let nlv = lvl;
-    let isHatching = false;
-
     if (nxp >= 100) {
-        nlv++;
-        nxp = 0;
-        if (lvl === 0) isHatching = true;
-
-        // תיקון אנימציית Level Up (הוספת האלמנט לכרטיס)
+        nlv++; nxp = 0;
         if (card) {
             const levelTag = document.createElement('div');
             levelTag.className = 'levelup';
             levelTag.innerText = 'LEVEL UP! ✨';
             card.appendChild(levelTag);
-            setTimeout(() => levelTag.remove(), 2000); // הארכתי מעט את זמן התצוגה
+            setTimeout(() => levelTag.remove(), 2000);
         }
     }
-
-    if (isHatching && img && card) {
-        img.classList.add("hatch-crack");
-        const flash = document.createElement("div");
-        flash.className = "hatch-flash";
-        card.appendChild(flash);
-        setTimeout(() => {
-            db.ref('students/' + id).update({ xp: nxp, level: nlv });
-            flash.remove();
-        }, 900);
-        return;
-    }
-
-    setTimeout(() => {
-        db.ref('students/' + id).update({ xp: nxp, level: nlv });
-    }, 450);
+    db.ref('students/' + id).update({ xp: nxp, level: nlv });
 }
 
 function updateView() {
     const grid = document.getElementById('farm-grid');
     if (!currentUser) return;
-
     const searchTerm = document.getElementById('search').value.toLowerCase();
     const sortBy = document.getElementById('sortBy').value;
-
     let filtered = allStudents.filter(s => s.name.toLowerCase().includes(searchTerm));
     filtered.sort((a, b) => {
         if (sortBy === 'name') return a.name.localeCompare(b.name);
@@ -425,239 +395,108 @@ function updateView() {
     });
 
     grid.innerHTML = filtered.map(s => {
-        const isShaking = (s.level === 0 && s.xp >= 90) ? 'shake' : '';
         const eggNum = (s.egg !== undefined) ? s.egg + 1 : 1;
         const isMine = currentUser === s.id;
-        
-        const imgPath = s.level === 0 
-            ? `images/egg${eggNum}.png` 
-            : `images/${s.type}${s.level >= 20 ? 3 : (s.level >= 10 ? 2 : 1)}.png`;
-
-        const canClick = (currentUser === 'admin' || isMine);
-
+        const imgPath = s.level === 0 ? `images/egg${eggNum}.png` : `images/${s.type}${s.level >= 20 ? 3 : (s.level >= 10 ? 2 : 1)}.png`;
         return `
         <div class="student-card ${isMine ? 'my-creature' : ''}">
             <div class="level-text-badge">Lv.${s.level}</div>
-            
-            ${currentUser === 'admin' ? 
-                `<button class="remove-btn" onclick="if(confirm('למחוק?')) db.ref('students/${s.id}').remove()">✖</button>` : ''}
-
-            <img id="img-${s.id}" src="${imgPath}" class="creature-img ${isShaking}" 
-                 style="cursor: ${canClick ? 'pointer' : 'default'}"
-                 onclick="addXP('${s.id}',${s.xp},${s.level})">
-
-            <div style="font-weight:bold;font-size:1.2em;margin-top:5px;">${s.name}</div>
+            ${currentUser === 'admin' ? `<button class="remove-btn" onclick="if(confirm('למחוק?')) db.ref('students/${s.id}').remove()">✖</button>` : ''}
+            <img id="img-${s.id}" src="${imgPath}" class="creature-img" onclick="addXP('${s.id}',${s.xp},${s.level})">
+            <div style="font-weight:bold;font-size:1.2em;">${s.name}</div>
             <div style="color:#555;font-size:0.9em;">כיתה ${s.className}</div>
-            <div class="xp-container">
-                <div class="xp-bar" style="width:${s.xp}%"></div>
-            </div>
+            <div class="xp-container"><div class="xp-bar" style="width:${s.xp}%"></div></div>
             ${isMine ? '<div style="font-size:0.8em; color:#2e7d32; font-weight:bold;">זה היצור שלי! ✨</div>' : ''}
         </div>`;
     }).join('');
 }
 
-// --- ניהול מטלות ---
-
-// פונקציה להוספת מטלה (למורה)
-function addTask() {
-    const title = document.getElementById('taskTitle').value;
-    const link = document.getElementById('taskLink').value;
-    if (!title) return alert("חובה להזין כותרת");
-
-    const taskId = Date.now().toString();
-    db.ref('tasks/' + taskId).set({
-        id: taskId,
-        title: title,
-        link: link,
-        timestamp: Date.now()
-    });
-
-    document.getElementById('taskTitle').value = '';
-    document.getElementById('taskLink').value = '';
-}
-
-// פונקציה למחיקת מטלה (למורה)
-function deleteTask(id) {
-    if(confirm('למחוק את המטלה?')) {
-        db.ref('tasks/' + id).remove();
-    }
-}
-
-// האזנה למטלות ועדכון התצוגה - גרסה מעודכנת עם כפתור הגשה
+// לוגיקת מטלות
 db.ref('tasks').on('value', (snap) => {
     const tasks = snap.val();
-    const tasksList = document.getElementById('tasks-list');
-    
-    // הצגת אזור המטלות רק אם המשתמש מחובר (תלמיד או מורה)
-    const tasksArea = document.getElementById('tasks-area');
-    if (currentUser && tasksArea) tasksArea.style.display = 'block';
-
-    tasksList.innerHTML = '';
-    
+    const list = document.getElementById('tasks-list');
+    list.innerHTML = '';
     if (tasks) {
         Object.values(tasks).reverse().forEach(task => {
-            const card = document.createElement('div');
-            card.className = 'task-card';
-            card.innerHTML = `
-                <div class="task-info">
-                    <h4>${task.title}</h4>
-                    ${task.link ? `<a href="${task.link}" target="_blank">לחץ כאן למעבר למטלה 🔗</a>` : ''}
-                </div>
-                <div>
-                    ${currentUser === 'admin' ? 
-                        `<button onclick="deleteTask('${task.id}')" style="background:#ff5252; padding:5px 10px;">מחק</button>` : 
-                        `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2; color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:bold;">הגש מטלה ✍️</button>`}
-                </div>
-            `;
-            tasksList.appendChild(card);
-        });
-    } else {
-        tasksList.innerHTML = '<p>אין מטלות כרגע. אפשר לנוח! 🌴</p>';
-    }
-});
-
-// עדכון פונקציית startApp הקיימת כדי להציג את אזור המטלות
-const originalStartApp = startApp;
-startApp = function() {
-    originalStartApp();
-    document.getElementById('tasks-area').style.display = 'block';
-}    
-
-// --- לוגיקת מטלות והגשות (חלק 3) ---
-
-let currentTaskToSubmit = null;
-
-// פונקציה לפתיחת חלונית ההגשה (לתלמיד)
-function openSubmitModal(taskId, taskTitle) {
-    currentTaskToSubmit = taskId;
-    document.getElementById('modal-task-title').innerText = "הגשה עבור: " + taskTitle;
-    document.getElementById('submit-modal').style.display = 'block';
-}
-
-// סגירת החלונית
-function closeModal() {
-    document.getElementById('submit-modal').style.display = 'none';
-}
-
-// שליחת ההגשה ל-Firebase (לתלמיד)
-function sendSubmission() {
-    const content = document.getElementById('submit-content').value;
-    if (!content) return alert("בבקשה כתוב משהו או הדבק קישור לפני השליחה");
-
-    const student = allStudents.find(s => s.id === currentUser);
-    if (!student) return;
-
-    const subId = Date.now().toString();
-    db.ref('submissions/' + subId).set({
-        id: subId,
-        taskId: currentTaskToSubmit,
-        studentId: currentUser,
-        studentName: student.name,
-        content: content,
-        status: 'pending'
-    });
-
-    alert("ההגשה נשלחה בהצלחה! היא תמתין לאישור המורה ✨");
-    document.getElementById('submit-content').value = '';
-    closeModal();
-}
-
-// האזנה למטלות ועדכון התצוגה (לכולם)
-db.ref('tasks').on('value', (snap) => {
-    const tasks = snap.val();
-    const tasksArea = document.getElementById('tasks-area');
-    const tasksList = document.getElementById('tasks-list');
-    
-    // הצגת אזור המטלות רק אם מחוברים
-    if (currentUser) tasksArea.style.display = 'block';
-    
-    tasksList.innerHTML = '';
-    if (tasks) {
-        Object.values(tasks).reverse().forEach(task => {
-            const card = document.createElement('div');
-            card.className = 'task-card';
-            card.innerHTML = `
+            const div = document.createElement('div');
+            div.className = 'task-card';
+            div.innerHTML = `
                 <div class="task-info">
                     <h4>${task.title}</h4>
                     ${task.link ? `<a href="${task.link}" target="_blank">קישור למטלה 🔗</a>` : ''}
                 </div>
                 <div>
-                    ${currentUser === 'admin' ? 
-                        `<button onclick="deleteTask('${task.id}')" style="background:#ff5252; padding:5px;">מחק</button>` : 
-                        `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2; color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer;">הגש מטלה ✍️</button>`}
-                </div>
-            `;
-            tasksList.appendChild(card);
+                    ${currentUser === 'admin' ? `<button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק</button>` : 
+                    `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2;">הגש מטלה ✍️</button>`}
+                </div>`;
+            list.appendChild(div);
         });
-    } else {
-        tasksList.innerHTML = '<p>אין מטלות כרגע.</p>';
-    }
+    } else { list.innerHTML = 'אין מטלות כרגע.'; }
 });
 
-// ניהול הגשות (למורה בלבד)
-db.ref('submissions').on('value', (snap) => {
-    if (currentUser !== 'admin') return;
-    
-    const subs = snap.val();
-    const container = document.getElementById('submissions-list');
-    container.innerHTML = '';
-
-    if (subs) {
-        Object.values(subs).forEach(sub => {
-            const div = document.createElement('div');
-            div.style = "background:white; padding:10px; margin:10px 0; border-radius:8px; border-right:4px solid #fbc02d; box-shadow: 0 2px 4px rgba(0,0,0,0.1);";
-            div.innerHTML = `
-                <div style="font-weight:bold;">תלמיד/ה: ${sub.studentName}</div>
-                <div style="margin:5px 0; color:#444; word-break: break-all;"><b>תוכן:</b> ${sub.content}</div>
-                <button onclick="approveSubmission('${sub.id}', '${sub.studentId}')" style="background:#4caf50; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; font-weight:bold;">אשר ושלח 20 XP ✅</button>
-            `;
-            container.appendChild(div);
-        });
-    } else {
-        container.innerText = 'אין הגשות חדשות כרגע';
-    }
-});
-
-// פונקציית אישור הגשה (למורה)
-function approveSubmission(subId, studentId) {
-    const student = allStudents.find(s => s.id === studentId);
-    if (student) {
-        // הוספת XP (20 נקודות בונוס)
-        addXP(studentId, student.xp, student.level); 
-        // מחיקת ההגשה מהרשימה
-        db.ref('submissions/' + subId).remove();
-    }
-}
-
-// מחיקת מטלה
-function deleteTask(id) {
-    if(confirm('למחוק את המטלה?')) db.ref('tasks/' + id).remove();
-}
-
-// פונקציה להוספת מטלה (למורה)
 function addTask() {
     const title = document.getElementById('taskTitle').value;
     const link = document.getElementById('taskLink').value;
-    if (!title) return alert("חובה להזין כותרת");
-    const taskId = Date.now().toString();
-    db.ref('tasks/' + taskId).set({ id: taskId, title: title, link: link, timestamp: Date.now() });
+    if (!title) return alert("הזן כותרת");
+    const id = Date.now().toString();
+    db.ref('tasks/' + id).set({ id, title, link });
     document.getElementById('taskTitle').value = '';
     document.getElementById('taskLink').value = '';
 }
-    
+
+function deleteTask(id) { if(confirm('למחוק?')) db.ref('tasks/' + id).remove(); }
+
+// לוגיקת הגשות
+let currentTaskToSubmit = null;
+function openSubmitModal(id, title) {
+    currentTaskToSubmit = id;
+    document.getElementById('modal-task-title').innerText = title;
+    document.getElementById('submit-modal').style.display = 'block';
+}
+function closeModal() { document.getElementById('submit-modal').style.display = 'none'; }
+
+function sendSubmission() {
+    const content = document.getElementById('submit-content').value;
+    if (!content) return;
+    const student = allStudents.find(s => s.id === currentUser);
+    const subId = Date.now().toString();
+    db.ref('submissions/' + subId).set({
+        id: subId, studentName: student.name, studentId: student.id, content: content
+    });
+    alert("נשלח!");
+    closeModal();
+}
+
+db.ref('submissions').on('value', (snap) => {
+    if (currentUser !== 'admin') return;
+    const subs = snap.val();
+    const container = document.getElementById('submissions-list');
+    container.innerHTML = '';
+    if (subs) {
+        Object.values(subs).forEach(sub => {
+            const d = document.createElement('div');
+            d.style = "background:white; padding:10px; margin:5px 0; border-radius:8px; border-right:4px solid gold;";
+            d.innerHTML = `
+                <b>${sub.studentName}:</b> ${sub.content}<br>
+                <button onclick="approveSub('${sub.id}', '${sub.studentId}')" style="background:#4caf50; padding:5px; margin-top:5px;">אשר ושלח 20 XP ✅</button>
+            `;
+            container.appendChild(d);
+        });
+    } else { container.innerText = 'אין הגשות חדשות'; }
+});
+
+function approveSub(subId, studentId) {
+    const s = allStudents.find(st => st.id === studentId);
+    if (s) {
+        // הוספת 20 XP (פעמיים addXP של 10)
+        addXP(studentId, s.xp, s.level);
+        setTimeout(() => {
+            const updatedS = allStudents.find(st => st.id === studentId);
+            addXP(studentId, updatedS.xp, updatedS.level);
+        }, 500);
+        db.ref('submissions/' + subId).remove();
+    }
+}
 </script>
-<div id="submit-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:25px; border-radius:15px; box-shadow:0 0 20px rgba(0,0,0,0.5); z-index:1000; width:300px; text-align:center; border:3px solid #1976d2;">
-    <h3 id="modal-task-title">הגשת מטלה</h3>
-    <textarea id="submit-content" placeholder="הדבק כאן קישור או כתוב תשובה..." style="width:100%; height:80px; margin-bottom:10px;"></textarea>
-    <div style="display:flex; gap:10px;">
-        <button onclick="sendSubmission()" style="flex:1; background:#4caf50;">שלח הגשה 🚀</button>
-        <button onclick="closeModal()" style="flex:1; background:#999;">ביטול</button>
-    </div>
-</div>
 </body>
 </html>
-
-
-
-
-
