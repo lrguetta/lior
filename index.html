@@ -424,13 +424,14 @@ db.ref('tasks').on('value', (snap) => {
         Object.values(tasks).reverse().forEach(task => {
             const div = document.createElement('div');
             div.className = 'task-card';
-            div.innerHTML = `
+           div.innerHTML = `
                 <div class="task-info">
                     <h4>${task.title}</h4>
                     ${task.link ? `<a href="${task.link}" target="_blank">קישור למטלה 🔗</a>` : ''}
                 </div>
-                <div>
-                    ${currentUser === 'admin' ? `<button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק</button>` : 
+                <div style="display: flex; gap: 5px;">
+                    ${currentUser === 'admin' ? 
+                    `<button onclick="deleteTask('${task.id}')" style="background:#ff5252; padding: 5px 10px; font-size: 0.8em;">מחק מטלה 🗑️</button>` : 
                     `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2;">הגש מטלה ✍️</button>`}
                 </div>`;
             list.appendChild(div);
@@ -525,6 +526,7 @@ function approveSub(subId, studentId) {
 </script>
 </body>
 </html>
+
 
 
 
