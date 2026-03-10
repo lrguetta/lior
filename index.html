@@ -351,8 +351,8 @@ function addStudent() {
 }
 
 function addXP(id, xp, lvl) {
-    if (currentUser !== 'admin' && currentUser !== id) return;
-    if (currentUser !== 'admin' && currentUser === id) return;
+   // רק המנהל יכול לתת XP
+if (currentUser !== 'admin') return;
 
     const img = document.getElementById('img-' + id);
     const card = img?.closest('.student-card');
@@ -379,7 +379,9 @@ function addXP(id, xp, lvl) {
             setTimeout(() => levelTag.remove(), 2000);
         }
     }
+    setTimeout(() => {
     db.ref('students/' + id).update({ xp: nxp, level: nlv });
+}, 500);
 }
 
 function updateView() {
@@ -468,21 +470,32 @@ function sendSubmission() {
 }
 
 db.ref('submissions').on('value', (snap) => {
-    if (currentUser !== 'admin') return;
-    const subs = snap.val();
+
     const container = document.getElementById('submissions-list');
+
+    if (currentUser !== 'admin') {
+        container.innerHTML = '';
+        return;
+    }
+
+    const subs = snap.val();
     container.innerHTML = '';
+
     if (subs) {
         Object.values(subs).forEach(sub => {
             const d = document.createElement('div');
             d.style = "background:white; padding:10px; margin:5px 0; border-radius:8px; border-right:4px solid gold;";
             d.innerHTML = `
                 <b>${sub.studentName}:</b> ${sub.content}<br>
-                <button onclick="approveSub('${sub.id}', '${sub.studentId}')" style="background:#4caf50; padding:5px; margin-top:5px;">אשר ושלח 20 XP ✅</button>
+                <button onclick="approveSub('${sub.id}', '${sub.studentId}')" style="background:#4caf50; padding:5px; margin-top:5px;">
+                אשר ושלח 20 XP ✅</button>
             `;
             container.appendChild(d);
         });
-    } else { container.innerText = 'אין הגשות חדשות'; }
+    } else {
+        container.innerText = 'אין הגשות חדשות';
+    }
+
 });
 
 function approveSub(subId, studentId) {
@@ -500,3 +513,4 @@ function approveSub(subId, studentId) {
 </script>
 </body>
 </html>
+
