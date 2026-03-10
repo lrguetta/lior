@@ -253,15 +253,14 @@ button {
    <div style="width:100%; display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
     <!-- שדות הקלט -->
     <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="flex:2; min-width:100px;">
-    <input type="text" id="taskLink" placeholder="קישור להורדת המטלה" style="flex:2; min-width:100px;">
-    <input type="date" id="taskDeadline" style="flex:1; min-width:100px;">
-    <input type="number" id="taskXP" placeholder="XP למטלה" value="20" style="width:80px;">
-
-    <!-- כפתורים -->
-    <button onclick="window.open('https://send.magicode.me/', '_blank')" 
+       <button onclick="window.open('https://send.magicode.me/', '_blank')" 
             style="background:#ff9800; color:white; padding:8px 8px; border:none; border-radius:6px; cursor:pointer;">
         העלה קובץ 📤
     </button>
+    <input type="text" id="taskLink" placeholder="קישור להורדת המטלה" style="flex:2; min-width:100px;">
+    <input type="date" id="taskDeadline" style="flex:1; min-width:100px;">
+    <input type="number" id="taskXP" placeholder="XP למטלה" value="20" style="width:80px;">
+    
     <button onclick="addTask()" 
             style="background-color:#1976d2; color:white; padding:8px 8px; border:none; border-radius:6px; cursor:pointer;">
         פרסם מטלה  📋
@@ -646,6 +645,7 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
 
 
 
