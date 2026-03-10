@@ -238,7 +238,7 @@ button {
         <button onclick="addStudent()">צרף יצור לחווה 🐾</button>
           <!-- כפתור להציג/להסתיר -->
 <button onclick="toggleTaskPanel()" 
-        style="background:#4caf50; color:white; padding:8px 12px; border:none; border-radius:6px; cursor:pointer; margin-bottom:10px;">
+        style="background:#4caf50; color:white; padding:10px 12px; border:none; border-radius:6px; cursor:pointer; margin-bottom:10px;">
     פרסום מטלה חדשה 📋
 </button>
     </div>
@@ -257,14 +257,14 @@ button {
 
 <!-- כל השדות לכאן -->
 <div id="task-panel" style="display:none; width:100%;  align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
-    <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="flex:2;">
+    <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="width:100px;">
       <button onclick="window.open('https://send.magicode.me/', '_blank')" 
             style="background:#ff9800; color:white; padding:8px 8px; border:none; border-radius:6px; cursor:pointer;">
         העלה קובץ  📤
     </button>
-    <input type="text" id="taskLink" placeholder="קישור להורדת המטלה" style="flex:2;">
-    <input type="date" id="taskDeadline" style="flex:1;">
-    <input type="number" id="taskXP" placeholder="XP למטלה" value="20" style="width:80px;">
+    <input type="text" id="taskLink" placeholder="קישור להורדת המטלה" style="width:100px;">
+    <input type="date" id="taskDeadline" style="width:80px;">
+    <input type="number" id="taskXP" placeholder="XP למטלה" value="100" style="width:60px;">
   
     <button onclick="addTask()" 
             style="background-color:#1976d2; color:white; padding:8px 8px; border:none; border-radius:6px; cursor:pointer;">
@@ -662,6 +662,7 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
 
 
 
