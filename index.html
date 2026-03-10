@@ -297,8 +297,19 @@ function addStudent() {
 }
 
 function addXP(id, xp, lvl) {
-    // בדיקת הרשאה: רק המנהל או התלמיד עצמו
-    if (currentUser !== 'admin' && currentUser !== id) return;
+    // 1. אם זה תלמיד שלוחץ על מישהו אחר
+    if (currentUser !== 'admin' && currentUser !== id) {
+        alert("ואהבת לרעך כמוך! ❤️ (רק המורה יכול לתת XP)");
+        return;
+    }
+
+    // 2. אם זה תלמיד שלוחץ על עצמו - נחסום הוספת XP (רק המורה נותן)
+    if (currentUser !== 'admin' && currentUser === id) {
+        // אפשר להוסיף כאן הודעה קטנה או פשוט לא לעשות כלום
+        return; 
+    }
+
+    // --- מכאן והלאה: רק המנהל (admin) מגיע לקוד הזה ---
 
     const img = document.getElementById('img-' + id);
     const card = img?.closest('.student-card');
@@ -325,14 +336,17 @@ function addXP(id, xp, lvl) {
         nxp = 0;
         if (lvl === 0) isHatching = true;
 
-        const levelTag = document.createElement('div');
-        levelTag.className = 'levelup';
-        levelTag.innerText = 'LEVEL UP!';
-        card.appendChild(levelTag);
-        setTimeout(() => levelTag.remove(), 1000);
+        // תיקון אנימציית Level Up (הוספת האלמנט לכרטיס)
+        if (card) {
+            const levelTag = document.createElement('div');
+            levelTag.className = 'levelup';
+            levelTag.innerText = 'LEVEL UP! ✨';
+            card.appendChild(levelTag);
+            setTimeout(() => levelTag.remove(), 2000); // הארכתי מעט את זמן התצוגה
+        }
     }
 
-    if (isHatching && img) {
+    if (isHatching && img && card) {
         img.classList.add("hatch-crack");
         const flash = document.createElement("div");
         flash.className = "hatch-flash";
