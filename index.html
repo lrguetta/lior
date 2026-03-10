@@ -274,7 +274,15 @@ button {
 <div id="submit-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:25px; border-radius:15px; box-shadow:0 0 20px rgba(0,0,0,0.5); z-index:1000; width:300px; text-align:center; border:3px solid #1976d2;">
     <h3 id="modal-task-title">הגשת מטלה</h3>
     <textarea id="submit-content" placeholder="הדבק כאן קישור או כתוב תשובה..." style="width:100%; height:80px; margin-bottom:10px; padding:5px;"></textarea>
-    <input type="file" id="submit-file" style="margin-bottom:10px;">
+    <div style="margin-bottom:10px;">
+    <button onclick="window.open('https://send.magicode.me/', '_blank')" 
+            style="background:#ff9800; color:white; padding:10px 15px; border:none; border-radius:8px; cursor:pointer;">
+        שלח קובץ חיצוני 📤
+    </button>
+    <span style="font-size:0.85em; color:#555; display:block; margin-top:5px;">
+        לאחר ההעלאה, העתק את הקישור והדבק כאן בתיבה למעלה
+    </span>
+</div>
     <div style="display:flex; gap:10px;">
         <button onclick="sendSubmission()" style="flex:1; background:#4caf50;">שלח הגשה 🚀</button>
         <button onclick="closeModal()" style="flex:1; background:#999;">ביטול</button>
@@ -510,53 +518,27 @@ function openSubmitModal(id, title) {
 function closeModal() { document.getElementById('submit-modal').style.display = 'none'; }
 
 function sendSubmission() {
-    const fileInput = document.getElementById('submit-file');
-    const content = document.getElementById('submit-content').value;
+    const content = document.getElementById('submit-content').value.trim();
 
-    if (!content && fileInput.files.length === 0) {
-        return alert("כתוב תשובה או בחר קובץ");
-    }
+    if (!content) return alert("הדבק קישור או כתוב תשובה");
 
     const student = allStudents.find(s => s.id === currentUser);
     if (!student) return alert("שגיאה בזיהוי תלמיד");
 
     const subId = Date.now().toString();
 
-    if (fileInput.files.length > 0) {
-        // יש קובץ -> נעלה ל-Firebase Storage
-        const file = fileInput.files[0];
-        const storageRef = firebase.storage().ref('submissions/' + subId + '_' + file.name);
-        storageRef.put(file).then(() => {
-            storageRef.getDownloadURL().then(url => {
-                db.ref('submissions/' + subId).set({
-                    id: subId,
-                    studentName: student.name,
-                    studentId: student.id,
-                    taskId: currentTaskToSubmit,
-                    fileURL: url,
-                    fileName: file.name,
-                    time: Date.now()
-                });
-                alert("המטלה נשלחה בהצלחה! 🎉");
-                fileInput.value = "";
-                document.getElementById('submit-content').value = "";
-                closeModal();
-            });
-        });
-    } else {
-        // רק טקסט
-        db.ref('submissions/' + subId).set({
-            id: subId,
-            studentName: student.name,
-            studentId: student.id,
-            taskId: currentTaskToSubmit,
-            content: content,
-            time: Date.now()
-        });
-        alert("המטלה נשלחה בהצלחה! 🎉");
-        document.getElementById('submit-content').value = "";
-        closeModal();
-    }
+    db.ref('submissions/' + subId).set({
+        id: subId,
+        studentName: student.name,
+        studentId: student.id,
+        taskId: currentTaskToSubmit,
+        content: content,
+        time: Date.now()
+    });
+
+    alert("המטלה נשלחה בהצלחה! 🎉");
+    document.getElementById('submit-content').value = "";
+    closeModal();
 }
 // פונקציה חדשה שמרכזת את ההאזנה להגשות למורה - תיקון ה-BUG
 function initAdminSubmissions() {
