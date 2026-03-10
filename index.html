@@ -187,6 +187,29 @@ button {
     animation: hatchFlash 0.4s ease-out forwards;
 }
 @keyframes hatchFlash { 0% { transform: translateX(-50%) scale(0.5); opacity: 1; } 100% { transform: translateX(-50%) scale(2); opacity: 0; } }
+
+#tasks-area {
+    width: 90%;
+    max-width: 1200px;
+    margin-bottom: 20px;
+    display: none; /* יוצג רק אחרי כניסה */
+}
+
+.task-card {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    border-right: 6px solid #1976d2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.task-info h4 { margin: 0; color: #333; }
+.task-info a { color: #1976d2; font-size: 0.9em; }
+    
 </style>
 </head>
 
@@ -427,5 +450,6 @@ function updateView() {
 
 </body>
 </html>
+
 
 
