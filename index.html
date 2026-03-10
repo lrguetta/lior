@@ -154,18 +154,27 @@ button {
 
 .levelup {
     position: absolute;
-    top: 40px;
-    right: 50%;
-    transform: translateX(50%);
-    background: gold;
-    color: #333;
-    padding: 4px 10px;
-    border-radius: 10px;
-    animation: levelPop 1s ease-out forwards;
-    z-index: 20;
+    top: 20%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #ffd700;
+    color: #1b5e20;
+    font-weight: bold;
+    font-size: 1.5em;
+    padding: 10px 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    z-index: 100;
+    pointer-events: none;
+    animation: levelPop 2s ease-out forwards;
 }
-@keyframes levelPop { 0% { opacity: 0; transform: translateX(50%) scale(0.5); } 100% { opacity: 0; transform: translateX(50%) scale(1); } }
 
+@keyframes levelPop {
+    0% { opacity: 0; transform: translate(-50%, 0) scale(0.5); }
+    20% { opacity: 1; transform: translate(-50%, -30px) scale(1.2); }
+    80% { opacity: 1; transform: translate(-50%, -40px) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -60px) scale(0.8); }
+}
 .hatch-flash {
     position: absolute;
     width: 120px;
@@ -412,3 +421,4 @@ function updateView() {
 
 </body>
 </html>
+
