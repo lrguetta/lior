@@ -539,9 +539,24 @@ function initAdminSubmissions() {
                 d.innerHTML = `
                     <div style="font-weight:bold; color:#2e7d32;">מאת: ${sub.studentName}</div>
                     <div style="margin: 5px 0; font-size: 0.95em;">${sub.content}</div>
-                    <button onclick="approveSub('${sub.id}', '${sub.studentId}')" style="background:#4caf50; color:white; border:none; border-radius:5px; padding:8px; cursor:pointer; width:100%; font-weight:bold;">
-                        אשר ושלח 20 XP ✅
-                    </button>
+                   <div style="display:flex; gap:5px; margin-top:5px;">
+    
+<button onclick="approveSub('${sub.id}', '${sub.studentId}', 1)"
+style="background:#4caf50; color:white; border:none; border-radius:5px; padding:8px; cursor:pointer; flex:1; font-weight:bold;">
+אשר מלא ✅
+</button>
+
+<button onclick="approveSub('${sub.id}', '${sub.studentId}', 0.5)"
+style="background:#ffc107; color:black; border:none; border-radius:5px; padding:8px; cursor:pointer; flex:1; font-weight:bold;">
+אשר חלקי 🟡
+</button>
+
+<button onclick="rejectSub('${sub.id}')"
+style="background:#f44336; color:white; border:none; border-radius:5px; padding:8px; cursor:pointer; flex:1; font-weight:bold;">
+דחה ❌
+</button>
+
+</div>
                 `;
                 container.appendChild(d);
             });
@@ -552,7 +567,7 @@ function initAdminSubmissions() {
 }
 
 // פונקציית אישור הגשה מתוקנת
-function approveSub(subId, studentId) {
+function approveSub(subId, studentId, multiplier = 1) {
 
     const submissionRef = db.ref('submissions/' + subId);
 
@@ -562,18 +577,30 @@ function approveSub(subId, studentId) {
         if (!sub) return;
 
         const task = allTasks.find(t => t.id === sub.taskId);
-        const xpReward = task ? (task.xp || 20) : 20;
+        const baseXP = task ? (task.xp || 20) : 20;
+
+        const rewardXP = Math.round(baseXP * multiplier);
 
         const s = allStudents.find(st => st.id === studentId);
         if (!s) return;
 
-        addXP(studentId, s.xp, s.level);
+        let remainingXP = rewardXP;
+        let currentXP = s.xp;
+        let currentLevel = s.level;
 
-        if (xpReward > 10) {
-            setTimeout(() => {
-                const updatedS = allStudents.find(st => st.id === studentId);
-                addXP(studentId, updatedS.xp, updatedS.level);
-            }, 500);
+        while (remainingXP > 0) {
+
+            const add = Math.min(10, remainingXP);
+
+            addXP(studentId, currentXP, currentLevel);
+
+            currentXP += add;
+            remainingXP -= add;
+
+            if (currentXP >= 100) {
+                currentLevel++;
+                currentXP = 0;
+            }
         }
 
         db.ref('submissions/' + subId).remove();
@@ -582,6 +609,7 @@ function approveSub(subId, studentId) {
 </script>
 </body>
 </html>
+
 
 
 
