@@ -417,27 +417,48 @@ function updateView() {
 }
 
 // לוגיקת מטלות
+let allTasks = [];
+
 db.ref('tasks').on('value', (snap) => {
     const tasks = snap.val();
-    const list = document.getElementById('tasks-list');
-    list.innerHTML = '';
-    if (tasks) {
-        Object.values(tasks).reverse().forEach(task => {
-            const div = document.createElement('div');
-            div.className = 'task-card';
-            div.innerHTML = `
-                <div class="task-info">
-                    <h4>${task.title}</h4>
-                    ${task.link ? `<a href="${task.link}" target="_blank">קישור למטלה 🔗</a>` : ''}
-                </div>
-                <div>
-                    ${currentUser === 'admin' ? `<button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק</button>` : 
-                    `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2;">הגש מטלה ✍️</button>`}
-                </div>`;
-            list.appendChild(div);
-        });
-    } else { list.innerHTML = 'אין מטלות כרגע.'; }
+    allTasks = tasks ? Object.values(tasks) : [];
+    renderTasks();
 });
+
+function renderTasks() {
+
+    const list = document.getElementById('tasks-list');
+    if (!list) return;
+
+    list.innerHTML = '';
+
+    if (allTasks.length === 0) {
+        list.innerHTML = 'אין מטלות כרגע.';
+        return;
+    }
+
+    allTasks.slice().reverse().forEach(task => {
+
+        const div = document.createElement('div');
+        div.className = 'task-card';
+
+        div.innerHTML = `
+            <div class="task-info">
+                <h4>${task.title}</h4>
+                ${task.link ? `<a href="${task.link}" target="_blank">קישור למטלה 🔗</a>` : ''}
+            </div>
+            <div>
+                ${currentUser === 'admin'
+                    ? `<button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק</button>`
+                    : `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2;">הגש מטלה ✍️</button>`
+                }
+            </div>
+        `;
+
+        list.appendChild(div);
+
+    });
+}
 
 function addTask() {
     const title = document.getElementById('taskTitle').value;
@@ -526,6 +547,7 @@ function approveSub(subId, studentId) {
 </script>
 </body>
 </html>
+
 
 
 
