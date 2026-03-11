@@ -8,6 +8,17 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <style>
+    /* מסתיר את אזור המטלות אם אין בתוכו תוכן */
+#tasks-list:empty, 
+#tasks-area:has(#tasks-list:empty) {
+    display: none;
+}
+
+/* מסתיר את אזור ההגשות למורה אם הוא ריק */
+#submissions-list:empty,
+#admin-submissions:has(#submissions-list:empty) {
+    display: none;
+}
 body {
     font-family: 'Segoe UI', Tahoma, sans-serif;
     background: #e0f7fa url('images/background.png') no-repeat center center fixed;
@@ -467,19 +478,8 @@ function renderTasks() {
 
     list.innerHTML = '';
 
-   if (allTasks.length === 0) {
-    list.innerHTML = `
-        <div style="
-            background: rgba(255, 255, 255, 0.8); 
-            padding: 10px 20px; 
-            border-radius: 8px; 
-            display: inline-block; 
-            color: #333;
-            font-weight: bold;
-            margin-top: 10px;
-        ">
-            אין מטלות כרגע.
-        </div>`;
+ if (allTasks.length === 0) {
+    list.innerHTML = ''; // משאיר ריק כדי שה-CSS יסתיר את המכולה
     return;
 }
 
@@ -617,8 +617,8 @@ function initAdminSubmissions() {
                 container.appendChild(d);
             });
         } else {
-            container.innerHTML = '<div style="color:#666; text-align:center;">אין הגשות חדשות כרגע</div>';
-        }
+    container.innerHTML = ''; // משאיר ריק
+}
     });
 }
 
@@ -670,6 +670,7 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
 
 
 
