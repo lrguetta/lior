@@ -2,12 +2,11 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>חוות הטמגוצ'י - גרסת ניהול מלאה V3</title>
+<title>חוות הטמגוצ'י - גרסה סופית ומתוקנת</title>
 
 <script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-app.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-database.js"></script>
 <style>
-    /* הסתרת אזורים ריקים */
     #tasks-list:empty, #tasks-area:has(#tasks-list:empty) { display: none; }
     #submissions-list:empty, #admin-submissions:has(#submissions-list:empty) { display: none; }
 
@@ -34,8 +33,7 @@
     }
 
     input, select, button, textarea { padding: 10px; border-radius: 10px; border: 1px solid #ddd; font-size: 15px; }
-    button { background-color: #2e7d32; color: white; cursor: pointer; border: none; font-weight: bold; transition: 0.2s; }
-    button:hover { opacity: 0.9; }
+    button { background-color: #2e7d32; color: white; cursor: pointer; border: none; font-weight: bold; }
 
     #farm-grid { display: none; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; width: 100%; max-width: 1200px; }
 
@@ -52,29 +50,28 @@
     .card-back { transform: rotateY(180deg); background: #f1f8e9; border-bottom: 5px solid #1976d2; }
     .my-creature .card-face { border: 4px solid #fbc02d; }
 
-    .creature-img { width: 120px; height: 120px; object-fit: contain; margin-bottom: 10px; position: relative; }
+    .creature-img { width: 120px; height: 120px; object-fit: contain; margin-bottom: 10px; }
     
     /* אנימציות */
     .glow-effect { animation: glow-pulse 0.6s ease-out; }
     @keyframes glow-pulse {
         0% { filter: brightness(1); transform: scale(1); }
-        50% { filter: brightness(1.6) drop-shadow(0 0 20px gold); transform: scale(1.15); }
+        50% { filter: brightness(1.6) drop-shadow(0 0 20px gold); transform: scale(1.1); }
         100% { filter: brightness(1); transform: scale(1); }
     }
 
     .xp-float { position: absolute; font-weight: bold; color: #fbc02d; font-size: 1.5em; animation: floatUp 0.8s forwards; left: 50%; top: 20px; z-index: 100; text-shadow: 1px 1px 2px black; }
     @keyframes floatUp { 0% { opacity: 1; transform: translate(-50%,0); } 100% { opacity: 0; transform: translate(-50%,-50px); } }
 
-    .levelup { position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%); background: #ffd700; color: #1b5e20; font-weight: bold; font-size: 1.3em; padding: 10px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 100; animation: levelPop 2s forwards; }
-    @keyframes levelPop { 0% { opacity: 0; transform: translate(-50%, 0) scale(0.5); } 20% { opacity: 1; transform: translate(-50%, -20px) scale(1.1); } 80% { opacity: 1; } 100% { opacity: 0; } }
+    .levelup { position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%); background: #ffd700; color: #1b5e20; font-weight: bold; font-size: 1.2em; padding: 10px; border-radius: 15px; z-index: 100; animation: levelPop 2s forwards; }
+    @keyframes levelPop { 0% { opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
 
     .xp-container { background: #eee; border-radius: 10px; height: 18px; margin: 10px 0; overflow: hidden; border: 1px solid #ccc; width: 100%; }
     .xp-bar { background: linear-gradient(90deg, #ffeb3b, #fbc02d); height: 100%; transition: width 0.4s; }
-    .level-text-badge { position: absolute; top: 10px; right: 15px; font-size: 1.4em; font-weight: bold; color: #2e7d32; text-shadow: 1px 1px 0 white; }
+    .level-text-badge { position: absolute; top: 10px; right: 15px; font-size: 1.4em; font-weight: bold; color: #2e7d32; }
 
-    /* משימות */
     #tasks-area { width: 90%; max-width: 1200px; margin-bottom: 20px; display: none; }
-    .task-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-right: 6px solid #1976d2; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    .task-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-right: 6px solid #1976d2; display: flex; justify-content: space-between; align-items: center; }
 </style>
 </head>
 
@@ -86,59 +83,53 @@
     <button onclick="checkAdmin()" style="width:90%;">כניסת מנהל 🔑</button>
     <hr style="margin:20px 0;">
     <p>כניסת תלמידים:</p>
-    <select id="studentSelect" style="width:90%; margin-bottom:10px;"><option value="">טוען רשימה...</option></select>
+    <select id="studentSelect" style="width:90%; margin-bottom:10px;"><option value="">טוען...</option></select>
     <input type="password" id="studentPin" placeholder="קוד PIN (1234)" maxlength="4" style="width:85%; margin-bottom:10px; text-align:center;">
     <button onclick="studentLogin()" style="width:90%; background-color:#1976d2;">היכנס ליצור שלי ✨</button>
 </div>
 
 <div id="control-panel">
-    <div style="display:flex; gap:10px; width:100%; flex-wrap:wrap; justify-content:center; align-items: center;">
+    <div style="display:flex; gap:10px; width:100%; flex-wrap:wrap; justify-content:center;">
         <input type="text" id="studentName" placeholder="שם התלמיד">
         <select id="studentClass"><option value="ה1">כיתה ה'1</option><option value="ה2">כיתה ה'2</option></select>
-        <button onclick="addStudent()">צרף תלמיד חדש</button>
+        <button onclick="addStudent()">צרף תלמיד</button>
         <button onclick="toggleTaskPanel()" style="background:#0288d1;">פרסום מטלה 📋</button>
     </div>
-
-    <div id="task-panel" style="display:none; width:100%; background:#e1f5fe; padding:15px; border-radius:15px; margin-top:10px; gap:10px; flex-wrap:wrap; justify-content:center; border: 1px solid #b3e5fc;">
+    <div id="task-panel" style="display:none; width:100%; background:#e1f5fe; padding:15px; border-radius:15px; margin-top:10px; gap:10px; flex-wrap:wrap; justify-content:center;">
         <input type="text" id="taskTitle" placeholder="כותרת המטלה">
         <button onclick="window.open('https://send.magicode.me/', '_blank')" style="background:#ff9800;">העלאת קובץ (Magicode) 📤</button>
-        <input type="text" id="taskLink" placeholder="הדבק קישור להורדה">
+        <input type="text" id="taskLink" placeholder="קישור להורדה">
         <input type="date" id="taskDeadline">
         <input type="number" id="taskXP" placeholder="XP" value="100" style="width:70px;">
-        <button onclick="addTask()" style="background:#1976d2;">פרסם כעת</button>
+        <button onclick="addTask()">פרסם</button>
     </div>
-
     <div style="width:100%; display:flex; gap:10px; margin-top:10px;">
-        <input type="text" id="search" placeholder="חפש לפי שם..." oninput="updateView()" style="flex:2;">
+        <input type="text" id="search" placeholder="חפש תלמיד..." oninput="updateView()" style="flex:2;">
         <select id="sortBy" onchange="updateView()" style="flex:1;">
-            <option value="name">מיין לפי שם</option>
-            <option value="level">מיין לפי רמה</option>
-            <option value="class">מיין לפי כיתה</option>
+            <option value="name">לפי שם</option>
+            <option value="level">לפי רמה</option>
+            <option value="class">לפי כיתה</option>
         </select>
         <button onclick="location.reload()" style="background:#616161;">יציאה</button>
     </div>
-
     <div id="admin-submissions" style="width:100%; margin-top:20px; background:#fff3e0; padding:15px; border-radius:12px; border:2px dashed #fb8c00;">
-        <h4 style="margin:0 0 10px 0;">הגשות שממתינות לבדיקה 📥</h4>
-        <div id="submissions-list">אין הגשות כרגע</div>
+        <h4 style="margin:0 0 10px 0;">הגשות חדשות 📥</h4>
+        <div id="submissions-list">אין הגשות</div>
     </div>
 </div>
 
 <div id="tasks-area">
-    <h3 style="background: white; padding: 8px 20px; border-radius: 30px; display: inline-block; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">משימות להשלמה 📝</h3>
+    <h3 style="background: white; padding: 8px 20px; border-radius: 30px; display: inline-block;">משימות 📝</h3>
     <div id="tasks-list"></div>
 </div>
 
 <div id="farm-grid"></div>
 
-<div id="submit-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:25px; border-radius:15px; box-shadow:0 0 30px rgba(0,0,0,0.5); z-index:1000; width:320px; text-align:center; border:3px solid #1976d2;">
+<div id="submit-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:25px; border-radius:15px; box-shadow:0 0 30px rgba(0,0,0,0.5); z-index:1000; width:300px; text-align:center; border:3px solid #1976d2;">
     <h3 id="modal-task-title">הגשת מטלה</h3>
-    <button onclick="window.open('https://send.magicode.me/', '_blank')" style="background:#ff9800; width:100%; margin-bottom:12px; padding:12px;">העלאת קובץ ב-Magicode 📤</button>
-    <textarea id="submit-content" placeholder="הדבק כאן את הקישור שקיבלת מהאתר" style="width:95%; height:70px; margin-bottom:12px;"></textarea>
-    <div style="display:flex; gap:10px;">
-        <button onclick="sendSubmission()" style="flex:1; background:#4caf50; padding:12px;">שלח הגשה 🚀</button>
-        <button onclick="closeModal()" style="flex:1; background:#9e9e9e; padding:12px;">ביטול</button>
-    </div>
+    <button onclick="window.open('https://send.magicode.me/', '_blank')" style="background:#ff9800; width:100%; margin-bottom:10px;">העלאת קובץ ב-Magicode 📤</button>
+    <textarea id="submit-content" placeholder="הדבק כאן את הקישור" style="width:100%; height:60px; margin-bottom:10px;"></textarea>
+    <div style="display:flex; gap:10px;"><button onclick="sendSubmission()" style="flex:1; background:#4caf50;">שלח 🚀</button><button onclick="closeModal()" style="flex:1; background:#9e9e9e;">ביטול</button></div>
 </div>
 
 <script>
@@ -159,33 +150,30 @@ let allStudents = [];
 let currentUser = null;
 let allTasks = [];
 
-// סנכרון נתונים
 db.ref('students').on('value', snap => {
-    const data = snap.val();
-    allStudents = data ? Object.values(data) : [];
+    allStudents = snap.val() ? Object.values(snap.val()) : [];
     const select = document.getElementById('studentSelect');
     const curVal = select.value;
-    select.innerHTML = '<option value="">בחר את שמך מהרשימה...</option>';
+    select.innerHTML = '<option value="">בחר שם...</option>';
     allStudents.forEach(s => {
-        const opt = document.createElement('option'); opt.value = s.id; opt.textContent = `${s.name} (כיתה ${s.className})`;
+        const opt = document.createElement('option'); opt.value = s.id; opt.textContent = `${s.name} (${s.className})`;
         select.appendChild(opt);
     });
     select.value = curVal;
     updateView();
 });
 
-// כניסה
 function checkAdmin() {
     if (document.getElementById('adminPass').value === 'rabenu247') { currentUser = 'admin'; startApp(); }
-    else alert('סיסמת מנהל שגויה!');
+    else alert('טעות');
 }
 
 function studentLogin() {
     const id = document.getElementById('studentSelect').value;
     const pin = document.getElementById('studentPin').value;
     const student = allStudents.find(s => s.id === id);
-    if (!student) return alert('אנא בחר שם');
-    if ((student.pin || "1234") !== pin) return alert('קוד PIN שגוי! נסה שוב.');
+    if (!student) return alert('בחר שם');
+    if ((student.pin || "1234") !== pin) return alert('PIN שגוי');
     currentUser = id; startApp();
 }
 
@@ -197,13 +185,13 @@ function startApp() {
         document.getElementById('control-panel').style.display = 'flex';
         initAdminSubmissions();
     }
+    updateTasksView(); // קריאה ראשונית לעדכון כפתורי המשימות
     updateView();
 }
 
-// הוספת תלמיד
 function addStudent() {
     const name = document.getElementById('studentName').value;
-    if (!name) return alert("הזן שם תלמיד");
+    if (!name) return;
     const id = Date.now().toString();
     db.ref('students/' + id).set({
         id, name, className: document.getElementById('studentClass').value,
@@ -211,22 +199,18 @@ function addStudent() {
         type: CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)],
         egg: Math.floor(Math.random() * 5)
     });
-    document.getElementById('studentName').value = '';
 }
 
-// אנימציית XP והוספה
 function addXP(id, xp, lvl) {
     if (currentUser !== 'admin') return;
     const card = document.getElementById('card-' + id);
     const img = card.querySelector('.creature-img');
     const face = card.querySelector('.card-face');
 
-    // אנימציית הבהוב
     img.classList.remove('glow-effect');
-    void img.offsetWidth; // Trigger reflow
+    void img.offsetWidth;
     img.classList.add('glow-effect');
 
-    // מספר XP צף
     const float = document.createElement('div');
     float.className = 'xp-float';
     float.innerText = '+10 XP';
@@ -245,7 +229,6 @@ function addXP(id, xp, lvl) {
     db.ref('students/' + id).update({ xp: nx, level: nl });
 }
 
-// עדכון תצוגת החווה
 function updateView() {
     const grid = document.getElementById('farm-grid');
     if (!currentUser) return;
@@ -262,136 +245,103 @@ function updateView() {
 
     grid.innerHTML = filtered.map(s => {
         const isM = currentUser === s.id;
-        const eggNum = (s.egg !== undefined) ? s.egg + 1 : 1;
-        const img = s.level === 0 ? `images/egg${eggNum}.png` : `images/${s.type}${s.level>=20?3:(s.level>=10?2:1)}.png`;
+        const isAdmin = currentUser === 'admin';
+        const img = s.level === 0 ? `images/egg${(s.egg||0)+1}.png` : `images/${s.type}${s.level>=20?3:(s.level>=10?2:1)}.png`;
         
+        const clickAction = isAdmin ? `addXP('${s.id}',${s.xp},${s.level})` : `this.classList.toggle('is-flipped')`;
+
         return `
         <div class="student-card-container ${isM?'my-creature':''}" id="card-${s.id}">
-            <div class="student-card" onclick="this.classList.toggle('is-flipped')">
+            <div class="student-card" onclick="${clickAction}">
                 <div class="card-face">
                     <div class="level-text-badge">Lv.${s.level}</div>
-                    <img src="${img}" class="creature-img" onclick="event.stopPropagation(); addXP('${s.id}',${s.xp},${s.level})">
-                    <div style="font-weight:bold; font-size:1.1em;">${s.name}</div>
-                    <div style="font-size:0.85em; color:#666;">כיתה ${s.className}</div>
+                    <img src="${img}" class="creature-img">
+                    <div style="font-weight:bold;">${s.name}</div>
                     <div class="xp-container"><div class="xp-bar" style="width:${s.xp}%"></div></div>
-                    ${isM ? '<div style="font-size:0.8em; color:#2e7d32; font-weight:bold;">היצור שלי ✨</div>' : ''}
                 </div>
                 <div class="card-face card-back">
                     ${isM ? `
-                        <h4>הגדרות PIN</h4>
-                        <p>שנה קוד כניסה:</p>
-                        <input type="text" maxlength="4" value="${s.pin||'1234'}" 
-                               onchange="db.ref('students/${s.id}').update({pin:this.value})" 
-                               onclick="event.stopPropagation()" style="width:70px; text-align:center;">
-                        <p style="font-size:0.8em; margin-top:10px;">הקוד נשמר אוטומטית</p>
-                    ` : `<h4>על היצור</h4><p>רמה: ${s.level}</p><p>כיתה: ${s.className}</p>`}
-                    ${currentUser === 'admin' ? `<button onclick="event.stopPropagation(); if(confirm('למחוק את ${s.name}?')) db.ref('students/${s.id}').remove()" style="background:#d32f2f; margin-top:15px; padding:5px 15px;">מחק תלמיד</button>` : ''}
+                        <p>שנה PIN:</p>
+                        <input type="text" maxlength="4" value="${s.pin||'1234'}" onchange="db.ref('students/${s.id}').update({pin:this.value})" onclick="event.stopPropagation()" style="width:60px; text-align:center;">
+                    ` : `<p>רמה: ${s.level}</p>`}
+                    ${isAdmin ? `<button onclick="event.stopPropagation(); if(confirm('למחוק?')) db.ref('students/${s.id}').remove()" style="background:#d32f2f; margin-top:10px;">מחק</button>` : ''}
                 </div>
             </div>
         </div>`;
     }).join('');
 }
 
-// ניהול מטלות
-function toggleTaskPanel() { 
-    const p = document.getElementById('task-panel'); 
-    p.style.display = (p.style.display === 'none' || p.style.display === '') ? 'flex' : 'none'; 
-}
+function toggleTaskPanel() { const p = document.getElementById('task-panel'); p.style.display = p.style.display==='none'?'flex':'none'; }
 
-db.ref('tasks').on('value', snap => {
-    allTasks = snap.val() ? Object.values(snap.val()) : [];
+function updateTasksView() {
     const list = document.getElementById('tasks-list');
+    const isAdmin = currentUser === 'admin';
     list.innerHTML = allTasks.map(t => `
         <div class="task-card">
             <div>
                 <h4 style="margin:0;">${t.title}</h4>
-                ${t.link ? `<a href="${t.link}" target="_blank" style="font-size:0.9em;">פתח מטלה 📎</a>` : ''}
-                <div style="font-size:0.8em; color:#666; margin-top:5px;">🎁 פרס: ${t.xp}XP | ⏰ עד: ${t.deadline || 'ללא הגבלה'}</div>
+                ${t.link ? `<a href="${t.link}" target="_blank">קובץ מטלה 📎</a>` : ''}
+                <div style="font-size:0.8em; color:#666;">פרס: ${t.xp}XP | עד: ${t.deadline || 'ללא'}</div>
             </div>
-            ${currentUser === 'admin' ? 
+            ${isAdmin ? 
                 `<button onclick="deleteTask('${t.id}')" style="background:#d32f2f;">מחק מטלה</button>` : 
                 `<button onclick="openSubmitModal('${t.id}','${t.title}')" style="background:#1976d2;">הגש מטלה ✍️</button>`
             }
         </div>
     `).join('');
+}
+
+db.ref('tasks').on('value', snap => {
+    allTasks = snap.val() ? Object.values(snap.val()) : [];
+    updateTasksView();
 });
 
 function addTask() {
-    const title = document.getElementById('taskTitle').value;
-    if (!title) return alert("הזן כותרת למטלה");
     const id = Date.now().toString();
     db.ref('tasks/' + id).set({
-        id, title,
+        id, title: document.getElementById('taskTitle').value,
         link: document.getElementById('taskLink').value,
         deadline: document.getElementById('taskDeadline').value,
         xp: parseInt(document.getElementById('taskXP').value) || 100
     });
-    document.getElementById('taskTitle').value = '';
-    document.getElementById('taskLink').value = '';
 }
-function deleteTask(id) { if(confirm('למחוק את המטלה?')) db.ref('tasks/'+id).remove(); }
+function deleteTask(id) { if(confirm('מחק?')) db.ref('tasks/'+id).remove(); }
 
-// הגשות ואישורים
-let curTaskID = null;
-function openSubmitModal(id, title) { 
-    curTaskID = id; 
-    document.getElementById('modal-task-title').innerText = title; 
-    document.getElementById('submit-modal').style.display='block'; 
-}
+let curT = null;
+function openSubmitModal(id, title) { curT = id; document.getElementById('modal-task-title').innerText = title; document.getElementById('submit-modal').style.display='block'; }
 function closeModal() { document.getElementById('submit-modal').style.display='none'; }
-
 function sendSubmission() {
-    const content = document.getElementById('submit-content').value;
-    if (!content) return alert("הדבק קישור להגשה");
-    const student = allStudents.find(s => s.id === currentUser);
-    const subID = Date.now().toString();
-    db.ref('submissions/' + subID).set({
-        id: subID, studentName: student.name, studentId: student.id, 
-        taskId: curTaskID, content: content, time: Date.now()
-    });
-    alert("המטלה נשלחה למורה! 🎉"); 
-    document.getElementById('submit-content').value = '';
-    closeModal();
+    const c = document.getElementById('submit-content').value;
+    const s = allStudents.find(st => st.id === currentUser);
+    db.ref('submissions/' + Date.now()).set({ id: Date.now(), studentName: s.name, studentId: s.id, taskId: curT, content: c });
+    alert("נשלח!"); closeModal();
 }
 
 function initAdminSubmissions() {
     db.ref('submissions').on('value', snap => {
-        const subs = snap.val();
-        const list = document.getElementById('submissions-list');
-        list.innerHTML = subs ? Object.values(subs).map(sub => `
-            <div style="background:white; padding:12px; margin-top:8px; border-radius:10px; border-right:5px solid #ffa000; display:flex; flex-direction:column; gap:8px;">
-                <div style="font-weight:bold;">${sub.studentName} שלח הגשה:</div>
-                <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                    <button onclick="window.open('${sub.content}', '_blank')" style="background:#0288d1; padding:5px 10px;">צפה בהגשה</button>
-                    <button onclick="approveSub('${sub.id}','${sub.studentId}', 1)" style="background:#43a047; padding:5px 10px;">אשר (XP מלא) ✅</button>
-                    <button onclick="approveSub('${sub.id}','${sub.studentId}', 0.5)" style="background:#fbc02d; color:black; padding:5px 10px;">אישור חלקי 🟡</button>
-                    <button onclick="if(confirm('לדחות?')) db.ref('submissions/'+'${sub.id}').remove()" style="background:#e53935; padding:5px 10px;">דחה ❌</button>
-                </div>
+        const s = snap.val();
+        document.getElementById('submissions-list').innerHTML = s ? Object.values(s).map(sub => `
+            <div style="background:white; padding:10px; margin-top:5px; border-radius:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <b>${sub.studentName}</b>
+                <button onclick="window.open('${sub.content}')" style="background:#0288d1; padding:5px;">צפה</button>
+                <button onclick="approveSub('${sub.id}','${sub.studentId}', 1)" style="background:green; padding:5px;">אשר ✅</button>
+                <button onclick="approveSub('${sub.id}','${sub.studentId}', 0.5)" style="background:#fbc02d; color:black; padding:5px;">חלקי 🟡</button>
+                <button onclick="db.ref('submissions/'+'${sub.id}').remove()" style="background:red; padding:5px;">X</button>
             </div>
-        `).join('') : 'אין הגשות חדשות כרגע.';
+        `).join('') : 'אין הגשות';
     });
 }
 
-function approveSub(subID, studentID, multiplier) {
-    db.ref('submissions/'+subID).once('value', snap => {
+function approveSub(sid, stid, mult) {
+    db.ref('submissions/'+sid).once('value', snap => {
         const sub = snap.val(); if(!sub) return;
-        const task = allTasks.find(t => t.id === sub.taskId);
-        const reward = Math.round((task ? task.xp : 100) * multiplier);
-        const student = allStudents.find(s => s.id === studentID);
-        
-        if (!student) return;
-
-        let totalXP = student.xp + reward;
-        let finalLevel = student.level;
-        
-        while(totalXP >= 100) {
-            finalLevel++;
-            totalXP -= 100;
-        }
-
-        db.ref('students/'+studentID).update({xp: totalXP, level: finalLevel});
-        db.ref('submissions/'+subID).remove();
-        alert(`המטלה אושרה! ${student.name} קיבל ${reward} XP`);
+        const t = allTasks.find(x => x.id === sub.taskId);
+        const xp = Math.round((t?t.xp:100) * mult);
+        const s = allStudents.find(x => x.id === stid);
+        let nx = s.xp + xp, nl = s.level;
+        while(nx >= 100) { nl++; nx -= 100; }
+        db.ref('students/'+stid).update({xp: nx, level: nl});
+        db.ref('submissions/'+sid).remove();
     });
 }
 </script>
