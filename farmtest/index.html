@@ -69,15 +69,16 @@
 
 .xp-float {
     position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%); /* ממרכז את המספר על הדמות */
     font-weight: bold;
     color: #ffd700;
-    font-size: 28px;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    font-size: 32px;
+    text-shadow: 2px 2px 5px rgba(0,0,0,1);
+    z-index: 1000; /* הכי גבוה שיש */
     pointer-events: none;
-    z-index: 200;
-    left: 50%;
-    top: 40%;
-    animation: floatUp 0.9s ease-out forwards;
+    animation: floatUp 1s ease-out forwards;
 }
 
 @keyframes floatUp {
@@ -85,7 +86,6 @@
     20% { opacity: 1; }
     100% { opacity: 0; transform: translate(-50%, -100px); }
 }
-
 /* Level Up */
 .levelup-anim {
     position: absolute;
@@ -346,39 +346,41 @@ function addStudent() {
 function addXP(id, xp, lvl) {
     if (currentUser !== 'admin') return;
     
-    // מציאת הכרטיס הספציפי
     const card = document.getElementById('card-' + id);
-    if (!card) return;
-    
     const img = card.querySelector('.creature-img');
     const face = card.querySelector('.card-face');
+    const bar = card.querySelector('.xp-bar');
 
-    // 1. הפעלת אנימציית הבהוב
+    // הפעלת האנימציות ב-UI מיד
     img.classList.remove('glow-effect');
-    void img.offsetWidth; // איפוס אנימציה
+    void img.offsetWidth; 
     img.classList.add('glow-effect');
 
-    // 2. יצירת XP צף
     const float = document.createElement('div');
     float.className = 'xp-float';
     float.innerText = '+10 XP';
     face.appendChild(float);
-    
-    // 3. חישוב רמה ו-XP
+    setTimeout(() => float.remove(), 800);
+
     let nx = xp + 10, nl = lvl;
-    let leveledUp = false;
-    
     if (nx >= 100) {
         nl++; nx = 0;
-        leveledUp = true;
-        
-        // אנימציית Level Up
         const lu = document.createElement('div');
         lu.className = 'levelup-anim';
-        lu.innerHTML = '✨ LEVEL UP! ✨';
+        lu.innerHTML = '✨ רמה עולה! ✨';
         face.appendChild(lu);
         setTimeout(() => lu.remove(), 2000);
+        card.querySelector('.level-text-badge').innerText = 'Lv.' + nl;
     }
+
+    // עדכון ויזואלי של הבר בלי לחכות לריענון של כל הדף
+    if (bar) bar.style.width = nx + '%';
+
+    // השהיית העדכון בבסיס הנתונים כדי שהאנימציה לא תיקטע
+    setTimeout(() => {
+        db.ref('students/' + id).update({ xp: nx, level: nl });
+    }, 1000);
+}
 
     // 4. הקסם: מעדכנים את הבר ב-UI מיד בלי לחכות ל-Firebase
     const bar = card.querySelector('.xp-bar');
@@ -396,6 +398,9 @@ function updateView() {
     const grid = document.getElementById('farm-grid');
     if (!currentUser) return;
     
+    // בדיקה: אם יש קלף הפוך כרגע, אל תרענן את התצוגה כדי לא להפריע לתלמיד
+    if (document.querySelector('.student-card.is-flipped')) return;
+
     const search = document.getElementById('search').value.toLowerCase();
     const sort = document.getElementById('sortBy').value;
     
