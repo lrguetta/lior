@@ -514,6 +514,7 @@ function updateView() {
             </div>
         </div>`;
     }).join('');
+}
 
 // לוגיקת מטלות
 let allTasks = [];
@@ -698,12 +699,9 @@ function approveSub(subId, studentId, multiplier = 1) {
         let currentLevel = s.level;
 
         while (remainingXP > 0) {
-
-            const add = Math.min(10, remainingXP);
-
-            addXP(studentId, currentXP, currentLevel);
-
-            currentXP += add;
+    addXP(studentId, currentXP, currentLevel);
+    remainingXP -= 10;
+}
             remainingXP -= add;
 
             if (currentXP >= 100) {
