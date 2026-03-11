@@ -343,6 +343,7 @@ let allSubmissions = {};
 
 db.ref('students').on('value', (snap) => {
     const data = snap.val();
+      console.log("students data:", data);
    allStudents = [];
 if (data) {
     Object.keys(data).forEach(key => {
@@ -674,3 +675,4 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
