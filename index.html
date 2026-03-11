@@ -4,9 +4,8 @@
 <meta charset="UTF-8">
 <title>חוות הטמגוצ'י - גרסת ניהול ותלמידים</title>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-database.js"></script>
 <style>
     /* מסתיר את אזור המטלות אם אין בתוכו תוכן */
 #tasks-list:empty, 
@@ -344,7 +343,12 @@ let allSubmissions = {};
 
 db.ref('students').on('value', (snap) => {
     const data = snap.val();
-    allStudents = data ? Object.values(data) : [];
+   allStudents = [];
+if (data) {
+    Object.keys(data).forEach(key => {
+        allStudents.push(data[key]);
+    });
+}
     const select = document.getElementById('studentSelect');
     const currentVal = select.value;
     select.innerHTML = '<option value="">בחר את שמך...</option>';
@@ -670,44 +674,3 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
