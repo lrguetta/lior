@@ -269,7 +269,7 @@ function updateView() {
 
     grid.innerHTML = filtered.map(s => {
         const isMine = currentUser === s.id;
-        const imgPath = s.level === 0 ? `images/egg${s.egg || 1}.png` : `images/${s.type}${s.level >= 20 ? 3 : (s.level >= 10 ? 2 : 1)}.png`;
+        const imgPath = s.level === 0 ? `../images/egg${s.egg || 1}.png` : `../images/${s.type}${s.level >= 20 ? 3 : (s.level >= 10 ? 2 : 1)}.png`;
         
         return `
         <div class="student-card-container ${isMine ? 'my-creature' : ''}">
