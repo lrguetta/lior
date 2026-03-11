@@ -72,6 +72,50 @@
 
     #tasks-area { width: 90%; max-width: 1200px; margin-bottom: 20px; display: none; }
     .task-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-right: 6px solid #1976d2; display: flex; justify-content: space-between; align-items: center; }
+/* כפתור מחיקת תלמיד בעיגול אדום */
+.delete-student-btn {
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    background: #ff5252;
+    color: white;
+    border: 2px solid white;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    font-size: 14px;
+    line-height: 21px;
+    cursor: pointer;
+    z-index: 10;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+}
+
+/* אנימציות - ודא שהן קיימות */
+.glow-effect { animation: glow-pulse 0.6s ease-out; }
+@keyframes glow-pulse {
+    0% { filter: brightness(1); transform: scale(1); }
+    50% { filter: brightness(1.8) drop-shadow(0 0 15px gold); transform: scale(1.1); }
+    100% { filter: brightness(1); transform: scale(1); }
+}
+
+.xp-float {
+    position: absolute;
+    font-weight: bold;
+    color: #fbc02d;
+    font-size: 24px;
+    text-shadow: 1px 1px 3px black;
+    animation: floatUp 0.8s ease-out forwards;
+    z-index: 100;
+    pointer-events: none;
+}
+@keyframes floatUp {
+    0% { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; transform: translate(-50%, -60px); }
+}
 </style>
 </head>
 
@@ -207,13 +251,16 @@ function addXP(id, xp, lvl) {
     const img = card.querySelector('.creature-img');
     const face = card.querySelector('.card-face');
 
+    // תיקון אנימציית הבהוב - איפוס והפעלה מחדש
     img.classList.remove('glow-effect');
-    void img.offsetWidth;
+    void img.offsetWidth; // טריק לריענון ה-DOM
     img.classList.add('glow-effect');
 
+    // יצירת מספר צף
     const float = document.createElement('div');
     float.className = 'xp-float';
-    float.innerText = '+10 XP';
+    float.style.left = "50%";
+    float.innerText = '+10';
     face.appendChild(float);
     setTimeout(() => float.remove(), 800);
 
@@ -244,16 +291,16 @@ function updateView() {
     });
 
     grid.innerHTML = filtered.map(s => {
-        const isM = currentUser === s.id;
         const isAdmin = currentUser === 'admin';
+        const isM = currentUser === s.id;
         const img = s.level === 0 ? `images/egg${(s.egg||0)+1}.png` : `images/${s.type}${s.level>=20?3:(s.level>=10?2:1)}.png`;
-        
         const clickAction = isAdmin ? `addXP('${s.id}',${s.xp},${s.level})` : `this.classList.toggle('is-flipped')`;
 
         return `
         <div class="student-card-container ${isM?'my-creature':''}" id="card-${s.id}">
             <div class="student-card" onclick="${clickAction}">
                 <div class="card-face">
+                    ${isAdmin ? `<div class="delete-student-btn" onclick="event.stopPropagation(); if(confirm('למחוק את ${s.name}?')) db.ref('students/${s.id}').remove()">X</div>` : ''}
                     <div class="level-text-badge">Lv.${s.level}</div>
                     <img src="${img}" class="creature-img">
                     <div style="font-weight:bold;">${s.name}</div>
@@ -263,8 +310,7 @@ function updateView() {
                     ${isM ? `
                         <p>שנה PIN:</p>
                         <input type="text" maxlength="4" value="${s.pin||'1234'}" onchange="db.ref('students/${s.id}').update({pin:this.value})" onclick="event.stopPropagation()" style="width:60px; text-align:center;">
-                    ` : `<p>רמה: ${s.level}</p>`}
-                    ${isAdmin ? `<button onclick="event.stopPropagation(); if(confirm('למחוק?')) db.ref('students/${s.id}').remove()" style="background:#d32f2f; margin-top:10px;">מחק</button>` : ''}
+                    ` : `<p>שלום, אני ${s.name}!</p>`}
                 </div>
             </div>
         </div>`;
