@@ -345,15 +345,17 @@ function addStudent() {
 
 function addXP(id, xp, lvl) {
     if (currentUser !== 'admin') return;
+    
+    // מציאת הכרטיס הספציפי
     const card = document.getElementById('card-' + id);
     if (!card) return;
-
+    
     const img = card.querySelector('.creature-img');
     const face = card.querySelector('.card-face');
 
-    // 1. אנימציית הבהוב - איפוס Class
+    // 1. הפעלת אנימציית הבהוב
     img.classList.remove('glow-effect');
-    void img.offsetWidth; // מאלץ את הדפדפן לחשב מחדש
+    void img.offsetWidth; // איפוס אנימציה
     img.classList.add('glow-effect');
 
     // 2. יצירת XP צף
@@ -361,23 +363,35 @@ function addXP(id, xp, lvl) {
     float.className = 'xp-float';
     float.innerText = '+10 XP';
     face.appendChild(float);
-    setTimeout(() => float.remove(), 900);
-
+    
+    // 3. חישוב רמה ו-XP
     let nx = xp + 10, nl = lvl;
+    let leveledUp = false;
+    
     if (nx >= 100) {
         nl++; nx = 0;
-        // 3. אנימציית Level Up
+        leveledUp = true;
+        
+        // אנימציית Level Up
         const lu = document.createElement('div');
         lu.className = 'levelup-anim';
-        lu.innerHTML = '✨ רמה עולה! ✨';
+        lu.innerHTML = '✨ LEVEL UP! ✨';
         face.appendChild(lu);
-        setTimeout(() => lu.remove(), 2500);
+        setTimeout(() => lu.remove(), 2000);
     }
-    
-    // עדכון Firebase
-    db.ref('students/' + id).update({ xp: nx, level: nl });
-}
 
+    // 4. הקסם: מעדכנים את הבר ב-UI מיד בלי לחכות ל-Firebase
+    const bar = card.querySelector('.xp-bar');
+    if (bar) bar.style.width = nx + '%';
+    const badge = card.querySelector('.level-text-badge');
+    if (badge) badge.innerText = 'Lv.' + nl;
+
+    // 5. השהיית העדכון ב-Firebase כדי שלא ימחק את האנימציה
+    // אנחנו מחכים 800 מילי-שניות (זמן האנימציה) לפני הריענון של Firebase
+    setTimeout(() => {
+        db.ref('students/' + id).update({ xp: nx, level: nl });
+    }, 800);
+}
 function updateView() {
     const grid = document.getElementById('farm-grid');
     if (!currentUser) return;
