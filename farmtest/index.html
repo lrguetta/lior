@@ -72,7 +72,62 @@
 
     #tasks-area { width: 90%; max-width: 1200px; margin-bottom: 20px; display: none; }
     .task-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-right: 6px solid #1976d2; display: flex; justify-content: space-between; align-items: center; }
-/* כפתור מחיקת תלמיד בעיגול אדום */
+
+    /* הבהוב הדמות - Glow */
+.glow-effect { 
+    animation: glow-pulse 0.6s ease-out !important; 
+}
+
+@keyframes glow-pulse {
+    0% { filter: brightness(1) drop-shadow(0 0 0px gold); transform: scale(1); }
+    50% { filter: brightness(1.8) drop-shadow(0 0 25px gold); transform: scale(1.1); }
+    100% { filter: brightness(1) drop-shadow(0 0 0px gold); transform: scale(1); }
+}
+
+/* מספר XP צף */
+.xp-float {
+    position: absolute;
+    font-weight: bold;
+    color: #ffd700;
+    font-size: 28px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    pointer-events: none;
+    z-index: 200;
+    animation: floatUp 0.8s ease-out forwards;
+}
+
+@keyframes floatUp {
+    0% { opacity: 0; transform: translate(-50%, 0); }
+    20% { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%, -80px); }
+}
+
+/* הודעת Level Up יפה */
+.levelup-anim {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(45deg, #ffd700, #ff9800);
+    color: #1b5e20;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 1.5em;
+    white-space: nowrap;
+    box-shadow: 0 0 20px rgba(255,215,0,0.6);
+    z-index: 300;
+    animation: levelPop 2.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes levelPop {
+    0% { opacity: 0; scale: 0.5; }
+    15% { opacity: 1; scale: 1.2; }
+    85% { opacity: 1; scale: 1; }
+    100% { opacity: 0; scale: 0.8; }
+}
+    
+    /* כפתור מחיקת תלמיד בעיגול אדום */
 .delete-student-btn {
     position: absolute;
     top: -10px;
@@ -251,28 +306,32 @@ function addXP(id, xp, lvl) {
     const img = card.querySelector('.creature-img');
     const face = card.querySelector('.card-face');
 
-    // תיקון אנימציית הבהוב - איפוס והפעלה מחדש
+    // 1. אנימציית הבהוב לדמות
     img.classList.remove('glow-effect');
-    void img.offsetWidth; // טריק לריענון ה-DOM
+    void img.offsetWidth; // פקודת קסם שגורמת לדפדפן להפעיל את האנימציה מחדש
     img.classList.add('glow-effect');
 
-    // יצירת מספר צף
+    // 2. יצירת XP צף
     const float = document.createElement('div');
     float.className = 'xp-float';
     float.style.left = "50%";
-    float.innerText = '+10';
+    float.style.top = "40%";
+    float.innerText = '+10 XP';
     face.appendChild(float);
-    setTimeout(() => float.remove(), 800);
+    setTimeout(() => float.remove(), 850);
 
     let nx = xp + 10, nl = lvl;
     if (nx >= 100) {
         nl++; nx = 0;
+        // 3. אנימציית עליית רמה חגיגית
         const lu = document.createElement('div');
-        lu.className = 'levelup';
-        lu.innerText = 'LEVEL UP! ✨';
+        lu.className = 'levelup-anim';
+        lu.innerHTML = '✨ LEVEL UP! ✨';
         face.appendChild(lu);
-        setTimeout(() => lu.remove(), 2000);
+        setTimeout(() => lu.remove(), 2500);
     }
+    
+    // עדכון ב-Firebase
     db.ref('students/' + id).update({ xp: nx, level: nl });
 }
 
