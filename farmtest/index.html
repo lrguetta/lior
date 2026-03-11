@@ -695,19 +695,10 @@ function approveSub(subId, studentId, multiplier = 1) {
         if (!s) return;
 
         let remainingXP = rewardXP;
-        let currentXP = s.xp;
-        let currentLevel = s.level;
 
         while (remainingXP > 0) {
-    addXP(studentId, currentXP, currentLevel);
-    remainingXP -= 10;
-}
-            remainingXP -= add;
-
-            if (currentXP >= 100) {
-                currentLevel++;
-                currentXP = 0;
-            }
+            addXP(studentId, s.xp, s.level);
+            remainingXP -= 10;
         }
 
         db.ref('submissions/' + subId).remove();
