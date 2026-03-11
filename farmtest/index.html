@@ -719,7 +719,7 @@ function approveSub(subId, studentId, multiplier = 1) {
     if (confirm("לדחות את ההגשה?")) {
         db.ref('submissions/' + subId).remove();
     }
-};
+}
 </script>
 </body>
 </html>
