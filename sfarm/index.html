@@ -5,8 +5,7 @@
 <title>חוות הטמגוצ'י - גרסת ניהול ותלמידים</title>
 
 <!-- Supabase במקום Firebase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <style>
 /* ... כל ה-CSS שלך נשאר ללא שינוי ... */
 #tasks-list:empty, 
@@ -50,7 +49,7 @@ function toggleTaskPanel() {
 
 const supabaseUrl = "https://muwpexflpjoqnaeiyfhk.supabase.co";
 const supabaseKey = "sb_publishable_poSgynlEXNYtk6kLRQpmhw_kytUEVF_";
-const db = supabase.createClient(supabaseUrl, supabaseKey);
+const db = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 /* ========================= */
 
