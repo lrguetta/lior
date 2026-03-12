@@ -2,31 +2,67 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>משימת חשבון מהירה ⚡</title>
+    <title>מטלה מס' 5 - שאלות אמריקאיות</title>
     <script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-database.js"></script>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #f0f4f8; padding: 50px; }
-        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: inline-block; }
-        button { background: #1976d2; color: white; border: none; padding: 10px 20px; margin: 10px; border-radius: 10px; cursor: pointer; font-size: 1.1em; }
-        button:hover { background: #1565c0; }
-        #status { margin-top: 20px; font-weight: bold; color: #2e7d32; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            text-align: center; 
+            background: #f0f4f8; 
+            padding: 50px; 
+            direction: rtl;
+        }
+        .card { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+            display: inline-block; 
+            min-width: 350px;
+        }
+        h2 { color: #1976d2; margin-bottom: 30px; }
+        .option-btn { 
+            background: #ffffff; 
+            color: #1976d2; 
+            border: 2px solid #1976d2; 
+            padding: 12px 25px; 
+            margin: 10px; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-size: 1.1em; 
+            transition: all 0.3s;
+            display: block;
+            width: 100%;
+        }
+        .option-btn:hover { 
+            background: #1976d2; 
+            color: white; 
+        }
+        #status { 
+            margin-top: 25px; 
+            font-weight: bold; 
+            min-height: 24px;
+        }
+        .progress {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>משימת בונוס: כמה זה 12 כפול 4?</h2>
+    <div id="progress" class="progress"></div>
+    <h2 id="questionText">טוען שאלה...</h2>
     <div id="options">
-        <button onclick="checkAnswer(44)">44</button>
-        <button onclick="checkAnswer(48)">48</button>
-        <button onclick="checkAnswer(52)">52</button>
-    </div>
+        </div>
     <div id="status"></div>
 </div>
 
 <script>
-    // הגדרות ה-Firebase שלך (אותן הגדרות מהחווה)
+    // --- הגדרות Firebase ---
     const firebaseConfig = {
         apiKey: "AIzaSyCtS0Gf9oNiRg6OTd3jyNaPxuWBFlWGIsE",
         authDomain: "liorfarm.firebaseapp.com",
@@ -39,43 +75,104 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // קבלת ה-ID של התלמיד מהכתובת (למשל: task.html?uid=123)
+    // --- מאגר השאלות (כאן מוסיפים שאלות נוספות) ---
+    const questions = [
+        {
+            text: "איזה פרק למדנו היום?",
+            options: ["כ'", "כ\"א", "כ\"ב"],
+            correct: 1 // התשובה השנייה (ספירה מתחילה מ-0)
+        },
+        {
+            text: "מהו הדין המרכזי שמופיע בתחילת הפרק?",
+            options: ["דיני נזיקין", "השבת אבידה", "שומר חינם", "מיקח וממכר"],
+            correct: 1
+        },
+        {
+            text: "כמה XP תקבל בסיום המטלה?",
+            options: ["10", "20", "50"],
+            correct: 2
+        }
+    ];
+
+    let currentIdx = 0;
     const urlParams = new URLSearchParams(window.location.search);
     const studentId = urlParams.get('uid');
 
-    function checkAnswer(answer) {
-        if (answer === 48) {
-            document.getElementById('status').innerText = "כל הכבוד! מעדכן XP...";
-            giveXP(50); // הענקת 50 XP
+    // פונקציה להצגת השאלה
+    function displayQuestion() {
+        const q = questions[currentIdx];
+        document.getElementById('questionText').innerText = q.text;
+        document.getElementById('progress').innerText = `שאלה ${currentIdx + 1} מתוך ${questions.length}`;
+        
+        const optionsDiv = document.getElementById('options');
+        optionsDiv.innerHTML = ''; 
+
+        q.options.forEach((option, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = option;
+            btn.onclick = () => handleAnswer(index);
+            optionsDiv.appendChild(btn);
+        });
+    }
+
+    // פונקציה לטיפול בתשובה
+    function handleAnswer(selectedIndex) {
+        const status = document.getElementById('status');
+        if (selectedIndex === questions[currentIdx].correct) {
+            status.innerText = "מצוין! נכון מאוד.";
+            status.style.color = "#2e7d32";
+            
+            currentIdx++;
+            if (currentIdx < questions.length) {
+                setTimeout(() => {
+                    status.innerText = "";
+                    displayQuestion();
+                }, 1000);
+            } else {
+                status.innerText = "סיימת הכל! מעדכן את החווה...";
+                giveXP(50);
+            }
         } else {
-            document.getElementById('status').innerText = "אופס, נסה שוב!";
-            document.getElementById('status').style.color = "red";
+            status.innerText = "לא מדויק, נסה שוב!";
+            status.style.color = "#d32f2f";
         }
     }
 
+    // פונקציה לעדכון ה-XP ב-Firebase
     function giveXP(amount) {
-        if (!studentId) return alert("שגיאה: לא נמצא מזהה תלמיד!");
+        if (!studentId) {
+            alert("שגיאה: חסר מזהה תלמיד (UID)");
+            return;
+        }
 
         const studentRef = db.ref('students/' + studentId);
         studentRef.once('value').then((snapshot) => {
-            const data = snapshot.val();
+            const data = snapshot.val() || {};
             let newXp = (data.xp || 0) + amount;
             let newLevel = data.level || 0;
 
+            // לוגיקת עליית רמה (כל 100 XP עולים רמה)
             if (newXp >= 100) {
                 newLevel++;
-                newXp = 0;
+                newXp = newXp - 100;
             }
 
             studentRef.update({
                 xp: newXp,
                 level: newLevel
             }).then(() => {
-                document.getElementById('status').innerText = "ה-XP עודכן! אפשר לחזור לחווה.";
-                setTimeout(() => window.close(), 2000); // סוגר את הלשונית אחרי 2 שניות
+                document.getElementById('status').innerText = "הנתונים עודכנו בהצלחה!";
+                setTimeout(() => window.close(), 1500);
             });
         });
     }
+
+    // הפעלה ראשונית
+    if (questions.length > 0) {
+        displayQuestion();
+    }
 </script>
+
 </body>
 </html>
