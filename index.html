@@ -468,7 +468,6 @@ db.ref('tasks').on('value', (snap) => {
     renderTasks();
     populateTasksForQuestions(); // ← מוסיף את המטלות לתפריט
 });
-});
 // מילוי תפריט המטלות למנהל
 function populateTasksForQuestions() {
     const select = document.getElementById('selectTaskForQuestions');
@@ -736,6 +735,7 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
 
 
 
