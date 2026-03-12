@@ -323,14 +323,40 @@ button {
         renderFarm();
     }
 
-    function renderFarm() {
-        const grid = document.getElementById('farm-grid');
-        grid.innerHTML = `<div class="creature-card">
-            <h3>היצור שלי</h3>
-            <div style="font-size: 50px;">${getEmoji(currentUser.type)}</div>
-            <p>סוג: ${currentUser.type}</p>
-        </div>`;
+  function renderFarm() {
+    const grid = document.getElementById('farm-grid');
+    grid.style.display = 'grid'; // ודא שהגריד מוצג
+    grid.innerHTML = ''; // ניקוי הגריד
+
+    // יצירת כרטיסייה לילד המחובר (היצור שלי)
+    const card = document.createElement('div');
+    card.className = 'student-card-container';
+    
+    // קביעת התמונה לפי סוג ורמה
+    // אם היצור הוא ביצה (egg), נשתמש בתמונת ביצה
+    let imageName = `${currentUser.type}_${currentUser.level}.png`;
+    if (currentUser.level === 1 && currentUser.egg > 0) {
+        imageName = `egg_${currentUser.egg}.png`;
     }
+
+    card.innerHTML = `
+        <div class="student-card">
+            <div class="card-face">
+                <div class="level-text-badge">Lvl ${currentUser.level}</div>
+                <img src="images/${imageName}" 
+                     onerror="this.src='images/egg_1.png'" 
+                     class="creature-img glow-effect">
+                <div style="font-weight:bold; font-size:1.2em;">${currentUser.name}</div>
+                
+                <div class="xp-container" style="width:100%;">
+                    <div class="xp-bar" style="width: ${currentUser.totalXp % 100}%"></div>
+                </div>
+                <div style="font-size:0.8em; color:#666;">XP: ${currentUser.totalXp}</div>
+            </div>
+        </div>
+    `;
+    grid.appendChild(card);
+}
 
     function getEmoji(type) {
         const emojis = { 'cat': '🐱', 'fox': '🦊', 'snk': '🐍', 'mnk': '🐒', 'zbr': '🦓' };
