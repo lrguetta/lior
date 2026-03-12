@@ -145,32 +145,44 @@ if (!studentId) {
 
     // פונקציה לעדכון ה-XP ב-Firebase
     function giveXP(amount) {
-        if (!studentId) {
-            alert("שגיאה: חסר מזהה תלמיד (UID)");
+
+    // אם אין מזהה תלמיד – לא עושים כלום
+    if (!studentId || studentId === "admin") {
+        document.getElementById('status').innerText = "המטלה הסתיימה (מצב מנהל)";
+        setTimeout(() => window.close(), 1500);
+        return;
+    }
+
+    const studentRef = db.ref('students/' + studentId);
+
+    studentRef.once('value').then((snapshot) => {
+
+        const data = snapshot.val();
+
+        // אם התלמיד לא קיים במסד הנתונים – עצור
+        if (!data) {
+            console.log("Student not found – XP cancelled");
             return;
         }
 
-        const studentRef = db.ref('students/' + studentId);
-        studentRef.once('value').then((snapshot) => {
-            const data = snapshot.val() || {};
-            let newXp = (data.xp || 0) + amount;
-            let newLevel = data.level || 0;
+        let newXp = (data.xp || 0) + amount;
+        let newLevel = data.level || 0;
 
-            // לוגיקת עליית רמה (כל 100 XP עולים רמה)
-            if (newXp >= 100) {
-                newLevel++;
-                newXp = newXp - 100;
-            }
+        if (newXp >= 100) {
+            newLevel++;
+            newXp -= 100;
+        }
 
-            studentRef.update({
-                xp: newXp,
-                level: newLevel
-            }).then(() => {
-                document.getElementById('status').innerText = "הנתונים עודכנו בהצלחה!";
-                setTimeout(() => window.close(), 1500);
-            });
+        studentRef.update({
+            xp: newXp,
+            level: newLevel
+        }).then(() => {
+            document.getElementById('status').innerText = "הנתונים עודכנו בהצלחה!";
+            setTimeout(() => window.close(), 1500);
         });
-    }
+
+    });
+}
 
     // הפעלה ראשונית
     if (questions.length > 0) {
