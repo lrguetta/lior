@@ -237,7 +237,29 @@ button {
         </select>
         <button onclick="addStudent()">צרף יצור לחווה 🐾</button>
     </div>
+<hr style="margin:15px 0;">
+<h3>ניהול שאלות למטלות 📝</h3>
+<div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+    <select id="selectTaskForQuestions">
+        <option value="">בחר מטלה...</option>
+    </select>
+    <button onclick="loadQuestions()">טען שאלות</button>
+</div>
 
+<div id="questions-manager" style="display:none; width:100%; max-width:900px; margin-bottom:20px;">
+    <div id="questions-list"></div>
+    <hr style="margin:10px 0;">
+    <h4>הוסף שאלה חדשה</h4>
+    <input type="text" id="newQuestionText" placeholder="טקסט השאלה" style="width:60%;">
+    <select id="newQuestionType">
+        <option value="mc">רב-ברירה</option>
+        <option value="text">תשובה פתוחה</option>
+        <option value="tf">נכון/לא נכון</option>
+    </select>
+    <input type="text" id="newQuestionOptions" placeholder="אפשרויות מופרדות בפסיק (ל-mc)" style="width:30%;">
+    <input type="text" id="newQuestionCorrect" placeholder="תשובה נכונה" style="width:20%;">
+    <button onclick="addQuestion()">הוסף שאלה</button>
+</div>
     <div style="width:100%; display:flex; gap:10px; margin-top:10px;">
         <input type="text" id="search" placeholder="חפש לפי שם..." oninput="updateView()" style="flex:2;">
         <select id="sortBy" onchange="updateView()" style="flex:1;">
@@ -445,7 +467,86 @@ db.ref('tasks').on('value', (snap) => {
     allTasks = tasks ? Object.values(tasks) : [];
     renderTasks();
 });
+// מילוי תפריט המטלות למנהל
+function populateTasksForQuestions() {
+    const select = document.getElementById('selectTaskForQuestions');
+    select.innerHTML = '<option value="">בחר מטלה...</option>';
+    allTasks.forEach(task => {
+        const opt = document.createElement('option');
+        opt.value = task.id;
+        opt.textContent = task.title;
+        select.appendChild(opt);
+    });
+}
 
+// טעינת שאלות למטלה
+function loadQuestions() {
+    const taskId = document.getElementById('selectTaskForQuestions').value;
+    if (!taskId) return alert('בחר מטלה');
+    
+    const questionsDiv = document.getElementById('questions-manager');
+    questionsDiv.style.display = 'block';
+    
+    const listDiv = document.getElementById('questions-list');
+    listDiv.innerHTML = 'טוען שאלות...';
+    
+    db.ref('tasks/' + taskId + '/questions').once('value').then(snap => {
+        const questions = snap.val() || {};
+        listDiv.innerHTML = '';
+        Object.keys(questions).forEach(qKey => {
+            const q = questions[qKey];
+            const div = document.createElement('div');
+            div.style = "border:1px solid #ccc; padding:8px; margin-bottom:5px; border-radius:5px; display:flex; gap:5px; align-items:center;";
+            div.innerHTML = `
+                <input type="text" value="${q.text}" style="flex:2;" onchange="updateQuestion('${taskId}','${qKey}', this.value, null, null)">
+                <input type="text" value="${q.type}" style="width:80px;" onchange="updateQuestion('${taskId}','${qKey}', null, this.value, null)">
+                <input type="text" value="${q.options ? q.options.join(',') : ''}" placeholder="אפשרויות (mc)" style="flex:1;" onchange="updateQuestion('${taskId}','${qKey}', null, null, this.value)">
+                <input type="text" value="${q.correct}" placeholder="תשובה נכונה" style="width:80px;" onchange="updateQuestion('${taskId}','${qKey}', null, null, null, this.value)">
+                <button onclick="deleteQuestion('${taskId}','${qKey}')">❌</button>
+            `;
+            listDiv.appendChild(div);
+        });
+    });
+}
+
+// פונקציות עדכון ושמירה
+function updateQuestion(taskId, qKey, text=null, type=null, options=null, correct=null) {
+    const updates = {};
+    if (text !== null) updates['text'] = text;
+    if (type !== null) updates['type'] = type;
+    if (options !== null) updates['options'] = options.split(',').map(o => o.trim());
+    if (correct !== null) updates['correct'] = (type==='tf') ? (correct==='true') : (type==='mc' ? parseInt(correct) : correct);
+    db.ref('tasks/' + taskId + '/questions/' + qKey).update(updates);
+}
+
+function deleteQuestion(taskId, qKey) {
+    if(confirm('למחוק שאלה?')) db.ref('tasks/' + taskId + '/questions/' + qKey).remove();
+}
+
+// הוספת שאלה חדשה
+function addQuestion() {
+    const taskId = document.getElementById('selectTaskForQuestions').value;
+    if (!taskId) return alert('בחר מטלה');
+    const text = document.getElementById('newQuestionText').value.trim();
+    const type = document.getElementById('newQuestionType').value;
+    const options = document.getElementById('newQuestionOptions').value.split(',').map(o => o.trim());
+    let correct = document.getElementById('newQuestionCorrect').value.trim();
+    if(type==='mc') correct = parseInt(correct);
+    if(type==='tf') correct = (correct==='true');
+
+    if(!text) return alert('טקסט השאלה חובה');
+
+    const qKey = Date.now().toString();
+    db.ref('tasks/' + taskId + '/questions/' + qKey).set({
+        text, type, options: (type==='mc'?options:[]), correct
+    });
+
+    document.getElementById('newQuestionText').value='';
+    document.getElementById('newQuestionOptions').value='';
+    document.getElementById('newQuestionCorrect').value='';
+    
+    loadQuestions(); // רענון רשימת השאלות
+}
 function renderTasks() {
 
     const list = document.getElementById('tasks-list');
@@ -633,4 +734,5 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
 
