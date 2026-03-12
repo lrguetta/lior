@@ -251,17 +251,17 @@ button {
     <hr style="width:100%; margin: 15px 0;">
     
     <div style="width:100%; display:flex; flex-wrap:wrap; gap:10px;">
-       <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="flex:1;">
-    <input type="text" id="taskLink" placeholder="קישור למטלה (אופציונלי)" style="flex:1;">
+    <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="flex:1;">
     <input type="date" id="taskDeadline" style="flex:1;">
     <input type="number" id="taskXP" placeholder="XP למטלה" value="20" style="width:120px;">
-<button onclick="addTask()" style="background-color:#1976d2;">פרסם מטלה חדשה 📋</button>
+    
+    <div id="questions-builder" style="width:100%; background:#f9f9f9; padding:10px; border-radius:8px; border:1px solid #ccc; margin-top:10px;">
+        <h5>בניית שאלון (אופציונלי):</h5>
+        <div id="questions-list-admin"></div>
+        <button onclick="addQuestionRow()" style="background:#007bff; font-size:0.9em;">+ הוסף שאלה</button>
     </div>
-    <div style="width:100%; margin-bottom:10px; text-align:right;">
-    <button onclick="window.open('https://send.magicode.me/', '_blank')" 
-            style="background:#ff9800; color:white; padding:10px 15px; border:none; border-radius:8px; cursor:pointer;">
-        העלאת קובץ מטלה 📤
-    </button>
+
+    <button onclick="addTask()" style="background-color:#1976d2; width:100%; margin-top:10px;">פרסם מטלה חדשה 📋</button>
 </div>
 
     <div id="admin-submissions" style="width:100%; margin-top:20px; background:#f1f8e9; padding:15px; border-radius:10px; border:1px dashed #2e7d32; text-align:right;">
@@ -294,7 +294,19 @@ button {
         <button onclick="closeModal()" style="flex:1; background:#999;">ביטול</button>
     </div>
 </div>
+<div style="width:100%; display:flex; flex-wrap:wrap; gap:10px;">
+    <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="flex:1;">
+    <input type="date" id="taskDeadline" style="flex:1;">
+    <input type="number" id="taskXP" placeholder="XP למטלה" value="20" style="width:120px;">
+    
+    <div id="questions-builder" style="width:100%; background:#f9f9f9; padding:10px; border-radius:8px; border:1px solid #ccc; margin-top:10px;">
+        <h5>בניית שאלון (אופציונלי):</h5>
+        <div id="questions-list-admin"></div>
+        <button onclick="addQuestionRow()" style="background:#007bff; font-size:0.9em;">+ הוסף שאלה</button>
+    </div>
 
+    <button onclick="addTask()" style="background-color:#1976d2; width:100%; margin-top:10px;">פרסם מטלה חדשה 📋</button>
+</div>
 <script>
 const firebaseConfig = {
     apiKey: "AIzaSyCtS0Gf9oNiRg6OTd3jyNaPxuWBFlWGIsE",
@@ -437,6 +449,118 @@ function updateView() {
     }).join('');
 }
 
+    let tempQuestions = [];
+
+// פונקציה להוספת שורת שאלה בממשק המנהל
+function addQuestionRow() {
+    const container = document.getElementById('questions-list-admin');
+    const qId = Date.now();
+    const div = document.createElement('div');
+    div.className = 'admin-q-row';
+    div.style = "margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;";
+    div.innerHTML = `
+        <input type="text" placeholder="השאלה" class="q-text" style="width:100%; margin-bottom:5px;">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+            <input type="text" placeholder="תשובה נכונה" class="q-correct" style="border:1px solid green;">
+            <input type="text" placeholder="מסיח 1" class="q-wrong1">
+            <input type="text" placeholder="מסיח 2" class="q-wrong2">
+            <input type="text" placeholder="מסיח 3" class="q-wrong3">
+        </div>
+    `;
+    container.appendChild(div);
+}
+
+// עדכון פונקציית הוספת המטלה שתכלול גם את השאלות
+function addTask() {
+    const title = document.getElementById('taskTitle').value;
+    const deadline = document.getElementById('taskDeadline').value;
+    const xp = parseInt(document.getElementById('taskXP').value) || 20;
+    
+    // איסוף השאלות
+    const qRows = document.querySelectorAll('.admin-q-row');
+    const questions = Array.from(qRows).map(row => ({
+        question: row.querySelector('.q-text').value,
+        correct: row.querySelector('.q-correct').value,
+        distractors: [
+            row.querySelector('.q-wrong1').value,
+            row.querySelector('.q-wrong2').value,
+            row.querySelector('.q-wrong3').value
+        ].filter(v => v !== "")
+    })).filter(q => q.question !== "");
+
+    if (!title) return alert("הזן כותרת");
+
+    const id = Date.now().toString();
+    db.ref('tasks/' + id).set({
+        id, title, deadline, xp,
+        questions: questions.length > 0 ? questions : null,
+        type: questions.length > 0 ? 'quiz' : 'manual'
+    });
+
+    // ניקוי טופס
+    document.getElementById('taskTitle').value = '';
+    document.getElementById('questions-list-admin').innerHTML = '';
+}
+
+// פונקציה לפתיחת שאלון עבור תלמיד
+function openQuiz(taskId) {
+    const task = allTasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    currentTaskToSubmit = taskId;
+    document.getElementById('quiz-title').innerText = task.title;
+    const container = document.getElementById('quiz-questions-container');
+    container.innerHTML = '';
+
+    task.questions.forEach((q, idx) => {
+        const options = [q.correct, ...q.distractors].sort(() => Math.random() - 0.5);
+        const qDiv = document.createElement('div');
+        qDiv.innerHTML = `
+            <p><strong>${idx + 1}. ${q.question}</strong></p>
+            ${options.map(opt => `
+                <label style="display:block; margin-bottom:5px;">
+                    <input type="radio" name="q${idx}" value="${opt}"> ${opt}
+                </label>
+            `).join('')}
+        `;
+        container.appendChild(qDiv);
+    });
+
+    document.getElementById('quiz-modal').style.display = 'block';
+}
+
+function closeQuizModal() { document.getElementById('quiz-modal').style.display = 'none'; }
+
+// שליחת שאלון
+function submitQuiz() {
+    const task = allTasks.find(t => t.id === currentTaskToSubmit);
+    const student = allStudents.find(s => s.id === currentUser);
+    let answers = [];
+    
+    task.questions.forEach((q, idx) => {
+        const selected = document.querySelector(`input[name="q${idx}"]:checked`);
+        answers.push({
+            question: q.question,
+            selected: selected ? selected.value : "לא נענה",
+            isCorrect: selected && selected.value === q.correct
+        });
+    });
+
+    const subId = Date.now().toString();
+    db.ref('submissions/' + subId).set({
+        id: subId,
+        studentName: student.name,
+        studentId: student.id,
+        taskId: currentTaskToSubmit,
+        type: 'quiz',
+        answers: answers,
+        time: Date.now()
+    });
+
+    alert("השאלון הוגש למורה! 🏁");
+    closeQuizModal();
+}
+    
 // לוגיקת מטלות
 let allTasks = [];
 
@@ -561,6 +685,27 @@ function initAdminSubmissions() {
 
         if (subs) {
             Object.values(subs).forEach(sub => {
+                // בתוך הלולאה של ה-Object.values(subs).forEach
+if (sub.type === 'quiz') {
+    const correctCount = sub.answers.filter(a => a.isCorrect).length;
+    d.innerHTML = `
+        <div style="font-weight:bold; color:#1976d2;">שאלון מאת: ${sub.studentName}</div>
+        <div style="font-size:0.9em; margin:5px 0;">
+            ציון גולמי: ${correctCount} מתוך ${sub.answers.length} נכונות
+            <details>
+                <summary style="cursor:pointer; color:blue;">הצג תשובות מפורטות</summary>
+                <ul style="font-size:0.8em; padding-right:15px;">
+                    ${sub.answers.map(a => `<li style="color:${a.isCorrect ? 'green':'red'}">${a.question}: ${a.selected}</li>`).join('')}
+                </ul>
+            </details>
+        </div>
+        <div style="display:flex; gap:5px; margin-top:5px;">
+            <button onclick="approveSub('${sub.id}', '${sub.studentId}', 1)" style="background:#4caf50;">אשר מלא ✅</button>
+            <button onclick="approveSub('${sub.id}', '${sub.studentId}', 0.5)" style="background:#ffc107;">אשר חלקי 🟡</button>
+            <button onclick="rejectSub('${sub.id}')" style="background:#f44336;">דחה ❌</button>
+        </div>
+    `;
+}
                 const d = document.createElement('div');
                 d.style = "background:white; padding:10px; margin:5px 0; border-radius:8px; border-right:4px solid gold; color: black; text-align: right; box-shadow: 0 2px 4px rgba(0,0,0,0.1);";
              d.innerHTML = `
@@ -633,4 +778,5 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
 
