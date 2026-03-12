@@ -95,9 +95,13 @@
     ];
 
     let currentIdx = 0;
-    const urlParams = new URLSearchParams(window.location.search);
-    const studentId = urlParams.get('uid');
+    // קבלת מזהה תלמיד: קודם מה-URL ואם אין אז מה-localStorage
+const urlParams = new URLSearchParams(window.location.search);
+let studentId = urlParams.get('uid');
 
+if (!studentId) {
+    studentId = localStorage.getItem('currentUser');
+}
     // פונקציה להצגת השאלה
     function displayQuestion() {
         const q = questions[currentIdx];
