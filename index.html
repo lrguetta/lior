@@ -121,23 +121,35 @@
 
     // הוספת XP ידנית (מורה) + אנימציות
     function addXP(id, xp, lvl) {
-        if (currentUser !== 'admin') return;
-        const img = document.getElementById('img-' + id);
-        const card = img?.closest('.student-card');
-        if (img) {
-            img.classList.remove('glow-effect');
-            requestAnimationFrame(() => img.classList.add('glow-effect'));
-            const f = document.createElement('div'); f.className = 'xp-float'; f.innerText = '+10 XP';
-            card.appendChild(f); setTimeout(() => f.remove(), 800);
-        }
-        let nxp = xp + 10, nlv = lvl;
-        if (nxp >= 100) { 
-            nlv++; nxp = 0; 
-            const l = document.createElement('div'); l.className = 'levelup'; l.innerText = 'LEVEL UP! ✨';
-            card.appendChild(l); setTimeout(() => l.remove(), 2000);
-        }
-        db.ref('students/' + id).update({ xp: nxp, level: nlv });
+    if (currentUser !== 'admin') return;
+    
+    const card = document.getElementById('img-' + id).closest('.student-card');
+    const img = document.getElementById('img-' + id);
+
+    // אנימציית נצנוץ לדמות
+    img.classList.remove('glow-effect');
+    void img.offsetWidth; // טריק לגרום לדפדפן להפעיל מחדש את האנימציה
+    img.classList.add('glow-effect');
+
+    // יצירת XP צף
+    const floatXP = document.createElement('div');
+    floatXP.className = 'xp-float';
+    floatXP.innerText = '+10 XP';
+    card.appendChild(floatXP);
+    setTimeout(() => floatXP.remove(), 800);
+
+    let nxp = xp + 10, nlv = lvl;
+    if (nxp >= 100) { 
+        nlv++; nxp = 0; 
+        // אנימציית עליית רמה
+        const lvlUp = document.createElement('div');
+        lvlUp.className = 'levelup';
+        lvlUp.innerText = 'LEVEL UP! ✨';
+        card.appendChild(lvlUp);
+        setTimeout(() => lvlUp.remove(), 2000);
     }
+    db.ref('students/' + id).update({ xp: nxp, level: nlv });
+}
 
     // רינדור החווה
     function updateView() {
@@ -175,13 +187,31 @@
         document.getElementById('taskTitle').value = ''; document.getElementById('questions-list-admin').innerHTML = '';
     }
 
-    function renderTasks() {
-        const list = document.getElementById('tasks-list'); list.innerHTML = '';
-        allTasks.slice().reverse().forEach(t => {
-            const isQuiz = t.type === 'quiz';
-            list.innerHTML += `<div class="task-card"><div><h4>${t.title} ${isQuiz?'📋':'📝'}</h4><p>🎁 ${t.xp} XP</p></div><button onclick="${currentUser==='admin'?`deleteTask('${t.id}')` : (isQuiz?`openQuiz('${t.id}')` : `openSubmitModal('${t.id}','${t.title}')`)}" style="background:${currentUser==='admin'?'#ff5252':'#1976d2'}">${currentUser==='admin'?'מחק':'בצע'}</button></div>`;
-        });
-    }
+  function renderTasks() {
+    const list = document.getElementById('tasks-list');
+    list.innerHTML = '';
+    allTasks.slice().reverse().forEach(t => {
+        const isQuiz = t.type === 'quiz';
+        
+        // הגדרת הכפתור לפי סוג משתמש
+        let actionButton;
+        if (currentUser === 'admin') {
+            actionButton = `<button onclick="deleteTask('${t.id}')" style="background:#ff5252;">מחק מטלה 🗑️</button>`;
+        } else {
+            const actionFunc = isQuiz ? `openQuiz('${t.id}')` : `openSubmitModal('${t.id}','${t.title}')`;
+            actionButton = `<button onclick="${actionFunc}" style="background:#1976d2;">בצע מטלה 📝</button>`;
+        }
+
+        list.innerHTML += `
+            <div class="task-card">
+                <div>
+                    <h4>${t.title} ${isQuiz ? '📋' : '📝'}</h4>
+                    <p style="font-size:0.8em; margin:0;">🎁 בונוס: ${t.xp} XP</p>
+                </div>
+                ${actionButton}
+            </div>`;
+    });
+}
 
     function deleteTask(id) { if(confirm('למחוק?')) db.ref('tasks/' + id).remove(); }
     function openQuiz(id) {
@@ -244,3 +274,4 @@
 </script>
 </body>
 </html>
+
