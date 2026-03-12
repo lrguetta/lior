@@ -259,6 +259,7 @@ button {
     <input type="text" id="newQuestionOptions" placeholder="אפשרויות מופרדות בפסיק (ל-mc)" style="width:30%;">
     <input type="text" id="newQuestionCorrect" placeholder="תשובה נכונה" style="width:20%;">
     <button onclick="addQuestion()">הוסף שאלה</button>
+    
 </div>
     <div style="width:100%; display:flex; gap:10px; margin-top:10px;">
         <input type="text" id="search" placeholder="חפש לפי שם..." oninput="updateView()" style="flex:2;">
@@ -581,10 +582,13 @@ function renderTasks() {
         </div>
     </div>
     <div>
-        ${currentUser === 'admin'
-            ? `<button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק</button>`
-            : `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2;">הגש מטלה ✍️</button>`
-        }
+       ${currentUser === 'admin' 
+    ? `
+    <button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק</button>
+    <button onclick="publishTask('${task.id}')" style="background:#4caf50;">פרסם ✅</button>
+    `
+    : `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2;">הגש מטלה ✍️</button>`
+}
     </div>
 `;
 
@@ -618,7 +622,12 @@ function addTask() {
 }
 
 function deleteTask(id) { if(confirm('למחוק?')) db.ref('tasks/' + id).remove(); }
-
+function publishTask(taskId) {
+    if (!confirm("לפרסם את המטלה הזו לתלמידים?")) return;
+    db.ref('tasks/' + taskId).update({ published: true })
+      .then(() => alert("המטלה פורסמה בהצלחה! 🎉"))
+      .catch(err => alert("שגיאה בפרסום: " + err));
+}
 // לוגיקת הגשות
 let currentTaskToSubmit = null;
 function openSubmitModal(id, title) {
@@ -735,6 +744,7 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
 
 
 
