@@ -417,9 +417,12 @@ function startApp() {
     
     if (currentUser === 'admin') {
         document.getElementById('control-panel').style.display = 'flex';
+        fetchGithubFiles();
+        initAdminSubmissions(); // ← השורה החסרה!
     }
+    
     updateView();
-     renderTasks(); // ← השורה החשובה
+    renderTasks();
 }
 
 function addStudent() {
@@ -728,6 +731,7 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
 
 
 
