@@ -251,12 +251,26 @@ function checkAdmin() {
     } else { alert('סיסמה שגויה'); }
 }
 
-function studentLogin() {
-    const id = document.getElementById('studentSelect').value;
-    if (!id) return alert('בחר שם מהרשימה');
-    currentUser = id;
+function studentLogin(studentId) {
+    // קודם כל מוצאים את אובייקט התלמיד מתוך הרשימה הכללית
+    const student = allStudents.find(s => s.id === studentId);
+    
+    if (!student) {
+        console.error("Student not found!");
+        return;
+    }
+
+    // עכשיו כשיש לנו את student, אפשר להשתמש בו
+    currentUser = student.id;
+    
+    // שמירה בזיכרון של הדפדפן (כדי שלא יתנתק ברענון)
     localStorage.setItem('farm_user_id', student.id);
-    startApp();
+    
+    // מעבר לתצוגת החווה
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('farm-screen').style.display = 'block';
+    
+    updateView();
 }
 
 function startApp() {
@@ -712,6 +726,7 @@ window.rejectSub = function(subId) {
 </script>
 </body>
 </html>
+
 
 
 
