@@ -585,12 +585,15 @@ function renderTasks() {
         </div>
     </div>
     <div>
-       ${currentUser === 'admin' 
-    ? `
-    <button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק</button>
-    <button onclick="publishTask('${task.id}')" style="background:#4caf50;">פרסם ✅</button>
-    `
-    : `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2;">הגש מטלה ✍️</button>`
+      ${currentUser === 'admin'
+    ? `<button onclick="deleteTask('${task.id}')">מחק</button>
+       <button onclick="publishTask('${task.id}')">פרסם ✅</button>`
+    : task.link
+        ? `<a href="${task.link}?task=${task.id}&xp=${task.xp}&uid=${currentUser}" target="_blank" 
+              style="background:#1976d2; color:white; padding:5px 10px; border-radius:5px; text-decoration:none; font-weight:bold;">
+              פתח את המטלה
+           </a>`
+        : `<span style="color:#888;">מטלה ללא קישור</span>`
 }
     </div>
 `;
@@ -747,6 +750,7 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
 
 
 
