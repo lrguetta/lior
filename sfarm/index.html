@@ -325,37 +325,46 @@ button {
 
   function renderFarm() {
     const grid = document.getElementById('farm-grid');
-    grid.style.display = 'grid'; // ודא שהגריד מוצג
-    grid.innerHTML = ''; // ניקוי הגריד
-
-    // יצירת כרטיסייה לילד המחובר (היצור שלי)
-    const card = document.createElement('div');
-    card.className = 'student-card-container';
+    if (!grid) return;
     
-    // קביעת התמונה לפי סוג ורמה
-    // אם היצור הוא ביצה (egg), נשתמש בתמונת ביצה
-    let imageName = `${currentUser.type}_${currentUser.level}.png`;
-    if (currentUser.level === 1 && currentUser.egg > 0) {
-        imageName = `egg_${currentUser.egg}.png`;
-    }
+    grid.style.display = 'grid'; // ודא שהגריד מוצג
+    grid.innerHTML = ''; // ניקוי הגריד לפני טעינה מחדש
 
-    card.innerHTML = `
-        <div class="student-card">
-            <div class="card-face">
-                <div class="level-text-badge">Lvl ${currentUser.level}</div>
-                <img src="images/${imageName}" 
-                     onerror="this.src='images/egg_1.png'" 
-                     class="creature-img glow-effect">
-                <div style="font-weight:bold; font-size:1.2em;">${currentUser.name}</div>
-                
-                <div class="xp-container" style="width:100%;">
-                    <div class="xp-bar" style="width: ${currentUser.totalXp % 100}%"></div>
+    // לולאה שעוברת על כל התלמידים שנטענו מסופרבייס
+    allStudents.forEach(student => {
+        const cardContainer = document.createElement('div');
+        cardContainer.className = 'student-card-container';
+        
+        // סימון מיוחד לכרטיס של הילד המחובר (אם זה הוא)
+        if (currentUser && student.id === currentUser.id) {
+            cardContainer.classList.add('my-creature');
+        }
+
+        // קביעת התמונה לפי סוג ורמה
+        let imageName = `${student.type}_${student.level}.png`;
+        // אם מדובר ברמה 1 ויש ביצה, נציג את הביצה
+        if (student.level === 1 && student.egg > 0) {
+            imageName = `egg_${student.egg}.png`;
+        }
+
+        cardContainer.innerHTML = `
+            <div class="student-card">
+                <div class="card-face">
+                    <div class="level-text-badge">Lvl ${student.level}</div>
+                    <img src="images/${imageName}" 
+                         onerror="this.src='images/egg_1.png'" 
+                         class="creature-img">
+                    <div style="font-weight:bold; font-size:1.1em; margin-bottom:5px;">${student.name}</div>
+                    
+                    <div class="xp-container" style="width:100%;">
+                        <div class="xp-bar" style="width: ${student.totalXp % 100}%"></div>
+                    </div>
+                    <div style="font-size:0.8em; color:#666;">XP: ${student.totalXp}</div>
                 </div>
-                <div style="font-size:0.8em; color:#666;">XP: ${currentUser.totalXp}</div>
             </div>
-        </div>
-    `;
-    grid.appendChild(card);
+        `;
+        grid.appendChild(cardContainer);
+    });
 }
 
     function getEmoji(type) {
