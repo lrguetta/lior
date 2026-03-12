@@ -285,24 +285,15 @@ button {
 
 <div id="farm-grid"></div>
 
-<div id="submit-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:25px; border-radius:15px; box-shadow:0 0 20px rgba(0,0,0,0.5); z-index:1000; width:300px; text-align:center; border:3px solid #1976d2;">
-    <h3 id="modal-task-title">הגשת מטלה</h3>
-    <button onclick="window.open('https://send.magicode.me/', '_blank')" 
-            style="background:#ff9800; color:white; padding:10px 15px; border:none; border-radius:8px; cursor:pointer;">
-        העלאת קבצים 📤
-    </button>
-    <textarea id="submit-content" placeholder="לאחר שהעלית את קובץ המטלה שלך, הדבק כאן את הקישור" style="width:100%; height:80px; margin-bottom:10px; padding:5px;"></textarea>
-    <div style="margin-bottom:10px;">
-    <span style="font-size:0.85em; color:#555; display:block; margin-top:5px;">
-        לאחר ההעלאה, העתק את הקישור והדבק כאן בתיבה למעלה
-    </span>
-</div>
+<div id="submit-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:25px; border-radius:15px; box-shadow:0 0 30px rgba(0,0,0,0.5); z-index:1000; width:90%; max-width:500px; max-height:80vh; overflow-y:auto; border:3px solid #1976d2;">
+    <h3 id="modal-task-title">שם המטלה</h3>
+    <div id="questions-display" style="text-align:right; margin-bottom:20px;"></div>
     <div style="display:flex; gap:10px;">
-        <button onclick="sendSubmission()" style="flex:1; background:#4caf50;">שלח הגשה 🚀</button>
-        <button onclick="closeModal()" style="flex:1; background:#999;">ביטול</button>
+        <button onclick="sendSubmission()" style="flex:1; background:#4caf50; padding:15px;">שלח תשובות לבדיקה 🚀</button>
+        <button onclick="closeModal()" style="flex:1; background:#999;">סגור</button>
     </div>
 </div>
-
+    
 <script>
 const firebaseConfig = {
     apiKey: "AIzaSyCtS0Gf9oNiRg6OTd3jyNaPxuWBFlWGIsE",
@@ -641,5 +632,6 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
 
 
