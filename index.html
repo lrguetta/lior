@@ -509,49 +509,58 @@ db.ref('tasks').on('value', (snap) => {
     renderTasks();
 });
 
+    // מאזין להגשות עבור כולם - כדי לדעת מה כבר הוגש
+db.ref('submissions').on('value', (snap) => {
+    allSubmissions = snap.val() || {};
+    renderTasks(); // מרענן את רשימת המטלות בכל פעם שיש הגשה חדשה
+});
+    
 function renderTasks() {
-
     const list = document.getElementById('tasks-list');
     if (!list) return;
 
     list.innerHTML = '';
 
- if (allTasks.length === 0) {
-    list.innerHTML = ''; // משאיר ריק כדי שה-CSS יסתיר את המכולה
-    return;
-}
+    if (allTasks.length === 0) return;
 
     allTasks.slice().reverse().forEach(task => {
+        // --- הבדיקה החדשה: האם התלמיד הנוכחי כבר הגיש את המטלה הזו? ---
+        const hasSubmitted = Object.values(allSubmissions).some(sub => 
+            sub.taskId === task.id && sub.studentId === currentUser
+        );
+        // -----------------------------------------------------------
 
         const div = document.createElement('div');
         div.className = 'task-card';
 
-     div.innerHTML = `
-    <div class="task-info">
-        <h4>${task.title}</h4>
-        ${task.link ? `
-            <div style="margin-top:4px;">
-                <a href="${task.link}${currentUser}" target="_blank">פתח את המטלה</a>
+        div.innerHTML = `
+            <div class="task-info">
+                <h4>${task.title}</h4>
+                ${task.link ? `
+                    <div style="margin-top:4px;">
+                        📎 <a href="${task.link}${currentUser}" target="_blank" style="color:#1976d2; font-weight:bold;">
+                            פתח את המטלה
+                        </a>
+                    </div>
+                ` : ''}
+                <div style="font-size:0.85em;color:#555; margin-top:4px;">
+                    🎁 פרס: ${task.xp || 20} XP
+                    ${task.deadline ? `<br>⏰ להגשה עד: ${task.deadline}` : ''}
+                </div>
             </div>
-        ` : ''}
-        <div style="font-size:0.85em;color:#555; margin-top:4px;">
-            🎁 פרס: ${task.xp || 20} XP
-            ${task.deadline ? `<br>⏰ להגשה עד: ${task.deadline}` : ''}
-        </div>
-    </div>
-    <div>
-        ${currentUser === 'admin'
-            ? `<button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק</button>`
-            : `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2;">הגש מטלה ✍️</button>`
-        }
-    </div>
-`;
-
+            <div>
+                ${currentUser === 'admin'
+                    ? `<button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק</button>`
+                    : hasSubmitted 
+                        ? `<button disabled style="background:#999; cursor:not-allowed;">כבר הוגש ✅</button>`
+                        : `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2;">הגש מטלה ✍️</button>`
+                }
+            </div>
+        `;
         list.appendChild(div);
-
     });
 }
-
+    
 function addTask() {
     const title = document.getElementById('taskTitle').value;
     const select = document.getElementById('taskFileSelect');
@@ -578,9 +587,26 @@ function deleteTask(id) { if(confirm('למחוק?')) db.ref('tasks/' + id).remov
 // לוגיקת הגשות
 let currentTaskToSubmit = null;
 function openSubmitModal(id, title) {
-    currentTaskToSubmit = id;
-    document.getElementById('modal-task-title').innerText = title;
-    document.getElementById('submit-modal').style.display = 'block';
+    // קודם כל, נבדוק אם התלמיד כבר הגיש את המטלה הזו
+    db.ref('submissions').orderByChild('taskId').equalTo(id).once('value').then(snap => {
+        const subs = snap.val();
+        let alreadySubmitted = false;
+
+        if (subs) {
+            // עוברים על כל ההגשות של המטלה הזו ובודקים אם אחת מהן שייכת לתלמיד הנוכחי
+            alreadySubmitted = Object.values(subs).some(sub => sub.studentId === currentUser);
+        }
+
+        if (alreadySubmitted) {
+            alert("כבר הגשת את המטלה הזו! המתן לבדיקת המורה. ✨");
+            return; // עוצר את פתיחת המודל
+        }
+
+        // אם לא הגיש - פותחים את המודל כרגיל
+        currentTaskToSubmit = id;
+        document.getElementById('modal-task-title').innerText = title;
+        document.getElementById('submit-modal').style.display = 'block';
+    });
 }
 function closeModal() { document.getElementById('submit-modal').style.display = 'none'; }
 
@@ -703,6 +729,7 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
 
 
 
