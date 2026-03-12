@@ -95,9 +95,10 @@ select.value = currentVal;
 updateView();
 }
 
-loadStudents();
-setInterval(loadStudents,3000);
-
+window.addEventListener("DOMContentLoaded", () => {
+    loadStudents();
+});
+    
 /* =========================
    כניסה
 ========================= */
