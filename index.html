@@ -72,6 +72,7 @@ button { background-color: #2e7d32; color: white; cursor: pointer; border: none;
     align-items: center;
     justify-content: space-between;
     border-bottom: 5px solid #81c784;
+    padding-bottom: 20px;
 }
 
 .card-back {
@@ -87,6 +88,21 @@ button { background-color: #2e7d32; color: white; cursor: pointer; border: none;
     width: 100px;
     height: 100px;
     object-fit: contain;
+}
+.xp-container {
+    width: 90%;
+    background-color: #e0e0e0;
+    border-radius: 10px;
+    height: 12px;
+    margin-top: auto; /* דוחף את המד הכי למטה שאפשר */
+    overflow: hidden;
+    border: 1px solid #ccc;
+}
+
+.xp-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #4caf50, #81c784);
+    transition: width 0.5s ease-in-out;
 }
 #tasks-area { width: 90%; max-width: 1200px; margin-bottom: 20px; display: none; }
 .task-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-right: 6px solid #1976d2; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
@@ -330,15 +346,27 @@ function updateView() {
         return `
         <div class="student-card ${isMine ? 'my-creature' : ''}" onclick="this.classList.toggle('flipped')">
             <div class="card-inner">
-                <div class="card-front">
-                    <div class="level-text-badge">Lv.${s.level}</div>
-                    ${currentUser === 'admin' ? `<button class="remove-btn" onclick="event.stopPropagation(); if(confirm('למחוק?')) db.ref('students/${s.id}').remove()">✖</button>` : ''}
-                    <img id="img-${s.id}" src="${imgPath}" class="creature-img" onclick="event.stopPropagation(); addXP('${s.id}',${s.xp},${s.level})">
-                    <div style="font-weight:bold;font-size:1.2em;">${s.name}</div>
-                    <div style="color:#555;font-size:0.9em;">כיתה ${s.className}</div>
-                    <div class="xp-container"><div class="xp-bar" style="width:${s.xp}%"></div></div>
-                    ${isMine ? '<div style="font-size:0.8em; color:#2e7d32; font-weight:bold;">לחץ להיפוך הכרטיס 🔄</div>' : ''}
-                </div>
+            <div class="card-front" style="display: flex; flex-direction: column; justify-content: space-between; align-items: center; height: 100%; padding: 15px; box-sizing: border-box;">
+    <div style="width: 100%; display: flex; justify-content: space-between; align-items: flex-start;">
+        <div class="level-text-badge">Lv.${s.level}</div>
+        ${currentUser === 'admin' ? `<button class="remove-btn" onclick="event.stopPropagation(); if(confirm('למחוק?')) db.ref('students/${s.id}').remove()">✖</button>` : '<div></div>'}
+    </div>
+
+    <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
+        <img id="img-${s.id}" src="${imgPath}" class="creature-img" 
+             style="max-height: 110px; object-fit: contain; margin-bottom: 5px;"
+             onclick="event.stopPropagation(); addXP('${s.id}',${s.xp},${s.level})">
+        <div style="font-weight:bold; font-size:1.1em; line-height: 1.2;">${s.name}</div>
+        <div style="color:#666; font-size:0.8em;">כיתה ${s.className}</div>
+    </div>
+
+    <div style="width: 100%; margin-top: 10px;">
+        <div class="xp-container" style="width: 100%; background: #eee; height: 10px; border-radius: 5px; overflow: hidden; border: 1px solid #ddd;">
+            <div class="xp-bar" style="width:${s.xp}%; background: linear-gradient(90deg, #4caf50, #81c784); height: 100%; transition: width 0.5s;"></div>
+        </div>
+        ${isMine ? '<div style="font-size:0.7em; color:#2e7d32; font-weight:bold; margin-top: 5px; text-align: center;">🔄 לחץ להיפוך</div>' : ''}
+    </div>
+</div>
                 <div class="card-back">
                     <h4 style="margin:0 0 10px 0; color:#2e7d32; border-bottom:1px solid #ccc;">יומן פעילות</h4>
                     <div style="flex-grow:1;">
@@ -684,6 +712,7 @@ window.rejectSub = function(subId) {
 </script>
 </body>
 </html>
+
 
 
 
