@@ -353,26 +353,39 @@ function renderTasks() {
         list.innerHTML = 'אין מטלות כרגע.';
         return;
     }
-    
-    allTasks.slice().reverse().forEach(task => {
-        const div = document.createElement('div');
-        div.className = 'task-card';
-        div.innerHTML = `
-            <div class="task-info">
-                <h4>${task.title}</h4>
-                <div style="font-size:0.85em;color:#555; margin-top:4px;">
-                    🎁 פרס: ${task.xp || 20} XP
-                    ${task.deadline ? `<br>⏰ להגשה עד: ${task.deadline}` : ''}
+
+    // נמשוך את כל ההגשות כדי לבדוק אם התלמיד כבר הגיש
+    db.ref('submissions').once('value', (snap) => {
+        const subs = snap.val() ? Object.values(snap.val()) : [];
+
+        allTasks.slice().reverse().forEach(task => {
+            // בדיקה אם המשתמש הנוכחי כבר הגיש את המטלה הזו
+            const alreadySubmitted = subs.some(s => s.studentId === currentUser && s.taskId === task.id);
+
+            const div = document.createElement('div');
+            div.className = 'task-card';
+            
+            let actionBtn;
+            if (currentUser === 'admin') {
+                actionBtn = `<button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק מטלה</button>`;
+            } else if (alreadySubmitted) {
+                actionBtn = `<button disabled style="background:#999; cursor:not-allowed;">כבר הגשת ✔️</button>`;
+            } else {
+                actionBtn = `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2;">פתח משימה ✍️</button>`;
+            }
+
+            div.innerHTML = `
+                <div class="task-info">
+                    <h4>${task.title}</h4>
+                    <div style="font-size:0.85em;color:#555; margin-top:4px;">
+                        🎁 פרס: ${task.xp || 20} XP
+                        ${task.deadline ? `<br>⏰ להגשה עד: ${task.deadline}` : ''}
+                    </div>
                 </div>
-            </div>
-            <div>
-                ${currentUser === 'admin'
-                    ? `<button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק מטלה</button>`
-                    : `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2;">פתח משימה ✍️</button>`
-                }
-            </div>
-        `;
-        list.appendChild(div);
+                <div>${actionBtn}</div>
+            `;
+            list.appendChild(div);
+        });
     });
 }
 
@@ -474,24 +487,37 @@ function initAdminSubmissions() {
 
         if (subs) {
             Object.values(subs).forEach(sub => {
+                const task = allTasks.find(t => t.id === sub.taskId);
+                const taskTitle = task ? task.title : "מטלה לא ידועה";
+                const taskXP = task ? task.xp : 20;
+
                 const d = document.createElement('div');
                 d.style = "background:white; padding:15px; margin:10px 0; border-radius:8px; border-right:5px solid gold; color: black; text-align: right; box-shadow: 0 2px 4px rgba(0,0,0,0.1);";
                 
-                // יצירת תצוגת התשובות של התלמיד
                 let answersHtml = sub.answers ? sub.answers.map(a => `
                     <div style="background:#f9f9f9; padding:8px; border-radius:5px; margin-bottom:5px; border:1px solid #eee;">
                         <b>${a.q}</b><br>
                         <span style="color:${a.a ? '#1976d2' : '#f44336'};">${a.a || 'לא ענה'}</span>
                     </div>
-                `).join('') : '<div style="color:red;">הגשה ישנה מהמערכת הקודמת</div>';
+                `).join('') : 'אין נתוני תשובות';
 
                 d.innerHTML = `
-                    <div style="font-weight:bold; color:#2e7d32; font-size:1.1em; margin-bottom:10px;">מאת: ${sub.studentName}</div>
-                    <div style="max-height:180px; overflow-y:auto; margin-bottom:10px;">${answersHtml}</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <div>
+                            <strong style="color:#2e7d32; font-size:1.1em;">${sub.studentName}</strong>
+                            <div style="font-size:0.85em; color:#666;">מטלה: ${taskTitle} | פרס: ${taskXP} XP</div>
+                        </div>
+                    </div>
+                    
+                    <details style="background:#f1f8e9; padding:10px; border-radius:5px; cursor:pointer;">
+                        <summary style="font-weight:bold; color:#1976d2;">🔍 בדיקת תשובות</summary>
+                        <div style="margin-top:10px; cursor:default;">${answersHtml}</div>
+                    </details>
+
                     <div style="display:flex; gap:5px; margin-top:10px;">
-                        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 1)" style="background:#4caf50; flex:1;">אשר מלא ✅</button>
-                        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 0.5)" style="background:#ffc107; flex:1;">אשר חלקי 🟡</button>
-                        <button onclick="rejectSub('${sub.id}')" style="background:#f44336; flex:1;">דחה ❌</button>
+                        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 1)" style="background:#4caf50; flex:1;">אשר מלא (100%)</button>
+                        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 0.5)" style="background:#ffc107; flex:1;">אשר חלקי (50%)</button>
+                        <button onclick="rejectSub('${sub.id}')" style="background:#f44336; flex:1;">דחה</button>
                     </div>
                 `;
                 container.appendChild(d);
@@ -544,3 +570,4 @@ window.rejectSub = function(subId) {
 </script>
 </body>
 </html>
+
