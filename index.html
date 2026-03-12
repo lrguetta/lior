@@ -466,13 +466,13 @@ function renderTasks() {
      div.innerHTML = `
     <div class="task-info">
         <h4>${task.title}</h4>
-        ${task.link ? `
-            <div style="margin-top:4px;">
-                📎 <a href="${task.link}" target="_blank" style="color:#1976d2; font-weight:bold;">
-                    פתח את המטלה
-                </a>
-            </div>
-        ` : ''}
+     ${task.link ? `
+    <div style="margin-top:4px;">
+        📎 <a href="${task.link}?task=${task.id}&xp=${task.xp}&uid=${currentUser}" target="_blank" style="color:#1976d2; font-weight:bold;">
+            פתח את המטלה
+        </a>
+    </div>
+` : ''}
         <div style="font-size:0.85em;color:#555; margin-top:4px;">
             🎁 פרס: ${task.xp || 20} XP
             ${task.deadline ? `<br>⏰ להגשה עד: ${task.deadline}` : ''}
