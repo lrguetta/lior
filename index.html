@@ -563,10 +563,13 @@ function renderTasks() {
 
     allTasks.slice().reverse().forEach(task => {
 
-        const div = document.createElement('div');
-        div.className = 'task-card';
+    if(currentUser !== 'admin' && !task.published) return; // ← כאן, מדלגים אם המטלה לא פורסמה
 
-     div.innerHTML = `
+    const div = document.createElement('div');
+    div.className = 'task-card';
+
+    div.innerHTML = `
+    ...
     <div class="task-info">
         <h4>${task.title}</h4>
      ${task.link ? `
@@ -744,6 +747,7 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
 
 
 
