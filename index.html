@@ -568,7 +568,6 @@ db.ref('tasks').on('value', (snap) => {
 });
 
 function renderTasks() {
-
     const list = document.getElementById('tasks-list');
     if (!list) return;
 
@@ -580,35 +579,45 @@ function renderTasks() {
     }
 
     allTasks.slice().reverse().forEach(task => {
-
         const div = document.createElement('div');
         div.className = 'task-card';
 
-     div.innerHTML = `
-    <div class="task-info">
-        <h4>${task.title}</h4>
-        ${task.link ? `
-            <div style="margin-top:4px;">
-                📎 <a href="${task.link}" target="_blank" style="color:#1976d2; font-weight:bold;">
-                    פתח את המטלה
-                </a>
-            </div>
-        ` : ''}
-        <div style="font-size:0.85em;color:#555; margin-top:4px;">
-            🎁 פרס: ${task.xp || 20} XP
-            ${task.deadline ? `<br>⏰ להגשה עד: ${task.deadline}` : ''}
-        </div>
-    </div>
-    <div>
-        ${currentUser === 'admin'
-            ? `<button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק</button>`
-            : `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2;">הגש מטלה ✍️</button>`
+        // בדיקה האם זו מטלת שאלון או מטלה ידנית
+        const isQuiz = task.type === 'quiz';
+        
+        // הגדרת הכפתור המתאים (שאלון או הגשה ידנית)
+        let actionButton;
+        if (currentUser === 'admin') {
+            actionButton = `<button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק</button>`;
+        } else {
+            if (isQuiz) {
+                actionButton = `<button onclick="openQuiz('${task.id}')" style="background:#4caf50;">פתור שאלון 📋</button>`;
+            } else {
+                actionButton = `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2;">הגש מטלה ✍️</button>`;
+            }
         }
-    </div>
-`;
+
+        div.innerHTML = `
+            <div class="task-info">
+                <h4>${task.title} ${isQuiz ? '📋' : '📝'}</h4>
+                ${task.link ? `
+                    <div style="margin-top:4px;">
+                        📎 <a href="${task.link}" target="_blank" style="color:#1976d2; font-weight:bold; cursor:pointer; position:relative; z-index:10;">
+                            לחץ כאן לפתיחת הקובץ
+                        </a>
+                    </div>
+                ` : ''}
+                <div style="font-size:0.85em;color:#555; margin-top:4px;">
+                    🎁 פרס: ${task.xp || 20} XP
+                    ${task.deadline ? `<br>⏰ להגשה עד: ${task.deadline}` : ''}
+                </div>
+            </div>
+            <div>
+                ${actionButton}
+            </div>
+        `;
 
         list.appendChild(div);
-
     });
 }
 
@@ -775,5 +784,6 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
 
 
