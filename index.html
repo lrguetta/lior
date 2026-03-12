@@ -30,6 +30,63 @@ button { background-color: #2e7d32; color: white; cursor: pointer; border: none;
 @keyframes floatUp { 0% { opacity: 1; transform: translate(-50%,0); } 100% { opacity: 0; transform: translate(-50%,-40px); } }
 .levelup { position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%); background: #ffd700; color: #1b5e20; font-weight: bold; font-size: 1.5em; padding: 10px 20px; border-radius: 15px; box-shadow: 0 0 15px rgba(0,0,0,0.3); z-index: 100; pointer-events: none; animation: levelPop 2s ease-out forwards; }
 @keyframes levelPop { 0% { opacity: 0; transform: translate(-50%, 0) scale(0.5); } 20% { opacity: 1; transform: translate(-50%, -30px) scale(1.2); } 80% { opacity: 1; transform: translate(-50%, -40px) scale(1); } 100% { opacity: 0; transform: translate(-50%, -60px) scale(0.8); } }
+/* אנימציית היפוך כרטיס */
+.student-card {
+    perspective: 1000px;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    cursor: pointer;
+}
+.card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+}
+.student-card.flipped .card-inner {
+    transform: rotateY(180deg);
+}
+.card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    backface-visibility: hidden;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 25px;
+    padding: 20px;
+    box-sizing: border-box;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    border-bottom: 5px solid #81c784;
+}
+.card-back {
+    transform: rotateY(180deg);
+    background: #f1f8e9;
+    font-size: 0.9em;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    height: 100%;
+    overflow-y: auto;
+}
+.history-item {
+    background: white;
+    margin-bottom: 5px;
+    padding: 5px;
+    border-radius: 8px;
+    border-right: 3px solid #4caf50;
+    text-align: right;
+    font-size: 0.85em;
+}
+.rejection-note {
+    background: #ffebee;
+    border-right: 3px solid #f44336;
+    padding: 5px;
+    margin-top: 5px;
+    border-radius: 8px;
+    color: #c62828;
+}
 #tasks-area { width: 90%; max-width: 1200px; margin-bottom: 20px; display: none; }
 .task-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-right: 6px solid #1976d2; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
 .task-info h4 { margin: 0; color: #333; }
@@ -245,29 +302,45 @@ function updateView() {
     const sortBy = document.getElementById('sortBy').value;
     let filtered = allStudents.filter(s => s.name.toLowerCase().includes(searchTerm));
     
-    filtered.sort((a, b) => {
-        if (sortBy === 'name') return a.name.localeCompare(b.name);
-        if (sortBy === 'level') return b.level - a.level;
-        return a.className.localeCompare(b.className);
-    });
-
     grid.innerHTML = filtered.map(s => {
         const eggNum = (s.egg !== undefined) ? s.egg + 1 : 1;
         const isMine = currentUser === s.id;
         const imgPath = s.level === 0 ? `images/egg${eggNum}.png` : `images/${s.type}${s.level >= 20 ? 3 : (s.level >= 10 ? 2 : 1)}.png`;
+        
+        // יצירת רשימת היסטוריה
+        let historyHtml = "";
+        if (s.history) {
+            historyHtml = Object.values(s.history).reverse().slice(0, 3).map(h => `
+                <div class="history-item">✨ ${h.msg}: <b>+${h.xp}XP</b></div>
+            `).join('');
+        }
+        
+        let noteHtml = s.lastNote ? `<div class="rejection-note">📝 הערת מורה: ${s.lastNote}</div>` : "";
+
         return `
-        <div class="student-card ${isMine ? 'my-creature' : ''}">
-            <div class="level-text-badge">Lv.${s.level}</div>
-            ${currentUser === 'admin' ? `<button class="remove-btn" onclick="if(confirm('למחוק?')) db.ref('students/${s.id}').remove()">✖</button>` : ''}
-            <img id="img-${s.id}" src="${imgPath}" class="creature-img" onclick="addXP('${s.id}',${s.xp},${s.level})">
-            <div style="font-weight:bold;font-size:1.2em;">${s.name}</div>
-            <div style="color:#555;font-size:0.9em;">כיתה ${s.className}</div>
-            <div class="xp-container"><div class="xp-bar" style="width:${s.xp}%"></div></div>
-            ${isMine ? '<div style="font-size:0.8em; color:#2e7d32; font-weight:bold;">זה היצור שלי! ✨</div>' : ''}
+        <div class="student-card ${isMine ? 'my-creature' : ''}" onclick="this.classList.toggle('flipped')">
+            <div class="card-inner">
+                <div class="card-front">
+                    <div class="level-text-badge">Lv.${s.level}</div>
+                    ${currentUser === 'admin' ? `<button class="remove-btn" onclick="event.stopPropagation(); if(confirm('למחוק?')) db.ref('students/${s.id}').remove()">✖</button>` : ''}
+                    <img id="img-${s.id}" src="${imgPath}" class="creature-img" onclick="event.stopPropagation(); addXP('${s.id}',${s.xp},${s.level})">
+                    <div style="font-weight:bold;font-size:1.2em;">${s.name}</div>
+                    <div style="color:#555;font-size:0.9em;">כיתה ${s.className}</div>
+                    <div class="xp-container"><div class="xp-bar" style="width:${s.xp}%"></div></div>
+                    ${isMine ? '<div style="font-size:0.8em; color:#2e7d32; font-weight:bold;">לחץ להיפוך הכרטיס 🔄</div>' : ''}
+                </div>
+                <div class="card-back">
+                    <h4 style="margin:0 0 10px 0; color:#2e7d32; border-bottom:1px solid #ccc;">יומן פעילות</h4>
+                    <div style="flex-grow:1;">
+                        ${historyHtml || "אין פעילות לאחרונה"}
+                        ${noteHtml}
+                    </div>
+                    <div style="font-size:0.75em; color:#999; margin-top:5px;">לחץ לחזרה</div>
+                </div>
+            </div>
         </div>`;
     }).join('');
 }
-
 // ==========================================
 // לוגיקת מטלות מעודכנת - יצירה ומענה מובנה
 // ==========================================
@@ -541,14 +614,25 @@ function approveSub(subId, studentId, multiplier = 1) {
         const s = allStudents.find(st => st.id === studentId);
         if (!s) return;
 
-        // שימוש בלולאה שלך כדי להפעיל את האנימציות
+        // --- חדש: רישום להיסטוריה כדי שיופיע בצד האחורי של הכרטיס ---
+        const historyRef = db.ref('students/' + studentId + '/history').push();
+        historyRef.set({
+            msg: task ? task.title : "מטלה",
+            xp: rewardXP,
+            time: Date.now()
+        });
+
+        // --- חדש: ניקוי הערת דחייה קודמת (כי עכשיו הוא הצליח) ---
+        db.ref('students/' + studentId).update({ lastNote: null });
+
+        // הלוגיקה שלך להפעלת האנימציות (נשארת אותו דבר)
         let remainingXP = rewardXP;
         let currentXP = s.xp;
         let currentLevel = s.level;
 
         while (remainingXP > 0) {
             const add = Math.min(10, remainingXP);
-            addXP(studentId, currentXP, currentLevel);
+            addXP(studentId, currentXP, currentLevel); // מפעיל את האנימציה הוויזואלית
             currentXP += add;
             remainingXP -= add;
 
@@ -558,16 +642,32 @@ function approveSub(subId, studentId, multiplier = 1) {
             }
         }
 
-        db.ref('submissions/' + subId).remove();
+        // הסרת ההגשה לאחר האישור
+        submissionRef.remove();
     });
 }
 
 window.rejectSub = function(subId) {
-    if (confirm("לדחות את ההגשה? התלמיד לא יקבל XP על משימה זו.")) {
-        db.ref('submissions/' + subId).remove();
+    // שינינו את ה-confirm ל-prompt כדי שתוכל לכתוב סיבה
+    const note = prompt("מדוע המטלה נדחית? (התלמיד יראה את זה בצד האחורי של הכרטיס):");
+    
+    if (note !== null) { // אם המורה לא לחץ על "ביטול"
+        db.ref('submissions/' + subId).once('value').then(snap => {
+            const sub = snap.val();
+            if (sub) {
+                // עדכון ההערה אצל התלמיד
+                db.ref('students/' + sub.studentId).update({ 
+                    lastNote: note || "המטלה נדחתה. בדוק שוב את ההוראות." 
+                });
+                
+                // מחיקת ההגשה מהרשימה של המורה
+                db.ref('submissions/' + subId).remove();
+            }
+        });
     }
 };
 </script>
 </body>
 </html>
+
 
