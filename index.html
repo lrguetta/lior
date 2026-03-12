@@ -199,7 +199,15 @@ const db = firebase.database();
 
 const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
 let allStudents = [];
-let currentUser = null;
+// 1. הגדרת המשתנה (זה בטח כבר קיים אצלך)
+let currentUser = localStorage.getItem('farm_user_id') || null;
+
+// 2. קוד שרץ מיד כשהדף עולה ובודק אם יש משתמש שמור
+if (currentUser) {
+    console.log("משתמש מזוהה מצאנו בזיכרון: " + currentUser);
+    // כאן כדאי להפעיל את הפונקציה שטוענת את הנתונים, למשל:
+    // initApp(); 
+}
 let allSubmissions = {};
 let allTasks = [];
 let currentTaskToSubmit = null;
@@ -231,6 +239,7 @@ function studentLogin() {
     const id = document.getElementById('studentSelect').value;
     if (!id) return alert('בחר שם מהרשימה');
     currentUser = id;
+    localStorage.setItem('farm_user_id', student.id);
     startApp();
 }
 
@@ -533,6 +542,7 @@ function sendSubmission() {
     const student = allStudents.find(s => s.id === currentUser);
     const subId = Date.now().toString();
 
+   // שליחת הנתונים ל-Firebase
     db.ref('submissions/' + subId).set({
         id: subId,
         studentName: student.name,
@@ -540,12 +550,16 @@ function sendSubmission() {
         taskId: currentTaskToSubmit,
         answers: answers,
         time: Date.now()
+    }).then(() => {
+        // --- זה החלק שמוודא שהכפתור יחסם מיד ---
+        alert("המטלה נשלחה למורה בהצלחה! 🎉");
+        closeModal();
+        
+        // קריאה לפונקציה שמרנדרת את המטלות - היא תבדוק שוב 
+        // את הסטטוס ותראה שהתלמיד כבר הגיש
+        renderTasks(); 
     });
-
-    alert("המטלה נשלחה למורה בהצלחה! 🎉");
-    closeModal();
 }
-
 // ==========================================
 // בדיקת הגשות למורה (עדכון ה-XP מבוסס על שאלות)
 // ==========================================
@@ -670,6 +684,7 @@ window.rejectSub = function(subId) {
 </script>
 </body>
 </html>
+
 
 
 
