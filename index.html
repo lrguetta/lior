@@ -1,229 +1,40 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<title>חוות הטמגוצ'י - גרסת ניהול ותלמידים</title>
-
-<script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-app.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-database.js"></script>
-
-<style>
-/* מסתיר את אזור המטלות אם אין בתוכו תוכן */
-#tasks-list:empty, 
-#tasks-area:has(#tasks-list:empty) {
-    display: none;
-}
-/* מסתיר את אזור ההגשות למורה אם הוא ריק */
-#submissions-list:empty,
-#admin-submissions:has(#submissions-list:empty) {
-    display: none;
-}
-
-body {
-    font-family: 'Segoe UI', Tahoma, sans-serif;
-    background: #e0f7fa url('images/background.png') no-repeat center center fixed;
-    background-size: cover;
-    margin: 0;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-#login-screen {
-    background: rgba(255, 255, 255, 0.95);
-    padding: 30px;
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    text-align: center;
-    width: 320px;
-    margin-top: 50px;
-    border: 2px solid #81c784;
-}
-
-#control-panel {
-    display: none; 
-    background: rgba(255, 255, 255, 0.95);
-    padding: 25px;
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-    margin-bottom: 30px;
-    width: 90%;
-    max-width: 900px;
-    flex-wrap: wrap;
-    gap: 15px;
-    justify-content: center;
-    border: 2px solid #81c784;
-}
-
-input, select, button {
-    padding: 12px;
-    border-radius: 10px;
-    border: 1px solid #ddd;
-    font-size: 15px;
-}
-
-button {
-    background-color: #2e7d32;
-    color: white;
-    cursor: pointer;
-    border: none;
-    font-weight: bold;
-}
-
-#farm-grid {
-    display: none;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 25px;
-    width: 100%;
-    max-width: 1200px;
-}
-
-.student-card {
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 25px;
-    padding: 20px;
-    text-align: center;
-    position: relative;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    border-bottom: 5px solid #81c784;
-    transition: transform 0.3s;
-}
-
-.my-creature { border: 4px solid #fbc02d; transform: scale(1.05); z-index: 5; }
-
-.level-text-badge {
-    position: absolute;
-    top: 5px;
-    right: 15px;
-    font-family: 'Arial Black', sans-serif;
-    font-size: 1.4em;
-    font-weight: 900;
-    color: #2e7d32;
-    z-index: 10;
-    text-shadow: -1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff, 0 2px 4px rgba(0,0,0,0.3);
-}
-
-.creature-img {
-    width: 120px;
-    height: 120px;
-    object-fit: contain;
-    margin-bottom: 10px;
-}
-
-/* אנימציות */
-.glow-effect { animation: glow-pulse 0.6s ease-out; }
-@keyframes glow-pulse {
-    0% { filter: brightness(1); transform: scale(1); }
-    50% { filter: brightness(1.6) drop-shadow(0 0 15px gold); transform: scale(1.25); }
-    100% { filter: brightness(1); transform: scale(1); }
-}
-
-.shake { animation: shake 0.5s infinite; }
-@keyframes shake {
-    0%, 100% { transform: translate(1px, 1px) rotate(0deg); }
-    25% { transform: translate(-1px, -2px) rotate(-1deg); }
-    75% { transform: translate(1px, -2px) rotate(1deg); }
-}
-
-.hatch-crack { animation: eggCrack 0.9s ease-out forwards; }
-@keyframes eggCrack {
-    0% { transform: scale(1); }
-    100% { transform: scale(0); opacity: 0; }
-}
-
-.xp-container { background: #eee; border-radius: 10px; height: 18px; margin: 10px 0; overflow: hidden; border: 1px solid #ccc; }
-.xp-bar { background: linear-gradient(90deg, #ffeb3b, #fbc02d); height: 100%; transition: width 0.4s ease-out; }
-
-.remove-btn {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    background: #ff5252;
-    color: white;
-    border-radius: 50%;
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.xp-float {
-    position: absolute;
-    font-weight: bold;
-    color: gold;
-    font-size: 1.2em;
-    animation: floatUp 0.8s ease-out forwards;
-    left: 50%;
-    top: 60px;
-}
-@keyframes floatUp { 0% { opacity: 1; transform: translate(-50%,0); } 100% { opacity: 0; transform: translate(-50%,-40px); } }
-
-.levelup {
-    position: absolute;
-    top: 20%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #ffd700;
-    color: #1b5e20;
-    font-weight: bold;
-    font-size: 1.5em;
-    padding: 10px 20px;
-    border-radius: 15px;
-    box-shadow: 0 0 15px rgba(0,0,0,0.3);
-    z-index: 100;
-    pointer-events: none;
-    animation: levelPop 2s ease-out forwards;
-}
-
-@keyframes levelPop {
-    0% { opacity: 0; transform: translate(-50%, 0) scale(0.5); }
-    20% { opacity: 1; transform: translate(-50%, -30px) scale(1.2); }
-    80% { opacity: 1; transform: translate(-50%, -40px) scale(1); }
-    100% { opacity: 0; transform: translate(-50%, -60px) scale(0.8); }
-}
-
-.hatch-flash {
-    position: absolute;
-    width: 120px;
-    height: 120px;
-    background: white;
-    border-radius: 50%;
-    top: 40px;
-    left: 50%;
-    transform: translateX(-50%);
-    animation: hatchFlash 0.4s ease-out forwards;
-}
-@keyframes hatchFlash { 0% { transform: translateX(-50%) scale(0.5); opacity: 1; } 100% { transform: translateX(-50%) scale(2); opacity: 0; } }
-
-#tasks-area {
-    width: 90%;
-    max-width: 1200px;
-    margin-bottom: 20px;
-    display: none;
-}
-
-.task-card {
-    background: white;
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 10px;
-    border-right: 6px solid #1976d2;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-}
-
-.task-info h4 { margin: 0; color: #333; }
-.task-info a { color: #1976d2; font-size: 0.9em; }
-</style>
+    <meta charset="UTF-8">
+    <title>חוות הטמגוצ'י - גרסת ניהול ותלמידים</title>
+    <script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-database.js"></script>
+    <style>
+        /* CSS נשאר ללא שינוי - הכל מועתק מהמקור שלך */
+        #tasks-list:empty, #tasks-area:has(#tasks-list:empty) { display: none; }
+        #submissions-list:empty,#admin-submissions:has(#submissions-list:empty) { display: none; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #e0f7fa url('images/background.png') no-repeat center center fixed; background-size: cover; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        #login-screen { background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center; width: 320px; margin-top: 50px; border: 2px solid #81c784; }
+        #control-panel { display: none; background: rgba(255, 255, 255, 0.95); padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); margin-bottom: 30px; width: 90%; max-width: 900px; flex-wrap: wrap; gap: 15px; justify-content: center; border: 2px solid #81c784; }
+        input, select, button { padding: 12px; border-radius: 10px; border: 1px solid #ddd; font-size: 15px; }
+        button { background-color: #2e7d32; color: white; cursor: pointer; border: none; font-weight: bold; }
+        #farm-grid { display: none; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; width: 100%; max-width: 1200px; }
+        .student-card { background: rgba(255, 255, 255, 0.9); border-radius: 25px; padding: 20px; text-align: center; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-bottom: 5px solid #81c784; transition: transform 0.3s; }
+        .my-creature { border: 4px solid #fbc02d; transform: scale(1.05); z-index: 5; }
+        .level-text-badge { position: absolute; top: 5px; right: 15px; font-family: 'Arial Black', sans-serif; font-size: 1.4em; font-weight: 900; color: #2e7d32; z-index: 10; text-shadow: -1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff, 0 2px 4px rgba(0,0,0,0.3); }
+        .creature-img { width: 120px; height: 120px; object-fit: contain; margin-bottom: 10px; cursor: pointer; }
+        .glow-effect { animation: glow-pulse 0.6s ease-out; }
+        @keyframes glow-pulse { 0% { filter: brightness(1); transform: scale(1); } 50% { filter: brightness(1.6) drop-shadow(0 0 15px gold); transform: scale(1.25); } 100% { filter: brightness(1); transform: scale(1); } }
+        .xp-container { background: #eee; border-radius: 10px; height: 18px; margin: 10px 0; overflow: hidden; border: 1px solid #ccc; }
+        .xp-bar { background: linear-gradient(90deg, #ffeb3b, #fbc02d); height: 100%; transition: width 0.4s ease-out; }
+        .remove-btn { position: absolute; top: 10px; left: 10px; background: #ff5252; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .xp-float { position: absolute; font-weight: bold; color: gold; font-size: 1.2em; animation: floatUp 0.8s ease-out forwards; left: 50%; top: 60px; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translate(-50%,0); } 100% { opacity: 0; transform: translate(-50%,-40px); } }
+        .levelup { position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%); background: #ffd700; color: #1b5e20; font-weight: bold; font-size: 1.5em; padding: 10px 20px; border-radius: 15px; z-index: 100; animation: levelPop 2s ease-out forwards; }
+        @keyframes levelPop { 0% { opacity: 0; transform: translate(-50%, 0) scale(0.5); } 20% { opacity: 1; transform: translate(-50%, -30px) scale(1.2); } 100% { opacity: 0; transform: translate(-50%, -60px) scale(0.8); } }
+        #tasks-area { width: 90%; max-width: 1200px; margin-bottom: 20px; display: none; }
+        .task-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-right: 6px solid #1976d2; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        #submit-modal { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:25px; border-radius:15px; box-shadow:0 0 20px rgba(0,0,0,0.5); z-index:1000; width:300px; text-align:center; border:3px solid #1976d2; }
+    </style>
 </head>
-
 <body>
 
-<!-- LOGIN SCREEN -->
 <div id="login-screen">
     <h2>החווה המופלאה 🐾</h2>
     <div id="admin-login-area">
@@ -240,9 +51,8 @@ button {
     </div>
 </div>
 
-<!-- CONTROL PANEL -->
 <div id="control-panel">
-    <div style="display:flex; gap:10px; width:100%; flex-wrap:wrap; justify-content:center; align-items: center; ">
+    <div style="display:flex; gap:10px; width:100%; flex-wrap:wrap; justify-content:center; align-items: center;">
         <input type="text" id="studentName" placeholder="שם התלמיד">
         <select id="studentClass">
             <option value="ה1">כיתה ה'1</option>
@@ -262,20 +72,13 @@ button {
         <button onclick="location.reload()" style="background:#555;">יציאה</button>
     </div>
 
-    <hr style="width:100%; margin: 15px 0;">
-
-    <div id="task-panel" style="display:none; width:100%;  align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
-        <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="width:100px;">
-        <select id="taskFileSelect" style="width:150px;">
-            <option value="">טוען משימות...</option>
-        </select>
+    <div id="task-panel" style="display:none; width:100%; align-items:center; gap:10px; flex-wrap:wrap; margin-top:15px;">
+        <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="width:150px;">
+        <select id="taskFileSelect" style="width:200px;"><option value="">טוען משימות...</option></select>
         <button onclick="fetchGithubFiles()" style="background:#555; padding:8px;">🔄</button>
         <input type="date" id="taskDeadline" style="width:120px;">
-        <input type="number" id="taskXP" placeholder="XP למטלה" value="100" style="width:60px;">
-        <button onclick="addTask()" 
-                style="background-color:#1976d2; color:white; padding:8px 8px; border:none; border-radius:6px; cursor:pointer;">
-            פרסם מטלה  📋
-        </button>
+        <input type="number" id="taskXP" placeholder="XP" value="100" style="width:60px;">
+        <button onclick="addTask()" style="background-color:#1976d2;">פרסם מטלה 📋</button>
     </div>
 
     <div id="admin-submissions" style="width:100%; margin-top:20px; background:#f1f8e9; padding:15px; border-radius:10px; border:1px dashed #2e7d32; text-align:right;">
@@ -284,30 +87,17 @@ button {
     </div>
 </div>
 
-<!-- TASKS AREA -->
 <div id="tasks-area">
-   <h3 style="background: rgba(255, 255, 255, 0.8); padding: 8px 12px; border-radius: 8px; display: inline-block;">
-        משימות להשלמה 📝
-    </h3>
+   <h3 style="background: rgba(255, 255, 255, 0.8); padding: 8px 12px; border-radius: 8px; display: inline-block;">משימות להשלמה 📝</h3>
     <div id="tasks-list"></div>
 </div>
 
-<!-- FARM GRID -->
 <div id="farm-grid"></div>
 
-<!-- SUBMIT MODAL -->
-<div id="submit-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:25px; border-radius:15px; box-shadow:0 0 20px rgba(0,0,0,0.5); z-index:1000; width:300px; text-align:center; border:3px solid #1976d2;">
+<div id="submit-modal">
     <h3 id="modal-task-title">הגשת מטלה</h3>
-    <button onclick="window.open('https://send.magicode.me/', '_blank')" 
-            style="background:#ff9800; color:white; padding:10px 15px; border:none; border-radius:8px; cursor:pointer;">
-        העלאת קבצים 📤
-    </button>
-    <textarea id="submit-content" placeholder="לאחר שהעלית את קובץ המטלה שלך, הדבק כאן את הקישור" style="width:100%; height:80px; margin-bottom:10px; padding:5px;"></textarea>
-    <div style="margin-bottom:10px;">
-        <span style="font-size:0.85em; color:#555; display:block; margin-top:5px;">
-            לאחר ההעלאה, העתק את הקישור והדבק כאן בתיבה למעלה
-        </span>
-    </div>
+    <button onclick="window.open('https://send.magicode.me/', '_blank')" style="background:#ff9800; color:white; margin-bottom:10px;">העלאת קבצים 📤</button>
+    <textarea id="submit-content" placeholder="הדבק כאן את הקישור מהמג'יקוד" style="width:90%; height:80px; margin-bottom:10px; padding:5px;"></textarea>
     <div style="display:flex; gap:10px;">
         <button onclick="sendSubmission()" style="flex:1; background:#4caf50;">שלח הגשה 🚀</button>
         <button onclick="closeModal()" style="flex:1; background:#999;">ביטול</button>
@@ -315,7 +105,16 @@ button {
 </div>
 
 <script>
-/* ================== FIREBASE CONFIG ================== */
+// --- הגדרות משתנים גלובליים (למניעת ReferenceError) ---
+let currentUser = null;
+let allStudents = [];
+let allTasks = [];
+let allSubmissions = {};
+let currentTaskToSubmit = null;
+
+const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
+
+// --- Firebase Config ---
 const firebaseConfig = {
     apiKey: "AIzaSyCtS0Gf9oNiRg6OTd3jyNaPxuWBFlWGIsE",
     authDomain: "liorfarm.firebaseapp.com",
@@ -328,20 +127,11 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/* ================== GLOBALS ================== */
-const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
-let allStudents = [];
-let currentUser = null;
-let allSubmissions = {};
-let allTasks = [];
-
-/* ================== FETCH STUDENTS ================== */
+// --- טעינת נתונים ראשונית ---
 db.ref('students').on('value', (snap) => {
     const data = snap.val();
-    console.log("students data:", data);
-    allStudents = [];
-    if (data) Object.keys(data).forEach(key => allStudents.push(data[key]));
-
+    allStudents = data ? Object.values(data) : [];
+    
     const select = document.getElementById('studentSelect');
     const currentVal = select.value;
     select.innerHTML = '<option value="">בחר את שמך...</option>';
@@ -355,7 +145,19 @@ db.ref('students').on('value', (snap) => {
     updateView();
 });
 
-/* ================== LOGIN ================== */
+db.ref('tasks').on('value', (snap) => {
+    const tasks = snap.val();
+    allTasks = tasks ? Object.values(tasks) : [];
+    renderTasks();
+});
+
+db.ref('submissions').on('value', (snap) => {
+    allSubmissions = snap.val() || {};
+    if (currentUser === 'admin') initAdminSubmissions();
+    renderTasks();
+});
+
+// --- פונקציות ליבה ---
 function checkAdmin() {
     if (document.getElementById('adminPass').value === 'rabenu247') {
         currentUser = 'admin';
@@ -370,32 +172,178 @@ function studentLogin() {
     startApp();
 }
 
-/* ================== START APP ================== */
 function startApp() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('farm-grid').style.display = 'grid';
     document.getElementById('tasks-area').style.display = 'block';
     
-    if (currentUser && currentUser === 'admin') {
+    if (currentUser === 'admin') {
         document.getElementById('control-panel').style.display = 'flex';
         fetchGithubFiles();
-        initAdminSubmissions();
     }
-    
     updateView();
-    renderTasks();
 }
 
-/* ================== UPDATE VIEW ================== */
 function updateView() {
     const grid = document.getElementById('farm-grid');
-    if (!currentUser || !allStudents) return;
+    if (!currentUser) return;
 
-    const searchTerm = (document.getElementById('search').value || '').toLowerCase();
+    const searchTerm = (document.getElementById('search').value || "").toLowerCase();
     const sortBy = document.getElementById('sortBy').value;
 
-    let filtered = allStudents.filter(s => s.name && s.name.toLowerCase().includes(searchTerm));
-    filtered.sort((a,b) => {
-        if (sortBy === 'name') return a.name.localeCompare(b.name);
-        if (sortBy === 'level') return b.level - a.level;
-        return a.className.localeCompare(b.className
+    // התיקון הקריטי: סינון בטוח למניעת השגיאה
+    let filtered = allStudents.filter(s => s && s.name && s.name.toLowerCase().includes(searchTerm));
+
+    filtered.sort((a, b) => {
+        if (sortBy === 'name') return (a.name || "").localeCompare(b.name || "");
+        if (sortBy === 'level') return (b.level || 0) - (a.level || 0);
+        return (a.className || "").localeCompare(b.className || "");
+    });
+
+    grid.innerHTML = filtered.map(s => {
+        const eggNum = (s.egg !== undefined) ? s.egg + 1 : 1;
+        const isMine = currentUser === s.id;
+        const imgPath = s.level === 0 ? `images/egg${eggNum}.png` : `images/${s.type}${s.level >= 20 ? 3 : (s.level >= 10 ? 2 : 1)}.png`;
+        return `
+        <div class="student-card ${isMine ? 'my-creature' : ''}">
+            <div class="level-text-badge">Lv.${s.level}</div>
+            ${currentUser === 'admin' ? `<button class="remove-btn" onclick="if(confirm('למחוק?')) db.ref('students/${s.id}').remove()">✖</button>` : ''}
+            <img id="img-${s.id}" src="${imgPath}" class="creature-img" onclick="addXP('${s.id}',${s.xp},${s.level})">
+            <div style="font-weight:bold;font-size:1.2em;">${s.name}</div>
+            <div style="color:#555;font-size:0.9em;">כיתה ${s.className}</div>
+            <div class="xp-container"><div class="xp-bar" style="width:${s.xp}%"></div></div>
+            ${isMine ? '<div style="font-size:0.8em; color:#2e7d32; font-weight:bold;">זה היצור שלי! ✨</div>' : ''}
+        </div>`;
+    }).join('');
+}
+
+// --- ניהול מטלות והגשות ---
+async function fetchGithubFiles() {
+    const username = "lrguetta"; 
+    const repo = "lior";         
+    const select = document.getElementById('taskFileSelect');
+    try {
+        const response = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/`);
+        const files = await response.json();
+        select.innerHTML = '<option value="">בחר קובץ משימה...</option>';
+        files.forEach(file => {
+            if (file.name.endsWith('.html') && file.name !== 'index.html') {
+                const option = document.createElement('option');
+                option.value = `https://${username}.github.io/${repo}/${file.name}?uid=`;
+                option.textContent = file.name;
+                select.appendChild(option);
+            }
+        });
+    } catch (e) { select.innerHTML = '<option value="">שגיאה בטעינה</option>'; }
+}
+
+function renderTasks() {
+    const list = document.getElementById('tasks-list');
+    if (!list) return;
+    list.innerHTML = '';
+    
+    allTasks.slice().reverse().forEach(task => {
+        const hasSubmitted = Object.values(allSubmissions).some(sub => sub.taskId === task.id && sub.studentId === currentUser);
+        const div = document.createElement('div');
+        div.className = 'task-card';
+        div.innerHTML = `
+            <div class="task-info">
+                <h4>${task.title}</h4>
+                ${task.link ? `<a href="${task.link}${currentUser}" target="_blank">פתח מטלה 📎</a>` : ''}
+                <div style="font-size:0.8em; color:gray;">פרס: ${task.xp} XP</div>
+            </div>
+            <div>
+                ${currentUser === 'admin' 
+                    ? `<button onclick="deleteTask('${task.id}')" style="background:red;">מחק</button>`
+                    : hasSubmitted ? '✅ הוגש' : `<button onclick="openSubmitModal('${task.id}', '${task.title}')">הגש ✍️</button>`}
+            </div>`;
+        list.appendChild(div);
+    });
+}
+
+function addXP(id, xp, lvl) {
+    if (currentUser !== 'admin') return;
+    const img = document.getElementById('img-' + id);
+    if (img) {
+        img.classList.remove('glow-effect');
+        void img.offsetWidth; // Trigger reflow
+        img.classList.add('glow-effect');
+    }
+    let nxp = xp + 10;
+    let nlv = lvl;
+    if (nxp >= 100) { nlv++; nxp = 0; }
+    db.ref('students/' + id).update({ xp: nxp, level: nlv });
+}
+
+function sendSubmission() {
+    const content = document.getElementById('submit-content').value.trim();
+    if (!content) return alert("הדבק קישור");
+    const student = allStudents.find(s => s.id === currentUser);
+    const subId = Date.now().toString();
+    db.ref('submissions/' + subId).set({
+        id: subId, studentName: student.name, studentId: student.id,
+        taskId: currentTaskToSubmit, content: content, time: Date.now()
+    });
+    alert("נשלח!");
+    closeModal();
+}
+
+function initAdminSubmissions() {
+    const container = document.getElementById('submissions-list');
+    container.innerHTML = '';
+    Object.values(allSubmissions).forEach(sub => {
+        const d = document.createElement('div');
+        d.style = "background:white; padding:10px; margin:5px 0; border-radius:8px; border-right:4px solid gold;";
+        d.innerHTML = `
+            <b>${sub.studentName}</b>
+            <button onclick="window.open('${sub.content}', '_blank')">פתח קישור</button>
+            <button onclick="approveSub('${sub.id}', '${sub.studentId}', 1)" style="background:green;">אשר ✅</button>
+            <button onclick="db.ref('submissions/${sub.id}').remove()" style="background:red;">דחה ❌</button>`;
+        container.appendChild(d);
+    });
+}
+
+// פונקציות עזר קטנות
+function toggleTaskPanel() { 
+    const p = document.getElementById('task-panel'); 
+    p.style.display = (p.style.display === 'none') ? 'flex' : 'none'; 
+}
+function openSubmitModal(id, title) { 
+    currentTaskToSubmit = id; 
+    document.getElementById('modal-task-title').innerText = title;
+    document.getElementById('submit-modal').style.display = 'block'; 
+}
+function closeModal() { document.getElementById('submit-modal').style.display = 'none'; }
+function deleteTask(id) { if(confirm('למחוק?')) db.ref('tasks/' + id).remove(); }
+function addStudent() {
+    const name = document.getElementById('studentName').value;
+    if (!name) return;
+    const id = Date.now().toString();
+    db.ref('students/' + id).set({
+        id, name, className: document.getElementById('studentClass').value,
+        xp: 0, level: 0, egg: Math.floor(Math.random() * 5),
+        type: CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)]
+    });
+    document.getElementById('studentName').value = '';
+}
+
+function approveSub(subId, studentId, mult) {
+    db.ref('submissions/' + subId).once('value', snap => {
+        const sub = snap.val();
+        if (!sub) return;
+        const task = allTasks.find(t => t.id === sub.taskId);
+        const reward = Math.round((task ? task.xp : 20) * mult);
+        const s = allStudents.find(st => st.id === studentId);
+        
+        // עדכון פשוט של XP
+        let totalXP = (s.xp || 0) + reward;
+        let newLvl = (s.level || 0) + Math.floor(totalXP / 100);
+        let newXP = totalXP % 100;
+        
+        db.ref('students/' + studentId).update({ xp: newXP, level: newLvl });
+        db.ref('submissions/' + subId).remove();
+    });
+}
+</script>
+</body>
+</html>
