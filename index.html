@@ -417,7 +417,6 @@ function startApp() {
     
     if (currentUser === 'admin') {
         document.getElementById('control-panel').style.display = 'flex';
-        initAdminSubmissions(); // זה השורה שמוסיפה את התיקון
     }
     updateView();
      renderTasks(); // ← השורה החשובה
@@ -729,6 +728,7 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
 
 
 
