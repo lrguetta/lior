@@ -207,6 +207,7 @@ button {
 
 .task-info h4 { margin: 0; color: #333; }
 .task-info a { color: #1976d2; font-size: 0.9em; }
+.task-card a { position: relative; z-index: 100; cursor: pointer; }
 </style>
 </head>
 
@@ -347,10 +348,11 @@ function addQuestionRow() {
 // עדכון פונקציית הוספת המטלה שתכלול גם את השאלות
 function addTask() {
     const title = document.getElementById('taskTitle').value;
+    const link = document.getElementById('taskLink').value;
     const deadline = document.getElementById('taskDeadline').value;
     const xp = parseInt(document.getElementById('taskXP').value) || 20;
     
-    // איסוף השאלות
+    // איסוף שאלות
     const qRows = document.querySelectorAll('.admin-q-row');
     const questions = Array.from(qRows).map(row => ({
         question: row.querySelector('.q-text').value,
@@ -365,17 +367,24 @@ function addTask() {
     if (!title) return alert("הזן כותרת");
 
     const id = Date.now().toString();
+    
+    // שמירה ב-Firebase כולל ה-Type
     db.ref('tasks/' + id).set({
-        id, title, deadline, xp,
+        id,
+        title,
+        link: link || null,
+        deadline,
+        xp,
         questions: questions.length > 0 ? questions : null,
-        type: questions.length > 0 ? 'quiz' : 'manual'
+        type: questions.length > 0 ? 'quiz' : 'manual' // כאן התיקון הקריטי
     });
 
     // ניקוי טופס
     document.getElementById('taskTitle').value = '';
+    document.getElementById('taskLink').value = '';
     document.getElementById('questions-list-admin').innerHTML = '';
+    alert("המטלה פורסמה!");
 }
-
 // פונקציה לפתיחת שאלון עבור תלמיד
 function openQuiz(taskId) {
     const task = allTasks.find(t => t.id === taskId);
@@ -570,7 +579,6 @@ db.ref('tasks').on('value', (snap) => {
 function renderTasks() {
     const list = document.getElementById('tasks-list');
     if (!list) return;
-
     list.innerHTML = '';
 
     if (allTasks.length === 0) {
@@ -582,14 +590,13 @@ function renderTasks() {
         const div = document.createElement('div');
         div.className = 'task-card';
 
-        // בדיקה האם זו מטלת שאלון או מטלה ידנית
         const isQuiz = task.type === 'quiz';
-        
-        // הגדרת הכפתור המתאים (שאלון או הגשה ידנית)
-        let actionButton;
+        let actionButton = '';
+
         if (currentUser === 'admin') {
             actionButton = `<button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק</button>`;
         } else {
+            // אם זה שאלון - כפתור ירוק. אם זו הגשה ידנית - כפתור כחול.
             if (isQuiz) {
                 actionButton = `<button onclick="openQuiz('${task.id}')" style="background:#4caf50;">פתור שאלון 📋</button>`;
             } else {
@@ -599,28 +606,23 @@ function renderTasks() {
 
         div.innerHTML = `
             <div class="task-info">
-                <h4>${task.title} ${isQuiz ? '📋' : '📝'}</h4>
+                <h4 style="margin:0;">${task.title} ${isQuiz ? '📋' : '📝'}</h4>
                 ${task.link ? `
-                    <div style="margin-top:4px;">
-                        📎 <a href="${task.link}" target="_blank" style="color:#1976d2; font-weight:bold; cursor:pointer; position:relative; z-index:10;">
-                            לחץ כאן לפתיחת הקובץ
+                    <div style="margin-top:8px;">
+                        <a href="${task.link}" target="_blank" style="background:#e3f2fd; color:#1976d2; padding:4px 8px; border-radius:5px; text-decoration:none; font-weight:bold; border:1px solid #1976d2; font-size:0.85em;">
+                            📎 לחץ כאן לפתיחת הקובץ
                         </a>
                     </div>
                 ` : ''}
-                <div style="font-size:0.85em;color:#555; margin-top:4px;">
-                    🎁 פרס: ${task.xp || 20} XP
-                    ${task.deadline ? `<br>⏰ להגשה עד: ${task.deadline}` : ''}
+                <div style="font-size:0.85em; color:#666; margin-top:8px;">
+                    🎁 פרס: ${task.xp || 20} XP | ⏰ עד: ${task.deadline || 'ללא תאריך'}
                 </div>
             </div>
-            <div>
-                ${actionButton}
-            </div>
+            <div>${actionButton}</div>
         `;
-
         list.appendChild(div);
     });
 }
-
 function addTask() {
 
     const title = document.getElementById('taskTitle').value;
@@ -684,54 +686,39 @@ function initAdminSubmissions() {
     db.ref('submissions').on('value', (snap) => {
         const container = document.getElementById('submissions-list');
         if (!container) return;
-
         const subs = snap.val();
-        allSubmissions = subs || {}; // עכשיו כל ההגשות מאוחסנות בזיכרון
         container.innerHTML = '';
 
         if (subs) {
             Object.values(subs).forEach(sub => {
-                // בתוך הלולאה של ה-Object.values(subs).forEach
-if (sub.type === 'quiz') {
-    const correctCount = sub.answers.filter(a => a.isCorrect).length;
-    d.innerHTML = `
-        <div style="font-weight:bold; color:#1976d2;">שאלון מאת: ${sub.studentName}</div>
-        <div style="font-size:0.9em; margin:5px 0;">
-            ציון גולמי: ${correctCount} מתוך ${sub.answers.length} נכונות
-            <details>
-                <summary style="cursor:pointer; color:blue;">הצג תשובות מפורטות</summary>
-                <ul style="font-size:0.8em; padding-right:15px;">
-                    ${sub.answers.map(a => `<li style="color:${a.isCorrect ? 'green':'red'}">${a.question}: ${a.selected}</li>`).join('')}
-                </ul>
-            </details>
-        </div>
-        <div style="display:flex; gap:5px; margin-top:5px;">
-            <button onclick="approveSub('${sub.id}', '${sub.studentId}', 1)" style="background:#4caf50;">אשר מלא ✅</button>
-            <button onclick="approveSub('${sub.id}', '${sub.studentId}', 0.5)" style="background:#ffc107;">אשר חלקי 🟡</button>
-            <button onclick="rejectSub('${sub.id}')" style="background:#f44336;">דחה ❌</button>
-        </div>
-    `;
-}
                 const d = document.createElement('div');
-                d.style = "background:white; padding:10px; margin:5px 0; border-radius:8px; border-right:4px solid gold; color: black; text-align: right; box-shadow: 0 2px 4px rgba(0,0,0,0.1);";
-             d.innerHTML = `
-    <div style="font-weight:bold; color:#2e7d32;">מאת: ${sub.studentName}</div>
-    <div style="margin: 5px 0; font-size: 0.95em;">
-        <a href="${sub.content}" target="_blank" 
-           style="background:#4caf50; color:white; padding:5px 10px; border-radius:5px; text-decoration:none; font-weight:bold;">
-           פתח/הורד את המטלה
-        </a>
-    </div>
-    <div style="display:flex; gap:5px; margin-top:5px;">
-        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 1)" style="background:#4caf50;">אשר מלא ✅</button>
-        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 0.5)" style="background:#ffc107;">אשר חלקי 🟡</button>
-        <button onclick="rejectSub('${sub.id}')" style="background:#f44336;">דחה ❌</button>
-    </div>
-`;
+                d.style = "background:white; padding:12px; margin:8px 0; border-radius:8px; border-right:4px solid #fbc02d; box-shadow: 0 2px 4px rgba(0,0,0,0.1);";
+                
+                let contentHTML = '';
+                if (sub.type === 'quiz') {
+                    const correctCount = sub.answers.filter(a => a.isCorrect).length;
+                    contentHTML = `
+                        <div style="color:#1976d2; font-weight:bold;">שאלון: ${sub.studentName}</div>
+                        <div style="font-size:0.9em;">ציון: ${correctCount}/${sub.answers.length}</div>
+                    `;
+                } else {
+                    contentHTML = `
+                        <div style="color:#2e7d32; font-weight:bold;">מטלה: ${sub.studentName}</div>
+                        <a href="${sub.content}" target="_blank" style="font-size:0.85em; color:blue;">פתח קישור להגשה</a>
+                    `;
+                }
+
+                d.innerHTML = `
+                    ${contentHTML}
+                    <div style="margin-top:8px; display:flex; gap:5px;">
+                        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 1)" style="background:#4caf50; padding:5px; font-size:0.8em;">אשר ✅</button>
+                        <button onclick="rejectSub('${sub.id}')" style="background:#f44336; padding:5px; font-size:0.8em;">דחה ❌</button>
+                    </div>
+                `;
                 container.appendChild(d);
             });
         } else {
-            container.innerHTML = '<div style="color:#666; text-align:center;">אין הגשות חדשות כרגע</div>';
+            container.innerHTML = '<div style="color:#666; text-align:center;">אין הגשות חדשות</div>';
         }
     });
 }
@@ -784,6 +771,7 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
 
 
 
