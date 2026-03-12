@@ -466,6 +466,8 @@ db.ref('tasks').on('value', (snap) => {
     const tasks = snap.val();
     allTasks = tasks ? Object.values(tasks) : [];
     renderTasks();
+    populateTasksForQuestions(); // ← מוסיף את המטלות לתפריט
+});
 });
 // מילוי תפריט המטלות למנהל
 function populateTasksForQuestions() {
@@ -734,5 +736,6 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
 
 
