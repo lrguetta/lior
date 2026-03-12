@@ -498,7 +498,6 @@ function renderTasks() {
         <h4>${task.title}</h4>
         ${task.link ? `
             <div style="margin-top:4px;">
-                // חפש את השורה הזו בתוך renderTasks בחווה שלך ושנה אותה:
                 <a href="${task.link}${currentUser}" target="_blank">פתח את המטלה</a>
             </div>
         ` : ''}
@@ -674,4 +673,5 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
 
