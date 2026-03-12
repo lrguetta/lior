@@ -327,24 +327,24 @@ button {
     const grid = document.getElementById('farm-grid');
     if (!grid) return;
     
-    grid.style.display = 'grid'; // ודא שהגריד מוצג
-    grid.innerHTML = ''; // ניקוי הגריד לפני טעינה מחדש
+    // הצגת הגריד (כי ב-CSS הוא על display: none)
+    grid.style.display = 'grid'; 
+    grid.innerHTML = ''; 
 
-    // לולאה שעוברת על כל התלמידים שנטענו מסופרבייס
     allStudents.forEach(student => {
         const cardContainer = document.createElement('div');
         cardContainer.className = 'student-card-container';
         
-        // סימון מיוחד לכרטיס של הילד המחובר (אם זה הוא)
         if (currentUser && student.id === currentUser.id) {
             cardContainer.classList.add('my-creature');
         }
 
-        // קביעת התמונה לפי סוג ורמה
-        let imageName = `${student.type}_${student.level}.png`;
-        // אם מדובר ברמה 1 ויש ביצה, נציג את הביצה
+        // בניית שם הקובץ לפי הפורמט שלך: cat1.png
+        let imageName = `${student.type}${student.level}.png`;
+        
+        // טיפול במקרה של ביצה (אם רמה 1)
         if (student.level === 1 && student.egg > 0) {
-            imageName = `egg_${student.egg}.png`;
+            imageName = `egg${student.egg}.png`;
         }
 
         cardContainer.innerHTML = `
@@ -352,7 +352,7 @@ button {
                 <div class="card-face">
                     <div class="level-text-badge">Lvl ${student.level}</div>
                     <img src="images/${imageName}" 
-                         onerror="this.src='images/egg_1.png'" 
+                         onerror="this.src='images/egg1.png'" 
                          class="creature-img">
                     <div style="font-weight:bold; font-size:1.1em; margin-bottom:5px;">${student.name}</div>
                     
@@ -366,7 +366,6 @@ button {
         grid.appendChild(cardContainer);
     });
 }
-
     function getEmoji(type) {
         const emojis = { 'cat': '🐱', 'fox': '🦊', 'snk': '🐍', 'mnk': '🐒', 'zbr': '🦓' };
         return emojis[type] || '🥚';
