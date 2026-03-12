@@ -4,14 +4,11 @@
 <meta charset="UTF-8">
 <title>חוות הטמגוצ'י - גרסת ניהול ותלמידים</title>
 
-<!-- Supabase במקום Firebase -->
+<!-- Supabase JS v2 -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
 <style>
-/* ... כל ה-CSS שלך נשאר ללא שינוי ... */
-#tasks-list:empty, 
-#tasks-area:has(#tasks-list:empty) { display: none; }
-#submissions-list:empty,
-#admin-submissions:has(#submissions-list:empty) { display: none; }
+/* ======= CSS נשמר כמו שהיה ======= */
 body {
     font-family: 'Segoe UI', Tahoma, sans-serif;
     background: #e0f7fa url('images/background.png') no-repeat center center fixed;
@@ -22,86 +19,107 @@ body {
     flex-direction: column;
     align-items: center;
 }
-/* (שאר ה-CSS שלך בדיוק כמו שהיה) */
+#tasks-list:empty, 
+#tasks-area:has(#tasks-list:empty) { display: none; }
+#submissions-list:empty,
+#admin-submissions:has(#submissions-list:empty) { display: none; }
+/* שאר ה-CSS שלך נשמר */
 </style>
 </head>
 
 <body>
 
-<!-- כל ה-HTML שלך נשאר ללא שינוי -->
-<!-- ... (הקוד של ה-login, control-panel, tasks-area וכו' בדיוק כפי ששלחת) ... -->
+<!-- ======= HTML שלך נשמר ======= -->
+<div id="login-screen">
+    <h2>כניסה</h2>
+    <select id="studentSelect"></select>
+    <input type="password" id="adminPass" placeholder="סיסמת מנהל">
+    <button onclick="studentLogin()">כניסה תלמיד</button>
+    <button onclick="checkAdmin()">כניסה מנהל</button>
+</div>
 
-<script>
-function toggleTaskPanel() {
-    const panel = document.getElementById('task-panel');
-    if (panel.style.display === 'none' || panel.style.display === '') {
-        panel.style.display = 'flex';
-    } else {
-        panel.style.display = 'none';
-    }
-}
-</script>
+<div id="farm-grid" style="display:none;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;"></div>
+
+<div id="control-panel" style="display:none;flex-direction:column;gap:10px;">
+    <input type="text" id="studentName" placeholder="שם תלמיד">
+    <select id="studentClass">
+        <option value="ה1">כיתה ה'1</option>
+        <option value="ה2">כיתה ה'2</option>
+    </select>
+    <button onclick="addStudent()">הוסף תלמיד</button>
+
+    <h3>הוספת מטלה</h3>
+    <input type="text" id="taskTitle" placeholder="כותרת">
+    <input type="text" id="taskLink" placeholder="קישור">
+    <input type="date" id="taskDeadline">
+    <input type="number" id="taskXP" placeholder="XP">
+    <button onclick="addTask()">הוסף מטלה</button>
+</div>
+
+<div id="tasks-area" style="display:none;">
+    <div id="tasks-list"></div>
+</div>
+
+<div id="submit-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);justify-content:center;align-items:center;">
+    <div style="background:white;padding:20px;border-radius:10px;max-width:400px;width:90%;">
+        <h3 id="modal-task-title"></h3>
+        <textarea id="submit-content" style="width:100%;height:80px;"></textarea>
+        <div style="margin-top:10px;">
+            <button onclick="sendSubmission()">שלח</button>
+            <button onclick="closeModal()">סגור</button>
+        </div>
+    </div>
+</div>
+
+<div id="submissions-list" style="max-width:600px;width:100%;margin-top:20px;"></div>
 
 <script>
 /* =========================
    Supabase Setup
 ========================= */
-
 const supabaseUrl = "https://muwpexflpjoqnaeiyfhk.supabase.co";
 const supabaseKey = "sb_publishable_poSgynlEXNYtk6kLRQpmhw_kytUEVF_";
-const db = window.supabase.createClient(supabaseUrl, supabaseKey);
+const db = Supabase.createClient(supabaseUrl, supabaseKey);
 
 /* ========================= */
-
 const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
 
 let allStudents = [];
 let currentUser = null;
-let allSubmissions = {};
 let allTasks = [];
 
 /* =========================
    טעינת תלמידים
 ========================= */
-
 async function loadStudents() {
+    const select = document.getElementById('studentSelect');
+    if(!select){ console.error("studentSelect לא נמצא"); return; }
 
-const { data, error } = await db
-.from("students")
-.select("*");
+    const { data, error } = await db.from("students").select("*");
+    if(error){ console.log(error); return; }
 
-if(error){
-console.log(error);
-return;
-}
+    allStudents = data || [];
 
-allStudents = data || [];
+    const currentVal = select.value;
+    select.innerHTML = '<option value="">בחר את שמך...</option>';
+    allStudents.forEach(s=>{
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = `${s.name} (${s.class_name})`;
+        select.appendChild(opt);
+    });
+    select.value = currentVal;
 
-const select = document.getElementById('studentSelect');
-const currentVal = select.value;
-
-select.innerHTML = '<option value="">בחר את שמך...</option>';
-
-allStudents.forEach(s => {
-const opt = document.createElement('option');
-opt.value = s.id;
-opt.textContent = `${s.name} (${s.class_name})`;
-select.appendChild(opt);
-});
-
-select.value = currentVal;
-
-updateView();
+    updateView();
 }
 
 window.addEventListener("DOMContentLoaded", () => {
     loadStudents();
 });
-    
+
 /* =========================
    כניסה
 ========================= */
-
 function checkAdmin() {
     if (document.getElementById('adminPass').value === 'rabenu247') {
         currentUser = 'admin';
@@ -110,384 +128,273 @@ function checkAdmin() {
 }
 
 function studentLogin() {
-    const id = document.getElementById('studentSelect').value;
+    const select = document.getElementById('studentSelect');
+    const id = select?.value;
     if (!id) return alert('בחר שם מהרשימה');
     currentUser = id;
     startApp();
 }
 
 function startApp() {
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('farm-grid').style.display='grid';
+    document.getElementById('tasks-area').style.display='block';
 
-document.getElementById('login-screen').style.display='none';
-document.getElementById('farm-grid').style.display='grid';
-document.getElementById('tasks-area').style.display='block';
+    if(currentUser==='admin'){
+        document.getElementById('control-panel').style.display='flex';
+        initAdminSubmissions();
+    }
 
-if(currentUser==='admin'){
-document.getElementById('control-panel').style.display='flex';
-initAdminSubmissions();
-}
-
-updateView();
-renderTasks();
+    updateView();
+    renderTasks();
 }
 
 /* =========================
    הוספת תלמיד
 ========================= */
-
 async function addStudent(){
+    const nameInput=document.getElementById('studentName');
+    if(!nameInput.value.trim()) return;
 
-const nameInput=document.getElementById('studentName');
+    const id=Date.now().toString();
 
-if(!nameInput.value.trim())return;
+    await db.from("students").insert([{
+        id:id,
+        name:nameInput.value,
+        class_name:document.getElementById('studentClass').value,
+        totalXp:0,
+        level:0,
+        type:CREATURE_TYPES[Math.floor(Math.random()*CREATURE_TYPES.length)],
+        egg:Math.floor(Math.random()*5)
+    }]);
 
-const id=Date.now().toString();
-
-await db.from("students").insert([{
-id:id,
-name:nameInput.value,
-class_name:document.getElementById('studentClass').value,
-totalXp:0,
-level:0,
-type:CREATURE_TYPES[Math.floor(Math.random()*CREATURE_TYPES.length)],
-egg:Math.floor(Math.random()*5)
-}]);
-
-nameInput.value='';
+    nameInput.value='';
+    loadStudents();
 }
 
 /* =========================
    XP
 ========================= */
-
 async function addXP(id,xp,lvl){
+    if(currentUser!=='admin') return;
 
-if(currentUser!=='admin')return;
+    const student = allStudents.find(s=>s.id===id);
+    if(!student) return;
 
-const img=document.getElementById('img-'+id);
-const card=img?.closest('.student-card');
+    let nxp = student.totalXp || 0;
+    let nlv = student.level || 0;
 
-if(img){
-img.classList.remove('glow-effect');
-requestAnimationFrame(()=>img.classList.add('glow-effect'));
+    nxp += 10;
+    if(nxp>=100){ nlv++; nxp -= 100; }
 
-const xpFloat=document.createElement('div');
-xpFloat.className='xp-float';
-xpFloat.innerText='+10 XP';
-card.appendChild(xpFloat);
-setTimeout(()=>xpFloat.remove(),800);
-}
-
-let nxp=xp+10;
-let nlv=lvl;
-
-if(nxp>=100){
-nlv++;
-nxp=0;
-
-if(card){
-const levelTag=document.createElement('div');
-levelTag.className='levelup';
-levelTag.innerText='LEVEL UP! ✨';
-card.appendChild(levelTag);
-setTimeout(()=>levelTag.remove(),2000);
-}
-}
-
-setTimeout(async()=>{
-await db
-.from("students")
-.update({ totalXp:nxp, level:nlv })
-.eq("id",id);
-},500);
+    await db.from("students").update({totalXp:nxp, level:nlv}).eq("id",id);
+    loadStudents();
 }
 
 /* =========================
    תצוגת תלמידים
 ========================= */
-
 function updateView(){
+    const grid=document.getElementById('farm-grid');
+    if(!currentUser || !grid) return;
 
-const grid=document.getElementById('farm-grid');
-if(!currentUser)return;
+    const searchTerm=document.getElementById('search')?.value?.toLowerCase()||'';
+    const sortBy=document.getElementById('sortBy')?.value||'name';
 
-const searchTerm=document.getElementById('search').value.toLowerCase();
-const sortBy=document.getElementById('sortBy').value;
+    let filtered=allStudents.filter(s=>s.name.toLowerCase().includes(searchTerm));
 
-let filtered=allStudents.filter(s=>s.name.toLowerCase().includes(searchTerm));
+    filtered.sort((a,b)=>{
+        if(sortBy==='name') return a.name.localeCompare(b.name);
+        if(sortBy==='level') return b.level-a.level;
+        return a.class_name.localeCompare(b.class_name);
+    });
 
-filtered.sort((a,b)=>{
-if(sortBy==='name')return a.name.localeCompare(b.name);
-if(sortBy==='level')return b.level-a.level;
-return a.class_name.localeCompare(b.class_name);
-});
+    grid.innerHTML=filtered.map(s=>{
+        const eggNum=(s.egg!==undefined)?s.egg+1:1;
+        const isMine=currentUser===s.id;
+        const xp=s.totalXp||0;
+        const imgPath=s.level===0 ? `images/egg${eggNum}.png` : `images/${s.type}${s.level>=20?3:(s.level>=10?2:1)}.png`;
 
-grid.innerHTML=filtered.map(s=>{
-
-const eggNum=(s.egg!==undefined)?s.egg+1:1;
-const isMine=currentUser===s.id;
-
-const xp=s.totalXp||0;
-
-const imgPath=s.level===0
-?`images/egg${eggNum}.png`
-:`images/${s.type}${s.level>=20?3:(s.level>=10?2:1)}.png`;
-
-return `
-<div class="student-card ${isMine?'my-creature':''}">
-<div class="level-text-badge">Lv.${s.level}</div>
-
-${currentUser==='admin'
-?`<button class="remove-btn" onclick="if(confirm('למחוק?')) deleteStudent('${s.id}')">✖</button>`
-:''}
-
-<img id="img-${s.id}" src="${imgPath}" class="creature-img" onclick="addXP('${s.id}',${xp},${s.level})">
-
-<div style="font-weight:bold;font-size:1.2em;">${s.name}</div>
-<div style="color:#555;font-size:0.9em;">כיתה ${s.class_name}</div>
-
-<div class="xp-container">
-<div class="xp-bar" style="width:${xp}%"></div>
-</div>
-
-${isMine?'<div style="font-size:0.8em; color:#2e7d32; font-weight:bold;">זה היצור שלי! ✨</div>':''}
-
-</div>
-`;
-
-}).join('');
+        return `
+        <div class="student-card ${isMine?'my-creature':''}">
+            <div class="level-text-badge">Lv.${s.level}</div>
+            ${currentUser==='admin' ? `<button class="remove-btn" onclick="if(confirm('למחוק?')) deleteStudent('${s.id}')">✖</button>` : ''}
+            <img id="img-${s.id}" src="${imgPath}" class="creature-img" onclick="addXP('${s.id}',${xp},${s.level})">
+            <div style="font-weight:bold;font-size:1.2em;">${s.name}</div>
+            <div style="color:#555;font-size:0.9em;">כיתה ${s.class_name}</div>
+            <div class="xp-container">
+                <div class="xp-bar" style="width:${xp}%"></div>
+            </div>
+            ${isMine?'<div style="font-size:0.8em; color:#2e7d32; font-weight:bold;">זה היצור שלי! ✨</div>':''}
+        </div>`;
+    }).join('');
 }
 
 async function deleteStudent(id){
-await db.from("students").delete().eq("id",id);
+    await db.from("students").delete().eq("id",id);
+    loadStudents();
 }
 
 /* =========================
    Tasks
 ========================= */
-
 async function loadTasks(){
+    const {data,error}=await db.from("tasks").select("*");
+    if(error){ console.log(error); return; }
 
-const {data,error}=await db.from("tasks").select("*");
-
-if(error){console.log(error);return;}
-
-allTasks=data||[];
-
-renderTasks();
+    allTasks=data||[];
+    renderTasks();
 }
 
 loadTasks();
 setInterval(loadTasks,3000);
 
 function renderTasks(){
+    const list=document.getElementById('tasks-list');
+    if(!list) return;
+    list.innerHTML='';
 
-const list=document.getElementById('tasks-list');
-if(!list)return;
+    if(allTasks.length===0) return;
 
-list.innerHTML='';
+    allTasks.slice().reverse().forEach(task=>{
+        const div=document.createElement('div');
+        div.className='task-card';
 
-if(allTasks.length===0){
-list.innerHTML='';
-return;
-}
-
-allTasks.slice().reverse().forEach(task=>{
-
-const div=document.createElement('div');
-div.className='task-card';
-
-div.innerHTML=`
-<div class="task-info">
-<h4>${task.title}</h4>
-
-${task.link?`
-<div style="margin-top:4px;">
-📎 <a href="${task.link}" target="_blank" style="color:#1976d2;font-weight:bold;">
-פתח את המטלה
-</a>
-</div>`:''}
-
-<div style="font-size:0.85em;color:#555;margin-top:4px;">
-🎁 פרס: ${task.xp||20} XP
-${task.deadline?`<br>⏰ להגשה עד: ${task.deadline}`:''}
-</div>
-</div>
-
-<div>
-${currentUser==='admin'
-?`<button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק</button>`
-:`<button onclick="openSubmitModal('${task.id}','${task.title}')" style="background:#1976d2;">הגש מטלה ✍️</button>`}
-</div>
-`;
-
-list.appendChild(div);
-});
+        div.innerHTML=`
+        <div class="task-info">
+            <h4>${task.title}</h4>
+            ${task.link ? `<div style="margin-top:4px;">📎 <a href="${task.link}" target="_blank" style="color:#1976d2;font-weight:bold;">פתח את המטלה</a></div>` : ''}
+            <div style="font-size:0.85em;color:#555;margin-top:4px;">
+                🎁 פרס: ${task.xp||20} XP
+                ${task.deadline?`<br>⏰ להגשה עד: ${task.deadline}`:''}
+            </div>
+        </div>
+        <div>
+            ${currentUser==='admin' ? `<button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק</button>` : `<button onclick="openSubmitModal('${task.id}','${task.title}')" style="background:#1976d2;">הגש מטלה ✍️</button>`}
+        </div>`;
+        list.appendChild(div);
+    });
 }
 
 async function addTask(){
+    const title=document.getElementById('taskTitle').value;
+    const link=document.getElementById('taskLink').value;
+    const deadline=document.getElementById('taskDeadline').value;
+    const xp=parseInt(document.getElementById('taskXP').value)||20;
 
-const title=document.getElementById('taskTitle').value;
-const link=document.getElementById('taskLink').value;
-const deadline=document.getElementById('taskDeadline').value;
-const xp=parseInt(document.getElementById('taskXP').value)||20;
+    if(!title) return alert("הזן כותרת");
+    const id=Date.now().toString();
 
-if(!title)return alert("הזן כותרת");
+    await db.from("tasks").insert([{id,title,link,deadline,xp}]);
 
-const id=Date.now().toString();
-
-await db.from("tasks").insert([{
-id,title,link,deadline,xp
-}]);
-
-document.getElementById('taskTitle').value='';
-document.getElementById('taskLink').value='';
-document.getElementById('taskDeadline').value='';
+    document.getElementById('taskTitle').value='';
+    document.getElementById('taskLink').value='';
+    document.getElementById('taskDeadline').value='';
+    document.getElementById('taskXP').value='';
+    loadTasks();
 }
 
 async function deleteTask(id){
-if(confirm('למחוק?')){
-await db.from("tasks").delete().eq("id",id);
-}
+    if(confirm('למחוק?')){
+        await db.from("tasks").delete().eq("id",id);
+        loadTasks();
+    }
 }
 
 /* =========================
    Submissions
 ========================= */
-
 let currentTaskToSubmit=null;
 
 function openSubmitModal(id,title){
-currentTaskToSubmit=id;
-document.getElementById('modal-task-title').innerText=title;
-document.getElementById('submit-modal').style.display='block';
+    currentTaskToSubmit=id;
+    document.getElementById('modal-task-title').innerText=title;
+    document.getElementById('submit-modal').style.display='flex';
 }
 
 function closeModal(){
-document.getElementById('submit-modal').style.display='none';
+    document.getElementById('submit-modal').style.display='none';
 }
 
 async function sendSubmission(){
+    const content=document.getElementById('submit-content').value.trim();
+    if(!content) return alert("הדבק קישור או כתוב תשובה");
 
-const content=document.getElementById('submit-content').value.trim();
-if(!content)return alert("הדבק קישור או כתוב תשובה");
+    const student=allStudents.find(s=>s.id===currentUser);
+    if(!student) return alert("שגיאה בזיהוי תלמיד");
 
-const student=allStudents.find(s=>s.id===currentUser);
-if(!student)return alert("שגיאה בזיהוי תלמיד");
+    const subId=Date.now().toString();
 
-const subId=Date.now().toString();
+    await db.from("submissions").insert([{
+        id:subId,
+        student_name:student.name,
+        student_id:student.id,
+        task_id:currentTaskToSubmit,
+        content:content,
+        created_at:new Date().toISOString()
+    }]);
 
-await db.from("submissions").insert([{
-id:subId,
-student_name:student.name,
-student_id:student.id,
-task_id:currentTaskToSubmit,
-content:content
-}]);
-
-alert("המטלה נשלחה בהצלחה! 🎉");
-
-document.getElementById('submit-content').value="";
-closeModal();
+    alert("המטלה נשלחה בהצלחה! 🎉");
+    document.getElementById('submit-content').value="";
+    closeModal();
 }
 
 /* טעינת הגשות למורה */
-
 async function initAdminSubmissions(){
+    const {data,error}=await db.from("submissions").select("*").order("created_at",{ascending:false});
+    if(error) return;
 
-const {data,error}=await db
-.from("submissions")
-.select("*")
-.order("created_at",{ascending:false});
+    const container=document.getElementById('submissions-list');
+    container.innerHTML='';
 
-if(error)return;
+    data.forEach(sub=>{
+        const d=document.createElement('div');
+        d.style="background:white;padding:10px;margin:5px 0;border-radius:8px;border-right:4px solid gold;color:black;text-align:right;box-shadow:0 2px 4px rgba(0,0,0,0.1);";
 
-const container=document.getElementById('submissions-list');
-container.innerHTML='';
-
-data.forEach(sub=>{
-
-const d=document.createElement('div');
-
-d.style="background:white;padding:10px;margin:5px 0;border-radius:8px;border-right:4px solid gold;color:black;text-align:right;box-shadow:0 2px 4px rgba(0,0,0,0.1);";
-
-d.innerHTML=`
-<div style="display:flex;align-items:center;gap:10px;">
-
-<div style="font-weight:bold;color:#2e7d32;">
-${sub.student_name}
-</div>
-
-${sub.content && sub.content.startsWith('http')
-?`<button onclick="window.open('${sub.content}','_blank')" style="background:#1976d2;color:white;padding:5px 10px;border:none;border-radius:6px;cursor:pointer;">
-פתח/הורד
-</button>`
-:''}
-
-<button onclick="approveSub('${sub.id}','${sub.student_id}',1)" style="background:#4caf50;color:white;padding:5px 10px;border:none;border-radius:6px;">
-אשר מטלה ✅
-</button>
-
-<button onclick="approveSub('${sub.id}','${sub.student_id}',0.5)" style="background:#ffc107;color:white;padding:5px 10px;border:none;border-radius:6px;">
-אישור חלקי 🟡
-</button>
-
-<button onclick="rejectSub('${sub.id}')" style="background:#f44336;color:white;padding:5px 10px;border:none;border-radius:6px;">
-דחה ❌
-</button>
-
-</div>
-`;
-
-container.appendChild(d);
-});
+        d.innerHTML=`
+        <div style="display:flex;align-items:center;gap:10px;">
+            <div style="font-weight:bold;color:#2e7d32;">${sub.student_name}</div>
+            ${sub.content && sub.content.startsWith('http') ? `<button onclick="window.open('${sub.content}','_blank')" style="background:#1976d2;color:white;padding:5px 10px;border:none;border-radius:6px;cursor:pointer;">פתח/הורד</button>` : ''}
+            <button onclick="approveSub('${sub.id}','${sub.student_id}',1)" style="background:#4caf50;color:white;padding:5px 10px;border:none;border-radius:6px;">אשר מטלה ✅</button>
+            <button onclick="approveSub('${sub.id}','${sub.student_id}',0.5)" style="background:#ffc107;color:white;padding:5px 10px;border:none;border-radius:6px;">אישור חלקי 🟡</button>
+            <button onclick="rejectSub('${sub.id}')" style="background:#f44336;color:white;padding:5px 10px;border:none;border-radius:6px;">דחה ❌</button>
+        </div>`;
+        container.appendChild(d);
+    });
 }
 
+/* =========================
+   Approve / Reject
+========================= */
 async function approveSub(subId,studentId,multiplier=1){
+    const {data:errorCheck}=await db.from("submissions").select("*").eq("id",subId).single();
+    if(!errorCheck) return;
 
-const {data}=await db
-.from("submissions")
-.select("*")
-.eq("id",subId)
-.single();
+    const task=allTasks.find(t=>t.id===errorCheck.task_id);
+    const baseXP=task?(task.xp||20):20;
+    const rewardXP=Math.round(baseXP*multiplier);
 
-if(!data)return;
+    const s=allStudents.find(st=>st.id===studentId);
+    if(!s) return;
 
-const task=allTasks.find(t=>t.id===data.task_id);
-const baseXP=task?(task.xp||20):20;
-const rewardXP=Math.round(baseXP*multiplier);
+    // חישוב XP נכון
+    let newXP = s.totalXp + rewardXP;
+    let newLevel = s.level;
+    while(newXP >= 100){ newLevel++; newXP -= 100; }
 
-const s=allStudents.find(st=>st.id===studentId);
-if(!s)return;
+    await db.from("students").update({totalXp:newXP, level:newLevel}).eq("id",studentId);
+    await db.from("submissions").delete().eq("id",subId);
 
-let remainingXP=rewardXP;
-let currentXP=s.totalXp||0;
-let currentLevel=s.level;
-
-while(remainingXP>0){
-
-const add=Math.min(10,remainingXP);
-
-addXP(studentId,currentXP,currentLevel);
-
-currentXP+=add;
-remainingXP-=add;
-
-if(currentXP>=100){
-currentLevel++;
-currentXP=0;
-}
-}
-
-await db.from("submissions").delete().eq("id",subId);
+    loadStudents();
+    initAdminSubmissions();
 }
 
 window.rejectSub=async function(subId){
-if(confirm("לדחות את ההגשה?")){
-await db.from("submissions").delete().eq("id",subId);
-}
+    if(confirm("לדחות את ההגשה?")){
+        await db.from("submissions").delete().eq("id",subId);
+        initAdminSubmissions();
+    }
 }
 </script>
-
 </body>
 </html>
