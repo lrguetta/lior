@@ -1,0 +1,45 @@
+{
+  "assignmentTitle": "מטלה מהחווה - 12.3.2026",
+  "questions": [
+    {
+      "type": "open",
+      "title": "שדגשדג",
+      "correct": "שדגשדגשדג"
+    },
+    {
+      "type": "open",
+      "title": "שדגשדג",
+      "correct": "שדגשדגשד"
+    },
+    {
+      "type": "open",
+      "title": "שדגשדגשדגש",
+      "correct": "דגכדגכדגכ"
+    },
+    {
+      "type": "multiple",
+      "title": "דגכדג",
+      "options": [
+        "''",
+        "קקק",
+        "עעע",
+        "ההה"
+      ],
+      "correct": "קקק"
+    },
+    {
+      "type": "boolean",
+      "title": "הקהקק",
+      "correct": "נכון"
+    },
+    {
+      "type": "verses",
+      "title": "ה'קה'ה'",
+      "correct": {
+        "start": "א",
+        "end": "ב"
+      }
+    }
+  ],
+  "version": "1.0"
+}
