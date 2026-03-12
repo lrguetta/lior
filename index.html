@@ -348,13 +348,16 @@ function startApp() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('farm-grid').style.display = 'grid';
     document.getElementById('tasks-area').style.display = 'block';
-    
+
+    localStorage.setItem('currentUser', currentUser); // ← הוסף את השורה הזו
+
     if (currentUser === 'admin') {
         document.getElementById('control-panel').style.display = 'flex';
-        initAdminSubmissions(); // זה השורה שמוסיפה את התיקון
+        initAdminSubmissions();
     }
+
     updateView();
-     renderTasks(); // ← השורה החשובה
+    renderTasks();
 }
 
 function addStudent() {
@@ -630,3 +633,4 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
