@@ -250,18 +250,26 @@ button {
 
     <hr style="width:100%; margin: 15px 0;">
     
-    <div style="width:100%; display:flex; flex-wrap:wrap; gap:10px;">
-       <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="flex:1;">
-    <input type="text" id="taskLink" placeholder="קישור למטלה (אופציונלי)" style="flex:1;">
-    <input type="date" id="taskDeadline" style="flex:1;">
-    <input type="number" id="taskXP" placeholder="XP למטלה" value="20" style="width:120px;">
-<button onclick="addTask()" style="background-color:#1976d2;">פרסם מטלה חדשה 📋</button>
+  <div style="width:100%; background:#f9f9f9; padding:15px; border-radius:10px; border:1px solid #ddd; margin-top:10px;">
+    <h4 style="margin-top:0;">יצירת מטלה אינטראקטיבית 📝</h4>
+    <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
+        <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="flex:2;">
+        <input type="date" id="taskDeadline" style="flex:1;">
+        <input type="number" id="taskXP" placeholder="XP" value="20" style="width:80px;">
     </div>
-    <div style="width:100%; margin-bottom:10px; text-align:right;">
-    <button onclick="window.open('https://send.magicode.me/', '_blank')" 
-            style="background:#ff9800; color:white; padding:10px 15px; border:none; border-radius:8px; cursor:pointer;">
-        העלאת קובץ מטלה 📤
-    </button>
+
+    <div id="questions-constructor" style="margin-bottom:15px;">
+        </div>
+
+    <div style="display:flex; gap:10px;">
+        <select id="questionType">
+            <option value="open">שאלה פתוחה</option>
+            <option value="multiple">ברירה מרובה (אמריקאית)</option>
+            <option value="boolean">נכון/לא נכון</option>
+        </select>
+        <button onclick="addQuestionField()" style="background:#0288d1;">הוסף שאלה +</button>
+        <button onclick="saveTask()" style="background-color:#1976d2; margin-right:auto;">פרסם מטלה לכולם 🚀</button>
+    </div>
 </div>
 
     <div id="admin-submissions" style="width:100%; margin-top:20px; background:#f1f8e9; padding:15px; border-radius:10px; border:1px dashed #2e7d32; text-align:right;">
@@ -633,4 +641,5 @@ function approveSub(subId, studentId, multiplier = 1) {
 </script>
 </body>
 </html>
+
 
