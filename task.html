@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>מטלה דינמית</title>
+    <script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/firebase@8.10.1/firebase-database.js"></script>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            text-align: center; 
+            background: #f0f4f8; 
+            padding: 50px; 
+            direction: rtl;
+        }
+        .card { 
+            background: white; 
+            padding: 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+            display: inline-block; 
+            min-width: 350px;
+        }
+        h2 { color: #1976d2; margin-bottom: 30px; }
+        .option-btn { 
+            background: #ffffff; 
+            color: #1976d2; 
+            border: 2px solid #1976d2; 
+            padding: 12px 25px; 
+            margin: 10px; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-size: 1.1em; 
+            transition: all 0.3s;
+            display: block;
+            width: 100%;
+        }
+        .option-btn:hover { 
+            background: #1976d2; 
+            color: white; 
+        }
+        #status { 
+            margin-top: 25px; 
+            font-weight: bold; 
+            min-height: 24px;
+        }
+        .progress {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 1em;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div id="progress" class="progress"></div>
+    <h2 id="questionText">טוען שאלה...</h2>
+    <div id="options"></div>
+    <div id="status"></div>
+</div>
+
+<script>
+    // --- הגדרות Firebase ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyCtS0Gf9oNiRg6OTd3jyNaPxuWBFlWGIsE",
+        authDomain: "liorfarm.firebaseapp.com",
+        databaseURL: "https://liorfarm-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "liorfarm",
+        storageBucket: "liorfarm.firebasestorage.app",
+        messagingSenderId: "436063422896",
+        appId: "1:436063422896:web:4cb14fbcc036ba97676e75"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // --- משתנים עיקריים ---
+    const urlParams = new URLSearchParams(window.location.search);
+    let studentId = urlParams.get('uid') || localStorage.getItem('currentUser');
+    const taskId = urlParams.get('task'); // מזהה המטלה
+    let questions = [];
+    let currentIdx = 0;
+
+    // --- פונקציה להצגת שאלה לפי סוג ---
+    function displayQuestion() {
+        if (!questions[currentIdx]) {
+            document.getElementById('status').innerText = "סיימת הכל! מעדכן את החווה...";
+            giveXP(50); // פרס סיום
+            return;
+        }
+
+        const q = questions[currentIdx];
+        document.getElementById('questionText').innerText = q.text;
+        document.getElementById('progress').innerText = `שאלה ${currentIdx + 1} מתוך ${questions.length}`;
+
+        const optionsDiv = document.getElementById('options');
+        optionsDiv.innerHTML = '';
+
+        // סוג שאלה: אמריקאית (mc)
+        if (q.type === "mc") {
+            q.options.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = option;
+                btn.onclick = () => handleAnswer(index);
+                optionsDiv.appendChild(btn);
+            });
+        }
+
+        // סוג שאלה: תשובה פתוחה (text)
+        if (q.type === "text") {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.placeholder = 'כתוב כאן את התשובה שלך';
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = 'שלח תשובה';
+            btn.onclick = () => handleTextAnswer(input.value, q.correct);
+            optionsDiv.appendChild(input);
+            optionsDiv.appendChild(btn);
+        }
+
+        // סוג שאלה: נכון/לא נכון (tf)
+        if (q.type === "tf") {
+            ['נכון','לא נכון'].forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                btn.onclick = () => handleAnswer(idx === 0 ? true : false, q.correct);
+                optionsDiv.appendChild(btn);
+            });
+        }
+    }
+
+    function handleTextAnswer(answer, correct) {
+        const status = document.getElementById('status');
+        if (answer.trim().toLowerCase() === correct.trim().toLowerCase()) {
+            status.innerText = "מצוין! נכון מאוד.";
+            status.style.color = "#2e7d32";
+            currentIdx++;
+            setTimeout(() => { status.innerText = ""; displayQuestion(); }, 1000);
+        } else {
+            status.innerText = "לא מדויק, נסה שוב!";
+            status.style.color = "#d32f2f";
+        }
+    }
+
+    function handleAnswer(selectedIndex, correctIndex) {
+        const status = document.getElementById('status');
+        const correct = (correctIndex !== undefined) ? correctIndex : questions[currentIdx].correct;
+
+        if (selectedIndex === correct) {
+            status.innerText = "מצוין! נכון מאוד.";
+            status.style.color = "#2e7d32";
+            currentIdx++;
+            if (currentIdx < questions.length) {
+                setTimeout(() => { status.innerText = ""; displayQuestion(); }, 1000);
+            } else {
+                status.innerText = "סיימת הכל! מעדכן את החווה...";
+                giveXP(50);
+            }
+        } else {
+            status.innerText = "לא מדויק, נסה שוב!";
+            status.style.color = "#d32f2f";
+        }
+    }
+
+    // --- פונקציה לעדכון ה-XP ב-Firebase ---
+    function giveXP(amount) {
+        if (!studentId || studentId === "admin") {
+            document.getElementById('status').innerText = "המטלה הסתיימה (מצב מנהל)";
+            setTimeout(() => window.close(), 1500);
+            return;
+        }
+
+        const studentRef = db.ref('students/' + studentId);
+
+        studentRef.once('value').then((snapshot) => {
+            const data = snapshot.val();
+            if (!data) { console.log("Student not found – XP cancelled"); return; }
+
+            let newXp = (data.xp || 0) + amount;
+            let newLevel = data.level || 0;
+
+            if (newXp >= 100) { newLevel++; newXp -= 100; }
+
+            studentRef.update({ xp: newXp, level: newLevel })
+                .then(() => { document.getElementById('status').innerText = "הנתונים עודכנו בהצלחה!"; 
+                              setTimeout(() => window.close(), 1500); });
+        });
+    }
+
+    // --- טעינת שאלות מה-Firebase ---
+    function loadQuestions() {
+        if (!taskId) {
+            document.getElementById('questionText').innerText = "מטלה לא מוגדרת";
+            return;
+        }
+
+        db.ref('tasks/' + taskId + '/questions').once('value').then((snapshot) => {
+            const data = snapshot.val();
+            if (!data) {
+                document.getElementById('questionText').innerText = "אין שאלות למטלה זו";
+                return;
+            }
+            questions = Object.values(data);
+            displayQuestion();
+        }).catch((err) => {
+            console.error("שגיאה בטעינת השאלות:", err);
+            document.getElementById('questionText').innerText = "שגיאה בטעינת השאלות";
+        });
+    }
+
+    // --- הפעלה ראשונית ---
+    loadQuestions();
+</script>
+
+</body>
+</html>
