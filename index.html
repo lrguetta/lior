@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -11,11 +12,13 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #e0f7fa url('ima
 #control-panel { display: none; background: rgba(255, 255, 255, 0.95); padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); margin-bottom: 30px; width: 90%; max-width: 900px; flex-wrap: wrap; gap: 15px; justify-content: center; border: 2px solid #81c784; }
 input, select, button, textarea { padding: 12px; border-radius: 10px; border: 1px solid #ddd; font-size: 15px; font-family: inherit; box-sizing: border-box; }
 button { background-color: #2e7d32; color: white; cursor: pointer; border: none; font-weight: bold; }
-#farm-grid { display: none; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; width: 100%; max-width: 1200px; }
+#farm-grid { display: none; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 25px; width: 100%; max-width: 1200px; }
 .student-card { background: rgba(255, 255, 255, 0.9); border-radius: 25px; padding: 20px; text-align: center; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-bottom: 5px solid #81c784; transition: transform 0.3s; }
 .my-creature { border: 4px solid #fbc02d; transform: scale(1.05); z-index: 5; }
-.level-text-badge { position: absolute; top: 5px; right: 15px; font-family: 'Arial Black', sans-serif; font-size: 1.4em; font-weight: 900; color: #2e7d32; z-index: 10; text-shadow: -1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff, 0 2px 4px rgba(0,0,0,0.3); }
-.creature-img { width: 120px; height: 120px; object-fit: contain; margin-bottom: 10px; }
+/* ---- ENLARGED: level badge ---- */
+.level-text-badge { position: absolute; top: 5px; right: 15px; font-family: 'Arial Black', sans-serif; font-size: 1.7em; font-weight: 900; color: #2e7d32; z-index: 10; text-shadow: -1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff, 0 2px 4px rgba(0,0,0,0.3); }
+/* ---- ENLARGED: creature image ---- */
+.creature-img { width: 130px; height: 130px; object-fit: contain; margin-bottom: 10px; }
 /* אנימציות */
 .glow-effect { animation: glow-pulse 0.6s ease-out; }
 @keyframes glow-pulse { 0% { filter: brightness(1); transform: scale(1); } 50% { filter: brightness(1.6) drop-shadow(0 0 15px gold); transform: scale(1.25); } 100% { filter: brightness(1); transform: scale(1); } }
@@ -30,18 +33,18 @@ button { background-color: #2e7d32; color: white; cursor: pointer; border: none;
 @keyframes floatUp { 0% { opacity: 1; transform: translate(-50%,0); } 100% { opacity: 0; transform: translate(-50%,-40px); } }
 .levelup { position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%); background: #ffd700; color: #1b5e20; font-weight: bold; font-size: 1.5em; padding: 10px 20px; border-radius: 15px; box-shadow: 0 0 15px rgba(0,0,0,0.3); z-index: 100; pointer-events: none; animation: levelPop 2s ease-out forwards; }
 @keyframes levelPop { 0% { opacity: 0; transform: translate(-50%, 0) scale(0.5); } 20% { opacity: 1; transform: translate(-50%, -30px) scale(1.2); } 80% { opacity: 1; transform: translate(-50%, -40px) scale(1); } 100% { opacity: 0; transform: translate(-50%, -60px) scale(0.8); } }
-/* אנימציית היפוך כרטיס */
-/* תיקון מבנה הכרטיסים ב-Grid */
+
+/* ---- ENLARGED: card dimensions ---- */
 .student-card {
     perspective: 1000px;
-    width: 200px;        /* הגדרת רוחב קבוע */
-    height: 300px;       /* הגדרת גובה קבוע */
-    margin: 10px;        /* מרווח בין כרטיס לכרטיס */
+    width: 220px;
+    height: 340px;
+    margin: 10px;
     background: transparent !important;
     box-shadow: none !important;
     border: none !important;
     cursor: pointer;
-    display: inline-block; /* מבטיח שהם יסתדרו אחד ליד השני */
+    display: inline-block;
 }
 
 .card-inner {
@@ -60,7 +63,7 @@ button { background-color: #2e7d32; color: white; cursor: pointer; border: none;
 .card-front, .card-back {
     position: absolute;
     width: 100%;
-    height: 100%;       /* שהצדדים ימלאו את כל גובה הכרטיס */
+    height: 100%;
     backface-visibility: hidden;
     background: white;
     border-radius: 20px;
@@ -78,23 +81,18 @@ button { background-color: #2e7d32; color: white; cursor: pointer; border: none;
 .card-back {
     transform: rotateY(180deg);
     background: #f1f8e9;
-    overflow-y: auto;   /* מאפשר גלילה אם יש הרבה היסטוריה */
-    display: block;     /* היסטוריה נראית טוב יותר בבלוק */
+    overflow-y: auto;
+    display: block;
     text-align: right;
 }
 
-/* התאמה לתמונות בתוך הכרטיס החדש */
-.creature-img {
-    width: 100px;
-    height: 100px;
-    object-fit: contain;
-}
+/* ---- ENLARGED: xp bar ---- */
 .xp-container {
     width: 90%;
     background-color: #e0e0e0;
     border-radius: 10px;
-    height: 12px;
-    margin-top: auto; /* דוחף את המד הכי למטה שאפשר */
+    height: 15px;
+    margin-top: auto;
     overflow: hidden;
     border: 1px solid #ccc;
 }
@@ -215,14 +213,10 @@ const db = firebase.database();
 
 const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
 let allStudents = [];
-// 1. הגדרת המשתנה (זה בטח כבר קיים אצלך)
 let currentUser = localStorage.getItem('farm_user_id') || null;
 
-// 2. קוד שרץ מיד כשהדף עולה ובודק אם יש משתמש שמור
 if (currentUser) {
     console.log("משתמש מזוהה מצאנו בזיכרון: " + currentUser);
-    // כאן כדאי להפעיל את הפונקציה שטוענת את הנתונים, למשל:
-    // initApp(); 
 }
 let allSubmissions = {};
 let allTasks = [];
@@ -244,7 +238,7 @@ db.ref('students').on('value', (snap) => {
     }
     
     if (currentUser) updateView();
-}); // ← הקולבק נסגר כאן
+});
 
 function renderLogin() {
     const select = document.getElementById('studentSelect');
@@ -342,8 +336,8 @@ function addXP(id, xp, lvl) {
 function updateView() {
     const grid = document.getElementById('farm-grid');
     if (!currentUser) return;
-    const searchTerm = document.getElementById('search').value.toLowerCase();
-    const sortBy = document.getElementById('sortBy').value;
+    const searchTerm = document.getElementById('search') ? document.getElementById('search').value.toLowerCase() : '';
+    const sortBy = document.getElementById('sortBy') ? document.getElementById('sortBy').value : 'name';
     let filtered = allStudents.filter(s => s.name.toLowerCase().includes(searchTerm));
     
     grid.innerHTML = filtered.map(s => {
@@ -351,7 +345,6 @@ function updateView() {
         const isMine = currentUser === s.id;
         const imgPath = s.level === 0 ? `images/egg${eggNum}.png` : `images/${s.type}${s.level >= 20 ? 3 : (s.level >= 10 ? 2 : 1)}.png`;
         
-        // יצירת רשימת היסטוריה
         let historyHtml = "";
         if (s.history) {
             historyHtml = Object.values(s.history).reverse().slice(0, 3).map(h => `
@@ -372,17 +365,17 @@ function updateView() {
 
     <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
         <img id="img-${s.id}" src="${imgPath}" class="creature-img" 
-             style="max-height: 110px; object-fit: contain; margin-bottom: 5px;"
+             style="max-height: 135px; object-fit: contain; margin-bottom: 8px;"
              onclick="event.stopPropagation(); addXP('${s.id}',${s.xp},${s.level})">
-        <div style="font-weight:bold; font-size:1.1em; line-height: 1.2;">${s.name}</div>
-        <div style="color:#666; font-size:0.8em;">כיתה ${s.className}</div>
+        <div style="font-weight:bold; font-size:1.3em; line-height: 1.2;">${s.name}</div>
+        <div style="color:#666; font-size:0.95em;">כיתה ${s.className}</div>
     </div>
 
     <div style="width: 100%; margin-top: 10px;">
-        <div class="xp-container" style="width: 100%; background: #eee; height: 10px; border-radius: 5px; overflow: hidden; border: 1px solid #ddd;">
+        <div class="xp-container" style="width: 100%; background: #eee; height: 14px; border-radius: 7px; overflow: hidden; border: 1px solid #ddd;">
             <div class="xp-bar" style="width:${s.xp}%; background: linear-gradient(90deg, #4caf50, #81c784); height: 100%; transition: width 0.5s;"></div>
         </div>
-        ${isMine ? '<div style="font-size:0.7em; color:#2e7d32; font-weight:bold; margin-top: 5px; text-align: center;">🔄 לחץ להיפוך</div>' : ''}
+        ${isMine ? '<div style="font-size:0.75em; color:#2e7d32; font-weight:bold; margin-top: 5px; text-align: center;">🔄 לחץ להיפוך</div>' : ''}
     </div>
 </div>
                 <div class="card-back">
@@ -397,9 +390,6 @@ function updateView() {
         </div>`;
     }).join('');
 }
-// ==========================================
-// לוגיקת מטלות מעודכנת - יצירה ומענה מובנה
-// ==========================================
 
 db.ref('tasks').on('value', (snap) => {
     const tasks = snap.val();
@@ -465,11 +455,10 @@ function saveNewTask() {
     const id = Date.now().toString();
     db.ref('tasks/' + id).set({ id, title, deadline, xp, questions });
     
-    // ניקוי הטופס לאחר הפרסום
     document.getElementById('taskTitle').value = '';
     document.getElementById('taskDeadline').value = '';
     document.getElementById('questions-constructor').innerHTML = '';
-    toggleTaskBuilder(); // סגירת חלונית העריכה
+    toggleTaskBuilder();
     alert("המטלה פורסמה בהצלחה! 🚀");
 }
 
@@ -483,12 +472,10 @@ function renderTasks() {
         return;
     }
 
-    // נמשוך את כל ההגשות כדי לבדוק אם התלמיד כבר הגיש
     db.ref('submissions').once('value', (snap) => {
         const subs = snap.val() ? Object.values(snap.val()) : [];
 
         allTasks.slice().reverse().forEach(task => {
-            // בדיקה אם המשתמש הנוכחי כבר הגיש את המטלה הזו
             const alreadySubmitted = subs.some(s => s.studentId === currentUser && s.taskId === task.id);
 
             const div = document.createElement('div');
@@ -519,10 +506,6 @@ function renderTasks() {
 }
 
 function deleteTask(id) { if(confirm('למחוק את המטלה?')) db.ref('tasks/' + id).remove(); }
-
-// ==========================================
-// לוגיקת מענה על שאלון (תלמיד)
-// ==========================================
 
 function openSubmitModal(id, title) {
     currentTaskToSubmit = id;
@@ -588,7 +571,6 @@ function sendSubmission() {
     const student = allStudents.find(s => s.id === currentUser);
     const subId = Date.now().toString();
 
-   // שליחת הנתונים ל-Firebase
     db.ref('submissions/' + subId).set({
         id: subId,
         studentName: student.name,
@@ -597,18 +579,11 @@ function sendSubmission() {
         answers: answers,
         time: Date.now()
     }).then(() => {
-        // --- זה החלק שמוודא שהכפתור יחסם מיד ---
         alert("המטלה נשלחה למורה בהצלחה! 🎉");
         closeModal();
-        
-        // קריאה לפונקציה שמרנדרת את המטלות - היא תבדוק שוב 
-        // את הסטטוס ותראה שהתלמיד כבר הגיש
         renderTasks(); 
     });
 }
-// ==========================================
-// בדיקת הגשות למורה (עדכון ה-XP מבוסס על שאלות)
-// ==========================================
 
 function initAdminSubmissions() {
     db.ref('submissions').on('value', (snap) => {
@@ -675,7 +650,6 @@ function approveSub(subId, studentId, multiplier = 1) {
         const s = allStudents.find(st => st.id === studentId);
         if (!s) return;
 
-        // --- חדש: רישום להיסטוריה כדי שיופיע בצד האחורי של הכרטיס ---
         const historyRef = db.ref('students/' + studentId + '/history').push();
         historyRef.set({
             msg: task ? task.title : "מטלה",
@@ -683,17 +657,15 @@ function approveSub(subId, studentId, multiplier = 1) {
             time: Date.now()
         });
 
-        // --- חדש: ניקוי הערת דחייה קודמת (כי עכשיו הוא הצליח) ---
         db.ref('students/' + studentId).update({ lastNote: null });
 
-        // הלוגיקה שלך להפעלת האנימציות (נשארת אותו דבר)
         let remainingXP = rewardXP;
         let currentXP = s.xp;
         let currentLevel = s.level;
 
         while (remainingXP > 0) {
             const add = Math.min(10, remainingXP);
-            addXP(studentId, currentXP, currentLevel); // מפעיל את האנימציה הוויזואלית
+            addXP(studentId, currentXP, currentLevel);
             currentXP += add;
             remainingXP -= add;
 
@@ -703,25 +675,20 @@ function approveSub(subId, studentId, multiplier = 1) {
             }
         }
 
-        // הסרת ההגשה לאחר האישור
         submissionRef.remove();
     });
 }
 
 window.rejectSub = function(subId) {
-    // שינינו את ה-confirm ל-prompt כדי שתוכל לכתוב סיבה
     const note = prompt("מדוע המטלה נדחית? (התלמיד יראה את זה בצד האחורי של הכרטיס):");
     
-    if (note !== null) { // אם המורה לא לחץ על "ביטול"
+    if (note !== null) {
         db.ref('submissions/' + subId).once('value').then(snap => {
             const sub = snap.val();
             if (sub) {
-                // עדכון ההערה אצל התלמיד
                 db.ref('students/' + sub.studentId).update({ 
                     lastNote: note || "המטלה נדחתה. בדוק שוב את ההוראות." 
                 });
-                
-                // מחיקת ההגשה מהרשימה של המורה
                 db.ref('submissions/' + subId).remove();
             }
         });
@@ -730,11 +697,3 @@ window.rejectSub = function(subId) {
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
