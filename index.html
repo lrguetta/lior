@@ -354,40 +354,62 @@ function updateView() {
         
         let noteHtml = s.lastNote ? `<div class="rejection-note">📝 הערת מורה: ${s.lastNote}</div>` : "";
 
-        return `
-        <div class="student-card ${isMine ? 'my-creature' : ''}" onclick="this.classList.toggle('flipped')">
-            <div class="card-inner">
-            <div class="card-front" style="display: flex; flex-direction: column; justify-content: space-between; align-items: center; height: 100%; padding: 15px; box-sizing: border-box;">
-    <div style="width: 100%; display: flex; justify-content: space-between; align-items: flex-start;">
-        <div class="level-text-badge">Lv.${s.level}</div>
-        ${currentUser === 'admin' ? `<button class="remove-btn" onclick="event.stopPropagation(); if(confirm('למחוק?')) db.ref('students/${s.id}').remove()">✖</button>` : '<div></div>'}
-    </div>
-
-    <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
-        <img id="img-${s.id}" src="${imgPath}" class="creature-img" 
-             style="max-height: 135px; object-fit: contain; margin-bottom: 8px;"
-             onclick="event.stopPropagation(); addXP('${s.id}',${s.xp},${s.level})">
-        <div style="font-weight:bold; font-size:1.3em; line-height: 1.2;">${s.name}</div>
-        <div style="color:#666; font-size:0.95em;">כיתה ${s.className}</div>
-    </div>
-
-    <div style="width: 100%; margin-top: 10px;">
-        <div class="xp-container" style="width: 100%; background: #eee; height: 14px; border-radius: 7px; overflow: hidden; border: 1px solid #ddd;">
-            <div class="xp-bar" style="width:${s.xp}%; background: linear-gradient(90deg, #4caf50, #81c784); height: 100%; transition: width 0.5s;"></div>
+      return `
+<div class="student-card ${isMine ? 'my-creature' : ''}" onclick="this.classList.toggle('flipped')">
+    <div class="card-inner">
+    <div class="card-front" style="display: flex; flex-direction: column; justify-content: space-between; align-items: center; height: 100%; padding: 15px; box-sizing: border-box;">
+        <div style="width: 100%; display: flex; justify-content: space-between; align-items: flex-start;">
+            <div class="level-text-badge">Lv.${s.level}</div>
+            ${currentUser === 'admin' ? `<button class="remove-btn" onclick="event.stopPropagation(); if(confirm('למחוק?')) db.ref('students/${s.id}').remove()">✖</button>` : '<div></div>'}
         </div>
-        ${isMine ? '<div style="font-size:0.75em; color:#2e7d32; font-weight:bold; margin-top: 5px; text-align: center;">🔄 לחץ להיפוך</div>' : ''}
-    </div>
-</div>
-                <div class="card-back">
-                    <h4 style="margin:0 0 10px 0; color:#2e7d32; border-bottom:1px solid #ccc;">יומן פעילות</h4>
-                    <div style="flex-grow:1;">
-                        ${historyHtml || "אין פעילות לאחרונה"}
-                        ${noteHtml}
-                    </div>
-                    <div style="font-size:0.75em; color:#999; margin-top:5px;">לחץ לחזרה</div>
-                </div>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
+            <img id="img-${s.id}" src="${imgPath}" class="creature-img" 
+                 style="max-height: 135px; object-fit: contain; margin-bottom: 8px;"
+                 onclick="event.stopPropagation(); addXP('${s.id}',${s.xp},${s.level})">
+            <div style="font-weight:bold; font-size:1.3em; line-height: 1.2;">${s.name}</div>
+            <div style="color:#666; font-size:0.95em;">כיתה ${s.className}</div>
+        </div>
+        <div style="width: 100%; margin-top: 10px;">
+            <div class="xp-container" style="width: 100%; background: #eee; height: 14px; border-radius: 7px; overflow: hidden; border: 1px solid #ddd;">
+                <div class="xp-bar" style="width:${s.xp}%; background: linear-gradient(90deg, #4caf50, #81c784); height: 100%; transition: width 0.5s;"></div>
             </div>
-        </div>`;
+            <div style="font-size:0.75em; color:#2e7d32; font-weight:bold; margin-top: 5px; text-align: center;">🔄 לחץ להיפוך</div>
+        </div>
+    </div>
+
+    <div class="card-back" style="padding:12px; display:flex; flex-direction:column; gap:8px;">
+        <h4 style="margin:0 0 6px 0; color:#2e7d32; border-bottom:1px solid #ccc; padding-bottom:5px;">יומן פעילות</h4>
+        
+        ${isMine ? `
+        <div style="background:#fffde7; border-radius:8px; padding:8px; border:1px solid #ffe082;">
+            <div style="font-size:0.8em; color:#f57f17; font-weight:bold; margin-bottom:4px;">✏️ ההודעה שלי:</div>
+            <textarea id="note-${s.id}" onclick="event.stopPropagation()" 
+                style="width:100%; height:55px; border-radius:6px; border:1px solid #ffd54f; font-size:0.85em; font-family:inherit; resize:none; padding:5px; box-sizing:border-box;"
+                placeholder="כתוב משהו על עצמך...">${s.personalNote || ''}</textarea>
+            <button onclick="event.stopPropagation(); savePersonalNote('${s.id}')" 
+                style="margin-top:5px; background:#f9a825; color:white; border:none; border-radius:6px; padding:5px 12px; font-size:0.8em; cursor:pointer; width:100%;">💾 שמור</button>
+        </div>
+        ` : `
+        ${s.personalNote ? `<div style="background:#fffde7; border-radius:8px; padding:8px; border:1px solid #ffe082; font-size:0.85em; color:#555;">✏️ <em>${s.personalNote}</em></div>` : ''}
+        <div style="text-align:center; margin-top:4px;">
+            <button onclick="event.stopPropagation(); toggleLike('${s.id}')" 
+                id="like-btn-${s.id}"
+                style="background:${(s.likes && s.likes[currentUser]) ? '#e91e63' : '#eee'}; 
+                       color:${(s.likes && s.likes[currentUser]) ? 'white' : '#555'}; 
+                       border:none; border-radius:20px; padding:8px 18px; font-size:1em; cursor:pointer; transition:all 0.2s;">
+                ❤️ ${Object.keys(s.likes || {}).length || 0}
+            </button>
+        </div>
+        `}
+
+        <div style="font-size:0.8em; color:#777; border-top:1px solid #eee; padding-top:6px;">
+            ${historyHtml || "אין פעילות לאחרונה"}
+            ${noteHtml}
+        </div>
+        <div style="font-size:0.75em; color:#999; text-align:center;">לחץ לחזרה</div>
+    </div>
+    </div>
+</div>`;
     }).join('');
 }
 
@@ -396,7 +418,22 @@ db.ref('tasks').on('value', (snap) => {
     allTasks = tasks ? Object.values(tasks) : [];
     renderTasks();
 });
+function savePersonalNote(studentId) {
+    const val = document.getElementById('note-' + studentId).value.trim();
+    db.ref('students/' + studentId).update({ personalNote: val });
+}
 
+function toggleLike(studentId) {
+    if (currentUser === 'admin' || currentUser === studentId) return;
+    const likeRef = db.ref('students/' + studentId + '/likes/' + currentUser);
+    likeRef.once('value').then(snap => {
+        if (snap.exists()) {
+            likeRef.remove();
+        } else {
+            likeRef.set(true);
+        }
+    });
+}
 function toggleTaskBuilder() {
     const builder = document.getElementById('task-builder');
     builder.style.display = builder.style.display === 'none' ? 'block' : 'none';
@@ -697,5 +734,6 @@ window.rejectSub = function(subId) {
 </script>
 </body>
 </html>
+
 
 
