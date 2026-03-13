@@ -231,64 +231,60 @@ let currentTaskToSubmit = null;
 db.ref('students').on('value', (snap) => {
     const data = snap.val();
     allStudents = data ? Object.values(data) : [];
+    
     const select = document.getElementById('studentSelect');
-    const currentVal = select.value;
-    select.innerHTML = '<option value="">בחר את שמך...</option>';
-   function renderLogin() {
-    const container = document.getElementById('login-students-container'); // או שם דומה
-    container.innerHTML = '';
+    if (select) {
+        select.innerHTML = '<option value="">בחר את שמך...</option>';
+        allStudents.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name;
+            select.appendChild(opt);
+        });
+    }
+    
+    if (currentUser) updateView();
+}); // ← הקולבק נסגר כאן
 
-    allStudents.forEach(s => { // הלולאה שעוברת על כל התלמידים
-        const div = document.createElement('div');
-        
-        // כאן נכנס השינוי! בתוך ה-HTML של הכפתור או הכרטיס:
-        div.innerHTML = `
-            <div class="login-card">
-                <img src="images/egg1.png">
-                <h3>${s.name}</h3>
-                <button onclick="studentLogin('${s.id}')" style="width:90%; background-color:#1976d2;">
-                    אני רוצה להיכנס! ✨
-                </button>
-            </div>
-        `;
-        container.appendChild(div);
+function renderLogin() {
+    const select = document.getElementById('studentSelect');
+    if (!select) return;
+    
+    select.innerHTML = '<option value="">בחר את שמך...</option>';
+    allStudents.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = s.name;
+        select.appendChild(opt);
     });
 }
+
 function checkAdmin() {
     if (document.getElementById('adminPass').value === 'rabenu247') {
         currentUser = 'admin';
         startApp();
-    } else { alert('סיסמה שגויה'); }
+    } else { 
+        alert('סיסמה שגויה'); 
+    }
 }
 
-function studentLogin(id) {
-    console.log("מנסה להיכנס עם מזהה:", id); // לבדיקה בקונסול
-    console.log("רשימת תלמידים קיימת:", allStudents);
-
+function studentLogin() {
+    const id = document.getElementById('studentSelect').value;
+    if (!id) { alert('בחר שם!'); return; }
+    
     const student = allStudents.find(s => s.id === id);
-
-    if (!student) {
-        console.error("Student not found! ID searched:", id);
-        alert("שגיאה: תלמיד לא נמצא במערכת");
-        return;
-    }
+    if (!student) { alert("שגיאה: תלמיד לא נמצא"); return; }
 
     currentUser = student.id;
     localStorage.setItem('farm_user_id', student.id);
-    
-    // מעבר למסך החווה
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('farm-screen').style.display = 'block';
-    
-    updateView();
+    startApp();
 }
+
 function startApp() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('farm-grid').style.display = 'grid';
     document.getElementById('tasks-area').style.display = 'block';
 
-    localStorage.setItem('currentUser', currentUser);
-    
     if (currentUser === 'admin') {
         document.getElementById('control-panel').style.display = 'flex';
         initAdminSubmissions();
@@ -297,7 +293,6 @@ function startApp() {
     updateView();
     renderTasks();
 }
-
 function addStudent() {
     const nameInput = document.getElementById('studentName');
     if (!nameInput.value.trim()) return;
@@ -735,6 +730,7 @@ window.rejectSub = function(subId) {
 </script>
 </body>
 </html>
+
 
 
 
