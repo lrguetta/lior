@@ -12,13 +12,13 @@ body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #e0f7fa url('ima
 #control-panel { display: none; background: rgba(255, 255, 255, 0.95); padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); margin-bottom: 30px; width: 90%; max-width: 900px; flex-wrap: wrap; gap: 15px; justify-content: center; border: 2px solid #81c784; }
 input, select, button, textarea { padding: 12px; border-radius: 10px; border: 1px solid #ddd; font-size: 15px; font-family: inherit; box-sizing: border-box; }
 button { background-color: #2e7d32; color: white; cursor: pointer; border: none; font-weight: bold; }
-#farm-grid { display: none; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 25px; width: 100%; max-width: 1200px; }
+#farm-grid { display: none; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; width: 100%; max-width: 1200px; }
 .student-card { background: rgba(255, 255, 255, 0.9); border-radius: 25px; padding: 20px; text-align: center; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-bottom: 5px solid #81c784; transition: transform 0.3s; }
 .my-creature { border: 4px solid #fbc02d; transform: scale(1.05); z-index: 5; }
 /* ---- ENLARGED: level badge ---- */
 .level-text-badge { position: absolute; top: 5px; right: 15px; font-family: 'Arial Black', sans-serif; font-size: 1.7em; font-weight: 900; color: #2e7d32; z-index: 10; text-shadow: -1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff, 0 2px 4px rgba(0,0,0,0.3); }
 /* ---- ENLARGED: creature image ---- */
-.creature-img { width: 130px; height: 130px; object-fit: contain; margin-bottom: 10px; }
+.creature-img { width: 150px; height: 150px; object-fit: contain; margin-bottom: 10px; }
 /* אנימציות */
 .glow-effect { animation: glow-pulse 0.6s ease-out; }
 @keyframes glow-pulse { 0% { filter: brightness(1); transform: scale(1); } 50% { filter: brightness(1.6) drop-shadow(0 0 15px gold); transform: scale(1.25); } 100% { filter: brightness(1); transform: scale(1); } }
@@ -697,3 +697,4 @@ window.rejectSub = function(subId) {
 </script>
 </body>
 </html>
+
