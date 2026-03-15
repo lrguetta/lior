@@ -638,7 +638,10 @@ function addQuestionField() {
     qDiv.className = 'question-item';
     qDiv.dataset.type = type;
     
-    let typeText = type === 'open' ? 'פתוחה' : (type === 'multiple' ? 'אמריקאית' : (type === 'survey' ? 'סקר (בחירה מרובה)' : 'נכון/לא נכון'));
+    let typeText = type === 'open' ? 'פתוחה' : 
+               (type === 'multiple' ? 'אמריקאית' : 
+               (type === 'survey' ? 'סקר (בחירה מרובה)' : 
+               (type === 'study_unit' ? 'יחידת לימוד' : 'נכון/לא נכון')));
     
     let html = `<button onclick="this.parentElement.remove()" style="position:absolute; left:10px; top:10px; background:#ff5252; color:white; border:none; border-radius:4px; cursor:pointer; padding:5px 10px;">X</button>`;
     html += `<strong>סוג: ${typeText}</strong><br>`;
@@ -661,6 +664,17 @@ function addQuestionField() {
             <input type="text" placeholder="אפשרות 3" class="opt-survey">
             <input type="text" placeholder="אפשרות 4" class="opt-survey">
             <input type="text" placeholder="אפשרות 5" class="opt-survey">
+        </div>`;
+    }
+    else if (type === 'study_unit') {
+        html += `<div style="background:#e8f5e9; padding:10px; border-radius:4px; border:1px solid #c8e6c9;">
+            <div style="font-size:0.85em; color:#2e7d32; margin-bottom:8px;"><strong>הזן את התשובה הנכונה לבדיקה אוטומטית:</strong></div>
+            <div style="display:flex; gap:5px;">
+                <input type="text" placeholder="פרק (לדוג' לד)" class="study-ans-chapter" style="width:30%; padding:5px; text-align:center;">
+                <input type="text" placeholder="מפסוק" class="study-ans-start" style="width:35%; padding:5px; text-align:center;">
+                <input type="text" placeholder="עד פסוק" class="study-ans-end" style="width:35%; padding:5px; text-align:center;">
+            </div>
+            <div style="font-size:0.75em; color:#666; margin-top:5px;">* המערכת תשווה את תשובת התלמיד לנתונים אלו.</div>
         </div>`;
     }
 
@@ -784,13 +798,16 @@ function openSubmitModal(id, title) {
                     </label>`;
                 });
             } else if (q.type === 'study_unit') {
-    d.innerHTML += `
-        <div style="display:flex; gap:10px; margin-top:10px; width:100%; direction:rtl;">
-            <input type="text" id="study_chapter_${index}" placeholder="פרק (לדוג' לד)" style="flex:1; padding:8px; text-align:center; border:1px solid #ccc; border-radius:4px;">
-            <input type="text" id="study_start_${index}" placeholder="פסוק התחלה" style="flex:1; padding:8px; text-align:center; border:1px solid #ccc; border-radius:4px;">
-            <input type="text" id="study_end_${index}" placeholder="פסוק סיום" style="flex:1; padding:8px; text-align:center; border:1px solid #ccc; border-radius:4px;">
-        </div>
-    `;
+d.innerHTML += `
+    <div style="display:flex; gap:5px; margin-top:10px; width:100%; box-sizing:border-box;">
+        <input type="text" id="study_chapter_${index}" placeholder="פרק" 
+            style="width:30%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+        <input type="text" id="study_start_${index}" placeholder="מפסוק" 
+            style="width:35%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+        <input type="text" id="study_end_${index}" placeholder="עד פסוק" 
+            style="width:35%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+    </div>
+`;
 }
             container.appendChild(d);
         });
