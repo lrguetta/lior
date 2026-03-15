@@ -321,6 +321,7 @@ button {
                 <option value="multiple">אמריקאית (ברירה מרובה)</option>
                 <option value="boolean">נכון / לא נכון</option>
                 <option value="survey">סקר (בחירה מרובה - ללא תשובה נכונה)</option>
+                <option value="poll">סקר</option> <option value="study_unit">יחידת לימוד (פרק ופסוקים)</option> </select>
             </select>
             <button onclick="addQuestionField()" style="background:#0288d1;">הוסף שאלה</button>
             <button onclick="saveNewTask()" style="background:#4caf50; margin-right:auto; padding:12px 25px;">פרסם מטלה 🚀</button>
@@ -782,7 +783,15 @@ function openSubmitModal(id, title) {
                         <input type="checkbox" name="q${index}" value="${opt}"> ${opt}
                     </label>`;
                 });
-            }
+            } else if (q.type === 'study_unit') {
+    d.innerHTML += `
+        <div style="display:flex; gap:10px; margin-top:10px; width:100%; direction:rtl;">
+            <input type="text" id="study_chapter_${index}" placeholder="פרק (לדוג' לד)" style="flex:1; padding:8px; text-align:center; border:1px solid #ccc; border-radius:4px;">
+            <input type="text" id="study_start_${index}" placeholder="פסוק התחלה" style="flex:1; padding:8px; text-align:center; border:1px solid #ccc; border-radius:4px;">
+            <input type="text" id="study_end_${index}" placeholder="פסוק סיום" style="flex:1; padding:8px; text-align:center; border:1px solid #ccc; border-radius:4px;">
+        </div>
+    `;
+}
             container.appendChild(d);
         });
     }
@@ -791,7 +800,6 @@ function openSubmitModal(id, title) {
 }
 
 function closeModal() { document.getElementById('submit-modal').style.display = 'none'; }
-
 function sendSubmission() {
     const task = allTasks.find(t => t.id === currentTaskToSubmit);
     const answers = [];
@@ -805,13 +813,29 @@ function sendSubmission() {
             } else if (q.type === 'survey') {
                 const checkedBoxes = document.querySelectorAll(`input[name="q${index}"]:checked`);
                 val = Array.from(checkedBoxes).map(cb => cb.value).join(' | ');
-            } else {
+            } 
+            // --- הוספה עבור יחידת לימוד ---
+            else if (q.type === 'study_unit') {
+                const chapter = document.getElementById(`study_chapter_${index}`).value.trim();
+                const start = document.getElementById(`study_start_${index}`).value.trim();
+                const end = document.getElementById(`study_end_${index}`).value.trim();
+                
+                if (chapter || start || end) {
+                    // אנחנו מחברים את זה למחרוזת אחת שתופיע למורה בבדיקה
+                    val = `פרק ${chapter}, פסוקים ${start}-${end}`;
+                } else {
+                    val = "";
+                }
+            } 
+            // ---------------------------
+            else {
                 const checked = document.querySelector(`input[name="q${index}"]:checked`);
                 val = checked ? checked.value : "";
             }
             
+            // כאן הוספתי את ה-safe() כדי שהמורה לא יראה "פיצוצים" בבדיקה אם התלמיד הקליד מירכאות
             if (!val) allAnswered = false;
-            answers.push({ q: q.text, a: val });
+            answers.push({ q: q.text, a: safe(val) });
         });
     }
 
