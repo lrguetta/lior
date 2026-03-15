@@ -3,214 +3,296 @@
 <head>
 <meta charset="UTF-8">
 <title>חוות הטמגוצ'י - גרסת ניהול ותלמידים</title>
-
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
 <style>
-body {
+body { 
     font-family: 'Segoe UI', Tahoma, sans-serif;
-    background: #e0f7fa url('images/background.png') no-repeat center center fixed;
-    background-size: cover;
-    margin: 0;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
+    background: #e0f7fa url('images/background.png') no-repeat center center fixed; 
+    background-size: cover; 
+    margin: 0; 
+    padding: 20px; 
+    display: flex; 
+    flex-direction: column; 
     align-items: center;
 }
 
-#login-screen {
-    background: rgba(255, 255, 255, 0.95);
-    padding: 30px;
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    text-align: center;
+/* ---- תוספת עיצוב: לוח מודעות (מה חדש) ---- */
+#announcements-board {
+    position: fixed; 
+    right: 20px; 
+    top: 20px; 
+    width: 250px;
+    background: rgba(255, 255, 255, 0.95); 
+    padding: 15px;
+    border-radius: 15px; 
+    border: 2px solid #ff9800;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+    z-index: 50; 
+    text-align: right;
+    max-height: 80vh; 
+    overflow-y: auto;
+}
+@media (max-width: 1000px) {
+    #announcements-board {
+        position: static; 
+        width: 90%; 
+        max-width: 900px; 
+        margin: 10px auto; 
+        order: -1; /* דוחף את הלוח למעלה במסכים קטנים */
+    }
+}
+/* --------------------------------------- */
+
+#login-screen { 
+    background: rgba(255, 255, 255, 0.95); 
+    padding: 30px; 
+    border-radius: 20px; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+    text-align: center; 
     width: 320px;
-    margin-top: 50px;
-    border: 2px solid #81c784;
+    margin-top: 50px; 
+    border: 2px solid #81c784; 
 }
-
-#control-panel {
+#control-panel { 
     display: none; 
-    background: rgba(255, 255, 255, 0.95);
-    padding: 25px;
+    background: rgba(255, 255, 255, 0.95); 
+    padding: 25px; 
     border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-    margin-bottom: 30px;
-    width: 90%;
-    max-width: 900px;
-    flex-wrap: wrap;
-    gap: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
+    margin-bottom: 30px; 
+    width: 90%; 
+    max-width: 900px; 
+    flex-wrap: wrap; 
+    gap: 15px; 
     justify-content: center;
-    border: 2px solid #81c784;
+    border: 2px solid #81c784; 
 }
-
-input, select, button {
-    padding: 12px;
-    border-radius: 10px;
-    border: 1px solid #ddd;
+input, select, button, textarea { 
+    padding: 12px; 
+    border-radius: 10px; 
+    border: 1px solid #ddd; 
     font-size: 15px;
+    font-family: inherit; 
+    box-sizing: border-box; 
 }
-
-button {
-    background-color: #2e7d32;
-    color: white;
-    cursor: pointer;
-    border: none;
-    font-weight: bold;
+button { 
+    background-color: #2e7d32; 
+    color: white; 
+    cursor: pointer; 
+    border: none; 
+    font-weight: bold; 
 }
-
-#farm-grid {
+#farm-grid { 
     display: none;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 25px;
-    width: 100%;
-    max-width: 1200px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+    gap: 20px; 
+    width: 100%; 
+    max-width: 1200px; 
 }
-
-.student-card {
-    background: rgba(255, 255, 255, 0.9);
+.student-card { 
+    background: rgba(255, 255, 255, 0.9); 
     border-radius: 25px;
-    padding: 20px;
-    text-align: center;
-    position: relative;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    border-bottom: 5px solid #81c784;
+    padding: 20px; 
+    text-align: center; 
+    position: relative; 
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
+    border-bottom: 5px solid #81c784; 
     transition: transform 0.3s;
 }
-
 .my-creature { border: 4px solid #fbc02d; transform: scale(1.05); z-index: 5; }
-
-.level-text-badge {
+.level-text-badge { 
     position: absolute;
-    top: 5px;
-    right: 15px;
-    font-family: 'Arial Black', sans-serif;
-    font-size: 1.4em;
-    font-weight: 900;
-    color: #2e7d32;
+    top: 5px; 
+    right: 15px; 
+    font-family: 'Arial Black', sans-serif; 
+    font-size: 1.7em; 
+    font-weight: 900; 
+    color: #2e7d32; 
     z-index: 10;
     text-shadow: -1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff, 0 2px 4px rgba(0,0,0,0.3);
 }
-
-.creature-img {
-    width: 120px;
-    height: 120px;
-    object-fit: contain;
+.creature-img { 
+    width: 150px; 
+    height: 150px; 
+    object-fit: contain; 
     margin-bottom: 10px;
 }
-
-/* אנימציות */
 .glow-effect { animation: glow-pulse 0.6s ease-out; }
-@keyframes glow-pulse {
-    0% { filter: brightness(1); transform: scale(1); }
-    50% { filter: brightness(1.6) drop-shadow(0 0 15px gold); transform: scale(1.25); }
-    100% { filter: brightness(1); transform: scale(1); }
+@keyframes glow-pulse { 
+    0% { filter: brightness(1); transform: scale(1); } 
+    50% { filter: brightness(1.6) drop-shadow(0 0 15px gold); transform: scale(1.25); } 
+    100% { filter: brightness(1); transform: scale(1); } 
 }
-
 .shake { animation: shake 0.5s infinite; }
-@keyframes shake {
-    0%, 100% { transform: translate(1px, 1px) rotate(0deg); }
-    25% { transform: translate(-1px, -2px) rotate(-1deg); }
-    75% { transform: translate(1px, -2px) rotate(1deg); }
+@keyframes shake { 
+    0%, 100% { transform: translate(1px, 1px) rotate(0deg); } 
+    25% { transform: translate(-1px, -2px) rotate(-1deg); } 
+    75% { transform: translate(1px, -2px) rotate(1deg); } 
 }
-
 .hatch-crack { animation: eggCrack 0.9s ease-out forwards; }
-@keyframes eggCrack {
-    0% { transform: scale(1); }
-    100% { transform: scale(0); opacity: 0; }
+@keyframes eggCrack { 
+    0% { transform: scale(1); } 
+    100% { transform: scale(0); opacity: 0; } 
 }
-
-.xp-container { background: #eee; border-radius: 10px; height: 18px; margin: 10px 0; overflow: hidden; border: 1px solid #ccc; }
-.xp-bar { background: linear-gradient(90deg, #ffeb3b, #fbc02d); height: 100%; transition: width 0.4s ease-out; }
-
-.remove-btn {
-    position: absolute;
-    top: 10px;
+.xp-container { 
+    background: #eee; 
+    border-radius: 10px; 
+    height: 18px; 
+    margin: 10px 0; 
+    overflow: hidden; 
+    border: 1px solid #ccc;
+}
+.xp-bar { 
+    background: linear-gradient(90deg, #ffeb3b, #fbc02d); 
+    height: 100%; 
+    transition: width 0.4s ease-out; 
+}
+.remove-btn { 
+    position: absolute; 
+    top: 10px; 
     left: 10px;
-    background: #ff5252;
-    color: white;
-    border-radius: 50%;
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: #ff5252; 
+    color: white; 
+    border-radius: 50%; 
+    width: 28px; 
+    height: 28px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
 }
-
-.xp-float {
+.xp-float { 
     position: absolute;
-    font-weight: bold;
-    color: gold;
-    font-size: 1.2em;
-    animation: floatUp 0.8s ease-out forwards;
-    left: 50%;
+    font-weight: bold; 
+    color: gold; 
+    font-size: 1.2em; 
+    animation: floatUp 0.8s ease-out forwards; 
+    left: 50%; 
     top: 60px;
 }
-@keyframes floatUp { 0% { opacity: 1; transform: translate(-50%,0); } 100% { opacity: 0; transform: translate(-50%,-40px); } }
-
-.levelup {
-    position: absolute;
-    top: 20%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #ffd700;
-    color: #1b5e20;
-    font-weight: bold;
+@keyframes floatUp { 
+    0% { opacity: 1; transform: translate(-50%,0); } 
+    100% { opacity: 0; transform: translate(-50%,-40px); } 
+}
+.levelup { 
+    position: absolute; 
+    top: 20%; 
+    left: 50%; 
+    transform: translate(-50%, -50%); 
+    background: #ffd700; 
+    color: #1b5e20; 
+    font-weight: bold; 
     font-size: 1.5em;
-    padding: 10px 20px;
-    border-radius: 15px;
-    box-shadow: 0 0 15px rgba(0,0,0,0.3);
-    z-index: 100;
-    pointer-events: none;
+    padding: 10px 20px; 
+    border-radius: 15px; 
+    box-shadow: 0 0 15px rgba(0,0,0,0.3); 
+    z-index: 100; 
+    pointer-events: none; 
     animation: levelPop 2s ease-out forwards;
 }
-
-@keyframes levelPop {
-    0% { opacity: 0; transform: translate(-50%, 0) scale(0.5); }
-    20% { opacity: 1; transform: translate(-50%, -30px) scale(1.2); }
-    80% { opacity: 1; transform: translate(-50%, -40px) scale(1); }
-    100% { opacity: 0; transform: translate(-50%, -60px) scale(0.8); }
+@keyframes levelPop { 
+    0% { opacity: 0; transform: translate(-50%, 0) scale(0.5); } 
+    20% { opacity: 1; transform: translate(-50%, -30px) scale(1.2); } 
+    80% { opacity: 1; transform: translate(-50%, -40px) scale(1); } 
+    100% { opacity: 0; transform: translate(-50%, -60px) scale(0.8); } 
 }
 
-.hatch-flash {
+.student-card {
+    perspective: 1000px;
+    width: 220px;
+    height: 340px;
+    margin: 10px;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    cursor: pointer;
+    display: inline-block;
+}
+
+.card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+}
+
+.student-card.flipped .card-inner {
+    transform: rotateY(180deg);
+}
+
+.card-front, .card-back {
     position: absolute;
-    width: 120px;
-    height: 120px;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
     background: white;
-    border-radius: 50%;
-    top: 40px;
-    left: 50%;
-    transform: translateX(-50%);
-    animation: hatchFlash 0.4s ease-out forwards;
-}
-@keyframes hatchFlash { 0% { transform: translateX(-50%) scale(0.5); opacity: 1; } 100% { transform: translateX(-50%) scale(2); opacity: 0; } }
-
-#tasks-area {
-    width: 90%;
-    max-width: 1200px;
-    margin-bottom: 20px;
-    display: none;
-}
-
-.task-card {
-    background: white;
+    border-radius: 20px;
     padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 10px;
-    border-right: 6px solid #1976d2;
+    box-sizing: border-box;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: center;
+    justify-content: space-between;
+    border-bottom: 5px solid #81c784;
+    padding-bottom: 20px;
+}
+
+.card-back {
+    transform: rotateY(180deg);
+    background: #f1f8e9;
+    overflow-y: auto;
+    display: block;
+    text-align: right;
+}
+
+.xp-container {
+    width: 90%;
+    background-color: #e0e0e0;
+    border-radius: 10px;
+    height: 15px;
+    margin-top: auto;
+    overflow: hidden;
+    border: 1px solid #ccc;
+}
+
+.xp-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #4caf50, #81c784);
+    transition: width 0.5s ease-in-out;
+}
+#tasks-area { width: 90%; max-width: 1200px; margin-bottom: 20px; display: none; }
+.task-card { 
+    background: white; 
+    padding: 15px;
+    border-radius: 12px; 
+    margin-bottom: 10px; 
+    border-right: 6px solid #1976d2; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
     box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
-
 .task-info h4 { margin: 0; color: #333; }
-.task-info a { color: #1976d2; font-size: 0.9em; }
+.question-item { 
+    background: white; 
+    padding: 15px; 
+    border: 1px solid #81c784; 
+    margin-bottom: 10px;
+    border-radius: 8px; 
+    position: relative; 
+    text-align: right; 
+}
 </style>
 </head>
-
 <body>
+
+<div id="announcements-board">
+    <h3 style="margin-top:0; color:#e65100; border-bottom:2px solid #ffcc80; padding-bottom:5px;">📢 מה חדש?</h3>
+    <div id="announcements-content" style="white-space: pre-wrap; font-size: 0.95em; color: #333;">טוען עדכונים...</div>
+</div>
 
 <div id="login-screen">
     <h2>החווה המופלאה 🐾</h2>
@@ -249,20 +331,39 @@ button {
     </div>
 
     <hr style="width:100%; margin: 15px 0;">
-    
-    <div style="width:100%; display:flex; flex-wrap:wrap; gap:10px;">
-       <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="flex:1;">
-    <input type="text" id="taskLink" placeholder="קישור למטלה (אופציונלי)" style="flex:1;">
-    <input type="date" id="taskDeadline" style="flex:1;">
-    <input type="number" id="taskXP" placeholder="XP למטלה" value="20" style="width:120px;">
-<button onclick="addTask()" style="background-color:#1976d2;">פרסם מטלה חדשה 📋</button>
+    <div style="width:100%; background:#fff3e0; padding:15px; border-radius:10px; border:1px solid #ffcc80; text-align:right; box-sizing:border-box;">
+        <h4 style="margin:0 0 10px 0; color:#e65100;">📢 ניהול לוח מודעות (מה חדש)</h4>
+        <textarea id="adminAnnouncementsText" style="width:100%; height:80px; resize:vertical; margin-bottom:10px; padding:10px; border-radius:8px; border:1px solid #ffb74d;" placeholder="כתוב כאן את העדכונים החדשים..."></textarea>
+        <button onclick="saveAnnouncements()" style="background:#ff9800; width:100%; padding:10px; font-size:1.1em;">עדכן לוח מודעות ופרסם לתלמידים 💾</button>
     </div>
-    <div style="width:100%; margin-bottom:10px; text-align:right;">
-    <button onclick="window.open('https://send.magicode.me/', '_blank')" 
-            style="background:#ff9800; color:white; padding:10px 15px; border:none; border-radius:8px; cursor:pointer;">
-        העלאת קובץ מטלה 📤
-    </button>
-</div>
+
+    <hr style="width:100%; margin: 15px 0;">
+    
+    <div style="width:100%; text-align:right;">
+        <button onclick="toggleTaskBuilder()" style="background-color:#1976d2; margin-bottom:10px;">יצירת מטלה חדשה ➕</button>
+    </div>
+
+    <div id="task-builder" style="display:none; width:100%; background:#f1f8e9; padding:15px; border-radius:10px; border:1px solid #c5e1a5; text-align:right; box-sizing:border-box;">
+        <h4 style="margin-top:0;">הגדרות המטלה</h4>
+        <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
+            <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="flex:2;">
+            <input type="date" id="taskDeadline" style="flex:1;">
+            <input type="number" id="taskXP" placeholder="XP למטלה" value="20" style="width:100px;">
+        </div>
+        
+        <div id="questions-constructor"></div>
+
+        <div style="display:flex; gap:10px; margin-top:15px; align-items:center;">
+            <select id="questionType">
+                <option value="open">שאלה פתוחה</option>
+                <option value="multiple">אמריקאית (ברירה מרובה)</option>
+                <option value="boolean">נכון / לא נכון</option>
+                <option value="survey">סקר (בחירה מרובה - ללא תשובה נכונה)</option>
+            </select>
+            <button onclick="addQuestionField()" style="background:#0288d1;">הוסף שאלה</button>
+            <button onclick="saveNewTask()" style="background:#4caf50; margin-right:auto; padding:12px 25px;">פרסם מטלה 🚀</button>
+        </div>
+    </div>
 
     <div id="admin-submissions" style="width:100%; margin-top:20px; background:#f1f8e9; padding:15px; border-radius:10px; border:1px dashed #2e7d32; text-align:right;">
         <h4 style="margin:0 0 10px 0;">הגשות שממתינות לבדיקה 📥</h4>
@@ -277,24 +378,16 @@ button {
 
 <div id="farm-grid"></div>
 
-<div id="submit-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:25px; border-radius:15px; box-shadow:0 0 20px rgba(0,0,0,0.5); z-index:1000; width:300px; text-align:center; border:3px solid #1976d2;">
-    <h3 id="modal-task-title">הגשת מטלה</h3>
-    <button onclick="window.open('https://send.magicode.me/', '_blank')" 
-            style="background:#ff9800; color:white; padding:10px 15px; border:none; border-radius:8px; cursor:pointer;">
-        העלאת קבצים 📤
-    </button>
-    <textarea id="submit-content" placeholder="לאחר שהעלית את קובץ המטלה שלך, הדבק כאן את הקישור" style="width:100%; height:80px; margin-bottom:10px; padding:5px;"></textarea>
-    <div style="margin-bottom:10px;">
-    <span style="font-size:0.85em; color:#555; display:block; margin-top:5px;">
-        לאחר ההעלאה, העתק את הקישור והדבק כאן בתיבה למעלה
-    </span>
-</div>
+<div id="submit-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:25px; border-radius:15px; box-shadow:0 0 30px rgba(0,0,0,0.5); z-index:1000; width:90%; max-width:500px; max-height:85vh; overflow-y:auto; text-align:right; border:3px solid #1976d2;">
+    <h3 id="modal-task-title" style="text-align:center; margin-top:0;">הגשת מטלה</h3>
+    
+    <div id="questions-display" style="margin-bottom:20px;"></div>
+    
     <div style="display:flex; gap:10px;">
         <button onclick="sendSubmission()" style="flex:1; background:#4caf50;">שלח הגשה 🚀</button>
         <button onclick="closeModal()" style="flex:1; background:#999;">ביטול</button>
     </div>
 </div>
-
 <script>
 const firebaseConfig = {
     apiKey: "AIzaSyCtS0Gf9oNiRg6OTd3jyNaPxuWBFlWGIsE",
@@ -311,36 +404,85 @@ const db = firebase.database();
 
 const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
 let allStudents = [];
-let currentUser = null;
+let currentUser = localStorage.getItem('farm_user_id') || null;
+
+if (currentUser) {
+    console.log("משתמש מזוהה מצאנו בזיכרון: " + currentUser);
+}
 let allSubmissions = {};
+let allTasks = [];
+let currentTaskToSubmit = null;
+
+// האזנה ללוח מודעות (מה חדש)
+db.ref('announcements').on('value', (snap) => {
+    const text = snap.val() || "אין הודעות חדשות כרגע.";
+    const contentDiv = document.getElementById('announcements-content');
+    if(contentDiv) contentDiv.innerText = text;
+    
+    if (currentUser === 'admin') {
+        const adminTextArea = document.getElementById('adminAnnouncementsText');
+        if (adminTextArea && adminTextArea.value === '') {
+            adminTextArea.value = text !== "אין הודעות חדשות כרגע." ? text : "";
+        }
+    }
+});
+
+function saveAnnouncements() {
+    const text = document.getElementById('adminAnnouncementsText').value;
+    db.ref('announcements').set(text).then(() => {
+        alert("לוח המודעות עודכן ופורסם לכולם! 📢");
+    });
+}
 
 db.ref('students').on('value', (snap) => {
     const data = snap.val();
     allStudents = data ? Object.values(data) : [];
+    
     const select = document.getElementById('studentSelect');
-    const currentVal = select.value;
+    if (select) {
+        select.innerHTML = '<option value="">בחר את שמך...</option>';
+        allStudents.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name;
+            select.appendChild(opt);
+        });
+    }
+    
+    if (currentUser) updateView();
+});
+
+function renderLogin() {
+    const select = document.getElementById('studentSelect');
+    if (!select) return;
+    
     select.innerHTML = '<option value="">בחר את שמך...</option>';
     allStudents.forEach(s => {
         const opt = document.createElement('option');
         opt.value = s.id;
-        opt.textContent = `${s.name} (${s.className})`;
+        opt.textContent = s.name;
         select.appendChild(opt);
     });
-    select.value = currentVal;
-    updateView();
-});
+}
 
 function checkAdmin() {
     if (document.getElementById('adminPass').value === 'rabenu247') {
         currentUser = 'admin';
         startApp();
-    } else { alert('סיסמה שגויה'); }
+    } else { 
+        alert('סיסמה שגויה');
+    }
 }
 
 function studentLogin() {
     const id = document.getElementById('studentSelect').value;
-    if (!id) return alert('בחר שם מהרשימה');
-    currentUser = id;
+    if (!id) { alert('בחר שם!'); return; }
+    
+    const student = allStudents.find(s => s.id === id);
+    if (!student) { alert("שגיאה: תלמיד לא נמצא"); return; }
+
+    currentUser = student.id;
+    localStorage.setItem('farm_user_id', student.id);
     startApp();
 }
 
@@ -348,14 +490,18 @@ function startApp() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('farm-grid').style.display = 'grid';
     document.getElementById('tasks-area').style.display = 'block';
-
-    localStorage.setItem('currentUser', currentUser); // ← הוסף את השורה הזו
-
     if (currentUser === 'admin') {
         document.getElementById('control-panel').style.display = 'flex';
         initAdminSubmissions();
+        
+        // אתחול טקסט בלוח המודעות למנהל
+        db.ref('announcements').once('value').then(snap => {
+            const text = snap.val() || "";
+            const adminTextArea = document.getElementById('adminAnnouncementsText');
+            if(adminTextArea) adminTextArea.value = text;
+        });
     }
-
+    
     updateView();
     renderTasks();
 }
@@ -375,12 +521,9 @@ function addStudent() {
 }
 
 function addXP(id, xp, lvl) {
-   // רק המנהל יכול לתת XP
-if (currentUser !== 'admin') return;
-
+    if (currentUser !== 'admin') return;
     const img = document.getElementById('img-' + id);
     const card = img?.closest('.student-card');
-
     if (img) {
         img.classList.remove('glow-effect');
         requestAnimationFrame(() => img.classList.add('glow-effect'));
@@ -404,41 +547,92 @@ if (currentUser !== 'admin') return;
         }
     }
     setTimeout(() => {
-    db.ref('students/' + id).update({ xp: nxp, level: nlv });
-}, 500);
+        db.ref('students/' + id).update({ xp: nxp, level: nlv });
+    }, 500);
 }
 
 function updateView() {
     const grid = document.getElementById('farm-grid');
     if (!currentUser) return;
-    const searchTerm = document.getElementById('search').value.toLowerCase();
-    const sortBy = document.getElementById('sortBy').value;
+    const searchTerm = document.getElementById('search') ? document.getElementById('search').value.toLowerCase() : '';
+    const sortBy = document.getElementById('sortBy') ? document.getElementById('sortBy').value : 'name';
     let filtered = allStudents.filter(s => s.name.toLowerCase().includes(searchTerm));
-    filtered.sort((a, b) => {
-        if (sortBy === 'name') return a.name.localeCompare(b.name);
-        if (sortBy === 'level') return b.level - a.level;
-        return a.className.localeCompare(b.className);
-    });
-
+    
     grid.innerHTML = filtered.map(s => {
         const eggNum = (s.egg !== undefined) ? s.egg + 1 : 1;
         const isMine = currentUser === s.id;
         const imgPath = s.level === 0 ? `images/egg${eggNum}.png` : `images/${s.type}${s.level >= 20 ? 3 : (s.level >= 10 ? 2 : 1)}.png`;
-        return `
-        <div class="student-card ${isMine ? 'my-creature' : ''}">
+        
+        let historyHtml = "";
+        if (s.history) {
+            historyHtml = Object.values(s.history).reverse().slice(0, 3).map(h => `
+                <div class="history-item">✨ ${h.msg}: <b>+${h.xp}XP</b></div>
+            `).join('');
+        }
+        
+        let noteHtml = s.lastNote ? `<div class="rejection-note">📝 הערת מורה: ${s.lastNote}</div>` : "";
+
+      return `
+<div class="student-card ${isMine ? 'my-creature' : ''}" onclick="this.classList.toggle('flipped')">
+    <div class="card-inner">
+    
+    <div class="card-front" style="display: flex; flex-direction: column; justify-content: space-between; align-items: center; height: 100%; padding: 15px; box-sizing: border-box;">
+        <div style="width: 100%; display: flex; justify-content: space-between; align-items: flex-start;">
             <div class="level-text-badge">Lv.${s.level}</div>
-            ${currentUser === 'admin' ? `<button class="remove-btn" onclick="if(confirm('למחוק?')) db.ref('students/${s.id}').remove()">✖</button>` : ''}
-            <img id="img-${s.id}" src="${imgPath}" class="creature-img" onclick="addXP('${s.id}',${s.xp},${s.level})">
-            <div style="font-weight:bold;font-size:1.2em;">${s.name}</div>
-            <div style="color:#555;font-size:0.9em;">כיתה ${s.className}</div>
-            <div class="xp-container"><div class="xp-bar" style="width:${s.xp}%"></div></div>
-            ${isMine ? '<div style="font-size:0.8em; color:#2e7d32; font-weight:bold;">זה היצור שלי! ✨</div>' : ''}
-        </div>`;
+    ${currentUser === 'admin' ? 
+        `<button class="remove-btn" onclick="event.stopPropagation(); if(confirm('למחוק?')) { db.ref('students/${s.id}').remove(); }">✖</button>` 
+        : '<div></div>'}
+</div>
+        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
+            <img id="img-${s.id}" src="${imgPath}" class="creature-img" 
+                 style="max-height: 135px; object-fit: contain; margin-bottom: 8px;"
+                 onclick="event.stopPropagation(); addXP('${s.id}',${s.xp},${s.level})">
+            <div style="font-weight:bold; font-size:1.3em; line-height: 1.2;">${s.name}</div>
+            <div style="color:#666; font-size:0.95em;">כיתה ${s.className}</div>
+        </div>
+        <div style="width: 100%; margin-top: 10px;">
+            <div class="xp-container" style="width: 100%; background: #eee; height: 14px; border-radius: 7px; overflow: hidden; border: 1px solid #ddd;">
+                <div class="xp-bar" style="width:${s.xp}%; background: linear-gradient(90deg, #4caf50, #81c784); height: 100%; transition: width 0.5s;"></div>
+            </div>
+            <div style="font-size:0.75em; color:#2e7d32; font-weight:bold; margin-top: 5px; text-align: center;">🔄 לחץ להיפוך</div>
+        </div>
+    </div>
+
+    <div class="card-back" style="padding:12px; display:flex; flex-direction:column; gap:8px;">
+        <h4 style="margin:0 0 6px 0; color:#2e7d32; border-bottom:1px solid #ccc; padding-bottom:5px;">יומן פעילות</h4>
+        
+        ${isMine ? `
+        <div style="background:#fffde7; border-radius:8px; padding:8px; border:1px solid #ffe082;">
+            <div style="font-size:0.8em; color:#f57f17; font-weight:bold; margin-bottom:4px;">✏️ ההודעה שלי:</div>
+            <textarea id="note-${s.id}" onclick="event.stopPropagation()" 
+                style="width:100%; height:55px; border-radius:6px; border:1px solid #ffd54f; font-size:0.85em; font-family:inherit; resize:none; padding:5px; box-sizing:border-box;"
+                placeholder="כתוב משהו על עצמך...">${s.personalNote || ''}</textarea>
+            <button onclick="event.stopPropagation(); savePersonalNote('${s.id}')" 
+                style="margin-top:5px; background:#f9a825; color:white; border:none; border-radius:6px; padding:5px 12px; font-size:0.8em; cursor:pointer; width:100%;">💾 שמור</button>
+        </div>
+        ` : `
+        ${s.personalNote ? `<div style="background:#fffde7; border-radius:8px; padding:8px; border:1px solid #ffe082; font-size:0.85em; color:#555;">✏️ <em>${s.personalNote}</em></div>` : ''}
+        <div style="text-align:center; margin-top:4px;">
+            <button onclick="event.stopPropagation(); toggleLike('${s.id}')" 
+                id="like-btn-${s.id}"
+                style="background:${(s.likes && s.likes[currentUser]) ? '#e91e63' : '#eee'}; 
+                       color:${(s.likes && s.likes[currentUser]) ? 'white' : '#555'}; 
+                       border:none; border-radius:20px; padding:8px 18px; font-size:1em; cursor:pointer; transition:all 0.2s;">
+                ❤️ ${Object.keys(s.likes || {}).length || 0}
+            </button>
+        </div>
+        `}
+
+        <div style="font-size:0.8em; color:#777; border-top:1px solid #eee; padding-top:6px;">
+            ${historyHtml || "אין פעילות לאחרונה"}
+            ${noteHtml}
+        </div>
+        <div style="font-size:0.75em; color:#999; text-align:center;">לחץ לחזרה</div>
+    </div>
+    </div>
+</div>`;
     }).join('');
 }
-
-// לוגיקת מטלות
-let allTasks = [];
 
 db.ref('tasks').on('value', (snap) => {
     const tasks = snap.val();
@@ -446,137 +640,280 @@ db.ref('tasks').on('value', (snap) => {
     renderTasks();
 });
 
-function renderTasks() {
+function savePersonalNote(studentId) {
+    const val = document.getElementById('note-' + studentId).value.trim();
+    db.ref('students/' + studentId).update({ personalNote: val });
+}
 
+function toggleLike(studentId) {
+    if (currentUser === 'admin' || currentUser === studentId) return;
+    const likeRef = db.ref('students/' + studentId + '/likes/' + currentUser);
+    likeRef.once('value').then(snap => {
+        if (snap.exists()) {
+            likeRef.remove();
+        } else {
+            likeRef.set(true);
+        }
+    });
+}
+
+function toggleTaskBuilder() {
+    const builder = document.getElementById('task-builder');
+    builder.style.display = builder.style.display === 'none' ? 'block' : 'none';
+}
+
+function addQuestionField() {
+    const type = document.getElementById('questionType').value;
+    const container = document.getElementById('questions-constructor');
+    const qDiv = document.createElement('div');
+    qDiv.className = 'question-item';
+    qDiv.dataset.type = type;
+    
+    let typeText = type === 'open' ? 'פתוחה' : (type === 'multiple' ? 'אמריקאית' : (type === 'survey' ? 'סקר (בחירה מרובה)' : 'נכון/לא נכון'));
+    
+    let html = `<button onclick="this.parentElement.remove()" style="position:absolute; left:10px; top:10px; background:#ff5252; color:white; border:none; border-radius:4px; cursor:pointer; padding:5px 10px;">X</button>`;
+    html += `<strong>סוג: ${typeText}</strong><br>`;
+    html += `<input type="text" class="q-text" placeholder="הקלד את השאלה כאן..." style="width:90%; margin-top:10px; margin-bottom:10px;">`;
+    
+    if (type === 'multiple') {
+        html += `<div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+            <input type="text" placeholder="תשובה נכונה (הזן כאן)" class="opt-correct" style="border:2px solid #4caf50;">
+            <input type="text" placeholder="מסיח 1" class="opt">
+            <input type="text" placeholder="מסיח 2" class="opt">
+            <input type="text" placeholder="מסיח 3" class="opt">
+        </div>`;
+    } else if (type === 'boolean') {
+        html += `<div>תשובה נכונה: <select class="q-ans-bool"><option value="נכון">נכון</option><option value="לא נכון">לא נכון</option></select></div>`;
+    } else if (type === 'survey') {
+        // הוספת מבנה של שאלת סקר חדשה - ללא תשובה נכונה
+        html += `<div style="display:grid; grid-template-columns: 1fr; gap:5px;">
+            <div style="font-size:0.85em; color:#666; margin-bottom:5px;">* התלמיד יוכל לסמן כמה אפשרויות שירצה (אין תשובה שגויה).</div>
+            <input type="text" placeholder="אפשרות 1" class="opt-survey">
+            <input type="text" placeholder="אפשרות 2" class="opt-survey">
+            <input type="text" placeholder="אפשרות 3" class="opt-survey">
+            <input type="text" placeholder="אפשרות 4" class="opt-survey">
+            <input type="text" placeholder="אפשרות 5" class="opt-survey">
+        </div>`;
+    }
+
+    qDiv.innerHTML = html;
+    container.appendChild(qDiv);
+}
+
+function saveNewTask() {
+    const title = document.getElementById('taskTitle').value;
+    const deadline = document.getElementById('taskDeadline').value;
+    const xp = parseInt(document.getElementById('taskXP').value) || 20;
+    const qNodes = document.querySelectorAll('.question-item');
+    
+    if (!title) return alert("חובה להזין כותרת למטלה!");
+    if (qNodes.length === 0) return alert("חובה להוסיף לפחות שאלה אחת!");
+    
+    const questions = Array.from(qNodes).map(node => {
+        const type = node.dataset.type;
+        const qObj = { type, text: node.querySelector('.q-text').value };
+        
+        if (type === 'multiple') {
+            qObj.correct = node.querySelector('.opt-correct').value;
+            qObj.others = Array.from(node.querySelectorAll('.opt')).map(i => i.value).filter(v => v !== "");
+        } else if (type === 'boolean') {
+            qObj.correct = node.querySelector('.q-ans-bool').value;
+        } else if (type === 'survey') {
+            // שמירת אפשרויות הסקר במערך
+            qObj.options = Array.from(node.querySelectorAll('.opt-survey')).map(i => i.value).filter(v => v !== "");
+        }
+        return qObj;
+    });
+    
+    const id = Date.now().toString();
+    db.ref('tasks/' + id).set({ id, title, deadline, xp, questions });
+    
+    document.getElementById('taskTitle').value = '';
+    document.getElementById('taskDeadline').value = '';
+    document.getElementById('questions-constructor').innerHTML = '';
+    toggleTaskBuilder();
+    alert("המטלה פורסמה בהצלחה! 🚀");
+}
+
+function renderTasks() {
     const list = document.getElementById('tasks-list');
     if (!list) return;
-
     list.innerHTML = '';
-
+    
     if (allTasks.length === 0) {
         list.innerHTML = 'אין מטלות כרגע.';
         return;
     }
 
-    allTasks.slice().reverse().forEach(task => {
+    db.ref('submissions').once('value', (snap) => {
+        const subs = snap.val() ? Object.values(snap.val()) : [];
 
-        const div = document.createElement('div');
-        div.className = 'task-card';
+        allTasks.slice().reverse().forEach(task => {
+            const alreadySubmitted = subs.some(s => s.studentId === currentUser && s.taskId === task.id);
 
-     div.innerHTML = `
-    <div class="task-info">
-        <h4>${task.title}</h4>
-        ${task.link ? `
-            <div style="margin-top:4px;">
-                📎 <a href="${task.link}" target="_blank" style="color:#1976d2; font-weight:bold;">
-                    פתח את המטלה
-                </a>
-            </div>
-        ` : ''}
-        <div style="font-size:0.85em;color:#555; margin-top:4px;">
-            🎁 פרס: ${task.xp || 20} XP
-            ${task.deadline ? `<br>⏰ להגשה עד: ${task.deadline}` : ''}
-        </div>
-    </div>
-    <div>
-        ${currentUser === 'admin'
-            ? `<button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק</button>`
-            : `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2;">הגש מטלה ✍️</button>`
-        }
-    </div>
-`;
+            const div = document.createElement('div');
+            div.className = 'task-card';
+            
+            let actionBtn;
+            if (currentUser === 'admin') {
+                actionBtn = `<button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק מטלה</button>`;
+            } else if (alreadySubmitted) {
+                actionBtn = `<button disabled style="background:#999; cursor:not-allowed;">כבר הגשת ✔️</button>`;
+            } else {
+                actionBtn = `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2;">פתח משימה ✍️</button>`;
+            }
 
-        list.appendChild(div);
-
+            div.innerHTML = `
+                <div class="task-info">
+                    <h4>${task.title}</h4>
+                    <div style="font-size:0.85em;color:#555; margin-top:4px;">
+                        🎁 פרס: ${task.xp || 20} XP
+                        ${task.deadline ? `<br>⏰ להגשה עד: ${task.deadline}` : ''}
+                    </div>
+                </div>
+                <div>${actionBtn}</div>
+            `;
+            list.appendChild(div);
+        });
     });
 }
 
-function addTask() {
+function deleteTask(id) { if(confirm('למחוק את המטלה?')) db.ref('tasks/' + id).remove(); }
 
-    const title = document.getElementById('taskTitle').value;
-    const link = document.getElementById('taskLink').value;
-    const deadline = document.getElementById('taskDeadline').value;
-    const xp = parseInt(document.getElementById('taskXP').value) || 20;
-
-    if (!title) return alert("הזן כותרת");
-
-    const id = Date.now().toString();
-
-    db.ref('tasks/' + id).set({
-        id,
-        title,
-        link,
-        deadline,
-        xp
-    });
-
-    document.getElementById('taskTitle').value = '';
-    document.getElementById('taskLink').value = '';
-    document.getElementById('taskDeadline').value = '';
-}
-
-function deleteTask(id) { if(confirm('למחוק?')) db.ref('tasks/' + id).remove(); }
-
-// לוגיקת הגשות
-let currentTaskToSubmit = null;
 function openSubmitModal(id, title) {
     currentTaskToSubmit = id;
     document.getElementById('modal-task-title').innerText = title;
+    
+    const task = allTasks.find(t => t.id === id);
+    const container = document.getElementById('questions-display');
+    container.innerHTML = '';
+
+    if (task.questions) {
+        task.questions.forEach((q, index) => {
+            const d = document.createElement('div');
+            d.style = "margin-bottom:15px; padding:15px; background:#f0f7ff; border-radius:8px; border:1px solid #bbdefb;";
+            d.innerHTML = `<strong>${index + 1}. ${q.text}</strong><br>`;
+            
+            if (q.type === 'open') {
+                d.innerHTML += `<textarea class="ans-input" data-index="${index}" style="width:100%; margin-top:10px; height:60px;" placeholder="הקלד את תשובתך כאן..."></textarea>`;
+            } else if (q.type === 'boolean') {
+                d.innerHTML += `<div style="margin-top:10px;">
+                    <label style="margin-left:20px; cursor:pointer;"><input type="radio" name="q${index}" value="נכון"> נכון</label>
+                    <label style="cursor:pointer;"><input type="radio" name="q${index}" value="לא נכון"> לא נכון</label>
+                </div>`;
+            } else if (q.type === 'multiple') {
+                const allOpts = [q.correct, ...(q.others || [])].sort(() => Math.random() - 0.5);
+                allOpts.forEach(opt => {
+                    d.innerHTML += `<label style="display:block; margin-top:8px; cursor:pointer; background:white; padding:8px; border-radius:5px; border:1px solid #ddd;">
+                        <input type="radio" name="q${index}" value="${opt}"> ${opt}
+                    </label>`;
+                });
+            } else if (q.type === 'survey') {
+                // הצגת סקר לתלמיד כ-Checkboxes כדי שיוכל לבחור יותר מאחד
+                const allOpts = q.options || [];
+                allOpts.forEach(opt => {
+                    d.innerHTML += `<label style="display:block; margin-top:8px; cursor:pointer; background:white; padding:8px; border-radius:5px; border:1px solid #ddd;">
+                        <input type="checkbox" name="q${index}" value="${opt}"> ${opt}
+                    </label>`;
+                });
+            }
+            container.appendChild(d);
+        });
+    }
+
     document.getElementById('submit-modal').style.display = 'block';
 }
+
 function closeModal() { document.getElementById('submit-modal').style.display = 'none'; }
 
 function sendSubmission() {
-    const content = document.getElementById('submit-content').value.trim();
+    const task = allTasks.find(t => t.id === currentTaskToSubmit);
+    const answers = [];
+    let allAnswered = true;
 
-    if (!content) return alert("הדבק קישור או כתוב תשובה");
+    if (task.questions) {
+        task.questions.forEach((q, index) => {
+            let val = "";
+            if (q.type === 'open') {
+                val = document.querySelector(`textarea[data-index="${index}"]`).value.trim();
+            } else if (q.type === 'survey') {
+                // איסוף כל התיבות שסומנו בסקר וחיבור למחרוזת אחת
+                const checkedBoxes = document.querySelectorAll(`input[name="q${index}"]:checked`);
+                val = Array.from(checkedBoxes).map(cb => cb.value).join(' | ');
+            } else {
+                const checked = document.querySelector(`input[name="q${index}"]:checked`);
+                val = checked ? checked.value : "";
+            }
+            
+            if (!val) allAnswered = false;
+            answers.push({ q: q.text, a: val });
+        });
+    }
+
+    if (!allAnswered) {
+        if (!confirm("לא ענית על כל השאלות! האם לשלוח בכל זאת?")) return;
+    }
 
     const student = allStudents.find(s => s.id === currentUser);
-    if (!student) return alert("שגיאה בזיהוי תלמיד");
-
     const subId = Date.now().toString();
-
     db.ref('submissions/' + subId).set({
         id: subId,
         studentName: student.name,
         studentId: student.id,
         taskId: currentTaskToSubmit,
-        content: content,
+        answers: answers,
         time: Date.now()
+    }).then(() => {
+        alert("המטלה נשלחה למורה בהצלחה! 🎉");
+        closeModal();
+        renderTasks(); 
     });
-
-    alert("המטלה נשלחה בהצלחה! 🎉");
-    document.getElementById('submit-content').value = "";
-    closeModal();
 }
-// פונקציה חדשה שמרכזת את ההאזנה להגשות למורה - תיקון ה-BUG
+
 function initAdminSubmissions() {
     db.ref('submissions').on('value', (snap) => {
         const container = document.getElementById('submissions-list');
         if (!container) return;
 
         const subs = snap.val();
-        allSubmissions = subs || {}; // עכשיו כל ההגשות מאוחסנות בזיכרון
+        allSubmissions = subs || {};
         container.innerHTML = '';
 
         if (subs) {
             Object.values(subs).forEach(sub => {
+                const task = allTasks.find(t => t.id === sub.taskId);
+                const taskTitle = task ? task.title : "מטלה לא ידועה";
+                const taskXP = task ? task.xp : 20;
+
                 const d = document.createElement('div');
-                d.style = "background:white; padding:10px; margin:5px 0; border-radius:8px; border-right:4px solid gold; color: black; text-align: right; box-shadow: 0 2px 4px rgba(0,0,0,0.1);";
-             d.innerHTML = `
-    <div style="font-weight:bold; color:#2e7d32;">מאת: ${sub.studentName}</div>
-    <div style="margin: 5px 0; font-size: 0.95em;">
-        <a href="${sub.content}" target="_blank" 
-           style="background:#4caf50; color:white; padding:5px 10px; border-radius:5px; text-decoration:none; font-weight:bold;">
-           פתח/הורד את המטלה
-        </a>
-    </div>
-    <div style="display:flex; gap:5px; margin-top:5px;">
-        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 1)" style="background:#4caf50;">אשר מלא ✅</button>
-        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 0.5)" style="background:#ffc107;">אשר חלקי 🟡</button>
-        <button onclick="rejectSub('${sub.id}')" style="background:#f44336;">דחה ❌</button>
-    </div>
-`;
+                d.style = "background:white; padding:15px; margin:10px 0; border-radius:8px; border-right:5px solid gold; color: black; text-align: right; box-shadow: 0 2px 4px rgba(0,0,0,0.1);";
+                
+                let answersHtml = sub.answers ? sub.answers.map(a => `
+                    <div style="background:#f9f9f9; padding:8px; border-radius:5px; margin-bottom:5px; border:1px solid #eee;">
+                        <b>${a.q}</b><br>
+                        <span style="color:${a.a ? '#1976d2' : '#f44336'};">${a.a || 'לא ענה'}</span>
+                    </div>
+                `).join('') : 'אין נתוני תשובות';
+
+                d.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <div>
+                            <strong style="color:#2e7d32; font-size:1.1em;">${sub.studentName}</strong>
+                            <div style="font-size:0.85em; color:#666;">מטלה: ${taskTitle} | פרס: ${taskXP} XP</div>
+                        </div>
+                    </div>
+                    
+                    <details style="background:#f1f8e9; padding:10px; border-radius:5px; cursor:pointer;">
+                        <summary style="font-weight:bold; color:#1976d2;">🔍 בדיקת תשובות</summary>
+                        <div style="margin-top:10px; cursor:default;">${answersHtml}</div>
+                    </details>
+
+                    <div style="display:flex; gap:5px; margin-top:10px;">
+                        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 1)" style="background:#4caf50; flex:1;">אשר מלא (100%)</button>
+                        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 0.5)" style="background:#ffc107; flex:1;">אשר חלקי (50%)</button>
+                        <button onclick="rejectSub('${sub.id}')" style="background:#f44336; flex:1;">דחה</button>
+                    </div>
+                `;
                 container.appendChild(d);
             });
         } else {
@@ -585,34 +922,35 @@ function initAdminSubmissions() {
     });
 }
 
-// פונקציית אישור הגשה מתוקנת
 function approveSub(subId, studentId, multiplier = 1) {
-
     const submissionRef = db.ref('submissions/' + subId);
-
     submissionRef.once('value').then(snap => {
-
         const sub = snap.val();
         if (!sub) return;
 
         const task = allTasks.find(t => t.id === sub.taskId);
         const baseXP = task ? (task.xp || 20) : 20;
-
         const rewardXP = Math.round(baseXP * multiplier);
 
         const s = allStudents.find(st => st.id === studentId);
         if (!s) return;
+
+        const historyRef = db.ref('students/' + studentId + '/history').push();
+        historyRef.set({
+            msg: task ? task.title : "מטלה",
+            xp: rewardXP,
+            time: Date.now()
+        });
+
+        db.ref('students/' + studentId).update({ lastNote: null });
 
         let remainingXP = rewardXP;
         let currentXP = s.xp;
         let currentLevel = s.level;
 
         while (remainingXP > 0) {
-
             const add = Math.min(10, remainingXP);
-
             addXP(studentId, currentXP, currentLevel);
-
             currentXP += add;
             remainingXP -= add;
 
@@ -622,15 +960,24 @@ function approveSub(subId, studentId, multiplier = 1) {
             }
         }
 
-        db.ref('submissions/' + subId).remove();
+        submissionRef.remove();
     });
 }
-    window.rejectSub = function(subId) {
-    if (confirm("לדחות את ההגשה?")) {
-        db.ref('submissions/' + subId).remove();
+
+window.rejectSub = function(subId) {
+    const note = prompt("מדוע המטלה נדחית? (התלמיד יראה את זה בצד האחורי של הכרטיס):");
+    if (note !== null) {
+        db.ref('submissions/' + subId).once('value').then(snap => {
+            const sub = snap.val();
+            if (sub) {
+                db.ref('students/' + sub.studentId).update({ 
+                    lastNote: note || "המטלה נדחתה. בדוק שוב את ההוראות." 
+                });
+                db.ref('submissions/' + subId).remove();
+            }
+        });
     }
 };
 </script>
 </body>
 </html>
-
