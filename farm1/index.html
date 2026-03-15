@@ -17,7 +17,7 @@ body {
     align-items: center;
 }
 
-/* ---- תוספת עיצוב: לוח מודעות (מה חדש) ---- */
+/* ---- לוח מודעות (מה חדש) ---- */
 #announcements-board {
     position: fixed; 
     right: 20px; 
@@ -39,10 +39,9 @@ body {
         width: 90%; 
         max-width: 900px; 
         margin: 10px auto; 
-        order: -1; /* דוחף את הלוח למעלה במסכים קטנים */
+        order: -1; 
     }
 }
-/* --------------------------------------- */
 
 #login-screen { 
     background: rgba(255, 255, 255, 0.95); 
@@ -90,17 +89,55 @@ button {
     width: 100%; 
     max-width: 1200px; 
 }
-.student-card { 
-    background: rgba(255, 255, 255, 0.9); 
-    border-radius: 25px;
-    padding: 20px; 
-    text-align: center; 
-    position: relative; 
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
-    border-bottom: 5px solid #81c784; 
-    transition: transform 0.3s;
+
+.student-card {
+    perspective: 1000px;
+    width: 220px;
+    height: 340px;
+    margin: 10px;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    cursor: pointer;
+    display: inline-block;
 }
-.my-creature { border: 4px solid #fbc02d; transform: scale(1.05); z-index: 5; }
+.my-creature { transform: scale(1.05); z-index: 5; }
+
+.card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+}
+.student-card.flipped .card-inner { transform: rotateY(180deg); }
+
+.card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    background: white;
+    border-radius: 20px;
+    padding: 15px;
+    box-sizing: border-box;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 5px solid #81c784;
+    padding-bottom: 20px;
+}
+.card-back {
+    transform: rotateY(180deg);
+    background: #f1f8e9;
+    overflow-y: auto;
+    display: block;
+    text-align: right;
+}
+
 .level-text-badge { 
     position: absolute;
     top: 5px; 
@@ -118,35 +155,26 @@ button {
     object-fit: contain; 
     margin-bottom: 10px;
 }
+
 .glow-effect { animation: glow-pulse 0.6s ease-out; }
 @keyframes glow-pulse { 
     0% { filter: brightness(1); transform: scale(1); } 
     50% { filter: brightness(1.6) drop-shadow(0 0 15px gold); transform: scale(1.25); } 
     100% { filter: brightness(1); transform: scale(1); } 
 }
-.shake { animation: shake 0.5s infinite; }
-@keyframes shake { 
-    0%, 100% { transform: translate(1px, 1px) rotate(0deg); } 
-    25% { transform: translate(-1px, -2px) rotate(-1deg); } 
-    75% { transform: translate(1px, -2px) rotate(1deg); } 
-}
-.hatch-crack { animation: eggCrack 0.9s ease-out forwards; }
-@keyframes eggCrack { 
-    0% { transform: scale(1); } 
-    100% { transform: scale(0); opacity: 0; } 
-}
-.xp-container { 
-    background: #eee; 
-    border-radius: 10px; 
-    height: 18px; 
-    margin: 10px 0; 
-    overflow: hidden; 
+.xp-container {
+    width: 90%;
+    background-color: #e0e0e0;
+    border-radius: 10px;
+    height: 15px;
+    margin-top: auto;
+    overflow: hidden;
     border: 1px solid #ccc;
 }
-.xp-bar { 
-    background: linear-gradient(90deg, #ffeb3b, #fbc02d); 
-    height: 100%; 
-    transition: width 0.4s ease-out; 
+.xp-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #4caf50, #81c784);
+    transition: width 0.5s ease-in-out;
 }
 .remove-btn { 
     position: absolute; 
@@ -197,72 +225,6 @@ button {
     100% { opacity: 0; transform: translate(-50%, -60px) scale(0.8); } 
 }
 
-.student-card {
-    perspective: 1000px;
-    width: 220px;
-    height: 340px;
-    margin: 10px;
-    background: transparent !important;
-    box-shadow: none !important;
-    border: none !important;
-    cursor: pointer;
-    display: inline-block;
-}
-
-.card-inner {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    text-align: center;
-    transition: transform 0.6s;
-    transform-style: preserve-3d;
-}
-
-.student-card.flipped .card-inner {
-    transform: rotateY(180deg);
-}
-
-.card-front, .card-back {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    backface-visibility: hidden;
-    background: white;
-    border-radius: 20px;
-    padding: 15px;
-    box-sizing: border-box;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 5px solid #81c784;
-    padding-bottom: 20px;
-}
-
-.card-back {
-    transform: rotateY(180deg);
-    background: #f1f8e9;
-    overflow-y: auto;
-    display: block;
-    text-align: right;
-}
-
-.xp-container {
-    width: 90%;
-    background-color: #e0e0e0;
-    border-radius: 10px;
-    height: 15px;
-    margin-top: auto;
-    overflow: hidden;
-    border: 1px solid #ccc;
-}
-
-.xp-bar {
-    height: 100%;
-    background: linear-gradient(90deg, #4caf50, #81c784);
-    transition: width 0.5s ease-in-out;
-}
 #tasks-area { width: 90%; max-width: 1200px; margin-bottom: 20px; display: none; }
 .task-card { 
     background: white; 
@@ -380,14 +342,13 @@ button {
 
 <div id="submit-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:25px; border-radius:15px; box-shadow:0 0 30px rgba(0,0,0,0.5); z-index:1000; width:90%; max-width:500px; max-height:85vh; overflow-y:auto; text-align:right; border:3px solid #1976d2;">
     <h3 id="modal-task-title" style="text-align:center; margin-top:0;">הגשת מטלה</h3>
-    
     <div id="questions-display" style="margin-bottom:20px;"></div>
-    
     <div style="display:flex; gap:10px;">
         <button onclick="sendSubmission()" style="flex:1; background:#4caf50;">שלח הגשה 🚀</button>
         <button onclick="closeModal()" style="flex:1; background:#999;">ביטול</button>
     </div>
 </div>
+
 <script>
 const firebaseConfig = {
     apiKey: "AIzaSyCtS0Gf9oNiRg6OTd3jyNaPxuWBFlWGIsE",
@@ -409,11 +370,12 @@ let currentUser = localStorage.getItem('farm_user_id') || null;
 if (currentUser) {
     console.log("משתמש מזוהה מצאנו בזיכרון: " + currentUser);
 }
+
 let allSubmissions = {};
 let allTasks = [];
 let currentTaskToSubmit = null;
 
-// האזנה ללוח מודעות (מה חדש)
+// האזנה ללוח מודעות
 db.ref('announcements').on('value', (snap) => {
     const text = snap.val() || "אין הודעות חדשות כרגע.";
     const contentDiv = document.getElementById('announcements-content');
@@ -494,7 +456,6 @@ function startApp() {
         document.getElementById('control-panel').style.display = 'flex';
         initAdminSubmissions();
         
-        // אתחול טקסט בלוח המודעות למנהל
         db.ref('announcements').once('value').then(snap => {
             const text = snap.val() || "";
             const adminTextArea = document.getElementById('adminAnnouncementsText');
@@ -572,65 +533,65 @@ function updateView() {
         
         let noteHtml = s.lastNote ? `<div class="rejection-note">📝 הערת מורה: ${s.lastNote}</div>` : "";
 
-      return `
-<div class="student-card ${isMine ? 'my-creature' : ''}" onclick="this.classList.toggle('flipped')">
-    <div class="card-inner">
-    
-    <div class="card-front" style="display: flex; flex-direction: column; justify-content: space-between; align-items: center; height: 100%; padding: 15px; box-sizing: border-box;">
-        <div style="width: 100%; display: flex; justify-content: space-between; align-items: flex-start;">
-            <div class="level-text-badge">Lv.${s.level}</div>
-    ${currentUser === 'admin' ? 
-        `<button class="remove-btn" onclick="event.stopPropagation(); if(confirm('למחוק?')) { db.ref('students/${s.id}').remove(); }">✖</button>` 
-        : '<div></div>'}
-</div>
-        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
-            <img id="img-${s.id}" src="${imgPath}" class="creature-img" 
-                 style="max-height: 135px; object-fit: contain; margin-bottom: 8px;"
-                 onclick="event.stopPropagation(); addXP('${s.id}',${s.xp},${s.level})">
-            <div style="font-weight:bold; font-size:1.3em; line-height: 1.2;">${s.name}</div>
-            <div style="color:#666; font-size:0.95em;">כיתה ${s.className}</div>
+        return `
+        <div class="student-card ${isMine ? 'my-creature' : ''}" onclick="this.classList.toggle('flipped')">
+            <div class="card-inner">
+            
+            <div class="card-front" style="display: flex; flex-direction: column; justify-content: space-between; align-items: center; height: 100%; padding: 15px; box-sizing: border-box;">
+                <div style="width: 100%; display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div class="level-text-badge">Lv.${s.level}</div>
+            ${currentUser === 'admin' ? 
+                `<button class="remove-btn" onclick="event.stopPropagation(); if(confirm('למחוק?')) { db.ref('students/${s.id}').remove(); }">✖</button>` 
+                : '<div></div>'}
         </div>
-        <div style="width: 100%; margin-top: 10px;">
-            <div class="xp-container" style="width: 100%; background: #eee; height: 14px; border-radius: 7px; overflow: hidden; border: 1px solid #ddd;">
-                <div class="xp-bar" style="width:${s.xp}%; background: linear-gradient(90deg, #4caf50, #81c784); height: 100%; transition: width 0.5s;"></div>
+                <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
+                    <img id="img-${s.id}" src="${imgPath}" class="creature-img" 
+                         style="max-height: 135px; object-fit: contain; margin-bottom: 8px;"
+                         onclick="event.stopPropagation(); addXP('${s.id}',${s.xp},${s.level})">
+                    <div style="font-weight:bold; font-size:1.3em; line-height: 1.2;">${s.name}</div>
+                    <div style="color:#666; font-size:0.95em;">כיתה ${s.className}</div>
+                </div>
+                <div style="width: 100%; margin-top: 10px;">
+                    <div class="xp-container" style="width: 100%; background: #eee; height: 14px; border-radius: 7px; overflow: hidden; border: 1px solid #ddd;">
+                        <div class="xp-bar" style="width:${s.xp}%; background: linear-gradient(90deg, #4caf50, #81c784); height: 100%; transition: width 0.5s;"></div>
+                    </div>
+                    <div style="font-size:0.75em; color:#2e7d32; font-weight:bold; margin-top: 5px; text-align: center;">🔄 לחץ להיפוך</div>
+                </div>
             </div>
-            <div style="font-size:0.75em; color:#2e7d32; font-weight:bold; margin-top: 5px; text-align: center;">🔄 לחץ להיפוך</div>
-        </div>
-    </div>
 
-    <div class="card-back" style="padding:12px; display:flex; flex-direction:column; gap:8px;">
-        <h4 style="margin:0 0 6px 0; color:#2e7d32; border-bottom:1px solid #ccc; padding-bottom:5px;">יומן פעילות</h4>
-        
-        ${isMine ? `
-        <div style="background:#fffde7; border-radius:8px; padding:8px; border:1px solid #ffe082;">
-            <div style="font-size:0.8em; color:#f57f17; font-weight:bold; margin-bottom:4px;">✏️ ההודעה שלי:</div>
-            <textarea id="note-${s.id}" onclick="event.stopPropagation()" 
-                style="width:100%; height:55px; border-radius:6px; border:1px solid #ffd54f; font-size:0.85em; font-family:inherit; resize:none; padding:5px; box-sizing:border-box;"
-                placeholder="כתוב משהו על עצמך...">${s.personalNote || ''}</textarea>
-            <button onclick="event.stopPropagation(); savePersonalNote('${s.id}')" 
-                style="margin-top:5px; background:#f9a825; color:white; border:none; border-radius:6px; padding:5px 12px; font-size:0.8em; cursor:pointer; width:100%;">💾 שמור</button>
-        </div>
-        ` : `
-        ${s.personalNote ? `<div style="background:#fffde7; border-radius:8px; padding:8px; border:1px solid #ffe082; font-size:0.85em; color:#555;">✏️ <em>${s.personalNote}</em></div>` : ''}
-        <div style="text-align:center; margin-top:4px;">
-            <button onclick="event.stopPropagation(); toggleLike('${s.id}')" 
-                id="like-btn-${s.id}"
-                style="background:${(s.likes && s.likes[currentUser]) ? '#e91e63' : '#eee'}; 
-                       color:${(s.likes && s.likes[currentUser]) ? 'white' : '#555'}; 
-                       border:none; border-radius:20px; padding:8px 18px; font-size:1em; cursor:pointer; transition:all 0.2s;">
-                ❤️ ${Object.keys(s.likes || {}).length || 0}
-            </button>
-        </div>
-        `}
+            <div class="card-back" style="padding:12px; display:flex; flex-direction:column; gap:8px;">
+                <h4 style="margin:0 0 6px 0; color:#2e7d32; border-bottom:1px solid #ccc; padding-bottom:5px;">יומן פעילות</h4>
+                
+                ${isMine ? `
+                <div style="background:#fffde7; border-radius:8px; padding:8px; border:1px solid #ffe082;">
+                    <div style="font-size:0.8em; color:#f57f17; font-weight:bold; margin-bottom:4px;">✏️ ההודעה שלי:</div>
+                    <textarea id="note-${s.id}" onclick="event.stopPropagation()" 
+                        style="width:100%; height:55px; border-radius:6px; border:1px solid #ffd54f; font-size:0.85em; font-family:inherit; resize:none; padding:5px; box-sizing:border-box;"
+                        placeholder="כתוב משהו על עצמך...">${s.personalNote || ''}</textarea>
+                    <button onclick="event.stopPropagation(); savePersonalNote('${s.id}')" 
+                        style="margin-top:5px; background:#f9a825; color:white; border:none; border-radius:6px; padding:5px 12px; font-size:0.8em; cursor:pointer; width:100%;">💾 שמור</button>
+                </div>
+                ` : `
+                ${s.personalNote ? `<div style="background:#fffde7; border-radius:8px; padding:8px; border:1px solid #ffe082; font-size:0.85em; color:#555;">✏️ <em>${s.personalNote}</em></div>` : ''}
+                <div style="text-align:center; margin-top:4px;">
+                    <button onclick="event.stopPropagation(); toggleLike('${s.id}')" 
+                        id="like-btn-${s.id}"
+                        style="background:${(s.likes && s.likes[currentUser]) ? '#e91e63' : '#eee'}; 
+                               color:${(s.likes && s.likes[currentUser]) ? 'white' : '#555'}; 
+                               border:none; border-radius:20px; padding:8px 18px; font-size:1em; cursor:pointer; transition:all 0.2s;">
+                        ❤️ ${Object.keys(s.likes || {}).length || 0}
+                    </button>
+                </div>
+                `}
 
-        <div style="font-size:0.8em; color:#777; border-top:1px solid #eee; padding-top:6px;">
-            ${historyHtml || "אין פעילות לאחרונה"}
-            ${noteHtml}
-        </div>
-        <div style="font-size:0.75em; color:#999; text-align:center;">לחץ לחזרה</div>
-    </div>
-    </div>
-</div>`;
+                <div style="font-size:0.8em; color:#777; border-top:1px solid #eee; padding-top:6px;">
+                    ${historyHtml || "אין פעילות לאחרונה"}
+                    ${noteHtml}
+                </div>
+                <div style="font-size:0.75em; color:#999; text-align:center;">לחץ לחזרה</div>
+            </div>
+            </div>
+        </div>`;
     }).join('');
 }
 
@@ -685,9 +646,8 @@ function addQuestionField() {
     } else if (type === 'boolean') {
         html += `<div>תשובה נכונה: <select class="q-ans-bool"><option value="נכון">נכון</option><option value="לא נכון">לא נכון</option></select></div>`;
     } else if (type === 'survey') {
-        // הוספת מבנה של שאלת סקר חדשה - ללא תשובה נכונה
         html += `<div style="display:grid; grid-template-columns: 1fr; gap:5px;">
-            <div style="font-size:0.85em; color:#666; margin-bottom:5px;">* התלמיד יוכל לסמן כמה אפשרויות שירצה (אין תשובה שגויה).</div>
+            <div style="font-size:0.85em; color:#666; margin-bottom:5px;">* התלמיד יוכל לסמן כמה אפשרויות שירצה.</div>
             <input type="text" placeholder="אפשרות 1" class="opt-survey">
             <input type="text" placeholder="אפשרות 2" class="opt-survey">
             <input type="text" placeholder="אפשרות 3" class="opt-survey">
@@ -719,7 +679,6 @@ function saveNewTask() {
         } else if (type === 'boolean') {
             qObj.correct = node.querySelector('.q-ans-bool').value;
         } else if (type === 'survey') {
-            // שמירת אפשרויות הסקר במערך
             qObj.options = Array.from(node.querySelectorAll('.opt-survey')).map(i => i.value).filter(v => v !== "");
         }
         return qObj;
@@ -760,7 +719,7 @@ function renderTasks() {
             } else if (alreadySubmitted) {
                 actionBtn = `<button disabled style="background:#999; cursor:not-allowed;">כבר הגשת ✔️</button>`;
             } else {
-                actionBtn = `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2;">פתח משימה ✍️</button>`;
+                actionBtn = `<button onclick="openSubmitModal('${task.id}', '${task.title.replace(/'/g, "\\'")}')" style="background:#1976d2;">פתח משימה ✍️</button>`;
             }
 
             div.innerHTML = `
@@ -809,7 +768,6 @@ function openSubmitModal(id, title) {
                     </label>`;
                 });
             } else if (q.type === 'survey') {
-                // הצגת סקר לתלמיד כ-Checkboxes כדי שיוכל לבחור יותר מאחד
                 const allOpts = q.options || [];
                 allOpts.forEach(opt => {
                     d.innerHTML += `<label style="display:block; margin-top:8px; cursor:pointer; background:white; padding:8px; border-radius:5px; border:1px solid #ddd;">
@@ -837,7 +795,6 @@ function sendSubmission() {
             if (q.type === 'open') {
                 val = document.querySelector(`textarea[data-index="${index}"]`).value.trim();
             } else if (q.type === 'survey') {
-                // איסוף כל התיבות שסומנו בסקר וחיבור למחרוזת אחת
                 const checkedBoxes = document.querySelectorAll(`input[name="q${index}"]:checked`);
                 val = Array.from(checkedBoxes).map(cb => cb.value).join(' | ');
             } else {
