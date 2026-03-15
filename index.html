@@ -43,6 +43,42 @@ body {
     }
 }
 
+/* לוח ממוזער */
+#announcements-board.minimized {
+    width: 40px;
+    height: 40px;
+    overflow: hidden;
+    padding: 0;
+    border-radius: 50%; /* הופך לעיגול קטן */
+    cursor: pointer;
+}
+
+/* הסתרת התוכן בזמן מיזעור */
+#announcements-board.minimized > *:not(#toggle-board) {
+    display: none;
+}
+
+/* עיצוב כפתור המיזעור */
+#toggle-board {
+    background: #ff9800;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    float: left;
+    font-weight: bold;
+    padding: 2px 8px;
+    margin-bottom: 10px;
+}
+
+#announcements-board.minimized #toggle-board {
+    float: none;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    border-radius: 50%;
+    font-size: 20px;
+}
 #login-screen { 
     background: rgba(255, 255, 255, 0.95); 
     padding: 30px; 
@@ -252,10 +288,11 @@ button {
 <body>
 
 <div id="announcements-board">
+    <button id="toggle-board" onclick="toggleBoard()" title="מזער לוח">−</button>
     <h3 style="margin-top:0; color:#e65100; border-bottom:2px solid #ffcc80; padding-bottom:5px;">📢 מה חדש?</h3>
     <div id="announcements-content" style="white-space: pre-wrap; font-size: 0.95em; color: #333;">טוען עדכונים...</div>
 </div>
-
+    
 <div id="login-screen">
     <h2>החווה המופלאה 🐾</h2>
     <div id="admin-login-area">
@@ -403,6 +440,21 @@ function saveAnnouncements() {
     db.ref('announcements').set(text).then(() => {
         alert("לוח המודעות עודכן ופורסם לכולם! 📢");
     });
+}
+function toggleBoard() {
+    const board = document.getElementById('announcements-board');
+    const btn = document.getElementById('toggle-board');
+    
+    board.classList.toggle('minimized');
+    
+    // שינוי סימון הכפתור בהתאם למצב
+    if (board.classList.contains('minimized')) {
+        btn.innerText = '📢'; // כשממוזער מציג אייקון
+        btn.title = "פתח לוח מודעות";
+    } else {
+        btn.innerText = '−'; // כשפתוח מציג כפתור מינוס למיזעור
+        btn.title = "מזער לוח";
+    }
 }
 
 db.ref('students').on('value', (snap) => {
