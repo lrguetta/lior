@@ -852,26 +852,26 @@ function initAdminSubmissions() {
                     </div>
                 `).join('') : 'אין נתוני תשובות';
 
-                d.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        <div>
-                            <strong style="color:#2e7d32; font-size:1.1em;">${sub.studentName}</strong>
-                            <div style="font-size:0.85em; color:#666;">מטלה: ${`taskTitle`} | פרס: ${taskXP} XP</div>
-                        </div>
-                    </div>
-                    
-                    <details style="background:#f1f8e9; padding:10px; border-radius:5px; cursor:pointer;">
-                        <summary style="font-weight:bold; color:#1976d2;">🔍 בדיקת תשובות</summary>
-                        <div style="margin-top:10px; cursor:default;">${answersHtml}</div>
-                    </details>
+d.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div>
+            <strong style="color:#2e7d32; font-size:1.1em;">${sub.studentName.replace(/'/g, '׳').replace(/"/g, '״')}</strong>
+            <div style="font-size:0.85em; color:#666;">מטלה: ${taskTitle.replace(/'/g, '׳').replace(/"/g, '״')} | פרס: ${taskXP} XP</div>
+        </div>
+    </div>
+    
+    <details style="background:#f1f8e9; padding:10px; border-radius:5px; cursor:pointer;">
+        <summary style="font-weight:bold; color:#1976d2;">🔍 בדיקת תשובות</summary>
+        <div style="margin-top:10px; cursor:default;">${answersHtml}</div>
+    </details>
 
-                    <div style="display:flex; gap:5px; margin-top:10px;">
-                        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 1)" style="background:#4caf50; flex:1;">אשר מלא (100%)</button>
-                        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 0.5)" style="background:#ffc107; flex:1;">אשר חלקי (50%)</button>
-                        <button onclick="rejectSub('${sub.id}')" style="background:#f44336; flex:1;">דחה</button>
-                    </div>
-                `;
-                container.appendChild(d);
+    <div style="display:flex; gap:5px; margin-top:10px;">
+        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 1)" style="background:#4caf50; flex:1;">אשר מלא (100%)</button>
+        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 0.5)" style="background:#ffc107; flex:1;">אשר חלקי (50%)</button>
+        <button onclick="rejectSub('${sub.id}')" style="background:#f44336; flex:1;">דחה</button>
+    </div>
+`; // זה הגרש הסוגר שראית - הוא חייב להישאר כאן!
+container.appendChild(d);
             });
         } else {
             container.innerHTML = '<div style="color:#666; text-align:center;">אין הגשות חדשות כרגע</div>';
