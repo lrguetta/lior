@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -7,34 +6,90 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <style>
-body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #e0f7fa url('images/background.png') no-repeat center center fixed; background-size: cover; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-#login-screen { background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center; width: 320px; margin-top: 50px; border: 2px solid #81c784; }
-#control-panel { display: none; background: rgba(255, 255, 255, 0.95); padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); margin-bottom: 30px; width: 90%; max-width: 900px; flex-wrap: wrap; gap: 15px; justify-content: center; border: 2px solid #81c784; }
-input, select, button, textarea { padding: 12px; border-radius: 10px; border: 1px solid #ddd; font-size: 15px; font-family: inherit; box-sizing: border-box; }
-button { background-color: #2e7d32; color: white; cursor: pointer; border: none; font-weight: bold; }
-#farm-grid { display: none; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; width: 100%; max-width: 1200px; }
-.student-card { background: rgba(255, 255, 255, 0.9); border-radius: 25px; padding: 20px; text-align: center; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-bottom: 5px solid #81c784; transition: transform 0.3s; }
-.my-creature { border: 4px solid #fbc02d; transform: scale(1.05); z-index: 5; }
-/* ---- ENLARGED: level badge ---- */
-.level-text-badge { position: absolute; top: 5px; right: 15px; font-family: 'Arial Black', sans-serif; font-size: 1.7em; font-weight: 900; color: #2e7d32; z-index: 10; text-shadow: -1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff, 0 2px 4px rgba(0,0,0,0.3); }
-/* ---- ENLARGED: creature image ---- */
-.creature-img { width: 150px; height: 150px; object-fit: contain; margin-bottom: 10px; }
-/* אנימציות */
-.glow-effect { animation: glow-pulse 0.6s ease-out; }
-@keyframes glow-pulse { 0% { filter: brightness(1); transform: scale(1); } 50% { filter: brightness(1.6) drop-shadow(0 0 15px gold); transform: scale(1.25); } 100% { filter: brightness(1); transform: scale(1); } }
-.shake { animation: shake 0.5s infinite; }
-@keyframes shake { 0%, 100% { transform: translate(1px, 1px) rotate(0deg); } 25% { transform: translate(-1px, -2px) rotate(-1deg); } 75% { transform: translate(1px, -2px) rotate(1deg); } }
-.hatch-crack { animation: eggCrack 0.9s ease-out forwards; }
-@keyframes eggCrack { 0% { transform: scale(1); } 100% { transform: scale(0); opacity: 0; } }
-.xp-container { background: #eee; border-radius: 10px; height: 18px; margin: 10px 0; overflow: hidden; border: 1px solid #ccc; }
-.xp-bar { background: linear-gradient(90deg, #ffeb3b, #fbc02d); height: 100%; transition: width 0.4s ease-out; }
-.remove-btn { position: absolute; top: 10px; left: 10px; background: #ff5252; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; }
-.xp-float { position: absolute; font-weight: bold; color: gold; font-size: 1.2em; animation: floatUp 0.8s ease-out forwards; left: 50%; top: 60px; }
-@keyframes floatUp { 0% { opacity: 1; transform: translate(-50%,0); } 100% { opacity: 0; transform: translate(-50%,-40px); } }
-.levelup { position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%); background: #ffd700; color: #1b5e20; font-weight: bold; font-size: 1.5em; padding: 10px 20px; border-radius: 15px; box-shadow: 0 0 15px rgba(0,0,0,0.3); z-index: 100; pointer-events: none; animation: levelPop 2s ease-out forwards; }
-@keyframes levelPop { 0% { opacity: 0; transform: translate(-50%, 0) scale(0.5); } 20% { opacity: 1; transform: translate(-50%, -30px) scale(1.2); } 80% { opacity: 1; transform: translate(-50%, -40px) scale(1); } 100% { opacity: 0; transform: translate(-50%, -60px) scale(0.8); } }
+body { 
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: #e0f7fa url('images/background.png') no-repeat center center fixed; 
+    background-size: cover; 
+    margin: 0; 
+    padding: 20px; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center;
+}
 
-/* ---- ENLARGED: card dimensions ---- */
+/* ---- לוח מודעות (מה חדש) ---- */
+#announcements-board {
+    position: fixed; 
+    right: 20px; 
+    top: 20px; 
+    width: 250px;
+    background: rgba(255, 255, 255, 0.95); 
+    padding: 15px;
+    border-radius: 15px; 
+    border: 2px solid #ff9800;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+    z-index: 50; 
+    text-align: right;
+    max-height: 80vh; 
+    overflow-y: auto;
+}
+@media (max-width: 1000px) {
+    #announcements-board {
+        position: static; 
+        width: 90%; 
+        max-width: 900px; 
+        margin: 10px auto; 
+        order: -1; 
+    }
+}
+
+#login-screen { 
+    background: rgba(255, 255, 255, 0.95); 
+    padding: 30px; 
+    border-radius: 20px; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+    text-align: center; 
+    width: 320px;
+    margin-top: 50px; 
+    border: 2px solid #81c784; 
+}
+#control-panel { 
+    display: none; 
+    background: rgba(255, 255, 255, 0.95); 
+    padding: 25px; 
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
+    margin-bottom: 30px; 
+    width: 90%; 
+    max-width: 900px; 
+    flex-wrap: wrap; 
+    gap: 15px; 
+    justify-content: center;
+    border: 2px solid #81c784; 
+}
+input, select, button, textarea { 
+    padding: 12px; 
+    border-radius: 10px; 
+    border: 1px solid #ddd; 
+    font-size: 15px;
+    font-family: inherit; 
+    box-sizing: border-box; 
+}
+button { 
+    background-color: #2e7d32; 
+    color: white; 
+    cursor: pointer; 
+    border: none; 
+    font-weight: bold; 
+}
+#farm-grid { 
+    display: none;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+    gap: 20px; 
+    width: 100%; 
+    max-width: 1200px; 
+}
+
 .student-card {
     perspective: 1000px;
     width: 220px;
@@ -46,6 +101,7 @@ button { background-color: #2e7d32; color: white; cursor: pointer; border: none;
     cursor: pointer;
     display: inline-block;
 }
+.my-creature { transform: scale(1.05); z-index: 5; }
 
 .card-inner {
     position: relative;
@@ -55,10 +111,7 @@ button { background-color: #2e7d32; color: white; cursor: pointer; border: none;
     transition: transform 0.6s;
     transform-style: preserve-3d;
 }
-
-.student-card.flipped .card-inner {
-    transform: rotateY(180deg);
-}
+.student-card.flipped .card-inner { transform: rotateY(180deg); }
 
 .card-front, .card-back {
     position: absolute;
@@ -77,7 +130,6 @@ button { background-color: #2e7d32; color: white; cursor: pointer; border: none;
     border-bottom: 5px solid #81c784;
     padding-bottom: 20px;
 }
-
 .card-back {
     transform: rotateY(180deg);
     background: #f1f8e9;
@@ -86,7 +138,30 @@ button { background-color: #2e7d32; color: white; cursor: pointer; border: none;
     text-align: right;
 }
 
-/* ---- ENLARGED: xp bar ---- */
+.level-text-badge { 
+    position: absolute;
+    top: 5px; 
+    right: 15px; 
+    font-family: 'Arial Black', sans-serif; 
+    font-size: 1.7em; 
+    font-weight: 900; 
+    color: #2e7d32; 
+    z-index: 10;
+    text-shadow: -1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff, 0 2px 4px rgba(0,0,0,0.3);
+}
+.creature-img { 
+    width: 150px; 
+    height: 150px; 
+    object-fit: contain; 
+    margin-bottom: 10px;
+}
+
+.glow-effect { animation: glow-pulse 0.6s ease-out; }
+@keyframes glow-pulse { 
+    0% { filter: brightness(1); transform: scale(1); } 
+    50% { filter: brightness(1.6) drop-shadow(0 0 15px gold); transform: scale(1.25); } 
+    100% { filter: brightness(1); transform: scale(1); } 
+}
 .xp-container {
     width: 90%;
     background-color: #e0e0e0;
@@ -96,19 +171,90 @@ button { background-color: #2e7d32; color: white; cursor: pointer; border: none;
     overflow: hidden;
     border: 1px solid #ccc;
 }
-
 .xp-bar {
     height: 100%;
     background: linear-gradient(90deg, #4caf50, #81c784);
     transition: width 0.5s ease-in-out;
 }
+.remove-btn { 
+    position: absolute; 
+    top: 10px; 
+    left: 10px;
+    background: #ff5252; 
+    color: white; 
+    border-radius: 50%; 
+    width: 28px; 
+    height: 28px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+}
+.xp-float { 
+    position: absolute;
+    font-weight: bold; 
+    color: gold; 
+    font-size: 1.2em; 
+    animation: floatUp 0.8s ease-out forwards; 
+    left: 50%; 
+    top: 60px;
+}
+@keyframes floatUp { 
+    0% { opacity: 1; transform: translate(-50%,0); } 
+    100% { opacity: 0; transform: translate(-50%,-40px); } 
+}
+.levelup { 
+    position: absolute; 
+    top: 20%; 
+    left: 50%; 
+    transform: translate(-50%, -50%); 
+    background: #ffd700; 
+    color: #1b5e20; 
+    font-weight: bold; 
+    font-size: 1.5em;
+    padding: 10px 20px; 
+    border-radius: 15px; 
+    box-shadow: 0 0 15px rgba(0,0,0,0.3); 
+    z-index: 100; 
+    pointer-events: none; 
+    animation: levelPop 2s ease-out forwards;
+}
+@keyframes levelPop { 
+    0% { opacity: 0; transform: translate(-50%, 0) scale(0.5); } 
+    20% { opacity: 1; transform: translate(-50%, -30px) scale(1.2); } 
+    80% { opacity: 1; transform: translate(-50%, -40px) scale(1); } 
+    100% { opacity: 0; transform: translate(-50%, -60px) scale(0.8); } 
+}
+
 #tasks-area { width: 90%; max-width: 1200px; margin-bottom: 20px; display: none; }
-.task-card { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-right: 6px solid #1976d2; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+.task-card { 
+    background: white; 
+    padding: 15px;
+    border-radius: 12px; 
+    margin-bottom: 10px; 
+    border-right: 6px solid #1976d2; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
 .task-info h4 { margin: 0; color: #333; }
-.question-item { background: white; padding: 15px; border: 1px solid #81c784; margin-bottom: 10px; border-radius: 8px; position: relative; text-align: right; }
+.question-item { 
+    background: white; 
+    padding: 15px; 
+    border: 1px solid #81c784; 
+    margin-bottom: 10px;
+    border-radius: 8px; 
+    position: relative; 
+    text-align: right; 
+}
 </style>
 </head>
 <body>
+
+<div id="announcements-board">
+    <h3 style="margin-top:0; color:#e65100; border-bottom:2px solid #ffcc80; padding-bottom:5px;">📢 מה חדש?</h3>
+    <div id="announcements-content" style="white-space: pre-wrap; font-size: 0.95em; color: #333;">טוען עדכונים...</div>
+</div>
 
 <div id="login-screen">
     <h2>החווה המופלאה 🐾</h2>
@@ -147,6 +293,13 @@ button { background-color: #2e7d32; color: white; cursor: pointer; border: none;
     </div>
 
     <hr style="width:100%; margin: 15px 0;">
+    <div style="width:100%; background:#fff3e0; padding:15px; border-radius:10px; border:1px solid #ffcc80; text-align:right; box-sizing:border-box;">
+        <h4 style="margin:0 0 10px 0; color:#e65100;">📢 ניהול לוח מודעות (מה חדש)</h4>
+        <textarea id="adminAnnouncementsText" style="width:100%; height:80px; resize:vertical; margin-bottom:10px; padding:10px; border-radius:8px; border:1px solid #ffb74d;" placeholder="כתוב כאן את העדכונים החדשים..."></textarea>
+        <button onclick="saveAnnouncements()" style="background:#ff9800; width:100%; padding:10px; font-size:1.1em;">עדכן לוח מודעות ופרסם לתלמידים 💾</button>
+    </div>
+
+    <hr style="width:100%; margin: 15px 0;">
     
     <div style="width:100%; text-align:right;">
         <button onclick="toggleTaskBuilder()" style="background-color:#1976d2; margin-bottom:10px;">יצירת מטלה חדשה ➕</button>
@@ -167,6 +320,8 @@ button { background-color: #2e7d32; color: white; cursor: pointer; border: none;
                 <option value="open">שאלה פתוחה</option>
                 <option value="multiple">אמריקאית (ברירה מרובה)</option>
                 <option value="boolean">נכון / לא נכון</option>
+                <option value="survey">סקר (בחירה מרובה - ללא תשובה נכונה)</option>
+                <option value="poll">סקר</option> <option value="study_unit">יחידת לימוד (פרק ופסוקים)</option> </select>
             </select>
             <button onclick="addQuestionField()" style="background:#0288d1;">הוסף שאלה</button>
             <button onclick="saveNewTask()" style="background:#4caf50; margin-right:auto; padding:12px 25px;">פרסם מטלה 🚀</button>
@@ -188,9 +343,7 @@ button { background-color: #2e7d32; color: white; cursor: pointer; border: none;
 
 <div id="submit-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:25px; border-radius:15px; box-shadow:0 0 30px rgba(0,0,0,0.5); z-index:1000; width:90%; max-width:500px; max-height:85vh; overflow-y:auto; text-align:right; border:3px solid #1976d2;">
     <h3 id="modal-task-title" style="text-align:center; margin-top:0;">הגשת מטלה</h3>
-    
     <div id="questions-display" style="margin-bottom:20px;"></div>
-    
     <div style="display:flex; gap:10px;">
         <button onclick="sendSubmission()" style="flex:1; background:#4caf50;">שלח הגשה 🚀</button>
         <button onclick="closeModal()" style="flex:1; background:#999;">ביטול</button>
@@ -198,6 +351,13 @@ button { background-color: #2e7d32; color: white; cursor: pointer; border: none;
 </div>
 
 <script>
+    function safe(text) {
+    if (typeof text !== 'string') return text;
+    // הפונקציה הזו הופכת כל מירכאה לגרסה ה"בטוחה" שלה (HTML Entities)
+    // הדפדפן יודע להציג אותן מושלם, אבל הן לא שוברות את הקוד
+    return text.replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+}
+    
 const firebaseConfig = {
     apiKey: "AIzaSyCtS0Gf9oNiRg6OTd3jyNaPxuWBFlWGIsE",
     authDomain: "liorfarm.firebaseapp.com",
@@ -218,9 +378,31 @@ let currentUser = localStorage.getItem('farm_user_id') || null;
 if (currentUser) {
     console.log("משתמש מזוהה מצאנו בזיכרון: " + currentUser);
 }
+
 let allSubmissions = {};
 let allTasks = [];
 let currentTaskToSubmit = null;
+
+// האזנה ללוח מודעות
+db.ref('announcements').on('value', (snap) => {
+    const text = snap.val() || "אין הודעות חדשות כרגע.";
+    const contentDiv = document.getElementById('announcements-content');
+    if(contentDiv) contentDiv.innerText = text;
+    
+    if (currentUser === 'admin') {
+        const adminTextArea = document.getElementById('adminAnnouncementsText');
+        if (adminTextArea && adminTextArea.value === '') {
+            adminTextArea.value = text !== "אין הודעות חדשות כרגע." ? text : "";
+        }
+    }
+});
+
+function saveAnnouncements() {
+    const text = document.getElementById('adminAnnouncementsText').value;
+    db.ref('announcements').set(text).then(() => {
+        alert("לוח המודעות עודכן ופורסם לכולם! 📢");
+    });
+}
 
 db.ref('students').on('value', (snap) => {
     const data = snap.val();
@@ -258,7 +440,7 @@ function checkAdmin() {
         currentUser = 'admin';
         startApp();
     } else { 
-        alert('סיסמה שגויה'); 
+        alert('סיסמה שגויה');
     }
 }
 
@@ -278,15 +460,21 @@ function startApp() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('farm-grid').style.display = 'grid';
     document.getElementById('tasks-area').style.display = 'block';
-
     if (currentUser === 'admin') {
         document.getElementById('control-panel').style.display = 'flex';
         initAdminSubmissions();
+        
+        db.ref('announcements').once('value').then(snap => {
+            const text = snap.val() || "";
+            const adminTextArea = document.getElementById('adminAnnouncementsText');
+            if(adminTextArea) adminTextArea.value = text;
+        });
     }
     
     updateView();
     renderTasks();
 }
+
 function addStudent() {
     const nameInput = document.getElementById('studentName');
     if (!nameInput.value.trim()) return;
@@ -305,7 +493,6 @@ function addXP(id, xp, lvl) {
     if (currentUser !== 'admin') return;
     const img = document.getElementById('img-' + id);
     const card = img?.closest('.student-card');
-
     if (img) {
         img.classList.remove('glow-effect');
         requestAnimationFrame(() => img.classList.add('glow-effect'));
@@ -354,64 +541,65 @@ function updateView() {
         
         let noteHtml = s.lastNote ? `<div class="rejection-note">📝 הערת מורה: ${s.lastNote}</div>` : "";
 
-      return `
-<div class="student-card ${isMine ? 'my-creature' : ''}" onclick="this.classList.toggle('flipped')">
-    <div class="card-inner">
-    <div class="card-front" style="display: flex; flex-direction: column; justify-content: space-between; align-items: center; height: 100%; padding: 15px; box-sizing: border-box;">
-        <div style="width: 100%; display: flex; justify-content: space-between; align-items: flex-start;">
-            <div class="level-text-badge">Lv.${s.level}</div>
-    ${currentUser === 'admin' ? 
-        `<button class="remove-btn" onclick="event.stopPropagation(); if(confirm('למחוק?')) { db.ref('students/${s.id}').remove(); }">✖</button>` 
-        : '<div></div>'}
-</div>
-        <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
-            <img id="img-${s.id}" src="${imgPath}" class="creature-img" 
-                 style="max-height: 135px; object-fit: contain; margin-bottom: 8px;"
-                 onclick="event.stopPropagation(); addXP('${s.id}',${s.xp},${s.level})">
-            <div style="font-weight:bold; font-size:1.3em; line-height: 1.2;">${s.name}</div>
-            <div style="color:#666; font-size:0.95em;">כיתה ${s.className}</div>
+        return `
+        <div class="student-card ${isMine ? 'my-creature' : ''}" onclick="this.classList.toggle('flipped')">
+            <div class="card-inner">
+            
+            <div class="card-front" style="display: flex; flex-direction: column; justify-content: space-between; align-items: center; height: 100%; padding: 15px; box-sizing: border-box;">
+                <div style="width: 100%; display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div class="level-text-badge">Lv.${s.level}</div>
+            ${currentUser === 'admin' ? 
+                `<button class="remove-btn" onclick="event.stopPropagation(); if(confirm('למחוק?')) { db.ref('students/${s.id}').remove(); }">✖</button>` 
+                : '<div></div>'}
         </div>
-        <div style="width: 100%; margin-top: 10px;">
-            <div class="xp-container" style="width: 100%; background: #eee; height: 14px; border-radius: 7px; overflow: hidden; border: 1px solid #ddd;">
-                <div class="xp-bar" style="width:${s.xp}%; background: linear-gradient(90deg, #4caf50, #81c784); height: 100%; transition: width 0.5s;"></div>
+                <div style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;">
+                    <img id="img-${s.id}" src="${imgPath}" class="creature-img" 
+                         style="max-height: 135px; object-fit: contain; margin-bottom: 8px;"
+                         onclick="event.stopPropagation(); addXP('${s.id}',${s.xp},${s.level})">
+                    <div style="font-weight:bold; font-size:1.3em; line-height: 1.2;">${s.name}</div>
+                    <div style="color:#666; font-size:0.95em;">כיתה ${s.className}</div>
+                </div>
+                <div style="width: 100%; margin-top: 10px;">
+                    <div class="xp-container" style="width: 100%; background: #eee; height: 14px; border-radius: 7px; overflow: hidden; border: 1px solid #ddd;">
+                        <div class="xp-bar" style="width:${s.xp}%; background: linear-gradient(90deg, #4caf50, #81c784); height: 100%; transition: width 0.5s;"></div>
+                    </div>
+                    <div style="font-size:0.75em; color:#2e7d32; font-weight:bold; margin-top: 5px; text-align: center;">🔄 לחץ להיפוך</div>
+                </div>
             </div>
-            <div style="font-size:0.75em; color:#2e7d32; font-weight:bold; margin-top: 5px; text-align: center;">🔄 לחץ להיפוך</div>
-        </div>
-    </div>
 
-    <div class="card-back" style="padding:12px; display:flex; flex-direction:column; gap:8px;">
-        <h4 style="margin:0 0 6px 0; color:#2e7d32; border-bottom:1px solid #ccc; padding-bottom:5px;">יומן פעילות</h4>
-        
-        ${isMine ? `
-        <div style="background:#fffde7; border-radius:8px; padding:8px; border:1px solid #ffe082;">
-            <div style="font-size:0.8em; color:#f57f17; font-weight:bold; margin-bottom:4px;">✏️ ההודעה שלי:</div>
-            <textarea id="note-${s.id}" onclick="event.stopPropagation()" 
-                style="width:100%; height:55px; border-radius:6px; border:1px solid #ffd54f; font-size:0.85em; font-family:inherit; resize:none; padding:5px; box-sizing:border-box;"
-                placeholder="כתוב משהו על עצמך...">${s.personalNote || ''}</textarea>
-            <button onclick="event.stopPropagation(); savePersonalNote('${s.id}')" 
-                style="margin-top:5px; background:#f9a825; color:white; border:none; border-radius:6px; padding:5px 12px; font-size:0.8em; cursor:pointer; width:100%;">💾 שמור</button>
-        </div>
-        ` : `
-        ${s.personalNote ? `<div style="background:#fffde7; border-radius:8px; padding:8px; border:1px solid #ffe082; font-size:0.85em; color:#555;">✏️ <em>${s.personalNote}</em></div>` : ''}
-        <div style="text-align:center; margin-top:4px;">
-            <button onclick="event.stopPropagation(); toggleLike('${s.id}')" 
-                id="like-btn-${s.id}"
-                style="background:${(s.likes && s.likes[currentUser]) ? '#e91e63' : '#eee'}; 
-                       color:${(s.likes && s.likes[currentUser]) ? 'white' : '#555'}; 
-                       border:none; border-radius:20px; padding:8px 18px; font-size:1em; cursor:pointer; transition:all 0.2s;">
-                ❤️ ${Object.keys(s.likes || {}).length || 0}
-            </button>
-        </div>
-        `}
+            <div class="card-back" style="padding:12px; display:flex; flex-direction:column; gap:8px;">
+                <h4 style="margin:0 0 6px 0; color:#2e7d32; border-bottom:1px solid #ccc; padding-bottom:5px;">יומן פעילות</h4>
+                
+                ${isMine ? `
+                <div style="background:#fffde7; border-radius:8px; padding:8px; border:1px solid #ffe082;">
+                    <div style="font-size:0.8em; color:#f57f17; font-weight:bold; margin-bottom:4px;">✏️ ההודעה שלי:</div>
+                    <textarea id="note-${s.id}" onclick="event.stopPropagation()" 
+                        style="width:100%; height:55px; border-radius:6px; border:1px solid #ffd54f; font-size:0.85em; font-family:inherit; resize:none; padding:5px; box-sizing:border-box;"
+                        placeholder="כתוב משהו על עצמך...">${s.personalNote || ''}</textarea>
+                    <button onclick="event.stopPropagation(); savePersonalNote('${s.id}')" 
+                        style="margin-top:5px; background:#f9a825; color:white; border:none; border-radius:6px; padding:5px 12px; font-size:0.8em; cursor:pointer; width:100%;">💾 שמור</button>
+                </div>
+                ` : `
+                ${s.personalNote ? `<div style="background:#fffde7; border-radius:8px; padding:8px; border:1px solid #ffe082; font-size:0.85em; color:#555;">✏️ <em>${s.personalNote}</em></div>` : ''}
+                <div style="text-align:center; margin-top:4px;">
+                    <button onclick="event.stopPropagation(); toggleLike('${s.id}')" 
+                        id="like-btn-${s.id}"
+                        style="background:${(s.likes && s.likes[currentUser]) ? '#e91e63' : '#eee'}; 
+                               color:${(s.likes && s.likes[currentUser]) ? 'white' : '#555'}; 
+                               border:none; border-radius:20px; padding:8px 18px; font-size:1em; cursor:pointer; transition:all 0.2s;">
+                        ❤️ ${Object.keys(s.likes || {}).length || 0}
+                    </button>
+                </div>
+                `}
 
-        <div style="font-size:0.8em; color:#777; border-top:1px solid #eee; padding-top:6px;">
-            ${historyHtml || "אין פעילות לאחרונה"}
-            ${noteHtml}
-        </div>
-        <div style="font-size:0.75em; color:#999; text-align:center;">לחץ לחזרה</div>
-    </div>
-    </div>
-</div>`;
+                <div style="font-size:0.8em; color:#777; border-top:1px solid #eee; padding-top:6px;">
+                    ${historyHtml || "אין פעילות לאחרונה"}
+                    ${noteHtml}
+                </div>
+                <div style="font-size:0.75em; color:#999; text-align:center;">לחץ לחזרה</div>
+            </div>
+            </div>
+        </div>`;
     }).join('');
 }
 
@@ -420,6 +608,7 @@ db.ref('tasks').on('value', (snap) => {
     allTasks = tasks ? Object.values(tasks) : [];
     renderTasks();
 });
+
 function savePersonalNote(studentId) {
     const val = document.getElementById('note-' + studentId).value.trim();
     db.ref('students/' + studentId).update({ personalNote: val });
@@ -436,6 +625,7 @@ function toggleLike(studentId) {
         }
     });
 }
+
 function toggleTaskBuilder() {
     const builder = document.getElementById('task-builder');
     builder.style.display = builder.style.display === 'none' ? 'block' : 'none';
@@ -447,13 +637,16 @@ function addQuestionField() {
     const qDiv = document.createElement('div');
     qDiv.className = 'question-item';
     qDiv.dataset.type = type;
-
-    let typeText = type === 'open' ? 'פתוחה' : (type === 'multiple' ? 'אמריקאית' : 'נכון/לא נכון');
+    
+    let typeText = type === 'open' ? 'פתוחה' : 
+               (type === 'multiple' ? 'אמריקאית' : 
+               (type === 'survey' ? 'סקר (בחירה מרובה)' : 
+               (type === 'study_unit' ? 'יחידת לימוד' : 'נכון/לא נכון')));
     
     let html = `<button onclick="this.parentElement.remove()" style="position:absolute; left:10px; top:10px; background:#ff5252; color:white; border:none; border-radius:4px; cursor:pointer; padding:5px 10px;">X</button>`;
     html += `<strong>סוג: ${typeText}</strong><br>`;
     html += `<input type="text" class="q-text" placeholder="הקלד את השאלה כאן..." style="width:90%; margin-top:10px; margin-bottom:10px;">`;
-
+    
     if (type === 'multiple') {
         html += `<div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
             <input type="text" placeholder="תשובה נכונה (הזן כאן)" class="opt-correct" style="border:2px solid #4caf50;">
@@ -463,6 +656,26 @@ function addQuestionField() {
         </div>`;
     } else if (type === 'boolean') {
         html += `<div>תשובה נכונה: <select class="q-ans-bool"><option value="נכון">נכון</option><option value="לא נכון">לא נכון</option></select></div>`;
+    } else if (type === 'survey') {
+        html += `<div style="display:grid; grid-template-columns: 1fr; gap:5px;">
+            <div style="font-size:0.85em; color:#666; margin-bottom:5px;">* התלמיד יוכל לסמן כמה אפשרויות שירצה.</div>
+            <input type="text" placeholder="אפשרות 1" class="opt-survey">
+            <input type="text" placeholder="אפשרות 2" class="opt-survey">
+            <input type="text" placeholder="אפשרות 3" class="opt-survey">
+            <input type="text" placeholder="אפשרות 4" class="opt-survey">
+            <input type="text" placeholder="אפשרות 5" class="opt-survey">
+        </div>`;
+    }
+    else if (type === 'study_unit') {
+        html += `<div style="background:#e8f5e9; padding:10px; border-radius:4px; border:1px solid #c8e6c9;">
+            <div style="font-size:0.85em; color:#2e7d32; margin-bottom:8px;"><strong>הזן את התשובה הנכונה לבדיקה אוטומטית:</strong></div>
+            <div style="display:flex; gap:5px;">
+                <input type="text" placeholder="פרק (לדוג' לד)" class="study-ans-chapter" style="width:30%; padding:5px; text-align:center;">
+                <input type="text" placeholder="מפסוק" class="study-ans-start" style="width:35%; padding:5px; text-align:center;">
+                <input type="text" placeholder="עד פסוק" class="study-ans-end" style="width:35%; padding:5px; text-align:center;">
+            </div>
+            <div style="font-size:0.75em; color:#666; margin-top:5px;">* המערכת תשווה את תשובת התלמיד לנתונים אלו.</div>
+        </div>`;
     }
 
     qDiv.innerHTML = html;
@@ -474,10 +687,10 @@ function saveNewTask() {
     const deadline = document.getElementById('taskDeadline').value;
     const xp = parseInt(document.getElementById('taskXP').value) || 20;
     const qNodes = document.querySelectorAll('.question-item');
-
+    
     if (!title) return alert("חובה להזין כותרת למטלה!");
     if (qNodes.length === 0) return alert("חובה להוסיף לפחות שאלה אחת!");
-
+    
     const questions = Array.from(qNodes).map(node => {
         const type = node.dataset.type;
         const qObj = { type, text: node.querySelector('.q-text').value };
@@ -487,10 +700,12 @@ function saveNewTask() {
             qObj.others = Array.from(node.querySelectorAll('.opt')).map(i => i.value).filter(v => v !== "");
         } else if (type === 'boolean') {
             qObj.correct = node.querySelector('.q-ans-bool').value;
+        } else if (type === 'survey') {
+            qObj.options = Array.from(node.querySelectorAll('.opt-survey')).map(i => i.value).filter(v => v !== "");
         }
         return qObj;
     });
-
+    
     const id = Date.now().toString();
     db.ref('tasks/' + id).set({ id, title, deadline, xp, questions });
     
@@ -526,7 +741,8 @@ function renderTasks() {
             } else if (alreadySubmitted) {
                 actionBtn = `<button disabled style="background:#999; cursor:not-allowed;">כבר הגשת ✔️</button>`;
             } else {
-                actionBtn = `<button onclick="openSubmitModal('${task.id}', '${task.title}')" style="background:#1976d2;">פתח משימה ✍️</button>`;
+                const safeTitle = task.title.replace(/'/g, '׳').replace(/"/g, '״');
+    actionBtn = `<button onclick="openSubmitModal('${task.id}', '${safeTitle}')" style="background:#1976d2;">פתח משימה ✍️</button>`;
             }
 
             div.innerHTML = `
@@ -574,7 +790,25 @@ function openSubmitModal(id, title) {
                         <input type="radio" name="q${index}" value="${opt}"> ${opt}
                     </label>`;
                 });
-            }
+            } else if (q.type === 'survey') {
+                const allOpts = q.options || [];
+                allOpts.forEach(opt => {
+                    d.innerHTML += `<label style="display:block; margin-top:8px; cursor:pointer; background:white; padding:8px; border-radius:5px; border:1px solid #ddd;">
+                        <input type="checkbox" name="q${index}" value="${opt}"> ${opt}
+                    </label>`;
+                });
+            } else if (q.type === 'study_unit') {
+d.innerHTML += `
+    <div style="display:flex; gap:5px; margin-top:10px; width:100%; box-sizing:border-box;">
+        <input type="text" id="study_chapter_${index}" placeholder="פרק" 
+            style="width:30%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+        <input type="text" id="study_start_${index}" placeholder="מפסוק" 
+            style="width:35%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+        <input type="text" id="study_end_${index}" placeholder="עד פסוק" 
+            style="width:35%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+    </div>
+`;
+}
             container.appendChild(d);
         });
     }
@@ -583,7 +817,6 @@ function openSubmitModal(id, title) {
 }
 
 function closeModal() { document.getElementById('submit-modal').style.display = 'none'; }
-
 function sendSubmission() {
     const task = allTasks.find(t => t.id === currentTaskToSubmit);
     const answers = [];
@@ -594,12 +827,32 @@ function sendSubmission() {
             let val = "";
             if (q.type === 'open') {
                 val = document.querySelector(`textarea[data-index="${index}"]`).value.trim();
-            } else {
+            } else if (q.type === 'survey') {
+                const checkedBoxes = document.querySelectorAll(`input[name="q${index}"]:checked`);
+                val = Array.from(checkedBoxes).map(cb => cb.value).join(' | ');
+            } 
+            // --- הוספה עבור יחידת לימוד ---
+            else if (q.type === 'study_unit') {
+                const chapter = document.getElementById(`study_chapter_${index}`).value.trim();
+                const start = document.getElementById(`study_start_${index}`).value.trim();
+                const end = document.getElementById(`study_end_${index}`).value.trim();
+                
+                if (chapter || start || end) {
+                    // אנחנו מחברים את זה למחרוזת אחת שתופיע למורה בבדיקה
+                    val = `פרק ${chapter}, פסוקים ${start}-${end}`;
+                } else {
+                    val = "";
+                }
+            } 
+            // ---------------------------
+            else {
                 const checked = document.querySelector(`input[name="q${index}"]:checked`);
                 val = checked ? checked.value : "";
             }
+            
+            // כאן הוספתי את ה-safe() כדי שהמורה לא יראה "פיצוצים" בבדיקה אם התלמיד הקליד מירכאות
             if (!val) allAnswered = false;
-            answers.push({ q: q.text, a: val });
+            answers.push({ q: q.text, a: safe(val) });
         });
     }
 
@@ -609,7 +862,6 @@ function sendSubmission() {
 
     const student = allStudents.find(s => s.id === currentUser);
     const subId = Date.now().toString();
-
     db.ref('submissions/' + subId).set({
         id: subId,
         studentName: student.name,
@@ -649,26 +901,26 @@ function initAdminSubmissions() {
                     </div>
                 `).join('') : 'אין נתוני תשובות';
 
-                d.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        <div>
-                            <strong style="color:#2e7d32; font-size:1.1em;">${sub.studentName}</strong>
-                            <div style="font-size:0.85em; color:#666;">מטלה: ${taskTitle} | פרס: ${taskXP} XP</div>
-                        </div>
-                    </div>
-                    
-                    <details style="background:#f1f8e9; padding:10px; border-radius:5px; cursor:pointer;">
-                        <summary style="font-weight:bold; color:#1976d2;">🔍 בדיקת תשובות</summary>
-                        <div style="margin-top:10px; cursor:default;">${answersHtml}</div>
-                    </details>
+d.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div>
+            <strong style="color:#2e7d32; font-size:1.1em;">${sub.studentName.replace(/'/g, '׳').replace(/"/g, '״')}</strong>
+            <div style="font-size:0.85em; color:#666;">מטלה: ${taskTitle.replace(/'/g, '׳').replace(/"/g, '״')} | פרס: ${taskXP} XP</div>
+        </div>
+    </div>
+    
+    <details style="background:#f1f8e9; padding:10px; border-radius:5px; cursor:pointer;">
+        <summary style="font-weight:bold; color:#1976d2;">🔍 בדיקת תשובות</summary>
+        <div style="margin-top:10px; cursor:default;">${answersHtml}</div>
+    </details>
 
-                    <div style="display:flex; gap:5px; margin-top:10px;">
-                        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 1)" style="background:#4caf50; flex:1;">אשר מלא (100%)</button>
-                        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 0.5)" style="background:#ffc107; flex:1;">אשר חלקי (50%)</button>
-                        <button onclick="rejectSub('${sub.id}')" style="background:#f44336; flex:1;">דחה</button>
-                    </div>
-                `;
-                container.appendChild(d);
+    <div style="display:flex; gap:5px; margin-top:10px;">
+        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 1)" style="background:#4caf50; flex:1;">אשר מלא (100%)</button>
+        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 0.5)" style="background:#ffc107; flex:1;">אשר חלקי (50%)</button>
+        <button onclick="rejectSub('${sub.id}')" style="background:#f44336; flex:1;">דחה</button>
+    </div>
+`; // זה הגרש הסוגר שראית - הוא חייב להישאר כאן!
+container.appendChild(d);
             });
         } else {
             container.innerHTML = '<div style="color:#666; text-align:center;">אין הגשות חדשות כרגע</div>';
@@ -720,7 +972,6 @@ function approveSub(subId, studentId, multiplier = 1) {
 
 window.rejectSub = function(subId) {
     const note = prompt("מדוע המטלה נדחית? (התלמיד יראה את זה בצד האחורי של הכרטיס):");
-    
     if (note !== null) {
         db.ref('submissions/' + subId).once('value').then(snap => {
             const sub = snap.val();
@@ -736,7 +987,3 @@ window.rejectSub = function(subId) {
 </script>
 </body>
 </html>
-
-
-
-
