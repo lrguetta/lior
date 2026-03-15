@@ -719,7 +719,8 @@ function renderTasks() {
             } else if (alreadySubmitted) {
                 actionBtn = `<button disabled style="background:#999; cursor:not-allowed;">כבר הגשת ✔️</button>`;
             } else {
-                actionBtn = `<button onclick="openSubmitModal('${task.id}', '${task.title.replace(/'/g, "\\'")}')" style="background:#1976d2;">פתח משימה ✍️</button>`;
+                const safeTitle = task.title.replace(/'/g, '׳').replace(/"/g, '״');
+    actionBtn = `<button onclick="openSubmitModal('${task.id}', '${safeTitle}')" style="background:#1976d2;">פתח משימה ✍️</button>`;
             }
 
             div.innerHTML = `
