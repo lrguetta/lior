@@ -350,6 +350,13 @@ button {
 </div>
 
 <script>
+    function safe(text) {
+    if (typeof text !== 'string') return text;
+    // הפונקציה הזו הופכת כל מירכאה לגרסה ה"בטוחה" שלה (HTML Entities)
+    // הדפדפן יודע להציג אותן מושלם, אבל הן לא שוברות את הקוד
+    return text.replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+}
+    
 const firebaseConfig = {
     apiKey: "AIzaSyCtS0Gf9oNiRg6OTd3jyNaPxuWBFlWGIsE",
     authDomain: "liorfarm.firebaseapp.com",
