@@ -381,6 +381,7 @@ if (currentUser) {
 
 let allSubmissions = {};
 let allTasks = [];
+let editingTaskId = null;    
 let currentTaskToSubmit = null;
 
 // האזנה ללוח מודעות
@@ -631,22 +632,22 @@ function toggleTaskBuilder() {
     builder.style.display = builder.style.display === 'none' ? 'block' : 'none';
 }
 
-function addQuestionField() {
-    const type = document.getElementById('questionType').value;
+function addQuestionField(existingType = null, qData = null) {
+    const type = existingType || document.getElementById('questionType').value;
     const container = document.getElementById('questions-constructor');
     const qDiv = document.createElement('div');
     qDiv.className = 'question-item';
     qDiv.dataset.type = type;
-    
+
     let typeText = type === 'open' ? 'פתוחה' : 
-               (type === 'multiple' ? 'אמריקאית' : 
-               (type === 'survey' ? 'סקר (בחירה מרובה)' : 
-               (type === 'study_unit' ? 'יחידת לימוד' : 'נכון/לא נכון')));
-    
+                   (type === 'multiple' ? 'אמריקאית' : 
+                   (type === 'survey' ? 'סקר (בחירה מרובה)' : 
+                   (type === 'study_unit' ? 'יחידת לימוד' : 'נכון/לא נכון')));
+
     let html = `<button onclick="this.parentElement.remove()" style="position:absolute; left:10px; top:10px; background:#ff5252; color:white; border:none; border-radius:4px; cursor:pointer; padding:5px 10px;">X</button>`;
     html += `<strong>סוג: ${typeText}</strong><br>`;
     html += `<input type="text" class="q-text" placeholder="הקלד את השאלה כאן..." style="width:90%; margin-top:10px; margin-bottom:10px;">`;
-    
+
     if (type === 'multiple') {
         html += `<div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
             <input type="text" placeholder="תשובה נכונה (הזן כאן)" class="opt-correct" style="border:2px solid #4caf50;">
@@ -665,8 +666,7 @@ function addQuestionField() {
             <input type="text" placeholder="אפשרות 4" class="opt-survey">
             <input type="text" placeholder="אפשרות 5" class="opt-survey">
         </div>`;
-    }
-    else if (type === 'study_unit') {
+    } else if (type === 'study_unit') {
         html += `<div style="background:#e8f5e9; padding:10px; border-radius:4px; border:1px solid #c8e6c9;">
             <div style="font-size:0.85em; color:#2e7d32; margin-bottom:8px;"><strong>הזן את התשובה הנכונה לבדיקה אוטומטית:</strong></div>
             <div style="display:flex; gap:5px;">
@@ -680,6 +680,40 @@ function addQuestionField() {
 
     qDiv.innerHTML = html;
     container.appendChild(qDiv);
+
+    // --- שחזור נתונים במצב עריכה ---
+    if (qData) {
+        qDiv.querySelector('.q-text').value = qData.text || '';
+        if (type === 'multiple' && qData.others) {
+            qDiv.querySelector('.opt-correct').value = qData.correct || '';
+            const optInputs = qDiv.querySelectorAll('.opt');
+            qData.others.forEach((optVal, idx) => {
+                if (optInputs[idx]) optInputs[idx].value = optVal;
+            });
+        } else if (type === 'boolean') {
+            qDiv.querySelector('.q-ans-bool').value = qData.correct || 'נכון';
+        } else if (type === 'survey' && qData.options) {
+            const optInputs = qDiv.querySelectorAll('.opt-survey');
+            qData.options.forEach((optVal, idx) => {
+                if (optInputs[idx]) optInputs[idx].value = optVal;
+            });
+        }
+    }
+}
+function toggleTaskBuilder() {
+    const builder = document.getElementById('task-builder');
+    if (builder.style.display === 'none') {
+        builder.style.display = 'block';
+    } else {
+        builder.style.display = 'none';
+        // איפוס במקרה של סגירה
+        editingTaskId = null;
+        document.getElementById('taskTitle').value = '';
+        document.getElementById('taskDeadline').value = '';
+        document.getElementById('questions-constructor').innerHTML = '';
+        const saveBtn = document.querySelector('#task-builder button[onclick="saveNewTask()"]');
+        if(saveBtn) saveBtn.innerHTML = 'פרסם מטלה 🚀';
+    }
 }
 
 function saveNewTask() {
@@ -687,10 +721,10 @@ function saveNewTask() {
     const deadline = document.getElementById('taskDeadline').value;
     const xp = parseInt(document.getElementById('taskXP').value) || 20;
     const qNodes = document.querySelectorAll('.question-item');
-    
+
     if (!title) return alert("חובה להזין כותרת למטלה!");
     if (qNodes.length === 0) return alert("חובה להוסיף לפחות שאלה אחת!");
-    
+
     const questions = Array.from(qNodes).map(node => {
         const type = node.dataset.type;
         const qObj = { type, text: node.querySelector('.q-text').value };
@@ -705,17 +739,58 @@ function saveNewTask() {
         }
         return qObj;
     });
+
+    // שימוש במזהה הקיים אם עורכים, או יצירת חדש
+    const id = editingTaskId ? editingTaskId : Date.now().toString();
     
-    const id = Date.now().toString();
     db.ref('tasks/' + id).set({ id, title, deadline, xp, questions });
     
+    // איפוס וסגירה
     document.getElementById('taskTitle').value = '';
     document.getElementById('taskDeadline').value = '';
+    document.getElementById('taskXP').value = '20';
     document.getElementById('questions-constructor').innerHTML = '';
-    toggleTaskBuilder();
-    alert("המטלה פורסמה בהצלחה! 🚀");
+    
+    const saveBtn = document.querySelector('#task-builder button[onclick="saveNewTask()"]');
+    if(saveBtn) saveBtn.innerHTML = 'פרסם מטלה 🚀';
+    
+    document.getElementById('task-builder').style.display = 'none';
+    
+    alert(editingTaskId ? "המטלה עודכנה בהצלחה! 💾" : "המטלה פורסמה בהצלחה! 🚀");
+    editingTaskId = null; // סיום מצב עריכה
 }
+    function editTask(id) {
+    const task = allTasks.find(t => t.id === id);
+    if (!task) return;
 
+    editingTaskId = id;
+    
+    // פתיחת חלונית המטלות
+    document.getElementById('task-builder').style.display = 'block';
+    
+    // מילוי הנתונים הקיימים
+    document.getElementById('taskTitle').value = task.title || '';
+    document.getElementById('taskDeadline').value = task.deadline || '';
+    document.getElementById('taskXP').value = task.xp || 20;
+    
+    // ניקוי השאלות הקיימות מהתצוגה כדי לטעון מחדש
+    const container = document.getElementById('questions-constructor');
+    container.innerHTML = '';
+    
+    // טעינת השאלות מהמטלה
+    if (task.questions) {
+        task.questions.forEach(q => {
+            addQuestionField(q.type, q);
+        });
+    }
+    
+    // שינוי הטקסט של כפתור הפרסום
+    const saveBtn = document.querySelector('#task-builder button[onclick="saveNewTask()"]');
+    if(saveBtn) saveBtn.innerHTML = 'עדכן מטלה 💾';
+    
+    // גלילה חלקה למעלה לאזור העריכה
+    document.getElementById('task-builder').scrollIntoView({ behavior: 'smooth' });
+}
 function renderTasks() {
     const list = document.getElementById('tasks-list');
     if (!list) return;
@@ -736,9 +811,12 @@ function renderTasks() {
             div.className = 'task-card';
             
             let actionBtn;
-            if (currentUser === 'admin') {
-                actionBtn = `<button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק מטלה</button>`;
-            } else if (alreadySubmitted) {
+           if (currentUser === 'admin') {
+    actionBtn = `
+        <button onclick="editTask('${task.id}')" style="background:#ff9800; margin-left:5px;">ערוך מטלה ✏️</button>
+        <button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק מטלה 🗑️</button>
+    `;
+} else if (alreadySubmitted) {
                 actionBtn = `<button disabled style="background:#999; cursor:not-allowed;">כבר הגשת ✔️</button>`;
             } else {
                 const safeTitle = task.title.replace(/'/g, '׳').replace(/"/g, '״');
