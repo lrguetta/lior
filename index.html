@@ -740,6 +740,16 @@ function updateView() {
                     <div class="history-item">✨ ${h.msg}: <b>+${h.xp}XP</b></div>
                 `).join('');
         }
+        // לייקים
+const likesObj = s.likes || {};
+const likeCount = Object.keys(likesObj).length;
+const iLiked = likesObj[currentUser] === true;
+const likerNames = Object.keys(likesObj)
+    .map(uid => { 
+        const u = allStudents.find(x => x.id === uid); 
+        return u ? u.name : null; 
+    })
+    .filter(Boolean);
         let personalNoteHtml = s.personalNote 
     ? `<div style="background:#e8f5e9; border-radius:6px; padding:8px; border-right:3px solid #4caf50; font-size:0.85em; color:#1b5e20;">
           💬 <b>על עצמי:</b> ${s.personalNote}
