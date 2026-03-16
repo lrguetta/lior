@@ -172,6 +172,9 @@ button {
     overflow-y: auto;
     display: block;
     text-align: right;
+    -webkit-backface-visibility: hidden;  /* תיקון טשטוש */
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;  /* חידוד טקסט */
 }
 .like-btn {
     background: none;
@@ -792,14 +795,39 @@ const likerNames = Object.keys(likesObj)
         </button>
     ` : ''}
 
-    ${(isMine && likeCount > 0) ? `
-        <button class="like-btn" 
-            onclick="event.stopPropagation(); openLikesPopup(${JSON.stringify(likerNames)})">
+   ${(isMine && likeCount > 0) ? `
+    <div style="position:relative; display:inline-block;">
+        <span class="like-btn" 
+            onmouseenter="document.getElementById('likes-tip-${s.id}').style.display='block'"
+            onmouseleave="document.getElementById('likes-tip-${s.id}').style.display='none'">
             ❤️ ${likeCount}
-        </button>
-    ` : isMine ? `
-        <span style="font-size:0.8em; color:#ccc;">🤍</span>
-    ` : ''}
+        </span>
+        <div id="likes-tip-${s.id}" style="
+            display:none;
+            position:absolute;
+            bottom:130%;
+            left:50%;
+            transform:translateX(-50%);
+            background:white;
+            border:2px solid #f48fb1;
+            border-radius:12px;
+            padding:10px 14px;
+            white-space:nowrap;
+            box-shadow:0 4px 15px rgba(233,30,99,0.25);
+            z-index:9999;
+            font-size:0.8em;
+            color:#880e4f;
+            font-weight:normal;
+        ">
+            💌 ${likerNames.join(' | ')}
+            <div style="position:absolute; bottom:-8px; left:50%; transform:translateX(-50%);
+                width:0; height:0; border-left:8px solid transparent; 
+                border-right:8px solid transparent; border-top:8px solid #f48fb1;"></div>
+        </div>
+    </div>
+` : isMine ? `
+    <span style="font-size:0.8em; color:#ccc;">🤍</span>
+` : ''}
 </div>
                     <div style="color:#666; font-size:0.95em;">
                         כיתה ${s.className}
