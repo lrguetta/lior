@@ -714,9 +714,23 @@ function updateView() {
                     ${noteHtml}
                 </div>
 
-                <div style="font-size:0.75em; color:#999; text-align:center;">
-                    לחץ לחזרה
-                </div>
+                ${isMine ? ` // הוספת הערות בגב הכרטיס
+    <div style="margin-top:8px; border-top:1px solid #c8e6c9; padding-top:8px;">
+        <div style="font-size:0.85em; color:#2e7d32; font-weight:bold; margin-bottom:5px;">✏️ ההערה שלי:</div>
+        <textarea id="note-${s.id}" 
+            onclick="event.stopPropagation()" 
+            style="width:100%; height:60px; font-size:0.85em; border-radius:6px; border:1px solid #a5d6a7; resize:none; padding:6px; box-sizing:border-box;"
+            placeholder="כתוב הערה קצרה על עצמך...">${s.personalNote || ''}</textarea>
+        <button onclick="event.stopPropagation(); savePersonalNote('${s.id}')" 
+            style="width:100%; margin-top:5px; background:#4caf50; padding:6px; font-size:0.85em;">
+            שמור הערה 💾
+        </button>
+    </div>
+` : `
+    <div style="font-size:0.75em; color:#999; text-align:center;">
+        לחץ לחזרה
+    </div>
+`}
 
             </div>
             </div>
