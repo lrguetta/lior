@@ -420,6 +420,11 @@ let allSubmissions = {};
 let allTasks = [];
 let editingTaskId = null;    
 let currentTaskToSubmit = null;
+    db.ref('tasks').on('value', (snap) => {
+    const data = snap.val();
+    allTasks = data ? Object.values(data) : [];
+    if (currentUser) renderTasks();
+});
 
 // האזנה ללוח מודעות
 db.ref('announcements').on('value', (snap) => {
