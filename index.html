@@ -300,11 +300,13 @@ button {
         <button onclick="checkAdmin()" style="width:90%;">כניסת מנהל 🔑</button>
     </div>
     <hr style="margin:20px 0;">
-    <div id="student-login-area">
+   <div id="student-login-area">
         <p>כניסת תלמידים:</p>
         <select id="studentSelect" style="width:90%; margin-bottom:10px;">
             <option value="">טוען רשימה...</option>
         </select>
+        <input type="password" id="studentPass" placeholder="סיסמה (בפעם ה-1: זו תהיה הסיסמתך הקבועה!)" style="width:90%; margin-bottom:10px; padding:12px; border-radius:10px; border:1px solid #ddd; box-sizing:border-box;">
+        
         <button onclick="studentLogin()" style="width:90%; background-color:#1976d2;">אני רוצה להיכנס! ✨</button>
     </div>
 </div>
@@ -504,13 +506,34 @@ function checkAdmin() {
 
 function studentLogin() {
     const id = document.getElementById('studentSelect').value;
-    if (!id) { alert('בחר שם!'); return; }
+    const passInput = document.getElementById('studentPass').value.trim();
+
+    if (!id) { alert('בחר שם מהרשימה!'); return; }
+    if (!passInput) { alert('חובה להזין סיסמה!'); return; }
     
     const student = allStudents.find(s => s.id === id);
     if (!student) { alert("שגיאה: תלמיד לא נמצא"); return; }
 
+    // לוגיקת בדיקת סיסמה
+    if (!student.password) {
+        // התחברות ראשונה - הגדרת סיסמה
+        if(confirm("זוהי הכניסה הראשונה שלך עם סיסמה. האם לשמור את '" + passInput + "' כסיסמה הקבועה שלך להמשך השנה?")) {
+            // שומרים את הסיסמה במסד הנתונים
+            db.ref('students/' + student.id).update({ password: passInput });
+            alert("הסיסמה נשמרה בהצלחה! זכור אותה לפעם הבאה.");
+        } else {
+            return; // התלמיד ביטל, לא ממשיכים בהתחברות
+        }
+    } else if (student.password !== passInput) {
+        // התחברות חוזרת - סיסמה שגויה
+        alert('סיסמה שגויה! נסה שוב (או פנה למורה אם שכחת).');
+        return;
+    }
+
+    // אם הגענו לכאן - הכל תקין, מתחברים!
     currentUser = student.id;
     localStorage.setItem('farm_user_id', student.id);
+    document.getElementById('studentPass').value = ''; // ניקוי השדה
     startApp();
 }
 
