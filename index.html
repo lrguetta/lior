@@ -1186,22 +1186,24 @@ function approveSub(subId, studentId, multiplier = 1) {
 
         db.ref('students/' + studentId).update({ lastNote: null });
 
-        let remainingXP = rewardXP;
-        let currentXP = s.xp;
-        let currentLevel = s.level;
-
-        while (remainingXP > 0) {
-            const add = Math.min(10, remainingXP);
-            addXP(studentId, currentXP, currentLevel);
-            currentXP += add;
-            remainingXP -= add;
-
-            if (currentXP >= 100) {
-                currentLevel++;
-                currentXP = 0;
-            }
+        // חישוב ה-XP והרמות החדשות בצורה מרוכזת
+        let newTotalXP = s.xp + rewardXP;
+        let newLevel = s.level;
+        
+        // כל 100 XP הם רמה
+        while (newTotalXP >= 100) {
+            newLevel++;
+            newTotalXP -= 100;
         }
 
+        // עדכון אחד סופי למסד הנתונים - זה יפתור את התקלה
+        db.ref('students/' + studentId).update({
+            xp: newTotalXP,
+            level: newLevel
+        }).then(() => {    
+            // רענון התצוגה אצלך בלוח הניהול כדי לראות את השינוי מיד
+            if (typeof loadAdminData === "function") loadAdminData();
+        });
         submissionRef.remove();
     });
 }
