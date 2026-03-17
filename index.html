@@ -391,10 +391,20 @@ button {
 
     <div id="task-builder" style="display:none; width:100%; background:#f1f8e9; padding:15px; border-radius:10px; border:1px solid #c5e1a5; text-align:right; box-sizing:border-box;">
         <h4 style="margin-top:0;">הגדרות המטלה</h4>
-        <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
+       <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap; align-items:center;">
             <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="flex:2;">
-            <input type="date" id="taskDeadline" style="flex:1;">
-            <input type="number" id="taskXP" placeholder="XP למטלה" value="20" style="width:100px;">
+            <input type="date" id="taskDeadline" style="flex:1;" title="תאריך (אופציונלי)">
+            <input type="number" id="taskXP" placeholder="XP" value="20" style="width:70px;">
+            <button type="button" onclick="document.getElementById('time-limit-container').style.display='flex'" style="background:#8e24aa; padding:12px;">⏲️ הגבלת זמן</button>
+        </div>
+        
+        <div id="time-limit-container" style="display:none; gap:10px; margin-bottom:15px; background:#e1bee7; padding:10px; border-radius:8px; align-items:center;">
+            <strong>🕒 הגבלת שעות:</strong>
+            <span>משעה:</span>
+            <input type="time" id="taskStartTime" style="flex:1;">
+            <span>עד שעה:</span>
+            <input type="time" id="taskEndTime" style="flex:1;">
+            <button type="button" onclick="document.getElementById('time-limit-container').style.display='none'; document.getElementById('taskStartTime').value=''; document.getElementById('taskEndTime').value='';" style="background:#d32f2f; padding:8px;">ביטול שעון</button>
         </div>
         
         <div id="questions-constructor"></div>
@@ -908,11 +918,6 @@ function toggleLike(studentId) {
     });
 }
 
-function toggleTaskBuilder() {
-    const builder = document.getElementById('task-builder');
-    builder.style.display = builder.style.display === 'none' ? 'block' : 'none';
-}
-
 function addQuestionField(existingType = null, qData = null) {
     const type = existingType || document.getElementById('questionType').value;
     const container = document.getElementById('questions-constructor');
@@ -980,8 +985,7 @@ function addQuestionField(existingType = null, qData = null) {
             });
         }
     }
-}
-function toggleTaskBuilder() {
+}function toggleTaskBuilder() {
     const builder = document.getElementById('task-builder');
     if (builder.style.display === 'none') {
         builder.style.display = 'block';
@@ -991,6 +995,10 @@ function toggleTaskBuilder() {
         editingTaskId = null;
         document.getElementById('taskTitle').value = '';
         document.getElementById('taskDeadline').value = '';
+        document.getElementById('taskXP').value = '20';
+        document.getElementById('taskStartTime').value = '';
+        document.getElementById('taskEndTime').value = '';
+        document.getElementById('time-limit-container').style.display = 'none';
         document.getElementById('questions-constructor').innerHTML = '';
         const saveBtn = document.querySelector('#task-builder button[onclick="saveNewTask()"]');
         if(saveBtn) saveBtn.innerHTML = 'פרסם מטלה 🚀';
@@ -1001,6 +1009,8 @@ function saveNewTask() {
     const title = document.getElementById('taskTitle').value;
     const deadline = document.getElementById('taskDeadline').value;
     const xp = parseInt(document.getElementById('taskXP').value) || 20;
+    const startTime = document.getElementById('taskStartTime').value;
+    const endTime = document.getElementById('taskEndTime').value;
     const qNodes = document.querySelectorAll('.question-item');
 
     if (!title) return alert("חובה להזין כותרת למטלה!");
@@ -1021,57 +1031,64 @@ function saveNewTask() {
         return qObj;
     });
 
-    // שימוש במזהה הקיים אם עורכים, או יצירת חדש
     const id = editingTaskId ? editingTaskId : Date.now().toString();
-    
-    db.ref('tasks/' + id).set({ id, title, deadline, xp, questions });
+    // שומרים גם את זמני ההתחלה והסיום במסד הנתונים
+    db.ref('tasks/' + id).set({ id, title, deadline, xp, startTime, endTime, questions });
     
     // איפוס וסגירה
     document.getElementById('taskTitle').value = '';
     document.getElementById('taskDeadline').value = '';
     document.getElementById('taskXP').value = '20';
+    document.getElementById('taskStartTime').value = '';
+    document.getElementById('taskEndTime').value = '';
+    document.getElementById('time-limit-container').style.display = 'none';
     document.getElementById('questions-constructor').innerHTML = '';
     
     const saveBtn = document.querySelector('#task-builder button[onclick="saveNewTask()"]');
     if(saveBtn) saveBtn.innerHTML = 'פרסם מטלה 🚀';
-    
     document.getElementById('task-builder').style.display = 'none';
     
     alert(editingTaskId ? "המטלה עודכנה בהצלחה! 💾" : "המטלה פורסמה בהצלחה! 🚀");
-    editingTaskId = null; // סיום מצב עריכה
+    editingTaskId = null;
 }
-    function editTask(id) {
+
+function editTask(id) {
     const task = allTasks.find(t => t.id === id);
     if (!task) return;
 
     editingTaskId = id;
     
-    // פתיחת חלונית המטלות
     document.getElementById('task-builder').style.display = 'block';
-    
-    // מילוי הנתונים הקיימים
     document.getElementById('taskTitle').value = task.title || '';
     document.getElementById('taskDeadline').value = task.deadline || '';
     document.getElementById('taskXP').value = task.xp || 20;
     
-    // ניקוי השאלות הקיימות מהתצוגה כדי לטעון מחדש
+    // טעינת שעות אם הוגדרו
+    if (task.startTime || task.endTime) {
+        document.getElementById('time-limit-container').style.display = 'flex';
+        document.getElementById('taskStartTime').value = task.startTime || '';
+        document.getElementById('taskEndTime').value = task.endTime || '';
+    } else {
+        document.getElementById('time-limit-container').style.display = 'none';
+        document.getElementById('taskStartTime').value = '';
+        document.getElementById('taskEndTime').value = '';
+    }
+    
     const container = document.getElementById('questions-constructor');
     container.innerHTML = '';
     
-    // טעינת השאלות מהמטלה
     if (task.questions) {
         task.questions.forEach(q => {
             addQuestionField(q.type, q);
         });
     }
     
-    // שינוי הטקסט של כפתור הפרסום
     const saveBtn = document.querySelector('#task-builder button[onclick="saveNewTask()"]');
     if(saveBtn) saveBtn.innerHTML = 'עדכן מטלה 💾';
     
-    // גלילה חלקה למעלה לאזור העריכה
     document.getElementById('task-builder').scrollIntoView({ behavior: 'smooth' });
 }
+
 function renderTasks() {
     const list = document.getElementById('tasks-list');
     if (!list) return;
@@ -1092,16 +1109,17 @@ function renderTasks() {
             div.className = 'task-card';
             
             let actionBtn;
-           if (currentUser === 'admin') {
-    actionBtn = `
-        <button onclick="editTask('${task.id}')" style="background:#ff9800; margin-left:5px;">ערוך מטלה ✏️</button>
-        <button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק מטלה 🗑️</button>
-    `;
-} else if (alreadySubmitted) {
+            if (currentUser === 'admin') {
+                actionBtn = `
+                    <button onclick="editTask('${task.id}')" style="background:#ff9800; margin-left:5px;">ערוך מטלה ✏️</button>
+                    <button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק מטלה 🗑️</button>
+                `;
+            } else if (alreadySubmitted) {
                 actionBtn = `<button disabled style="background:#999; cursor:not-allowed;">כבר הגשת ✔️</button>`;
             } else {
                 const safeTitle = task.title.replace(/'/g, '׳').replace(/"/g, '״');
-    actionBtn = `<button onclick="openSubmitModal('${task.id}', '${safeTitle}')" style="background:#1976d2;">פתח משימה ✍️</button>`;
+                // הוספנו מזהה מיוחד לכפתור התלמיד כדי שהטיימר יוכל לנעול אותו
+                actionBtn = `<button id="student-btn-${task.id}" onclick="openSubmitModal('${task.id}', '${safeTitle}')" style="background:#1976d2;">פתח משימה ✍️</button>`;
             }
 
             div.innerHTML = `
@@ -1109,13 +1127,17 @@ function renderTasks() {
                     <h4>${task.title}</h4>
                     <div style="font-size:0.85em;color:#555; margin-top:4px;">
                         🎁 פרס: ${task.xp || 20} XP
-                        ${task.deadline ? `<br>⏰ להגשה עד: ${task.deadline}` : ''}
+                        ${task.deadline ? `<br>⏰ תאריך יעד: ${task.deadline}` : ''}
+                        ${(task.startTime && task.endTime) ? `<br>⏳ <span id="timer-${task.id}" style="color:#d32f2f; font-weight:bold;">מחשב זמנים...</span>` : ''}
                     </div>
                 </div>
                 <div>${actionBtn}</div>
             `;
             list.appendChild(div);
         });
+        
+        // קריאה ראשונית לטיימרים מיד אחרי טעינת המטלות
+        updateAllTimers();
     });
 }
 
@@ -1345,6 +1367,62 @@ window.rejectSub = function(subId) {
         });
     }
 };
+function updateAllTimers() {
+    if (currentUser === 'admin') return; // המורה לא צריך טיימרים
+    
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    const currentDay = now.getDate();
+
+    allTasks.forEach(task => {
+        if (!task.startTime || !task.endTime) return;
+
+        const timerSpan = document.getElementById(`timer-${task.id}`);
+        const actionBtn = document.getElementById(`student-btn-${task.id}`);
+        
+        if (!timerSpan || !actionBtn) return; // הכפתור לא קיים (למשל אם כבר הוגש)
+
+        const [startHours, startMins] = task.startTime.split(':').map(Number);
+        const [endHours, endMins] = task.endTime.split(':').map(Number);
+
+        // יצירת תאריכים להיום עם השעות שהוגדרו
+        const startDate = new Date(currentYear, currentMonth, currentDay, startHours, startMins, 0);
+        const endDate = new Date(currentYear, currentMonth, currentDay, endHours, endMins, 0);
+
+        if (now < startDate) {
+            // המטלה עדיין לא נפתחה
+            const diffMs = startDate - now;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffSecs = Math.floor((diffMs % 60000) / 1000);
+            timerSpan.innerText = `תיפתח בעוד ${String(diffMins).padStart(2, '0')}:${String(diffSecs).padStart(2, '0')} דקות`;
+            timerSpan.style.color = "#ff9800";
+            actionBtn.disabled = true;
+            actionBtn.innerText = "טרם נפתח 🔒";
+            actionBtn.style.background = "#999";
+        } else if (now >= startDate && now < endDate) {
+            // המטלה פעילה עכשיו! ספירה לאחור לסיום
+            const diffMs = endDate - now;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffSecs = Math.floor((diffMs % 60000) / 1000);
+            timerSpan.innerText = `נותרו: ${String(diffMins).padStart(2, '0')}:${String(diffSecs).padStart(2, '0')} לסיום!`;
+            timerSpan.style.color = "#d32f2f";
+            actionBtn.disabled = false;
+            actionBtn.innerText = "פתח משימה ✍️";
+            actionBtn.style.background = "#1976d2";
+        } else {
+            // הזמן עבר
+            timerSpan.innerText = "הזמן להגשה נגמר!";
+            timerSpan.style.color = "#555";
+            actionBtn.disabled = true;
+            actionBtn.innerText = "הזמן נגמר! ⏳";
+            actionBtn.style.background = "#555";
+        }
+    });
+}
+
+// הפעלת הטיימר כל שנייה אחת
+setInterval(updateAllTimers, 1000);
 </script>
 </body>
 </html>
