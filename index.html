@@ -392,10 +392,11 @@ button {
     <div id="task-builder" style="display:none; width:100%; background:#f1f8e9; padding:15px; border-radius:10px; border:1px solid #c5e1a5; text-align:right; box-sizing:border-box;">
         <h4 style="margin-top:0;">הגדרות המטלה</h4>
         <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
-            <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="flex:2;">
-            <input type="date" id="taskDeadline" style="flex:1;">
-            <input type="number" id="taskXP" placeholder="XP למטלה" value="20" style="width:100px;">
-        </div>
+    <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="flex:2;">
+    <input type="date" id="taskDeadline" title="תאריך סיום" style="flex:1;">
+    <input type="time" id="taskDeadlineTime" title="שעת סיום" style="flex:1;">
+    <input type="number" id="taskXP" placeholder="XP למטלה" value="20" style="width:100px;">
+</div>
         
         <div id="questions-constructor"></div>
 
@@ -911,6 +912,8 @@ function toggleLike(studentId) {
 function toggleTaskBuilder() {
     const builder = document.getElementById('task-builder');
     builder.style.display = builder.style.display === 'none' ? 'block' : 'none';
+    document.getElementById('taskDeadline').value = '';
+    document.getElementById('taskDeadlineTime').value = ''; // שורה חדשה
 }
 
 function addQuestionField(existingType = null, qData = null) {
@@ -1000,9 +1003,9 @@ function toggleTaskBuilder() {
 function saveNewTask() {
     const title = document.getElementById('taskTitle').value;
     const deadline = document.getElementById('taskDeadline').value;
+    const deadlineTime = document.getElementById('taskDeadlineTime').value; // שורה חדשה
     const xp = parseInt(document.getElementById('taskXP').value) || 20;
-    const qNodes = document.querySelectorAll('.question-item');
-
+    
     if (!title) return alert("חובה להזין כותרת למטלה!");
     if (qNodes.length === 0) return alert("חובה להוסיף לפחות שאלה אחת!");
 
@@ -1024,11 +1027,12 @@ function saveNewTask() {
     // שימוש במזהה הקיים אם עורכים, או יצירת חדש
     const id = editingTaskId ? editingTaskId : Date.now().toString();
     
-    db.ref('tasks/' + id).set({ id, title, deadline, xp, questions });
+    db.ref('tasks/' + id).set({ id, title, deadline, deadlineTime, xp, questions });    
     
     // איפוס וסגירה
     document.getElementById('taskTitle').value = '';
-    document.getElementById('taskDeadline').value = '';
+   document.getElementById('taskDeadline').value = '';
+    document.getElementById('taskDeadlineTime').value = ''; // שורה חדשה
     document.getElementById('taskXP').value = '20';
     document.getElementById('questions-constructor').innerHTML = '';
     
@@ -1043,7 +1047,7 @@ function saveNewTask() {
     function editTask(id) {
     const task = allTasks.find(t => t.id === id);
     if (!task) return;
-
+    
     editingTaskId = id;
     
     // פתיחת חלונית המטלות
@@ -1053,6 +1057,7 @@ function saveNewTask() {
     document.getElementById('taskTitle').value = task.title || '';
     document.getElementById('taskDeadline').value = task.deadline || '';
     document.getElementById('taskXP').value = task.xp || 20;
+    document.getElementById('taskDeadlineTime').value = task.deadlineTime || ''; // שורה חדשה
     
     // ניקוי השאלות הקיימות מהתצוגה כדי לטעון מחדש
     const container = document.getElementById('questions-constructor');
@@ -1109,7 +1114,7 @@ function renderTasks() {
                     <h4>${task.title}</h4>
                     <div style="font-size:0.85em;color:#555; margin-top:4px;">
                         🎁 פרס: ${task.xp || 20} XP
-                        ${task.deadline ? `<br>⏰ להגשה עד: ${task.deadline}` : ''}
+                           ${task.deadline ? `<br>⏰ להגשה עד: ${task.deadline} ${task.deadlineTime ? 'בשעה ' + task.deadlineTime : ''}` : ''}
                     </div>
                 </div>
                 <div>${actionBtn}</div>
@@ -1122,6 +1127,25 @@ function renderTasks() {
 function deleteTask(id) { if(confirm('למחוק את המטלה?')) db.ref('tasks/' + id).remove(); }
 
 function openSubmitModal(id, title) {
+    const task = allTasks.find(t => t.id === id);
+    
+    // -- תחילת בדיקת זמנים --
+    if (task.deadline) {
+        const now = new Date();
+        // חיבור התאריך והשעה לאובייקט זמן, ואם אין שעה נגדיר את סוף היום
+        const deadlineString = task.deadline + (task.deadlineTime ? 'T' + task.deadlineTime : 'T23:59:59');
+        const deadlineDate = new Date(deadlineString);
+        
+        if (now > deadlineDate) {
+            alert("נגמר הזמן! ⏰\nלא ניתן להגיש יותר את המטלה הזו.");
+            return; // עוצר את הפונקציה ולא פותח את החלון
+        }
+    }
+    // -- סוף בדיקת זמנים --
+
+    currentTaskToSubmit = id;
+    document.getElementById('modal-task-title').innerText = title;
+    // ... המשך הקוד הקיים ...
     currentTaskToSubmit = id;
     document.getElementById('modal-task-title').innerText = title;
     
@@ -1177,6 +1201,24 @@ d.innerHTML += `
 
 function closeModal() { document.getElementById('submit-modal').style.display = 'none'; }
 function sendSubmission() {
+    const task = allTasks.find(t => t.id === currentTaskToSubmit);
+    
+    // -- תחילת בדיקת זמנים בשליחה --
+    if (task.deadline) {
+        const now = new Date();
+        const deadlineString = task.deadline + (task.deadlineTime ? 'T' + task.deadlineTime : 'T23:59:59');
+        const deadlineDate = new Date(deadlineString);
+        
+        if (now > deadlineDate) {
+            alert("נגמר הזמן! ⏰\nהמטלה ננעלה ולא ניתן לשלוח את התשובות.");
+            closeModal();
+            return;
+        }
+    }
+    // -- סוף בדיקת זמנים --
+
+    const answers = [];
+    let allAnswered = true;
     const task = allTasks.find(t => t.id === currentTaskToSubmit);
     const answers = [];
     let allAnswered = true;
