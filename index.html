@@ -566,7 +566,7 @@ button {
 <div id="welcome-image-overlay" onclick="handleOverlayClick(event)">
     <div id="welcome-image-box">
         <button id="close-welcome-img" onclick="closeWelcomeImage()" title="סגור">✕</button>
-        <img id="welcome-img-el" src="" alt="תמונת הברכה">
+        <div id="welcome-media-container"></div>
         <div id="welcome-img-caption"></div>
     </div>
 </div>
@@ -1590,10 +1590,35 @@ function showWelcomeImageIfExists() {
     db.ref('welcomeImage').once('value', (snap) => {
         const data = snap.val();
         if (!data || !data.url) return;
-        const overlay = document.getElementById('welcome-image-overlay');
-        const imgEl   = document.getElementById('welcome-img-el');
-        const caption = document.getElementById('welcome-img-caption');
-        imgEl.src = data.url;
+
+        const overlay   = document.getElementById('welcome-image-overlay');
+        const container = document.getElementById('welcome-media-container');
+        const caption   = document.getElementById('welcome-img-caption');
+
+        const isYoutube    = data.url.includes('youtube.com') || data.url.includes('youtu.be');
+        const isStreamable = data.url.includes('streamable.com');
+
+        if (isYoutube) {
+            const embedUrl = data.url
+                .replace('watch?v=', 'embed/')
+                .replace('youtu.be/', 'www.youtube.com/embed/');
+            container.innerHTML = `<iframe src="${embedUrl}?autoplay=1"
+                width="560" height="315"
+                style="max-width:85vw; border-radius:16px; border:none;"
+                allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+
+        } else if (isStreamable) {
+            const embedUrl = data.url.replace('streamable.com/', 'streamable.com/e/');
+            container.innerHTML = `<iframe src="${embedUrl}"
+                width="560" height="315"
+                style="max-width:85vw; border-radius:16px; border:none;"
+                allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+
+        } else {
+            container.innerHTML = `<img src="${data.url}" alt="תמונה"
+                style="display:block; max-width:85vw; max-height:80vh; object-fit:contain; border-radius:16px;">`;
+        }
+
         caption.innerText     = data.caption || '';
         caption.style.display = data.caption ? 'block' : 'none';
         overlay.classList.add('active');
