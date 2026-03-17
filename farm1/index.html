@@ -328,54 +328,6 @@ button {
     position: relative; 
     text-align: right; 
 }
-
-/* ---- הודעה קופצת לתלמידים ---- */
-#popup-announcement-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.65);
-    z-index: 3000;
-    justify-content: center;
-    align-items: center;
-}
-#popup-announcement-overlay.active {
-    display: flex;
-}
-#popup-announcement-box {
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 8px 40px rgba(0,0,0,0.4);
-    border: 3px solid #ff9800;
-    max-width: 90vw;
-    max-height: 90vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    min-width: 280px;
-}
-#popup-announcement-img {
-    max-width: 100%;
-    max-height: 70vh;
-    object-fit: contain;
-    display: block;
-}
-#popup-close-btn {
-    margin: 12px auto;
-    background: #e65100;
-    color: white;
-    border: none;
-    border-radius: 12px;
-    padding: 10px 35px;
-    font-size: 1.1em;
-    font-weight: bold;
-    cursor: pointer;
-    font-family: inherit;
-    transition: background 0.2s;
-}
-#popup-close-btn:hover { background: #bf360c; }
 </style>
 </head>
 <body>
@@ -432,23 +384,6 @@ button {
     </div>
 
     <hr style="width:100%; margin: 15px 0;">
-    <div style="width:100%; background:#e8f5e9; padding:15px; border-radius:10px; border:1px solid #a5d6a7; text-align:right; box-sizing:border-box;">
-        <h4 style="margin:0 0 10px 0; color:#2e7d32;">🖼️ הודעה קופצת לתלמידים (תמונה)</h4>
-        <p style="margin:0 0 10px 0; font-size:0.9em; color:#555;">העלה תמונה שתוצג אוטומטית לכל תלמיד מיד אחרי כניסה למערכת. התלמיד יוכל לסגור אותה.</p>
-        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-            <label style="background:#1976d2; color:white; padding:10px 18px; border-radius:10px; cursor:pointer; font-weight:bold; font-size:15px;">
-                📂 בחר תמונה
-                <input type="file" id="popupImageFile" accept="image/*" style="display:none;" onchange="previewPopupImage(event)">
-            </label>
-            <button onclick="publishPopupImage()" style="background:#2e7d32; padding:10px 18px;">פרסם תמונה לתלמידים 🚀</button>
-            <button onclick="clearPopupImage()" style="background:#c62828; padding:10px 14px;">הסר הודעה קופצת 🗑️</button>
-        </div>
-        <div id="popup-preview-container" style="margin-top:12px; display:none;">
-            <p style="margin:0 0 6px 0; font-size:0.88em; color:#555;">תצוגה מקדימה:</p>
-            <img id="popup-preview-img" style="max-width:100%; max-height:300px; border-radius:10px; border:2px solid #a5d6a7; object-fit:contain; display:block;">
-        </div>
-        <div id="popup-current-status" style="margin-top:10px; font-size:0.88em; color:#555;">בודק סטטוס...</div>
-    </div>
     
     <div style="width:100%; text-align:right;">
         <button onclick="toggleTaskBuilder()" style="background-color:#1976d2; margin-bottom:10px;">יצירת מטלה חדשה ➕</button>
@@ -506,14 +441,6 @@ button {
     <div style="display:flex; gap:10px;">
         <button onclick="sendSubmission()" style="flex:1; background:#4caf50;">שלח הגשה 🚀</button>
         <button onclick="closeModal()" style="flex:1; background:#999;">ביטול</button>
-    </div>
-</div>
-
-<!-- הודעה קופצת לתלמידים -->
-<div id="popup-announcement-overlay">
-    <div id="popup-announcement-box">
-        <img id="popup-announcement-img" src="" alt="הודעה">
-        <button id="popup-close-btn" onclick="closePopupAnnouncement()">הבנתי, סגור ✕</button>
     </div>
 </div>
 
@@ -588,81 +515,6 @@ function saveAnnouncements() {
         alert("לוח המודעות עודכן ופורסם לכולם! 📢");
     });
 }
-
-// ---- הודעה קופצת עם תמונה ----
-let popupImageBase64 = null;
-
-function previewPopupImage(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        popupImageBase64 = e.target.result;
-        const previewImg = document.getElementById('popup-preview-img');
-        const previewContainer = document.getElementById('popup-preview-container');
-        previewImg.src = popupImageBase64;
-        previewContainer.style.display = 'block';
-    };
-    reader.readAsDataURL(file);
-}
-
-function publishPopupImage() {
-    if (!popupImageBase64) {
-        alert("בחר תמונה קודם!");
-        return;
-    }
-    // שמירה ב-Firebase כ-base64
-    db.ref('popupAnnouncement').set({
-        image: popupImageBase64,
-        publishedAt: Date.now()
-    }).then(() => {
-        alert("ההודעה הקופצת פורסמה בהצלחה לכל התלמידים! 🎉");
-        updatePopupStatus();
-    });
-}
-
-function clearPopupImage() {
-    if (!confirm("האם להסיר את ההודעה הקופצת? התלמידים לא יראו אותה יותר.")) return;
-    db.ref('popupAnnouncement').remove().then(() => {
-        alert("ההודעה הקופצת הוסרה.");
-        document.getElementById('popup-preview-container').style.display = 'none';
-        document.getElementById('popupImageFile').value = '';
-        popupImageBase64 = null;
-        updatePopupStatus();
-    });
-}
-
-function updatePopupStatus() {
-    db.ref('popupAnnouncement').once('value').then(snap => {
-        const statusDiv = document.getElementById('popup-current-status');
-        if (!statusDiv) return;
-        const data = snap.val();
-        if (data && data.image) {
-            const date = new Date(data.publishedAt);
-            statusDiv.innerHTML = `✅ <strong>יש הודעה קופצת פעילה</strong> — פורסמה ב-${date.toLocaleDateString('he-IL')} ${date.toLocaleTimeString('he-IL', {hour:'2-digit',minute:'2-digit'})}`;
-            statusDiv.style.color = '#2e7d32';
-        } else {
-            statusDiv.innerText = "אין הודעה קופצת פעילה כרגע.";
-            statusDiv.style.color = '#888';
-        }
-    });
-}
-
-// הצגת ההודעה הקופצת לתלמיד
-function checkAndShowPopupAnnouncement() {
-    db.ref('popupAnnouncement').once('value').then(snap => {
-        const data = snap.val();
-        if (data && data.image) {
-            document.getElementById('popup-announcement-img').src = data.image;
-            document.getElementById('popup-announcement-overlay').classList.add('active');
-        }
-    });
-}
-
-function closePopupAnnouncement() {
-    document.getElementById('popup-announcement-overlay').classList.remove('active');
-}
-
 function toggleBoard() {
     const board = document.getElementById('announcements-board');
     const btn = document.getElementById('toggle-board');
@@ -781,12 +633,6 @@ function startApp() {
             const adminTextArea = document.getElementById('adminAnnouncementsText');
             if(adminTextArea) adminTextArea.value = text;
         });
-
-        // עדכון סטטוס הודעה קופצת בממשק הניהול
-        updatePopupStatus();
-    } else {
-        // לתלמיד - הצג הודעה קופצת אם יש
-        checkAndShowPopupAnnouncement();
     }
     
     updateView();
