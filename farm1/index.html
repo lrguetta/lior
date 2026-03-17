@@ -16,7 +16,81 @@ body {
     flex-direction: column; 
     align-items: center;
 }
+/* --- מודל תמונת הברכה --- */
+#welcome-image-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 3000;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(4px);
+    animation: fadeInOverlay 0.4s ease;
+}
+#welcome-image-overlay.active { display: flex; }
 
+@keyframes fadeInOverlay {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+#welcome-image-box {
+    position: relative;
+    max-width: 85vw;
+    max-height: 85vh;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes popIn {
+    from { transform: scale(0.7); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+}
+
+#welcome-image-box img {
+    display: block;
+    max-width: 85vw;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: 16px;
+}
+
+#close-welcome-img {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.3em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.2s;
+    line-height: 1;
+}
+#close-welcome-img:hover {
+    background: rgba(220,50,50,0.8);
+    transform: scale(1.1);
+}
+
+#welcome-img-caption {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.65));
+    color: white;
+    padding: 20px 20px 14px;
+    font-size: 1em;
+    text-align: center;
+    border-radius: 0 0 16px 16px;
+}
 /* ---- לוח מודעות (מה חדש) ---- */
 #announcements-board {
     position: fixed; 
@@ -382,6 +456,39 @@ button {
         <textarea id="adminAnnouncementsText" style="width:100%; height:80px; resize:vertical; margin-bottom:10px; padding:10px; border-radius:8px; border:1px solid #ffb74d;" placeholder="כתוב כאן את העדכונים החדשים..."></textarea>
         <button onclick="saveAnnouncements()" style="background:#ff9800; width:100%; padding:10px; font-size:1.1em;">עדכן לוח מודעות ופרסם לתלמידים 💾</button>
     </div>
+    <hr style="width:100%; margin: 15px 0;">
+<div style="width:100%; background:#e8eaf6; padding:15px; border-radius:10px; border:1px solid #9fa8da; text-align:right; box-sizing:border-box;">
+    <h4 style="margin:0 0 10px 0; color:#283593;">🖼️ תמונה שתופיע לתלמידים בכניסה</h4>
+
+    <div id="current-welcome-img-preview" style="margin-bottom:12px; display:none; text-align:center;">
+        <img id="preview-thumb" src="" alt="תצוגה מקדימה"
+             style="max-height:120px; max-width:100%; border-radius:8px; border:2px solid #9fa8da; object-fit:contain;">
+        <div style="font-size:0.8em; color:#555; margin-top:5px;">התמונה הנוכחית הפעילה</div>
+    </div>
+
+    <div style="font-size:0.85em; color:#3949ab; margin-bottom:6px;">
+        📎 העלה תמונה באתר PostImages ואז הדבק את הקישור הישיר כאן:
+    </div>
+
+    <input type="url" id="welcomeImgUrl"
+           placeholder="https://postimages.org/he/"
+           value="https://postimages.org/he/"
+           style="width:100%; margin-bottom:10px; box-sizing:border-box; direction:ltr; text-align:left;">
+
+    <input type="text" id="welcomeImgCaption"
+           placeholder="כיתוב מתחת לתמונה (אופציונלי)"
+           style="width:100%; margin-bottom:10px; box-sizing:border-box;">
+
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button onclick="publishWelcomeImageUrl()" style="flex:2; background:#283593; padding:11px; font-size:0.95em;">
+            פרסם תמונה 🚀
+        </button>
+        <button onclick="clearWelcomeImage()" style="flex:1; background:#c62828; padding:11px; font-size:0.95em;">
+            הסר 🗑️
+        </button>
+    </div>
+    <div id="upload-status" style="margin-top:8px; font-size:0.85em; color:#555; text-align:center;"></div>
+</div>
 
     <hr style="width:100%; margin: 15px 0;">
     
@@ -454,6 +561,14 @@ button {
         style="margin-top:15px; background:#e91e63; width:100%; padding:10px;">
         סגור 💕
     </button>
+</div>
+    <!-- מודל תמונת הברכה לתלמידים -->
+<div id="welcome-image-overlay" onclick="handleOverlayClick(event)">
+    <div id="welcome-image-box">
+        <button id="close-welcome-img" onclick="closeWelcomeImage()" title="סגור">✕</button>
+        <img id="welcome-img-el" src="" alt="תמונת הברכה">
+        <div id="welcome-img-caption"></div>
+    </div>
 </div>
     
 <script>
