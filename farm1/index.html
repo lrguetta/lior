@@ -749,7 +749,9 @@ function startApp() {
             if(adminTextArea) adminTextArea.value = text;
         });
     }
-    
+    if (currentUser !== 'admin') {
+    showWelcomeImageIfExists();
+}
     updateView();
     renderTasks();
 }
@@ -1535,6 +1537,82 @@ function updateAllTimers() {
         }
     });
 }
+    // ===== מערכת תמונת הברכה =====
+
+db.ref('welcomeImage').on('value', (snap) => {
+    const data = snap.val();
+    const preview = document.getElementById('current-welcome-img-preview');
+    const thumb   = document.getElementById('preview-thumb');
+    if (preview && thumb) {
+        if (data && data.url) {
+            thumb.src = data.url;
+            preview.style.display = 'block';
+            document.getElementById('welcomeImgUrl').value     = data.url;
+            document.getElementById('welcomeImgCaption').value = data.caption || '';
+        } else {
+            preview.style.display = 'none';
+            const urlInput = document.getElementById('welcomeImgUrl');
+            if (urlInput) urlInput.value = 'https://postimages.org/he/';
+        }
+    }
+});
+
+function publishWelcomeImageUrl() {
+    const url       = document.getElementById('welcomeImgUrl').value.trim();
+    const caption   = document.getElementById('welcomeImgCaption').value.trim();
+    const statusDiv = document.getElementById('upload-status');
+
+    if (!url || url === 'https://postimages.org/he/') {
+        alert('אנא הדבק קישור תמונה תקין!');
+        return;
+    }
+
+    statusDiv.innerText = '⏳ שומר...';
+    db.ref('welcomeImage').set({ url, caption, time: Date.now() }).then(() => {
+        statusDiv.innerText = '✅ התמונה פורסמה לכל התלמידים!';
+        document.getElementById('preview-thumb').src = url;
+        document.getElementById('current-welcome-img-preview').style.display = 'block';
+    }).catch(() => {
+        statusDiv.innerText = '❌ שגיאה בשמירה. בדוק את הקישור.';
+    });
+}
+
+function clearWelcomeImage() {
+    if (!confirm('להסיר את התמונה? התלמידים לא יראו אותה יותר.')) return;
+    db.ref('welcomeImage').remove().then(() => {
+        document.getElementById('upload-status').innerText = 'התמונה הוסרה.';
+        document.getElementById('current-welcome-img-preview').style.display = 'none';
+        document.getElementById('welcomeImgUrl').value = 'https://postimages.org/he/';
+    });
+}
+
+function showWelcomeImageIfExists() {
+    db.ref('welcomeImage').once('value', (snap) => {
+        const data = snap.val();
+        if (!data || !data.url) return;
+        const overlay = document.getElementById('welcome-image-overlay');
+        const imgEl   = document.getElementById('welcome-img-el');
+        const caption = document.getElementById('welcome-img-caption');
+        imgEl.src = data.url;
+        caption.innerText     = data.caption || '';
+        caption.style.display = data.caption ? 'block' : 'none';
+        overlay.classList.add('active');
+    });
+}
+
+function closeWelcomeImage() {
+    document.getElementById('welcome-image-overlay').classList.remove('active');
+}
+
+function handleOverlayClick(event) {
+    if (event.target === document.getElementById('welcome-image-overlay')) {
+        closeWelcomeImage();
+    }
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeWelcomeImage();
+});
 
 // הפעלת הטיימר כל שנייה אחת
 setInterval(updateAllTimers, 1000);
