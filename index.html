@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <title>חוות הטמגוצ'י - גרסת ניהול ותלמידים</title>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<!-- Appwrite SDK במקום Firebase -->
+<script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.2/dist/iife/sdk.js"></script>
 <style>
 body { 
     font-family: 'Segoe UI', Tahoma, sans-serif;
@@ -117,22 +117,19 @@ body {
     }
 }
 
-/* לוח ממוזער */
 #announcements-board.minimized {
     width: 40px;
     height: 40px;
     overflow: hidden;
     padding: 0;
-    border-radius: 50%; /* הופך לעיגול קטן */
+    border-radius: 50%;
     cursor: pointer;
 }
 
-/* הסתרת התוכן בזמן מיזעור */
 #announcements-board.minimized > *:not(#toggle-board) {
     display: none;
 }
 
-/* עיצוב כפתור המיזעור */
 #toggle-board {
     background: #ff9800;
     color: white;
@@ -268,7 +265,6 @@ button {
 .like-btn:hover { transform: scale(1.3); }
 .like-btn.liked { filter: drop-shadow(0 0 4px red); }
 
-/* בלון לייקים */
 #likes-popup {
     display: none;
     position: fixed;
@@ -405,6 +401,10 @@ button {
 </style>
 </head>
 <body>
+    <!-- כפתור התנתקות צף לתלמידים -->
+<div id="logout-btn-float" style="display:none; position:fixed; bottom:20px; left:20px; z-index:200;">
+    <button onclick="logout()" style="background:#c62828; border-radius:50px; padding:10px 18px; font-size:0.9em; box-shadow:0 4px 10px rgba(0,0,0,0.2);">🚪 התנתק</button>
+</div>
 
 <div id="announcements-board">
     <button id="toggle-board" onclick="toggleBoard()" title="מזער לוח">−</button>
@@ -419,13 +419,12 @@ button {
         <button onclick="checkAdmin()" style="width:90%;">כניסת מנהל 🔑</button>
     </div>
     <hr style="margin:20px 0;">
-   <div id="student-login-area">
+    <div id="student-login-area">
         <p>כניסת תלמידים:</p>
         <select id="studentSelect" style="width:90%; margin-bottom:10px;">
             <option value="">טוען רשימה...</option>
         </select>
         <input type="password" id="studentPass" placeholder="סיסמה (בפעם ה-1: זו תהיה הסיסמתך הקבועה!)" style="width:90%; margin-bottom:10px; padding:12px; border-radius:10px; border:1px solid #ddd; box-sizing:border-box;">
-        
         <button onclick="studentLogin()" style="width:90%; background-color:#1976d2;">אני רוצה להיכנס! ✨</button>
     </div>
 </div>
@@ -447,7 +446,7 @@ button {
             <option value="level">מיין לפי רמה</option>
             <option value="class">מיין לפי כיתה</option>
         </select>
-        <button onclick="location.reload()" style="background:#555;">יציאה</button>
+    <button onclick="logout()" style="background:#c62828;">התנתק 🚪</button>
     </div>
 
     <hr style="width:100%; margin: 15px 0;">
@@ -475,14 +474,11 @@ button {
                 <img id="preview-thumb" src="" alt="תצוגה מקדימה" style="max-height:120px; max-width:100%; border-radius:8px; border:2px solid #9fa8da; object-fit:contain;">
                 <div style="font-size:0.8em; color:#555; margin-top:5px;">התמונה הנוכחית הפעילה</div>
             </div>
-
             <div style="font-size:0.85em; color:#3949ab; margin-bottom:6px;">
                 📎 העלה תמונה באתר PostImages ואז הדבק את הקישור הישיר כאן:
             </div>
-
             <input type="url" id="welcomeImgUrl" placeholder="https://postimages.org/he/" value="https://postimages.org/he/" style="width:100%; margin-bottom:10px; box-sizing:border-box; direction:ltr; text-align:left;">
             <input type="text" id="welcomeImgCaption" placeholder="כיתוב מתחת לתמונה (אופציונלי)" style="width:100%; margin-bottom:10px; box-sizing:border-box;">
-
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
                 <button onclick="publishWelcomeImageUrl()" style="flex:2; background:#283593; padding:11px; font-size:0.95em;">פרסם תמונה 🚀</button>
                 <button onclick="clearWelcomeImage()" style="flex:1; background:#c62828; padding:11px; font-size:0.95em;">הסר 🗑️</button>
@@ -506,7 +502,7 @@ button {
 
             <div id="task-builder" style="display:none; width:100%; background:#f1f8e9; padding:15px; border-radius:10px; border:1px solid #c5e1a5; text-align:right; box-sizing:border-box;">
                 <h4 style="margin-top:0;">הגדרות המטלה</h4>
-               <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap; align-items:center;">
+                <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap; align-items:center;">
                     <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="flex:2;">
                     <input type="date" id="taskDeadline" style="flex:1;" title="תאריך (אופציונלי)">
                     <input type="number" id="taskXP" placeholder="XP" value="20" style="width:70px;">
@@ -577,208 +573,273 @@ button {
         <div id="welcome-img-caption"></div>
     </div>
 </div>
-    
+
 <script>
+// ========== הגדרות Appwrite ==========
+const { Client, Databases, Query, ID } = Appwrite;
+
+const client = new Client()
+    .setEndpoint('https://cloud.appwrite.io/v1')
+    .setProject('69ba8bd200228971c224');
+
+const dbSvc = new Databases(client);
+
+// מזהים של הפרויקט
+const DB_ID  = '69ba8e8e00096cab7d99';
+const TABLES = {
+    students:      'students',
+    tasks:         'tasks',
+    submissions:   'submissions',
+    announcements: 'announcements',
+    welcomeImage:  'welcomeimage'   // שם ה-table שנתת
+};
+
+// ========== משתנים גלובליים ==========
+const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
+let allStudents = [];
+let allTasks    = [];
+let currentUser = localStorage.getItem('farm_user_id') || null;
+let editingTaskId       = null;
+let currentTaskToSubmit = null;
+
+// ========== פונקציית עזר ==========
 function safe(text) {
     if (typeof text !== 'string') return text;
-    // הפונקציה הזו הופכת כל מירכאה לגרסה ה"בטוחה" שלה (HTML Entities)
-    // הדפדפן יודע להציג אותן מושלם, אבל הן לא שוברות את הקוד
     return text.replace(/'/g, '&#39;').replace(/"/g, '&quot;');
 }
 
-const firebaseConfig = {
-    apiKey: "AIzaSyCtS0Gf9oNiRg6OTd3jyNaPxuWBFlWGIsE",
-    authDomain: "liorfarm.firebaseapp.com",
-    databaseURL: "https://liorfarm-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "liorfarm",
-    storageBucket: "liorfarm.firebasestorage.app",
-    messagingSenderId: "436063422896",
-    appId: "1:436063422896:web:4cb14fbcc036ba97676e75"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
-let allStudents = [];
-let currentUser = localStorage.getItem('farm_user_id') || null;
-if (currentUser) {
-    console.log("משתמש מזוהה מצאנו בזיכרון: " + currentUser);
+// המרת document של Appwrite לאובייקט תלמיד
+function docToStudent(doc) {
+    return {
+        id:           doc.$id,
+        name:         doc.name         || '',
+        className:    doc.className    || '',
+        xp:           doc.xp           ?? 0,
+        level:        doc.level        ?? 0,
+        type:         doc.type         || 'cat',
+        egg:          doc.egg          ?? 0,
+        password:     doc.password     || null,
+        personalNote: doc.personalNote || '',
+        lastNote:     doc.lastNote     || '',
+        likes:        doc.likes    ? JSON.parse(doc.likes)   : {},
+        history:      doc.history  ? JSON.parse(doc.history) : {}
+    };
 }
 
-let allSubmissions = {};
-let allTasks = [];
-let editingTaskId = null;    
-let currentTaskToSubmit = null;
+// המרת document של Appwrite לאובייקט מטלה
+function docToTask(doc) {
+    return {
+        id:        doc.$id,
+        title:     doc.title     || '',
+        deadline:  doc.deadline  || '',
+        xp:        doc.xp        ?? 20,
+        startTime: doc.startTime || '',
+        endTime:   doc.endTime   || '',
+        questions: doc.questions ? JSON.parse(doc.questions) : []
+    };
+}
 
-db.ref('tasks').on('value', (snap) => {
-    const data = snap.val();
-    allTasks = data ? Object.values(data) : [];
-    if (currentUser) renderTasks();
-});
+// ========== טעינת נתונים ==========
+async function loadStudents() {
+    try {
+        const res = await dbSvc.listDocuments(DB_ID, TABLES.students, [Query.limit(500), Query.orderAsc('name')]);
+        allStudents = res.documents.map(docToStudent);
+        renderStudentSelect();
+        if (currentUser) updateView();
+    } catch(e) { console.error('loadStudents error:', e); }
+}
 
-// האזנה ללוח מודעות
-db.ref('announcements').on('value', (snap) => {
-    const text = snap.val() || "אין הודעות חדשות כרגע.";
-    const contentDiv = document.getElementById('announcements-content');
-    if(contentDiv) contentDiv.innerText = text;
-    
-    if (currentUser === 'admin') {
-        const adminTextArea = document.getElementById('adminAnnouncementsText');
-        if (adminTextArea && adminTextArea.value === '') {
-            adminTextArea.value = text !== "אין הודעות חדשות כרגע." ? text : "";
+async function loadTasks() {
+    try {
+        const res = await dbSvc.listDocuments(DB_ID, TABLES.tasks, [Query.limit(200)]);
+        allTasks = res.documents.map(docToTask);
+        if (currentUser) renderTasks();
+    } catch(e) { console.error('loadTasks error:', e); }
+}
+
+async function loadAnnouncements() {
+    try {
+        const res = await dbSvc.listDocuments(DB_ID, TABLES.announcements, [Query.limit(1)]);
+        const text = (res.documents[0] && res.documents[0].text) ? res.documents[0].text : 'אין הודעות חדשות כרגע.';
+        const contentDiv = document.getElementById('announcements-content');
+        if (contentDiv) contentDiv.innerText = text;
+        if (currentUser === 'admin') {
+            const adminTA = document.getElementById('adminAnnouncementsText');
+            if (adminTA && adminTA.value === '') {
+                adminTA.value = text !== 'אין הודעות חדשות כרגע.' ? text : '';
+            }
         }
-    }
-});
-
-function saveAnnouncements() {
-    const text = document.getElementById('adminAnnouncementsText').value;
-    db.ref('announcements').set(text).then(() => {
-        alert("לוח המודעות עודכן ופורסם לכולם! 📢");
-    });
+    } catch(e) { console.error('loadAnnouncements error:', e); }
 }
 
+async function loadWelcomeImageForAdmin() {
+    try {
+        const res = await dbSvc.listDocuments(DB_ID, TABLES.welcomeImage, [Query.limit(1)]);
+        const data = res.documents[0];
+        const preview = document.getElementById('current-welcome-img-preview');
+        const thumb   = document.getElementById('preview-thumb');
+        if (data && data.url) {
+            if (thumb)   thumb.src = data.url;
+            if (preview) preview.style.display = 'block';
+            const urlInput = document.getElementById('welcomeImgUrl');
+            const capInput = document.getElementById('welcomeImgCaption');
+            if (urlInput) urlInput.value = data.url;
+            if (capInput) capInput.value = data.caption || '';
+        } else {
+            if (preview) preview.style.display = 'none';
+        }
+    } catch(e) { console.error('loadWelcomeImageForAdmin error:', e); }
+}
+
+// ========== Realtime subscriptions (מחליף את .on('value')) ==========
+function subscribeAll() {
+    // האזנה לשינויים בתלמידים
+    client.subscribe(
+        `databases.${DB_ID}.collections.${TABLES.students}.documents`,
+        () => loadStudents()
+    );
+    // האזנה לשינויים במטלות
+    client.subscribe(
+        `databases.${DB_ID}.collections.${TABLES.tasks}.documents`,
+        () => loadTasks()
+    );
+    // האזנה להכרזות
+    client.subscribe(
+        `databases.${DB_ID}.collections.${TABLES.announcements}.documents`,
+        () => loadAnnouncements()
+    );
+    // האזנה להגשות (למנהל)
+    if (currentUser === 'admin') {
+        client.subscribe(
+            `databases.${DB_ID}.collections.${TABLES.submissions}.documents`,
+            () => initAdminSubmissions()
+        );
+    }
+}
+
+// ========== לוח מודעות ==========
 function toggleBoard() {
     const board = document.getElementById('announcements-board');
-    const btn = document.getElementById('toggle-board');
-    
+    const btn   = document.getElementById('toggle-board');
     board.classList.toggle('minimized');
-    // שינוי סימון הכפתור בהתאם למצב
     if (board.classList.contains('minimized')) {
-        btn.innerText = '📢'; // כשממוזער מציג אייקון
-        btn.title = "פתח לוח מודעות";
+        btn.innerText = '📢';
+        btn.title = 'פתח לוח מודעות';
     } else {
-        btn.innerText = '−'; // כשפתוח מציג כפתור מינוס למיזעור
-        btn.title = "מזער לוח";
+        btn.innerText = '−';
+        btn.title = 'מזער לוח';
     }
 }
 
-db.ref('students').on('value', (snap) => {
-    const data = snap.val();
-    allStudents = data ? Object.values(data) : [];
-    
-    const select = document.getElementById('studentSelect');
-    if (select) {
-        select.innerHTML = '<option value="">בחר את שמך...</option>';
-        allStudents.forEach(s => {
-            const opt = document.createElement('option');
-            opt.value = s.id;
-            opt.textContent = s.name;
-            select.appendChild(opt);
-        });
-    }
-    
-    if (currentUser) updateView();
-});
+async function saveAnnouncements() {
+    const text = document.getElementById('adminAnnouncementsText').value;
+    try {
+        const res = await dbSvc.listDocuments(DB_ID, TABLES.announcements, [Query.limit(1)]);
+        if (res.documents.length > 0) {
+            await dbSvc.updateDocument(DB_ID, TABLES.announcements, res.documents[0].$id, { text });
+        } else {
+            await dbSvc.createDocument(DB_ID, TABLES.announcements, ID.unique(), { text });
+        }
+        alert('לוח המודעות עודכן ופורסם לכולם! 📢');
+        await loadAnnouncements();
+    } catch(e) { alert('שגיאה בשמירה: ' + e.message); }
+}
 
-function renderLogin() {
+// ========== כניסת מנהל ==========
+function checkAdmin() {
+    if (document.getElementById('adminPass').value === 'rabenu247') {
+        currentUser = 'admin';
+        startApp();
+    } else {
+        alert('סיסמה שגויה');
+    }
+}
+
+// ========== כניסת תלמיד ==========
+async function studentLogin() {
+    const id        = document.getElementById('studentSelect').value;
+    const passInput = document.getElementById('studentPass').value.trim();
+
+    if (!id)        { alert('בחר שם מהרשימה!');    return; }
+    if (!passInput) { alert('חובה להזין סיסמה!'); return; }
+
+    const student = allStudents.find(s => s.id === id);
+    if (!student) { alert('שגיאה: תלמיד לא נמצא'); return; }
+
+    if (!student.password) {
+        if (confirm("זוהי הכניסה הראשונה שלך עם סיסמה. האם לשמור את '" + passInput + "' כסיסמה הקבועה שלך?")) {
+            await dbSvc.updateDocument(DB_ID, TABLES.students, id, { password: passInput });
+            alert('הסיסמה נשמרה בהצלחה! זכור אותה לפעם הבאה.');
+        } else { return; }
+    } else if (student.password !== passInput) {
+        alert('סיסמה שגויה! נסה שוב (או פנה למורה אם שכחת).');
+        return;
+    }
+
+    currentUser = id;
+    localStorage.setItem('farm_user_id', id);
+    document.getElementById('studentPass').value = '';
+    startApp();
+}
+
+// ========== renderStudentSelect ==========
+function renderStudentSelect() {
     const select = document.getElementById('studentSelect');
     if (!select) return;
-    
     select.innerHTML = '<option value="">בחר את שמך...</option>';
     allStudents.forEach(s => {
         const opt = document.createElement('option');
-        opt.value = s.id;
+        opt.value       = s.id;
         opt.textContent = s.name;
         select.appendChild(opt);
     });
 }
 
-function checkAdmin() {
-    if (document.getElementById('adminPass').value === 'rabenu247') {
-        currentUser = 'admin';
-        startApp();
-    } else { 
-        alert('סיסמה שגויה');
-    }
-}
-
-function studentLogin() {
-    const id = document.getElementById('studentSelect').value;
-    const passInput = document.getElementById('studentPass').value.trim();
-
-    if (!id) { alert('בחר שם מהרשימה!'); return; }
-    if (!passInput) { alert('חובה להזין סיסמה!'); return; }
-    
-    const student = allStudents.find(s => s.id === id);
-    if (!student) { alert("שגיאה: תלמיד לא נמצא"); return; }
-
-    // לוגיקת בדיקת סיסמה
-    if (!student.password) {
-        // התחברות ראשונה - הגדרת סיסמה
-        if(confirm("זוהי הכניסה הראשונה שלך עם סיסמה. האם לשמור את '" + passInput + "' כסיסמה הקבועה שלך להמשך השנה?")) {
-            // שומרים את הסיסמה במסד הנתונים
-            db.ref('students/' + student.id).update({ password: passInput });
-            alert("הסיסמה נשמרה בהצלחה! זכור אותה לפעם הבאה.");
-        } else {
-            return; // התלמיד ביטל, לא ממשיכים בהתחברות
-        }
-    } else if (student.password !== passInput) {
-        // התחברות חוזרת - סיסמה שגויה
-        alert('סיסמה שגויה! נסה שוב (או פנה למורה אם שכחת).');
-        return;
-    }
-
-    // אם הגענו לכאן - הכל תקין, מתחברים!
-    currentUser = student.id;
-    localStorage.setItem('farm_user_id', student.id);
-    document.getElementById('studentPass').value = ''; // ניקוי השדה
-    startApp();
-}
-
-function openLikesPopup(names) {
-    const content = document.getElementById('likes-popup-content');
-    content.innerHTML = names.map(n => `
-        <span style="display:inline-block; background:#fce4ec; border-radius:10px; 
-              padding:5px 12px; margin:4px; border:1px solid #f48fb1; color:#880e4f; font-size:0.95em;">
-            💌 ${n}
-        </span>
-    `).join('');
-    document.getElementById('likes-popup').style.display = 'block';
-    document.getElementById('likes-popup-overlay').style.display = 'block';
-}
-
-function closeLikesPopup() {
-    document.getElementById('likes-popup').style.display = 'none';
-    document.getElementById('likes-popup-overlay').style.display = 'none';
-}
-
-function startApp() {
+// ========== startApp ==========
+async function startApp() {
     document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('farm-grid').style.display = 'grid';
-    document.getElementById('tasks-area').style.display = 'block';
+    document.getElementById('farm-grid').style.display    = 'grid';
+    document.getElementById('tasks-area').style.display   = 'block';
+
     if (currentUser === 'admin') {
         document.getElementById('control-panel').style.display = 'flex';
-        initAdminSubmissions();
-        db.ref('announcements').once('value').then(snap => {
-            const text = snap.val() || "";
-            const adminTextArea = document.getElementById('adminAnnouncementsText');
-            if(adminTextArea) adminTextArea.value = text;
-        });
+        await loadAnnouncements();
+        await loadWelcomeImageForAdmin();
+        await initAdminSubmissions();
+    } else {
+            document.getElementById('logout-btn-float').style.display = 'block';
+        await showWelcomeImageIfExists();
     }
-    if (currentUser !== 'admin') {
-        showWelcomeImageIfExists();
-    }
+
+    subscribeAll();
     updateView();
     renderTasks();
 }
 
-function addStudent() {
+// ========== הוספת תלמיד ==========
+async function addStudent() {
     const nameInput = document.getElementById('studentName');
     if (!nameInput.value.trim()) return;
-    const id = Date.now().toString();
-    db.ref('students/' + id).set({
-        id, name: nameInput.value,
-        className: document.getElementById('studentClass').value,
-        xp: 0, level: 0,
-        type: CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)],
-        egg: Math.floor(Math.random() * 5)
-    });
-    nameInput.value = '';
+    try {
+        await dbSvc.createDocument(DB_ID, TABLES.students, ID.unique(), {
+            name:      nameInput.value.trim(),
+            className: document.getElementById('studentClass').value,
+            xp:        0,
+            level:     0,
+            type:      CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)],
+            egg:       Math.floor(Math.random() * 5),
+            likes:     '{}',
+            history:   '{}'
+        });
+        nameInput.value = '';
+        await loadStudents();
+    } catch(e) { alert('שגיאה בהוספת תלמיד: ' + e.message); }
 }
 
-function addXP(id, xp, lvl) {
+// ========== הוספת XP (לחיצת מנהל על היצור) ==========
+async function addXP(id, xp, lvl) {
     if (currentUser !== 'admin') return;
-    const img = document.getElementById('img-' + id);
+    const img  = document.getElementById('img-' + id);
     const card = img?.closest('.student-card');
     if (img) {
         img.classList.remove('glow-effect');
@@ -802,82 +863,89 @@ function addXP(id, xp, lvl) {
             setTimeout(() => levelTag.remove(), 2000);
         }
     }
-    setTimeout(() => {
-        db.ref('students/' + id).update({ xp: nxp, level: nlv });
+
+    // מוסיפים להיסטוריה
+    const s = allStudents.find(x => x.id === id);
+    const history = s ? { ...s.history } : {};
+    history['tap_' + Date.now()] = { msg: 'לחיצת מורה', xp: 10, time: Date.now() };
+
+    setTimeout(async () => {
+        try {
+            await dbSvc.updateDocument(DB_ID, TABLES.students, id, {
+                xp:      nxp,
+                level:   nlv,
+                history: JSON.stringify(history)
+            });
+            await loadStudents();
+        } catch(e) { console.error('addXP error:', e); }
     }, 500);
 }
 
+// ========== תצוגת כרטיסים ==========
 function updateView() {
     const grid = document.getElementById('farm-grid');
     if (!currentUser) return;
-    const searchTerm = document.getElementById('search') ? document.getElementById('search').value.toLowerCase() : '';
-    const sortBy = document.getElementById('sortBy') ? document.getElementById('sortBy').value : 'name';
-    
-    // סינון לפי חיפוש
+    const searchTerm = document.getElementById('search')  ? document.getElementById('search').value.toLowerCase()  : '';
+    const sortBy     = document.getElementById('sortBy')  ? document.getElementById('sortBy').value                 : 'name';
+
     let filtered = allStudents.filter(s => s.name.toLowerCase().includes(searchTerm));
-    
-    // מיון
+
     if (sortBy === 'name') {
         filtered.sort((a, b) => a.name.localeCompare(b.name, 'he'));
     } else if (sortBy === 'level') {
         filtered.sort((a, b) => b.level - a.level);
     } else if (sortBy === 'class') {
         function parseClass(cls) {
-            if (!cls) return {grade:0, group:0};
+            if (!cls) return { grade: 0, group: 0 };
             const match = cls.match(/([א-ת])'?(\d+)/);
-            if (!match) return {grade:0, group:0};
-            const letters = "אבגדהוזחטיכלמנסעפצקרשת";
-            const grade = letters.indexOf(match[1]);
-            const group = parseInt(match[2]);
-            return {grade, group};
+            if (!match) return { grade: 0, group: 0 };
+            const letters = 'אבגדהוזחטיכלמנסעפצקרשת';
+            return { grade: letters.indexOf(match[1]), group: parseInt(match[2]) };
         }
-
         filtered.sort((a, b) => {
-            const ca = parseClass(a.className);
-            const cb = parseClass(b.className);
-            if (ca.grade !== cb.grade) {
-                return ca.grade - cb.grade;
-            }
-            return ca.group - cb.group;
+            const ca = parseClass(a.className), cb = parseClass(b.className);
+            return ca.grade !== cb.grade ? ca.grade - cb.grade : ca.group - cb.group;
         });
     }
 
     grid.innerHTML = filtered.map(s => {
         const eggNum = (s.egg !== undefined) ? s.egg + 1 : 1;
         const isMine = currentUser === s.id;
-
         const imgPath = s.level === 0
             ? `images/egg${eggNum}.png`
             : `images/${s.type}${s.level >= 20 ? 3 : (s.level >= 10 ? 2 : 1)}.png`;
 
-        let historyHtml = "";
-        if (s.history) {
-            historyHtml = Object.values(s.history).reverse().slice(0,3).map(h => `
-                <div class="history-item">✨ ${h.msg}: <b>+${h.xp}XP</b></div>
-            `).join('');
+        let historyHtml = '';
+        if (s.history && Object.keys(s.history).length > 0) {
+            historyHtml = Object.values(s.history).reverse().slice(0, 3).map(h =>
+                `<div class="history-item">✨ ${h.msg}: <b>+${h.xp}XP</b></div>`
+            ).join('');
         }
-        
-        // לייקים
-        const likesObj = s.likes || {};
-        const likeCount = Object.keys(likesObj).length;
-        const iLiked = likesObj[currentUser] === true;
-        const likerNames = Object.keys(likesObj).map(uid => { 
-            const u = allStudents.find(x => x.id === uid); 
-            return u ? u.name : null; 
+
+        const likesObj    = s.likes || {};
+        const likeCount   = Object.keys(likesObj).length;
+        const iLiked      = likesObj[currentUser] === true;
+        const likerNames  = Object.keys(likesObj).map(uid => {
+            const u = allStudents.find(x => x.id === uid);
+            return u ? u.name : null;
         }).filter(Boolean);
-       
-        let personalNoteHtml = s.personalNote ? `<div style="background:#e8f5e9; border-radius:6px; padding:8px; border-right:3px solid #4caf50; font-size:0.85em; color:#1b5e20;">💬 <b>על עצמי:</b> ${s.personalNote}</div>` : "";
-        let noteHtml = s.lastNote ? `<div class="rejection-note">📝 הערת מורה: ${s.lastNote}</div>` : "";
-        
+
+        let personalNoteHtml = s.personalNote
+            ? `<div style="background:#e8f5e9; border-radius:6px; padding:8px; border-right:3px solid #4caf50; font-size:0.85em; color:#1b5e20;">💬 <b>על עצמי:</b> ${s.personalNote}</div>`
+            : '';
+        let noteHtml = s.lastNote
+            ? `<div style="background:#fff3e0; border-radius:6px; padding:8px; border-right:3px solid #ff9800; font-size:0.85em; color:#e65100;">📝 הערת מורה: ${s.lastNote}</div>`
+            : '';
+
         return `
         <div class="student-card ${isMine ? 'my-creature' : ''}" onclick="this.classList.toggle('flipped')">
             <div class="card-inner">
-            
+
             <div class="card-front" style="display:flex; flex-direction:column; justify-content:space-between; align-items:center; height:100%; padding:15px; box-sizing:border-box;">
                 <div style="width:100%; display:flex; justify-content:space-between; align-items:flex-start;">
                     <div class="level-text-badge">Lv.${s.level}</div>
                     ${currentUser === 'admin'
-                        ? `<button class="remove-btn" onclick="event.stopPropagation(); if(confirm('למחוק?')) { db.ref('students/${s.id}').remove(); }">✖</button>`
+                        ? `<button class="remove-btn" onclick="event.stopPropagation(); deleteStudent('${s.id}')">✖</button>`
                         : '<div></div>'
                     }
                 </div>
@@ -892,7 +960,6 @@ function updateView() {
                                 ${iLiked ? '❤️' : '🤍'}
                             </button>
                         ` : ''}
-
                         ${(isMine && likeCount > 0) ? `
                             <div style="position:relative; display:inline-block;">
                                 <span class="like-btn" onmouseenter="document.getElementById('likes-tip-${s.id}').style.display='block'" onmouseleave="document.getElementById('likes-tip-${s.id}').style.display='none'">
@@ -921,11 +988,10 @@ function updateView() {
             <div class="card-back" style="padding:12px; display:flex; flex-direction:column; gap:8px;">
                 <h4 style="margin:0 0 6px 0; color:#2e7d32; border-bottom:1px solid #ccc; padding-bottom:5px;">יומן פעילות</h4>
                 <div style="font-size:0.8em; color:#777; border-top:1px solid #eee; padding-top:6px;">
-                    ${historyHtml || "אין פעילות לאחרונה"}
+                    ${historyHtml || 'אין פעילות לאחרונה'}
                     ${noteHtml}
                 </div>
                 ${personalNoteHtml}
-
                 ${isMine ? `
                     <div style="margin-top:8px; border-top:1px solid #c8e6c9; padding-top:8px;">
                         <div style="font-size:0.85em; color:#2e7d32; font-weight:bold; margin-bottom:5px;">✏️ ערוך הערה:</div>
@@ -942,35 +1008,57 @@ function updateView() {
     }).join('');
 }
 
-function savePersonalNote(studentId) {
+async function deleteStudent(id) {
+    if (!confirm('למחוק את התלמיד?')) return;
+    try {
+        await dbSvc.deleteDocument(DB_ID, TABLES.students, id);
+        await loadStudents();
+    } catch(e) { alert('שגיאה במחיקה: ' + e.message); }
+}
+
+async function savePersonalNote(studentId) {
     const val = document.getElementById('note-' + studentId).value.trim();
-    db.ref('students/' + studentId).update({ personalNote: val });
+    try {
+        await dbSvc.updateDocument(DB_ID, TABLES.students, studentId, { personalNote: val });
+        await loadStudents();
+    } catch(e) { alert('שגיאה בשמירה: ' + e.message); }
 }
 
-function toggleLike(studentId) {
+// ========== לייקים ==========
+async function toggleLike(studentId) {
     if (currentUser === 'admin' || currentUser === studentId) return;
-    const likeRef = db.ref('students/' + studentId + '/likes/' + currentUser);
-    likeRef.once('value').then(snap => {
-        if (snap.exists()) {
-            likeRef.remove();
-        } else {
-            likeRef.set(true);
-        }
-    });
+    const s = allStudents.find(x => x.id === studentId);
+    if (!s) return;
+    const likes = { ...s.likes };
+    if (likes[currentUser]) {
+        delete likes[currentUser];
+    } else {
+        likes[currentUser] = true;
+    }
+    try {
+        await dbSvc.updateDocument(DB_ID, TABLES.students, studentId, { likes: JSON.stringify(likes) });
+        await loadStudents();
+    } catch(e) { console.error('toggleLike error:', e); }
 }
 
+function closeLikesPopup() {
+    document.getElementById('likes-popup').style.display         = 'none';
+    document.getElementById('likes-popup-overlay').style.display = 'none';
+}
+
+// ========== בניית שאלות (ללא שינוי) ==========
 function addQuestionField(existingType = null, qData = null) {
-    const type = existingType || document.getElementById('questionType').value;
+    const type      = existingType || document.getElementById('questionType').value;
     const container = document.getElementById('questions-constructor');
-    const qDiv = document.createElement('div');
-    qDiv.className = 'question-item';
+    const qDiv      = document.createElement('div');
+    qDiv.className  = 'question-item';
     qDiv.dataset.type = type;
 
     let typeText = type === 'open' ? 'פתוחה' : (type === 'multiple' ? 'אמריקאית' : (type === 'survey' ? 'סקר (בחירה מרובה)' : (type === 'study_unit' ? 'יחידת לימוד' : 'נכון/לא נכון')));
     let html = `<button onclick="this.parentElement.remove()" style="position:absolute; left:10px; top:10px; background:#ff5252; color:white; border:none; border-radius:4px; cursor:pointer; padding:5px 10px;">X</button>`;
     html += `<strong>סוג: ${typeText}</strong><br>`;
     html += `<input type="text" class="q-text" placeholder="הקלד את השאלה כאן..." style="width:90%; margin-top:10px; margin-bottom:10px;">`;
-    
+
     if (type === 'multiple') {
         html += `<div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
             <input type="text" placeholder="תשובה נכונה (הזן כאן)" class="opt-correct" style="border:2px solid #4caf50;">
@@ -1004,22 +1092,17 @@ function addQuestionField(existingType = null, qData = null) {
     qDiv.innerHTML = html;
     container.appendChild(qDiv);
 
-    // --- שחזור נתונים במצב עריכה ---
     if (qData) {
         qDiv.querySelector('.q-text').value = qData.text || '';
         if (type === 'multiple' && qData.others) {
             qDiv.querySelector('.opt-correct').value = qData.correct || '';
             const optInputs = qDiv.querySelectorAll('.opt');
-            qData.others.forEach((optVal, idx) => {
-                if (optInputs[idx]) optInputs[idx].value = optVal;
-            });
+            qData.others.forEach((v, i) => { if (optInputs[i]) optInputs[i].value = v; });
         } else if (type === 'boolean') {
             qDiv.querySelector('.q-ans-bool').value = qData.correct || 'נכון';
         } else if (type === 'survey' && qData.options) {
             const optInputs = qDiv.querySelectorAll('.opt-survey');
-            qData.options.forEach((optVal, idx) => {
-                if (optInputs[idx]) optInputs[idx].value = optVal;
-            });
+            qData.options.forEach((v, i) => { if (optInputs[i]) optInputs[i].value = v; });
         }
     }
 }
@@ -1030,166 +1113,169 @@ function toggleTaskBuilder() {
         builder.style.display = 'block';
     } else {
         builder.style.display = 'none';
-        // איפוס במקרה של סגירה
         editingTaskId = null;
-        document.getElementById('taskTitle').value = '';
+        document.getElementById('taskTitle').value    = '';
         document.getElementById('taskDeadline').value = '';
-        document.getElementById('taskXP').value = '20';
+        document.getElementById('taskXP').value       = '20';
         document.getElementById('taskStartTime').value = '';
-        document.getElementById('taskEndTime').value = '';
+        document.getElementById('taskEndTime').value   = '';
         document.getElementById('time-limit-container').style.display = 'none';
-        document.getElementById('questions-constructor').innerHTML = '';
+        document.getElementById('questions-constructor').innerHTML    = '';
         const saveBtn = document.querySelector('#task-builder button[onclick="saveNewTask()"]');
-        if(saveBtn) saveBtn.innerHTML = 'פרסם מטלה 🚀';
+        if (saveBtn) saveBtn.innerHTML = 'פרסם מטלה 🚀';
     }
 }
 
-function saveNewTask() {
-    const title = document.getElementById('taskTitle').value;
-    const deadline = document.getElementById('taskDeadline').value;
-    const xp = parseInt(document.getElementById('taskXP').value) || 20;
+// ========== שמירת מטלה ==========
+async function saveNewTask() {
+    const title     = document.getElementById('taskTitle').value;
+    const deadline  = document.getElementById('taskDeadline').value;
+    const xp        = parseInt(document.getElementById('taskXP').value) || 20;
     const startTime = document.getElementById('taskStartTime').value;
-    const endTime = document.getElementById('taskEndTime').value;
-    const qNodes = document.querySelectorAll('.question-item');
+    const endTime   = document.getElementById('taskEndTime').value;
+    const qNodes    = document.querySelectorAll('.question-item');
 
-    if (!title) return alert("חובה להזין כותרת למטלה!");
-    if (qNodes.length === 0) return alert("חובה להוסיף לפחות שאלה אחת!");
-    
+    if (!title)           return alert('חובה להזין כותרת למטלה!');
+    if (!qNodes.length)   return alert('חובה להוסיף לפחות שאלה אחת!');
+
     const questions = Array.from(qNodes).map(node => {
         const type = node.dataset.type;
         const qObj = { type, text: node.querySelector('.q-text').value };
-        
         if (type === 'multiple') {
             qObj.correct = node.querySelector('.opt-correct').value;
-            qObj.others = Array.from(node.querySelectorAll('.opt')).map(i => i.value).filter(v => v !== "");
+            qObj.others  = Array.from(node.querySelectorAll('.opt')).map(i => i.value).filter(v => v);
         } else if (type === 'boolean') {
             qObj.correct = node.querySelector('.q-ans-bool').value;
         } else if (type === 'survey') {
-            qObj.options = Array.from(node.querySelectorAll('.opt-survey')).map(i => i.value).filter(v => v !== "");
+            qObj.options = Array.from(node.querySelectorAll('.opt-survey')).map(i => i.value).filter(v => v);
         }
         return qObj;
     });
-    
-    const id = editingTaskId ? editingTaskId : Date.now().toString();
-    // שומרים גם את זמני ההתחלה והסיום במסד הנתונים
-    db.ref('tasks/' + id).set({ id, title, deadline, xp, startTime, endTime, questions });
-    
-    // איפוס וסגירה
-    document.getElementById('taskTitle').value = '';
-    document.getElementById('taskDeadline').value = '';
-    document.getElementById('taskXP').value = '20';
-    document.getElementById('taskStartTime').value = '';
-    document.getElementById('taskEndTime').value = '';
-    document.getElementById('time-limit-container').style.display = 'none';
-    document.getElementById('questions-constructor').innerHTML = '';
-    
-    const saveBtn = document.querySelector('#task-builder button[onclick="saveNewTask()"]');
-    if(saveBtn) saveBtn.innerHTML = 'פרסם מטלה 🚀';
-    document.getElementById('task-builder').style.display = 'none';
-    
-    alert(editingTaskId ? "המטלה עודכנה בהצלחה! 💾" : "המטלה פורסמה בהצלחה! 🚀");
+
+    const payload = { title, deadline, xp, startTime, endTime, questions: JSON.stringify(questions) };
+
+    try {
+        if (editingTaskId) {
+            await dbSvc.updateDocument(DB_ID, TABLES.tasks, editingTaskId, payload);
+            alert('המטלה עודכנה בהצלחה! 💾');
+        } else {
+            await dbSvc.createDocument(DB_ID, TABLES.tasks, ID.unique(), payload);
+            alert('המטלה פורסמה בהצלחה! 🚀');
+        }
+    } catch(e) { alert('שגיאה בשמירת מטלה: ' + e.message); return; }
+
     editingTaskId = null;
+    document.getElementById('taskTitle').value     = '';
+    document.getElementById('taskDeadline').value  = '';
+    document.getElementById('taskXP').value        = '20';
+    document.getElementById('taskStartTime').value = '';
+    document.getElementById('taskEndTime').value   = '';
+    document.getElementById('time-limit-container').style.display = 'none';
+    document.getElementById('questions-constructor').innerHTML    = '';
+    document.getElementById('task-builder').style.display        = 'none';
+    await loadTasks();
 }
 
 function editTask(id) {
     const task = allTasks.find(t => t.id === id);
     if (!task) return;
-
     editingTaskId = id;
     document.getElementById('task-builder').style.display = 'block';
-    document.getElementById('taskTitle').value = task.title || '';
-    document.getElementById('taskDeadline').value = task.deadline || '';
-    document.getElementById('taskXP').value = task.xp || 20;
-    
-    // טעינת שעות אם הוגדרו
+    document.getElementById('taskTitle').value     = task.title    || '';
+    document.getElementById('taskDeadline').value  = task.deadline || '';
+    document.getElementById('taskXP').value        = task.xp      || 20;
     if (task.startTime || task.endTime) {
         document.getElementById('time-limit-container').style.display = 'flex';
         document.getElementById('taskStartTime').value = task.startTime || '';
-        document.getElementById('taskEndTime').value = task.endTime || '';
+        document.getElementById('taskEndTime').value   = task.endTime   || '';
     } else {
         document.getElementById('time-limit-container').style.display = 'none';
-        document.getElementById('taskStartTime').value = '';
-        document.getElementById('taskEndTime').value = '';
     }
-    
     const container = document.getElementById('questions-constructor');
     container.innerHTML = '';
-    if (task.questions) {
-        task.questions.forEach(q => {
-            addQuestionField(q.type, q);
-        });
-    }
-    
+    if (task.questions) task.questions.forEach(q => addQuestionField(q.type, q));
     const saveBtn = document.querySelector('#task-builder button[onclick="saveNewTask()"]');
-    if(saveBtn) saveBtn.innerHTML = 'עדכן מטלה 💾';
+    if (saveBtn) saveBtn.innerHTML = 'עדכן מטלה 💾';
     document.getElementById('task-builder').scrollIntoView({ behavior: 'smooth' });
 }
 
-function renderTasks() {
+async function deleteTask(id) {
+    if (!confirm('למחוק את המטלה?')) return;
+    try {
+        await dbSvc.deleteDocument(DB_ID, TABLES.tasks, id);
+        await loadTasks();
+    } catch(e) { alert('שגיאה במחיקה: ' + e.message); }
+}
+
+// ========== הצגת מטלות לתלמיד / מנהל ==========
+async function renderTasks() {
     const list = document.getElementById('tasks-list');
     if (!list) return;
     list.innerHTML = '';
-    if (allTasks.length === 0) {
-        list.innerHTML = 'אין מטלות כרגע.';
-        return;
-    }
+    if (allTasks.length === 0) { list.innerHTML = 'אין מטלות כרגע.'; return; }
 
-    db.ref('submissions').once('value', (snap) => {
-        const subs = snap.val() ? Object.values(snap.val()) : [];
+    // בדיקת הגשות קיימות
+    let submittedTaskIds = [];
+    try {
+        if (currentUser !== 'admin') {
+            const res = await dbSvc.listDocuments(DB_ID, TABLES.submissions, [
+                Query.equal('studentId', currentUser),
+                Query.limit(200)
+            ]);
+            submittedTaskIds = res.documents.map(d => d.taskId);
+        }
+    } catch(e) { console.error('renderTasks submissions check error:', e); }
 
-        allTasks.slice().reverse().forEach(task => {
-            const alreadySubmitted = subs.some(s => s.studentId === currentUser && s.taskId === task.id);
+    allTasks.slice().reverse().forEach(task => {
+        const alreadySubmitted = submittedTaskIds.includes(task.id);
+        const div = document.createElement('div');
+        div.className = 'task-card';
 
-            const div = document.createElement('div');
-            div.className = 'task-card';
-            
-            let actionBtn;
-            if (currentUser === 'admin') {
-                actionBtn = `
-                    <button onclick="editTask('${task.id}')" style="background:#ff9800; margin-left:5px;">ערוך מטלה ✏️</button>
-                    <button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק מטלה 🗑️</button>
-                `;
-            } else if (alreadySubmitted) {
-                actionBtn = `<button disabled style="background:#999; cursor:not-allowed;">כבר הגשת ✔️</button>`;
-            } else {
-                const safeTitle = task.title.replace(/'/g, '׳').replace(/"/g, '״');
-                actionBtn = `<button id="student-btn-${task.id}" onclick="openSubmitModal('${task.id}', '${safeTitle}')" style="background:#1976d2;">פתח משימה ✍️</button>`;
-            }
-
-            div.innerHTML = `
-                <div class="task-info">
-                    <h4>${task.title}</h4>
-                    <div style="font-size:0.85em;color:#555; margin-top:4px;">
-                        🎁 פרס: ${task.xp || 20} XP
-                        ${task.deadline ? `<br>⏰ תאריך יעד: ${task.deadline}` : ''}
-                        ${(task.startTime && task.endTime) ? `<br>⏳ <span id="timer-${task.id}" style="color:#d32f2f; font-weight:bold;">מחשב זמנים...</span>` : ''}
-                    </div>
-                </div>
-                <div>${actionBtn}</div>
+        let actionBtn;
+        if (currentUser === 'admin') {
+            actionBtn = `
+                <button onclick="editTask('${task.id}')" style="background:#ff9800; margin-left:5px;">ערוך מטלה ✏️</button>
+                <button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק מטלה 🗑️</button>
             `;
-            list.appendChild(div);
-        });
-        
-        // קריאה ראשונית לטיימרים מיד אחרי טעינת המטלות
-        updateAllTimers();
+        } else if (alreadySubmitted) {
+            actionBtn = `<button disabled style="background:#999; cursor:not-allowed;">כבר הגשת ✔️</button>`;
+        } else {
+            const safeTitle = task.title.replace(/'/g, '׳').replace(/"/g, '״');
+            actionBtn = `<button id="student-btn-${task.id}" onclick="openSubmitModal('${task.id}', '${safeTitle}')" style="background:#1976d2;">פתח משימה ✍️</button>`;
+        }
+
+        div.innerHTML = `
+            <div class="task-info">
+                <h4>${task.title}</h4>
+                <div style="font-size:0.85em;color:#555; margin-top:4px;">
+                    🎁 פרס: ${task.xp || 20} XP
+                    ${task.deadline ? `<br>⏰ תאריך יעד: ${task.deadline}` : ''}
+                    ${(task.startTime && task.endTime) ? `<br>⏳ <span id="timer-${task.id}" style="color:#d32f2f; font-weight:bold;">מחשב זמנים...</span>` : ''}
+                </div>
+            </div>
+            <div>${actionBtn}</div>
+        `;
+        list.appendChild(div);
     });
+
+    updateAllTimers();
 }
 
-function deleteTask(id) { if(confirm('למחוק את המטלה?')) db.ref('tasks/' + id).remove(); }
-
+// ========== מודל הגשה ==========
 function openSubmitModal(id, title) {
     currentTaskToSubmit = id;
     document.getElementById('modal-task-title').innerText = title;
-    
-    const task = allTasks.find(t => t.id === id);
+
+    const task      = allTasks.find(t => t.id === id);
     const container = document.getElementById('questions-display');
     container.innerHTML = '';
-    if (task.questions) {
+
+    if (task && task.questions) {
         task.questions.forEach((q, index) => {
-            const d = document.createElement('div');
-            d.style = "margin-bottom:15px; padding:15px; background:#f0f7ff; border-radius:8px; border:1px solid #bbdefb;";
+            const d   = document.createElement('div');
+            d.style   = 'margin-bottom:15px; padding:15px; background:#f0f7ff; border-radius:8px; border:1px solid #bbdefb;';
             d.innerHTML = `<strong>${index + 1}. ${q.text}</strong><br>`;
-            
+
             if (q.type === 'open') {
                 d.innerHTML += `<textarea class="ans-input" data-index="${index}" style="width:100%; margin-top:10px; height:60px;" placeholder="הקלד את תשובתך כאן..."></textarea>`;
             } else if (q.type === 'boolean') {
@@ -1205,20 +1291,17 @@ function openSubmitModal(id, title) {
                     </label>`;
                 });
             } else if (q.type === 'survey') {
-                const allOpts = q.options || [];
-                allOpts.forEach(opt => {
+                (q.options || []).forEach(opt => {
                     d.innerHTML += `<label style="display:block; margin-top:8px; cursor:pointer; background:white; padding:8px; border-radius:5px; border:1px solid #ddd;">
                         <input type="checkbox" name="q${index}" value="${opt}"> ${opt}
                     </label>`;
                 });
             } else if (q.type === 'study_unit') {
-                d.innerHTML += `
-                    <div style="display:flex; gap:5px; margin-top:10px; width:100%; box-sizing:border-box;">
-                        <input type="text" id="study_chapter_${index}" placeholder="פרק" style="width:30%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
-                        <input type="text" id="study_start_${index}" placeholder="מפסוק" style="width:35%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
-                        <input type="text" id="study_end_${index}" placeholder="עד פסוק" style="width:35%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
-                    </div>
-                `;
+                d.innerHTML += `<div style="display:flex; gap:5px; margin-top:10px; width:100%; box-sizing:border-box;">
+                    <input type="text" id="study_chapter_${index}" placeholder="פרק" style="width:30%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+                    <input type="text" id="study_start_${index}"   placeholder="מפסוק" style="width:35%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+                    <input type="text" id="study_end_${index}"     placeholder="עד פסוק" style="width:35%; padding:8px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box;">
+                </div>`;
             }
             container.appendChild(d);
         });
@@ -1229,297 +1312,275 @@ function openSubmitModal(id, title) {
 
 function closeModal() { document.getElementById('submit-modal').style.display = 'none'; }
 
-function sendSubmission() {
-    const task = allTasks.find(t => t.id === currentTaskToSubmit);
+async function sendSubmission() {
+    const task    = allTasks.find(t => t.id === currentTaskToSubmit);
     const answers = [];
     let allAnswered = true;
 
-    if (task.questions) {
+    if (task && task.questions) {
         task.questions.forEach((q, index) => {
-            let val = "";
+            let val = '';
             if (q.type === 'open') {
                 val = document.querySelector(`textarea[data-index="${index}"]`).value.trim();
             } else if (q.type === 'survey') {
-                const checkedBoxes = document.querySelectorAll(`input[name="q${index}"]:checked`);
-                val = Array.from(checkedBoxes).map(cb => cb.value).join(' | ');
+                val = Array.from(document.querySelectorAll(`input[name="q${index}"]:checked`)).map(cb => cb.value).join(' | ');
             } else if (q.type === 'study_unit') {
-                const chapter = document.getElementById(`study_chapter_${index}`).value.trim();
-                const start = document.getElementById(`study_start_${index}`).value.trim();
-                const end = document.getElementById(`study_end_${index}`).value.trim();
-                if (chapter || start || end) {
-                    val = `פרק ${chapter}, פסוקים ${start}-${end}`;
-                } else {
-                    val = "";
-                }
+                const ch = document.getElementById(`study_chapter_${index}`).value.trim();
+                const st = document.getElementById(`study_start_${index}`).value.trim();
+                const en = document.getElementById(`study_end_${index}`).value.trim();
+                val = (ch || st || en) ? `פרק ${ch}, פסוקים ${st}-${en}` : '';
             } else {
                 const checked = document.querySelector(`input[name="q${index}"]:checked`);
-                val = checked ? checked.value : "";
+                val = checked ? checked.value : '';
             }
-            
             if (!val) allAnswered = false;
             answers.push({ q: q.text, a: safe(val) });
         });
     }
 
-    if (!allAnswered) {
-        if (!confirm("לא ענית על כל השאלות! האם לשלוח בכל זאת?")) return;
-    }
+    if (!allAnswered && !confirm('לא ענית על כל השאלות! האם לשלוח בכל זאת?')) return;
 
     const student = allStudents.find(s => s.id === currentUser);
-    const subId = Date.now().toString();
-    db.ref('submissions/' + subId).set({
-        id: subId,
-        studentName: student.name,
-        studentId: student.id,
-        taskId: currentTaskToSubmit,
-        answers: answers,
-        time: Date.now()
-    }).then(() => {
-        alert("המטלה נשלחה למורה בהצלחה! 🎉");
+    try {
+        await dbSvc.createDocument(DB_ID, TABLES.submissions, ID.unique(), {
+            studentName: student.name,
+            studentId:   student.id,
+            taskId:      currentTaskToSubmit,
+            answers:     JSON.stringify(answers),
+            time:        Date.now()
+        });
+        alert('המטלה נשלחה למורה בהצלחה! 🎉');
         closeModal();
-        renderTasks(); 
-    });
+        await renderTasks();
+    } catch(e) { alert('שגיאה בשליחה: ' + e.message); }
 }
 
-function initAdminSubmissions() {
-    db.ref('submissions').on('value', (snap) => {
-        const container = document.getElementById('submissions-list');
-        if (!container) return;
+// ========== ניהול הגשות למנהל ==========
+async function initAdminSubmissions() {
+    const container = document.getElementById('submissions-list');
+    if (!container) return;
+    container.innerHTML = '<div style="color:#888; text-align:center;">טוען...</div>';
 
-        const subs = snap.val();
-        allSubmissions = subs || {};
+    try {
+        const res  = await dbSvc.listDocuments(DB_ID, TABLES.submissions, [Query.limit(200), Query.orderDesc('time')]);
+        const subs = res.documents;
+
+        if (subs.length === 0) {
+            container.innerHTML = '<div style="color:#666; text-align:center;">אין הגשות חדשות כרגע</div>';
+            return;
+        }
         container.innerHTML = '';
 
-        if (subs) {
-            Object.values(subs).forEach(sub => {
-                const task = allTasks.find(t => t.id === sub.taskId);
-                const taskTitle = task ? task.title : "מטלה לא ידועה";
-                const taskXP = task ? task.xp : 20;
+        subs.forEach(subDoc => {
+            const answers  = subDoc.answers ? JSON.parse(subDoc.answers) : [];
+            const task     = allTasks.find(t => t.id === subDoc.taskId);
+            const taskTitle = task ? task.title : 'מטלה לא ידועה';
+            const taskXP   = task ? task.xp    : 20;
 
-                const d = document.createElement('div');
-                d.style = "background:white; padding:15px; margin:10px 0; border-radius:8px; border-right:5px solid gold; color: black; text-align: right; box-shadow: 0 2px 4px rgba(0,0,0,0.1);";
-                
-                let answersHtml = sub.answers ? sub.answers.map(a => `
-                    <div style="background:#f9f9f9; padding:8px; border-radius:5px; margin-bottom:5px; border:1px solid #eee;">
-                        <b>${a.q}</b><br>
-                        <span style="color:${a.a ? '#1976d2' : '#f44336'};">${a.a || 'לא ענה'}</span>
-                    </div>
-                `).join('') : 'אין נתוני תשובות';
+            const d   = document.createElement('div');
+            d.style   = 'background:white; padding:15px; margin:10px 0; border-radius:8px; border-right:5px solid gold; color:black; text-align:right; box-shadow:0 2px 4px rgba(0,0,0,0.1);';
 
-                d.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        <div>
-                            <strong style="color:#2e7d32; font-size:1.1em;">${sub.studentName.replace(/'/g, '׳').replace(/"/g, '״')}</strong>
-                            <div style="font-size:0.85em; color:#666;">מטלה: ${taskTitle.replace(/'/g, '׳').replace(/"/g, '״')} | פרס: ${taskXP} XP</div>
-                        </div>
-                    </div>
-                    
-                    <details style="background:#f1f8e9; padding:10px; border-radius:5px; cursor:pointer;">
-                        <summary style="font-weight:bold; color:#1976d2;">🔍 בדיקת תשובות</summary>
-                        <div style="margin-top:10px; cursor:default;">${answersHtml}</div>
-                    </details>
+            const answersHtml = answers.map(a => `
+                <div style="background:#f9f9f9; padding:8px; border-radius:5px; margin-bottom:5px; border:1px solid #eee;">
+                    <b>${a.q}</b><br>
+                    <span style="color:${a.a ? '#1976d2' : '#f44336'};">${a.a || 'לא ענה'}</span>
+                </div>
+            `).join('');
 
-                    <div style="display:flex; gap:5px; margin-top:10px;">
-                        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 1)" style="background:#4caf50; flex:1;">אשר מלא (100%)</button>
-                        <button onclick="approveSub('${sub.id}', '${sub.studentId}', 0.5)" style="background:#ffc107; flex:1;">אשר חלקי (50%)</button>
-                        <button onclick="rejectSub('${sub.id}')" style="background:#f44336; flex:1;">דחה</button>
+            d.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <div>
+                        <strong style="color:#2e7d32; font-size:1.1em;">${subDoc.studentName}</strong>
+                        <div style="font-size:0.85em; color:#666;">מטלה: ${taskTitle} | פרס: ${taskXP} XP</div>
                     </div>
-                `;
-                container.appendChild(d);
-            });
-        } else {
-            container.innerHTML = '<div style="color:#666; text-align:center;">אין הגשות חדשות כרגע</div>';
-        }
-    });
+                </div>
+                <details style="background:#f1f8e9; padding:10px; border-radius:5px; cursor:pointer;">
+                    <summary style="font-weight:bold; color:#1976d2;">🔍 בדיקת תשובות</summary>
+                    <div style="margin-top:10px;">${answersHtml}</div>
+                </details>
+                <div style="display:flex; gap:5px; margin-top:10px;">
+                    <button onclick="approveSub('${subDoc.$id}', '${subDoc.studentId}', 1)"   style="background:#4caf50; flex:1;">אשר מלא (100%)</button>
+                    <button onclick="approveSub('${subDoc.$id}', '${subDoc.studentId}', 0.5)" style="background:#ffc107; flex:1;">אשר חלקי (50%)</button>
+                    <button onclick="rejectSub('${subDoc.$id}', '${subDoc.studentId}')"       style="background:#f44336; flex:1;">דחה</button>
+                </div>
+            `;
+            container.appendChild(d);
+        });
+    } catch(e) { container.innerHTML = '<div style="color:red;">שגיאה בטעינת הגשות: ' + e.message + '</div>'; }
 }
 
-function approveSub(subId, studentId, multiplier = 1) {
-    const submissionRef = db.ref('submissions/' + subId);
-    submissionRef.once('value').then(snap => {
-        const sub = snap.val();
-        if (!sub) return;
-
-        const task = allTasks.find(t => t.id === sub.taskId);
+async function approveSub(subId, studentId, multiplier = 1) {
+    try {
+        const subDoc = await dbSvc.getDocument(DB_ID, TABLES.submissions, subId);
+        const task   = allTasks.find(t => t.id === subDoc.taskId);
         const baseXP = task ? (task.xp || 20) : 20;
         const rewardXP = Math.round(baseXP * multiplier);
 
         const s = allStudents.find(st => st.id === studentId);
         if (!s) return;
 
-        const historyRef = db.ref('students/' + studentId + '/history').push();
-        historyRef.set({
-            msg: task ? task.title : "מטלה",
-            xp: rewardXP,
-            time: Date.now()
-         });
+        const history = { ...s.history };
+        history['sub_' + Date.now()] = { msg: task ? task.title : 'מטלה', xp: rewardXP, time: Date.now() };
 
-        db.ref('students/' + studentId).update({ lastNote: null });
-
-        // חישוב ה-XP והרמות החדשות בצורה מרוכזת
-        let newTotalXP = s.xp + rewardXP;
+        let newXP    = s.xp + rewardXP;
         let newLevel = s.level;
-        
-        while (newTotalXP >= 100) {
-            newLevel++;
-            newTotalXP -= 100;
-        }
+        while (newXP >= 100) { newLevel++; newXP -= 100; }
 
-        db.ref('students/' + studentId).update({
-            xp: newTotalXP,
-            level: newLevel
-        }).then(() => {    
-             if (typeof loadAdminData === "function") loadAdminData();
+        await dbSvc.updateDocument(DB_ID, TABLES.students, studentId, {
+            xp:       newXP,
+            level:    newLevel,
+            history:  JSON.stringify(history),
+            lastNote: null
         });
-        submissionRef.remove();
-});
+        await dbSvc.deleteDocument(DB_ID, TABLES.submissions, subId);
+        await loadStudents();
+        await initAdminSubmissions();
+    } catch(e) { alert('שגיאה באישור: ' + e.message); }
 }
 
-window.rejectSub = function(subId) {
-    const note = prompt("מדוע המטלה נדחית? (התלמיד יראה את זה בצד האחורי של הכרטיס):");
-    if (note !== null) {
-        db.ref('submissions/' + subId).once('value').then(snap => {
-            const sub = snap.val();
-            if (sub) {
-                db.ref('students/' + sub.studentId).update({ 
-                    lastNote: note || "המטלה נדחתה. בדוק שוב את ההוראות." 
-                 });
-                db.ref('submissions/' + subId).remove();
-            }
+async function rejectSub(subId, studentId) {
+    const note = prompt('מדוע המטלה נדחית? (התלמיד יראה את זה בצד האחורי של הכרטיס):');
+    if (note === null) return;
+    try {
+        await dbSvc.updateDocument(DB_ID, TABLES.students, studentId, {
+            lastNote: note || 'המטלה נדחתה. בדוק שוב את ההוראות.'
         });
+        await dbSvc.deleteDocument(DB_ID, TABLES.submissions, subId);
+        await initAdminSubmissions();
+    } catch(e) { alert('שגיאה בדחיית הגשה: ' + e.message); }
 }
-};
 
+// ========== טיימרים ==========
 function updateAllTimers() {
     if (currentUser === 'admin') return;
-    
     const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth();
-    const currentDay = now.getDate();
-    
+
     allTasks.forEach(task => {
         if (!task.startTime || !task.endTime) return;
-
         const timerSpan = document.getElementById(`timer-${task.id}`);
         const actionBtn = document.getElementById(`student-btn-${task.id}`);
-        
-        if (!timerSpan || !actionBtn) return; 
+        if (!timerSpan || !actionBtn) return;
 
-        const [startHours, startMins] = task.startTime.split(':').map(Number);
-        const [endHours, endMins] = task.endTime.split(':').map(Number);
-
-        const startDate = new Date(currentYear, currentMonth, currentDay, startHours, startMins, 0);
-        const endDate = new Date(currentYear, currentMonth, currentDay, endHours, endMins, 0);
+        const [sH, sM] = task.startTime.split(':').map(Number);
+        const [eH, eM] = task.endTime.split(':').map(Number);
+        const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), sH, sM, 0);
+        const endDate   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), eH, eM, 0);
 
         if (now < startDate) {
-            const diffMs = startDate - now;
-            const diffMins = Math.floor(diffMs / 60000);
-            const diffSecs = Math.floor((diffMs % 60000) / 1000);
-            timerSpan.innerText = `תיפתח בעוד ${String(diffMins).padStart(2, '0')}:${String(diffSecs).padStart(2, '0')} דקות`;
-            timerSpan.style.color = "#ff9800";
-            actionBtn.disabled = true;
-            actionBtn.innerText = "טרם נפתח 🔒";
-            actionBtn.style.background = "#999";
-        } else if (now >= startDate && now < endDate) {
-            const diffMs = endDate - now;
-            const diffMins = Math.floor(diffMs / 60000);
-            const diffSecs = Math.floor((diffMs % 60000) / 1000);
-            timerSpan.innerText = `נותרו: ${String(diffMins).padStart(2, '0')}:${String(diffSecs).padStart(2, '0')} לסיום!`;
-            timerSpan.style.color = "#d32f2f";
-            actionBtn.disabled = false;
-            actionBtn.innerText = "פתח משימה ✍️";
-            actionBtn.style.background = "#1976d2";
+            const diff = startDate - now;
+            timerSpan.innerText    = `תיפתח בעוד ${String(Math.floor(diff/60000)).padStart(2,'0')}:${String(Math.floor((diff%60000)/1000)).padStart(2,'0')} דקות`;
+            timerSpan.style.color  = '#ff9800';
+            actionBtn.disabled     = true;
+            actionBtn.innerText    = 'טרם נפתח 🔒';
+            actionBtn.style.background = '#999';
+        } else if (now < endDate) {
+            const diff = endDate - now;
+            timerSpan.innerText    = `נותרו: ${String(Math.floor(diff/60000)).padStart(2,'0')}:${String(Math.floor((diff%60000)/1000)).padStart(2,'0')} לסיום!`;
+            timerSpan.style.color  = '#d32f2f';
+            actionBtn.disabled     = false;
+            actionBtn.innerText    = 'פתח משימה ✍️';
+            actionBtn.style.background = '#1976d2';
         } else {
-            timerSpan.innerText = "הזמן להגשה נגמר!";
-            timerSpan.style.color = "#555";
-            actionBtn.disabled = true;
-            actionBtn.innerText = "הזמן נגמר! ⏳";
-            actionBtn.style.background = "#555";
+            timerSpan.innerText    = 'הזמן להגשה נגמר!';
+            timerSpan.style.color  = '#555';
+            actionBtn.disabled     = true;
+            actionBtn.innerText    = 'הזמן נגמר! ⏳';
+            actionBtn.style.background = '#555';
         }
     });
 }
 
-// ===== מערכת תמונת הברכה =====
-db.ref('welcomeImage').on('value', (snap) => {
-    const data = snap.val();
-    const preview = document.getElementById('current-welcome-img-preview');
-    const thumb   = document.getElementById('preview-thumb');
-    if (preview && thumb) {
-        if (data && data.url) {
-            thumb.src = data.url;
-            preview.style.display = 'block';
-            document.getElementById('welcomeImgUrl').value = data.url;
-            document.getElementById('welcomeImgCaption').value = data.caption || '';
-        } else {
-            preview.style.display = 'none';
-            const urlInput = document.getElementById('welcomeImgUrl');
-            if (urlInput) urlInput.value = 'https://postimages.org/he/';
-        }
-    }
-});
-
-function publishWelcomeImageUrl() {
-    const url       = document.getElementById('welcomeImgUrl').value.trim();
-    const caption   = document.getElementById('welcomeImgCaption').value.trim();
-    const statusDiv = document.getElementById('upload-status');
-    
-    if (!url || url === 'https://postimages.org/he/') {
-        alert('אנא הדבק קישור תמונה תקין!');
-        return;
-    }
-
-    statusDiv.innerText = '⏳ שומר...';
-    db.ref('welcomeImage').set({ url, caption, time: Date.now() }).then(() => {
-        statusDiv.innerText = '✅ התמונה פורסמה לכל התלמידים!';
-        document.getElementById('preview-thumb').src = url;
-        document.getElementById('current-welcome-img-preview').style.display = 'block';
-    }).catch(() => {
-        statusDiv.innerText = '❌ שגיאה בשמירה. בדוק את הקישור.';
-    });
-}
-
-function clearWelcomeImage() {
-    if (!confirm('להסיר את התמונה? התלמידים לא יראו אותה יותר.')) return;
-    db.ref('welcomeImage').remove().then(() => {
-        document.getElementById('upload-status').innerText = 'התמונה הוסרה.';
-        document.getElementById('current-welcome-img-preview').style.display = 'none';
-        document.getElementById('welcomeImgUrl').value = 'https://postimages.org/he/';
-    });
-}
-
-function showWelcomeImageIfExists() {
-    db.ref('welcomeImage').once('value', (snap) => {
-        const data = snap.val();
+// ========== תמונת ברכה ==========
+async function showWelcomeImageIfExists() {
+    try {
+        const res  = await dbSvc.listDocuments(DB_ID, TABLES.welcomeImage, [Query.limit(1)]);
+        const data = res.documents[0];
         if (!data || !data.url) return;
+
         const overlay = document.getElementById('welcome-image-overlay');
         const imgEl   = document.getElementById('welcome-img-el');
         const caption = document.getElementById('welcome-img-caption');
-        imgEl.src = data.url;
+
+        const isStreamable = data.url.includes('streamable.com');
+
+        if (isStreamable) {
+            const videoId  = data.url.split('streamable.com/').pop().split('?')[0];
+            const embedUrl = 'https://streamable.com/e/' + videoId;
+
+            imgEl.style.display = 'none';
+            const old = document.getElementById('welcome-video-frame');
+            if (old) old.remove();
+
+            const iframe = document.createElement('iframe');
+            iframe.id    = 'welcome-video-frame';
+            iframe.src   = embedUrl;
+            iframe.setAttribute('allowfullscreen', '');
+            iframe.setAttribute('frameborder', '0');
+            iframe.style = 'width:80vw; max-width:800px; height:45vw; max-height:450px; border-radius:12px; display:block;';
+            imgEl.parentNode.insertBefore(iframe, imgEl);
+        } else {
+            const old = document.getElementById('welcome-video-frame');
+            if (old) old.remove();
+            imgEl.style.display = 'block';
+            imgEl.src = data.url;
+        }
+
         caption.innerText     = data.caption || '';
         caption.style.display = data.caption ? 'block' : 'none';
         overlay.classList.add('active');
-    });
+
+    } catch(e) { console.error('showWelcomeImageIfExists error:', e); }
+}
+
+async function publishWelcomeImageUrl() {
+    const url       = document.getElementById('welcomeImgUrl').value.trim();
+    const caption   = document.getElementById('welcomeImgCaption').value.trim();
+    const statusDiv = document.getElementById('upload-status');
+    if (!url || url === 'https://postimages.org/he/') { alert('אנא הדבק קישור תמונה תקין!'); return; }
+
+    statusDiv.innerText = '⏳ שומר...';
+    try {
+        const res = await dbSvc.listDocuments(DB_ID, TABLES.welcomeImage, [Query.limit(1)]);
+        if (res.documents.length > 0) {
+            await dbSvc.updateDocument(DB_ID, TABLES.welcomeImage, res.documents[0].$id, { url, caption });
+        } else {
+            await dbSvc.createDocument(DB_ID, TABLES.welcomeImage, ID.unique(), { url, caption });
+        }
+        statusDiv.innerText = '✅ התמונה פורסמה לכל התלמידים!';
+        document.getElementById('preview-thumb').src = url;
+        document.getElementById('current-welcome-img-preview').style.display = 'block';
+    } catch(e) { statusDiv.innerText = '❌ שגיאה: ' + e.message; }
+}
+
+async function clearWelcomeImage() {
+    if (!confirm('להסיר את התמונה? התלמידים לא יראו אותה יותר.')) return;
+    try {
+        const res = await dbSvc.listDocuments(DB_ID, TABLES.welcomeImage, [Query.limit(1)]);
+        if (res.documents.length > 0) {
+            await dbSvc.deleteDocument(DB_ID, TABLES.welcomeImage, res.documents[0].$id);
+        }
+        document.getElementById('upload-status').innerText = 'התמונה הוסרה.';
+        document.getElementById('current-welcome-img-preview').style.display = 'none';
+        document.getElementById('welcomeImgUrl').value = 'https://postimages.org/he/';
+    } catch(e) { alert('שגיאה בהסרה: ' + e.message); }
 }
 
 function closeWelcomeImage() {
     document.getElementById('welcome-image-overlay').classList.remove('active');
+    // עצירת הסרטון
+    const iframe = document.getElementById('welcome-video-frame');
+    if (iframe) iframe.src = '';
 }
 
 function handleOverlayClick(event) {
-    if (event.target === document.getElementById('welcome-image-overlay')) {
-        closeWelcomeImage();
-    }
+    if (event.target === document.getElementById('welcome-image-overlay')) closeWelcomeImage();
 }
 
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeWelcomeImage();
-});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeWelcomeImage(); });
 
-// פונקציית מזעור אזורים למורה
 function toggleAdminSection(sectionId, headerElement) {
     const section = document.getElementById(sectionId);
-    const icon = headerElement.querySelector('.toggle-icon');
-    
+    const icon    = headerElement.querySelector('.toggle-icon');
     if (section.style.display === 'none') {
         section.style.display = 'block';
         icon.innerText = '▼ מזער';
@@ -1529,8 +1590,27 @@ function toggleAdminSection(sectionId, headerElement) {
     }
 }
 
-// הפעלת הטיימר כל שנייה אחת
+// ========== אתחול ==========
+async function init() {
+    await Promise.all([loadStudents(), loadTasks(), loadAnnouncements()]);
+    // אם המשתמש כבר מחובר מה-localStorage - נתחיל ישירות
+    if (currentUser && currentUser !== 'admin') {
+        const found = allStudents.find(s => s.id === currentUser);
+        if (found) {
+            startApp();
+        } else {
+            // המשתמש לא קיים יותר - נאפס
+            localStorage.removeItem('farm_user_id');
+            currentUser = null;
+        }
+    }
+}
+function logout() {
+    localStorage.removeItem('farm_user_id');
+    location.reload();
+}
 setInterval(updateAllTimers, 1000);
+init();
 </script>
 </body>
 </html>
