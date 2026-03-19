@@ -1496,11 +1496,39 @@ async function showWelcomeImageIfExists() {
         const res  = await dbSvc.listDocuments(DB_ID, TABLES.welcomeImage, [Query.limit(1)]);
         const data = res.documents[0];
         if (!data || !data.url) return;
-        document.getElementById('welcome-img-el').src  = data.url;
-        const cap = document.getElementById('welcome-img-caption');
-        cap.innerText     = data.caption || '';
-        cap.style.display = data.caption ? 'block' : 'none';
-        document.getElementById('welcome-image-overlay').classList.add('active');
+
+        const overlay = document.getElementById('welcome-image-overlay');
+        const imgEl   = document.getElementById('welcome-img-el');
+        const caption = document.getElementById('welcome-img-caption');
+
+        const isStreamable = data.url.includes('streamable.com');
+
+        if (isStreamable) {
+            const videoId  = data.url.split('streamable.com/').pop().split('?')[0];
+            const embedUrl = 'https://streamable.com/e/' + videoId;
+
+            imgEl.style.display = 'none';
+            const old = document.getElementById('welcome-video-frame');
+            if (old) old.remove();
+
+            const iframe = document.createElement('iframe');
+            iframe.id    = 'welcome-video-frame';
+            iframe.src   = embedUrl;
+            iframe.setAttribute('allowfullscreen', '');
+            iframe.setAttribute('frameborder', '0');
+            iframe.style = 'width:80vw; max-width:800px; height:45vw; max-height:450px; border-radius:12px; display:block;';
+            imgEl.parentNode.insertBefore(iframe, imgEl);
+        } else {
+            const old = document.getElementById('welcome-video-frame');
+            if (old) old.remove();
+            imgEl.style.display = 'block';
+            imgEl.src = data.url;
+        }
+
+        caption.innerText     = data.caption || '';
+        caption.style.display = data.caption ? 'block' : 'none';
+        overlay.classList.add('active');
+
     } catch(e) { console.error('showWelcomeImageIfExists error:', e); }
 }
 
