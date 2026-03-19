@@ -406,8 +406,8 @@ button {
 #battle-sidebar {
     display: none;
     position: fixed;
-    bottom: 82px;
-    right: 14px;
+    top: 84px;
+    left: 14px;
     z-index: 499;
     background: rgba(255,255,255,0.98);
     border: 2px solid #e53935;
@@ -418,11 +418,11 @@ button {
     box-shadow: 0 4px 20px rgba(229,57,53,0.25);
     min-width: 150px;
     max-width: 180px;
-    animation: slideUpIn 0.2s ease;
+    animation: slideDownIn 0.2s ease;
 }
 #battle-sidebar.open { display: flex; }
-@keyframes slideUpIn {
-    from { opacity: 0; transform: translateY(12px); }
+@keyframes slideDownIn {
+    from { opacity: 0; transform: translateY(-12px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 #battle-sidebar .sidebar-title {
