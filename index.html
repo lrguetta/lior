@@ -398,66 +398,9 @@ button {
     position: relative; 
     text-align: right; 
 }
-/* עיצוב מערכת הקרב */
-#battle-system-container {
-    position: fixed;
-    top: 20px;
-    left: 20px; /* שיניתי לימין כדי שלא יתנגש עם אלמנטים אחרים בצד שמאל */
-    z-index: 2000;
-}
-#battle-main-btn {
-    font-size: 30px; background: #ff4757; border: none;
-    border-radius: 50%; width: 60px; height: 60px;
-    cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-}
-#battle-menu {
-    display: flex; flex-direction: column; gap: 8px;
-    margin-top: 10px; background: white; padding: 10px;
-    border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-}
-.skill-btn {
-    padding: 10px; background: #2f3542; color: white;
-    border: none; border-radius: 5px; cursor: pointer; font-weight: bold;
-}
-.skill-btn:hover { background: #57606f; }
-
-/* עיצוב המגינים */
-#shields-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr);
-    gap: 15px; margin-top: 20px;
-}
-.shield-box {
-    font-size: 40px; cursor: pointer; padding: 10px;
-    border: 2px solid #ddd; border-radius: 10px; transition: 0.3s;
-}
-.shield-box:hover { background: #f1f2f6; transform: scale(1.1); }
-
-/* אנימציית "תחת התקפה" לכרטיס התלמיד */
-.under-attack {
-    border: 3px solid red !important;
-    animation: pulse-red 1s infinite;
-}
-@keyframes pulse-red {
-    0% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); }
-    70% { box-shadow: 0 0 0 15px rgba(255, 0, 0, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }
-}
 </style>
 </head>
 <body>
-<div id="battle-system-container">
-    <button id="battle-main-btn" onclick="toggleBattleMenu()">⚔️</button>
-    <div id="battle-menu" class="hidden">
-        </div>
-</div>
-
-<div id="defense-overlay" class="welcome-overlay"> 
-    <div class="welcome-content">
-        <h2 id="defense-title">התקפה מגיעה!</h2>
-        <p id="defense-skill-text"></p>
-        <div id="shields-grid"></div>
-    </div>
-</div>
     <!-- כפתור התנתקות צף לתלמידים -->
 <div id="logout-btn-float" style="display:none; position:fixed; bottom:20px; left:20px; z-index:200;">
     <button onclick="logout()" style="background:#c62828; border-radius:50px; padding:10px 18px; font-size:0.9em; box-shadow:0 4px 10px rgba(0,0,0,0.2);">🚪 התנתק</button>
@@ -995,7 +938,7 @@ function updateView() {
             : '';
 
         return `
-        <div class="student-card ${isMine ? 'my-creature' : ''}" onclick="if(window.selectedSkill) { handleTargetClick('${s.id}'); } else { this.classList.toggle('flipped'); }">
+        <div class="student-card ${isMine ? 'my-creature' : ''}" onclick="this.classList.toggle('flipped')">
             <div class="card-inner">
 
             <div class="card-front" style="display:flex; flex-direction:column; justify-content:space-between; align-items:center; height:100%; padding:15px; box-sizing:border-box;">
@@ -1627,11 +1570,6 @@ function closeWelcomeImage() {
     // עצירת הסרטון
     const iframe = document.getElementById('welcome-video-frame');
     if (iframe) iframe.src = '';
-    
-    // כאן אנחנו מוסיפים את הבדיקה למערכת הקרבות
-    if (currentUser && currentUser !== 'admin') {
-        checkForAttacks();
-    }
 }
 
 function handleOverlayClick(event) {
@@ -1653,95 +1591,6 @@ function toggleAdminSection(sectionId, headerElement) {
 }
 
 // ========== אתחול ==========
-    let selectedSkill = null;
-
-// פונקציה לבדיקת הדרגה והיכולות
-function getStudentStage(level) {
-    if (level <= 5) return { name: 'egg', skills: [], shields: 3 };
-    if (level <= 10) return { name: 'baby', skills: ['נגיחה'], shields: 4 };
-    if (level <= 20) return { name: 'adult', skills: ['נגיחה', 'מכת רוח'], shields: 5 };
-    return { name: 'evolved', skills: ['נגיחה', 'מכת רוח', 'קרן אור'], shields: 6 };
-}
-
-function toggleBattleMenu() {
-    const menu = document.getElementById('battle-menu');
-    menu.classList.toggle('hidden');
-    
-    const me = allStudents.find(s => s.id === currentUser);
-    const stageInfo = getStudentStage(me.level);
-    
-    if (stageInfo.skills.length === 0) {
-        menu.innerHTML = "<p style='color:black; font-size:12px;'>ביצים לא יכולות לתקוף...</p>";
-        return;
-    }
-
-    menu.innerHTML = stageInfo.skills.map(s => 
-        `<button class="skill-btn" onclick="selectSkill('${s}')">${s}</button>`
-    ).join('');
-}
-
-function selectSkill(skillName) {
-    selectedSkill = skillName;
-    alert(`בחרת ב-${skillName}! עכשיו לחץ על כרטיס של תלמיד אחר כדי לתקוף.`);
-    document.getElementById('battle-menu').classList.add('hidden');
-}
-
-// פונקציה שתופעל כשלוחצים על כרטיס של תלמיד
-async function handleTargetClick(targetId) {
-    if (!selectedSkill) return;
-    if (targetId === currentUser) return alert("אתה לא יכול לתקוף את עצמך!");
-
-    const target = allStudents.find(s => s.id === targetId);
-    const targetStage = getStudentStage(target.level);
-    
-    let mine = prompt(`בחר איזה מגן למלכד (1 עד ${targetStage.shields}):`);
-    let mineIndex = parseInt(mine) - 1;
-
-    if (isNaN(mineIndex) || mineIndex < 0 || mineIndex >= targetStage.shields) {
-        return alert("בחירה לא תוקפה");
-    }
-
-    try {
-        await databases.createDocument(DATABASE_ID, 'battles', 'unique()', {
-            attackerId: currentUser,
-            targetId: targetId,
-            skill: selectedSkill,
-            mineIndex: mineIndex,
-            status: 'pending'
-        });
-        alert("המתקפה נשלחה!");
-        selectedSkill = null;
-    } catch (e) { console.error(e); }
-}
-    async function handleTargetClick(targetId) {
-    if (!window.selectedSkill) return; // אם לא נבחר סקיל, לחיצה רגילה לא עושה כלום
-    if (targetId === currentUser) return alert("אי אפשר לתקוף את עצמך!");
-
-    const target = allStudents.find(s => s.id === targetId);
-    if (!target) return alert("תלמיד לא נמצא");
-    
-    const targetStage = getStudentStage(target.level);
-    
-    let mine = prompt(`בחר איזה מגן למלכד עבור ${target.name} (1 עד ${targetStage.shields}):`);
-    let mineIndex = parseInt(mine) - 1;
-
-    if (isNaN(mineIndex) || mineIndex < 0 || mineIndex >= targetStage.shields) {
-        return alert("בחירה לא חוקית");
-    }
-
-    try {
-        await databases.createDocument(DATABASE_ID, 'battles', 'unique()', {
-            attackerId: currentUser,
-            targetId: targetId,
-            skill: window.selectedSkill,
-            mineIndex: mineIndex,
-            status: 'pending'
-        });
-        alert(`הסקיל ${window.selectedSkill} נשלח למטרה!`);
-        window.selectedSkill = null; // איפוס הבחירה
-    } catch (e) { console.error("שגיאה בשליחת התקפה:", e); }
-}
-    
 async function init() {
     await Promise.all([loadStudents(), loadTasks(), loadAnnouncements()]);
     // אם המשתמש כבר מחובר מה-localStorage - נתחיל ישירות
