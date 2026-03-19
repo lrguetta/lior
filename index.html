@@ -207,7 +207,7 @@ button {
     box-shadow: none !important;
     border: none !important;
     cursor: pointer;
-    display: inline-block;
+    display: block;
 }
 .my-creature { transform: scale(1.05); z-index: 5; }
 
@@ -383,16 +383,16 @@ button {
 #battle-float-btn {
     display: none;
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    top: 14px;
+    left: 14px;
+    width: 64px;
+    height: 64px;
+    font-size: 1.9em;
     z-index: 500;
     background: linear-gradient(135deg, #ff6f00, #e53935);
     color: white;
     border: none;
     border-radius: 50%;
-    width: 52px;
-    height: 52px;
-    font-size: 1.5em;
     cursor: pointer;
     box-shadow: 0 4px 14px rgba(229,57,53,0.5);
     transition: transform 0.2s, box-shadow 0.2s;
@@ -474,7 +474,7 @@ button {
 
 /* כרטיס מטרה אפשרית — גבול ירוק בהובר */
 .student-card.pick-mode:not(.my-creature) {
-    cursor: crosshair !important;
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ctext y='28' font-size='28'%3E⚔️%3C/text%3E%3C/svg%3E") 16 16, crosshair !important;
 }
 .student-card.pick-mode:not(.my-creature):hover .card-inner {
     box-shadow: 0 0 0 3px #43a047, 0 0 14px rgba(67,160,71,0.4);
