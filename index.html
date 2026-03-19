@@ -466,21 +466,22 @@ button {
 
     <div style="width:100%; background:#e8eaf6; padding:15px; border-radius:10px; border:1px solid #9fa8da; text-align:right; box-sizing:border-box;">
         <h4 style="margin:0 0 10px 0; color:#283593; cursor:pointer; display:flex; justify-content:space-between; align-items:center;" onclick="toggleAdminSection('welcome-img-collapse', this)">
-            <span>🖼️ תמונה שתופיע לתלמידים בכניסה</span>
+            <span>🖼️ כרזה חדשה</span>
             <span class="toggle-icon" style="font-size:0.8em; background:#9fa8da; color:white; padding:4px 10px; border-radius:10px;">▼ מזער</span>
         </h4>
         <div id="welcome-img-collapse" style="display:block;">
             <div id="current-welcome-img-preview" style="margin-bottom:12px; display:none; text-align:center;">
                 <img id="preview-thumb" src="" alt="תצוגה מקדימה" style="max-height:120px; max-width:100%; border-radius:8px; border:2px solid #9fa8da; object-fit:contain;">
-                <div style="font-size:0.8em; color:#555; margin-top:5px;">התמונה הנוכחית הפעילה</div>
+                <div style="font-size:0.8em; color:#555; margin-top:5px;">כרזה פעילה</div>
             </div>
             <div style="font-size:0.85em; color:#3949ab; margin-bottom:6px;">
-                📎 העלה תמונה באתר PostImages ואז הדבק את הקישור הישיר כאן:
+                העלה תמונה או סרטון והדבק את הקישור כאן
+                אתר להעלאת סרטון קצר:https://streamable.com/
             </div>
-            <input type="url" id="welcomeImgUrl" placeholder="https://postimages.org/he/" value="https://postimages.org/he/" style="width:100%; margin-bottom:10px; box-sizing:border-box; direction:ltr; text-align:left;">
-            <input type="text" id="welcomeImgCaption" placeholder="כיתוב מתחת לתמונה (אופציונלי)" style="width:100%; margin-bottom:10px; box-sizing:border-box;">
+            <input type="url" id="welcomeImgUrl" placeholder="https://streamable.com/" value="https://streamable.com/" style="width:100%; margin-bottom:10px; box-sizing:border-box; direction:ltr; text-align:left;">
+            <input type="text" id="welcomeImgCaption" placeholder="כיתוב מתחת לכרזה (אופציונלי)" style="width:100%; margin-bottom:10px; box-sizing:border-box;">
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                <button onclick="publishWelcomeImageUrl()" style="flex:2; background:#283593; padding:11px; font-size:0.95em;">פרסם תמונה 🚀</button>
+                <button onclick="publishWelcomeImageUrl()" style="flex:2; background:#283593; padding:11px; font-size:0.95em;">פרסם כרזה 🚀</button>
                 <button onclick="clearWelcomeImage()" style="flex:1; background:#c62828; padding:11px; font-size:0.95em;">הסר 🗑️</button>
             </div>
             <div id="upload-status" style="margin-top:8px; font-size:0.85em; color:#555; text-align:center;"></div>
