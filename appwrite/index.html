@@ -1567,6 +1567,9 @@ async function clearWelcomeImage() {
 
 function closeWelcomeImage() {
     document.getElementById('welcome-image-overlay').classList.remove('active');
+    // עצירת הסרטון
+    const iframe = document.getElementById('welcome-video-frame');
+    if (iframe) iframe.src = '';
 }
 
 function handleOverlayClick(event) {
