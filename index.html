@@ -1990,6 +1990,14 @@ function toggleBattleSidebar() {
 
 // כניסה למצב "בחר מטרה"
 function enterPickMode(skill) {
+    const lastAttack = parseInt(localStorage.getItem('last_attack_' + currentUser) || '0');
+    const cooldownMs = 15 * 60 * 1000;
+    const remaining  = cooldownMs - (Date.now() - lastAttack);
+    if (remaining > 0) {
+        const mins = Math.ceil(remaining / 60000);
+        alert(`⏳ קולדאון! תוכל לתקוף שוב בעוד ${mins} דקות.`);
+        return;
+    }
     battleState.selectedSkill = skill;
     // סגור סרגל
     document.getElementById('battle-sidebar').classList.remove('open');
@@ -2045,8 +2053,8 @@ async function pickTargetShield(targetId, shieldIndex) {
     const mineIndex     = activeIndices[Math.floor(Math.random() * activeIndices.length)];
 
     // סגור overlay וביטול מצב
-    cancelAttack();
-
+   cancelAttack();
+    localStorage.setItem('last_attack_' + currentUser, Date.now().toString());
     try {
         await dbSvc.createDocument(DB_ID, TABLES.battles, ID.unique(), {
             attackerId: currentUser,
