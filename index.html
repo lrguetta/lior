@@ -592,6 +592,23 @@ button {
     position: relative; 
     text-align: right; 
 }
+    #battle-float-btn.cooldown {
+    background: linear-gradient(135deg, #888, #555);
+    cursor: not-allowed;
+}
+#battle-cooldown-timer {
+    position: fixed;
+    top: 78px;
+    left: 14px;
+    font-size: 0.72em;
+    font-weight: bold;
+    color: white;
+    background: rgba(0,0,0,0.55);
+    padding: 2px 7px;
+    border-radius: 8px;
+    z-index: 501;
+    display: none;
+}
 </style>
 </head>
 <body>
@@ -1999,21 +2016,35 @@ function enterPickMode(skill) {
     const lastAttack = parseInt(localStorage.getItem('last_attack_' + currentUser) || '0');
     const cooldownMs = 15 * 60 * 1000;
     const remaining  = cooldownMs - (Date.now() - lastAttack);
-    if (remaining > 0) {
-        const mins = Math.ceil(remaining / 60000);
-        alert(`⏳ קולדאון! תוכל לתקוף שוב בעוד ${mins} דקות.`);
-        return;
-    }
+    if (remaining > 0) return; // כפתור אפור, לא עושים כלום
+
     battleState.selectedSkill = skill;
-    // סגור סרגל
     document.getElementById('battle-sidebar').classList.remove('open');
     document.getElementById('battle-float-btn').classList.remove('active');
-    // הצג באנר
     document.getElementById('battle-pick-banner').classList.add('visible');
-    // הוסף pick-mode לכל הכרטיסים
     document.querySelectorAll('.student-card').forEach(c => c.classList.add('pick-mode'));
 }
 
+    function updateCooldownDisplay() {
+    const btn     = document.getElementById('battle-float-btn');
+    const timer   = document.getElementById('battle-cooldown-timer');
+    if (!btn || !currentUser || currentUser === 'admin') return;
+
+    const lastAttack = parseInt(localStorage.getItem('last_attack_' + currentUser) || '0');
+    const cooldownMs = 15 * 60 * 1000;
+    const remaining  = cooldownMs - (Date.now() - lastAttack);
+
+    if (remaining > 0) {
+        const mins = String(Math.floor(remaining / 60000)).padStart(2, '0');
+        const secs = String(Math.floor((remaining % 60000) / 1000)).padStart(2, '0');
+        btn.classList.add('cooldown');
+        timer.style.display = 'block';
+        timer.textContent   = `${mins}:${secs}`;
+    } else {
+        btn.classList.remove('cooldown');
+        timer.style.display = 'none';
+    }
+}
 // ביטול מצב תקיפה
 function cancelAttack() {
     battleState.selectedSkill = null;
@@ -2346,8 +2377,8 @@ function logout() {
     localStorage.removeItem('farm_user_id');
     location.reload();
 }
-setInterval(updateAllTimers, 1000);
-init();
+    setInterval(() => { updateAllTimers(); updateCooldownDisplay(); }, 1000);
+    init();
 </script>
 </body>
 </html>
