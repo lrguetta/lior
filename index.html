@@ -1969,8 +1969,8 @@ function buildBattleSidebar(me) {
         btn.title     = name;
         if (icon) {
             btn.innerHTML = `<img src="${icon}" style="width:28px;height:28px;object-fit:contain;display:block;margin:0 auto 2px;"
-                onerror="this.style.display='none';this.nextSibling.style.display='block'">
-                <span style="display:none;font-size:0.8em;">${name}</span>`;
+                onerror="this.style.display='none'; if(this.nextSibling) this.nextSibling.style.display='block';"
+            <span style="display:none;font-size:0.8em;">${name}</span>`;
         } else {
             btn.textContent = name;
         }
