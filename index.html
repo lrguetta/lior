@@ -1967,13 +1967,17 @@ function buildBattleSidebar(me) {
         const btn  = document.createElement('button');
         btn.className = 'attack-btn';
         btn.title     = name;
-        if (icon) {
-            btn.innerHTML = `<img src="${icon}" style="width:28px;height:28px;object-fit:contain;display:block;margin:0 auto 2px;"
-                onerror="this.style.display='none'; if(this.nextSibling) this.nextSibling.style.display='block';"
-            <span style="display:none;font-size:0.8em;">${name}</span>`;
-        } else {
-            btn.textContent = name;
-        }
+       if (icon) {
+    btn.innerHTML = `<img src="${icon}" style="width:36px;height:36px;object-fit:contain;display:block;margin:0 auto;"
+        onerror="this.style.display='none'; if(this.nextSibling) this.nextSibling.style.display='block'">
+        <span style="display:none;font-size:0.8em;">${name}</span>`;
+    btn.style.background = 'none';
+    btn.style.border = 'none';
+    btn.style.padding = '4px';
+    btn.style.boxShadow = 'none';
+} else {
+    btn.textContent = name;
+}
         btn.onclick = () => enterPickMode(name);
         sidebar.appendChild(btn);
     });
