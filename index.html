@@ -1986,17 +1986,30 @@ function buildBattleSidebar(me) {
         const btn  = document.createElement('button');
         btn.className = 'attack-btn';
         btn.title     = name;
-       if (icon) {
-    btn.innerHTML = `<img src="${icon}" style="width:65px;height:65px;object-fit:contain;display:block;margin:0 auto;"
-        onerror="this.style.display='none'; if(this.nextSibling) this.nextSibling.style.display='block'">
-        <span style="display:none;font-size:0.8em;">${name}</span>`;
-    btn.style.background = 'none';
-    btn.style.border = 'none';
-    btn.style.padding = '4px';
-    btn.style.boxShadow = 'none';
-} else {
-    btn.textContent = name;
-}
+
+        if (icon) {
+            btn.innerHTML = `<img src="${icon}" style="width:65px;height:65px;object-fit:contain;display:block;margin:0 auto;"
+                onerror="this.style.display='none'; if(this.nextSibling) this.nextSibling.style.display='block'">
+                <span style="display:none;font-size:0.8em;">${name}</span>`;
+            btn.style.background = 'none';
+            btn.style.border = 'none';
+            btn.style.padding = '4px';
+            btn.style.boxShadow = 'none';
+        } else {
+            btn.textContent = name;
+        }
+
+        // בדיקת קולדאון לפי מתקפה ספציפית
+        const lastAttack = parseInt(localStorage.getItem('last_attack_' + currentUser + '_' + name) || '0');
+        const remaining  = (15 * 60 * 1000) - (Date.now() - lastAttack);
+        if (remaining > 0) {
+            btn.style.opacity = '0.4';
+            btn.style.cursor  = 'not-allowed';
+            const mins = String(Math.floor(remaining / 60000)).padStart(2,'0');
+            const secs = String(Math.floor((remaining % 60000) / 1000)).padStart(2,'0');
+            btn.title = `קולדאון: ${mins}:${secs}`;
+        }
+
         btn.onclick = () => enterPickMode(name);
         sidebar.appendChild(btn);
     });
@@ -2013,11 +2026,10 @@ function toggleBattleSidebar() {
 
 // כניסה למצב "בחר מטרה"
 function enterPickMode(skill) {
-    const lastAttack = parseInt(localStorage.getItem('last_attack_' + currentUser) || '0');
+    const lastAttack = parseInt(localStorage.getItem('last_attack_' + currentUser + '_' + skill) || '0');
     const cooldownMs = 15 * 60 * 1000;
     const remaining  = cooldownMs - (Date.now() - lastAttack);
-    if (remaining > 0) return; // כפתור אפור, לא עושים כלום
-
+    if (remaining > 0) return;
     battleState.selectedSkill = skill;
     document.getElementById('battle-sidebar').classList.remove('open');
     document.getElementById('battle-float-btn').classList.remove('active');
@@ -2025,25 +2037,10 @@ function enterPickMode(skill) {
     document.querySelectorAll('.student-card').forEach(c => c.classList.add('pick-mode'));
 }
 
-    function updateCooldownDisplay() {
-    const btn     = document.getElementById('battle-float-btn');
-    const timer   = document.getElementById('battle-cooldown-timer');
-    if (!btn || !currentUser || currentUser === 'admin') return;
-
-    const lastAttack = parseInt(localStorage.getItem('last_attack_' + currentUser) || '0');
-    const cooldownMs = 15 * 60 * 1000;
-    const remaining  = cooldownMs - (Date.now() - lastAttack);
-
-    if (remaining > 0) {
-        const mins = String(Math.floor(remaining / 60000)).padStart(2, '0');
-        const secs = String(Math.floor((remaining % 60000) / 1000)).padStart(2, '0');
-        btn.classList.add('cooldown');
-        timer.style.display = 'block';
-        timer.textContent   = `${mins}:${secs}`;
-    } else {
-        btn.classList.remove('cooldown');
-        timer.style.display = 'none';
-    }
+   function updateCooldownDisplay() {
+    if (!currentUser || currentUser === 'admin') return;
+    const me = allStudents.find(s => s.id === currentUser);
+    if (me) buildBattleSidebar(me);
 }
 // ביטול מצב תקיפה
 function cancelAttack() {
@@ -2091,7 +2088,7 @@ async function pickTargetShield(targetId, shieldIndex) {
 
     // סגור overlay וביטול מצב
    cancelAttack();
-    localStorage.setItem('last_attack_' + currentUser, Date.now().toString());
+    localStorage.setItem('last_attack_' + currentUser + '_' + skill, Date.now().toString());
     try {
         await dbSvc.createDocument(DB_ID, TABLES.battles, ID.unique(), {
             attackerId: currentUser,
