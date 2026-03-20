@@ -2280,6 +2280,7 @@ async function saveCreatureField(docId, field, value) {
 }
 
 // ========== אתחול ==========
+async function init() {
     await Promise.all([loadStudents(), loadTasks(), loadAnnouncements(), loadCreatureTypes()]);
     // אם המשתמש כבר מחובר מה-localStorage - נתחיל ישירות
     if (currentUser && currentUser !== 'admin') {
