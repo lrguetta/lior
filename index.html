@@ -207,7 +207,7 @@ button {
     box-shadow: none !important;
     border: none !important;
     cursor: pointer;
-    display: block;
+    display: inline-block;
 }
 .my-creature { transform: scale(1.05); z-index: 5; }
 
@@ -383,16 +383,16 @@ button {
 #battle-float-btn {
     display: none;
     position: fixed;
-    top: 14px;
-    left: 14px;
-    width: 64px;
-    height: 64px;
-    font-size: 1.9em;
+    bottom: 20px;
+    right: 20px;
     z-index: 500;
     background: linear-gradient(135deg, #ff6f00, #e53935);
     color: white;
     border: none;
     border-radius: 50%;
+    width: 52px;
+    height: 52px;
+    font-size: 1.5em;
     cursor: pointer;
     box-shadow: 0 4px 14px rgba(229,57,53,0.5);
     transition: transform 0.2s, box-shadow 0.2s;
@@ -406,8 +406,8 @@ button {
 #battle-sidebar {
     display: none;
     position: fixed;
-    top: 84px;
-    left: 14px;
+    bottom: 82px;
+    right: 14px;
     z-index: 499;
     background: rgba(255,255,255,0.98);
     border: 2px solid #e53935;
@@ -416,13 +416,13 @@ button {
     flex-direction: column;
     gap: 7px;
     box-shadow: 0 4px 20px rgba(229,57,53,0.25);
-    min-width: 100px;
-    max-width: 100px;
-    animation: slideDownIn 0.2s ease;
+    min-width: 150px;
+    max-width: 180px;
+    animation: slideUpIn 0.2s ease;
 }
 #battle-sidebar.open { display: flex; }
-@keyframes slideDownIn {
-    from { opacity: 0; transform: translateY(-12px); }
+@keyframes slideUpIn {
+    from { opacity: 0; transform: translateY(12px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 #battle-sidebar .sidebar-title {
@@ -443,6 +443,7 @@ button {
     font-weight: bold;
     text-align: center;
     transition: transform 0.15s, filter 0.15s;
+    white-space: nowrap;
 }
 .attack-btn:hover { transform: scale(1.05); filter: brightness(1.15); }
 .attack-btn.selected-skill {
@@ -473,7 +474,7 @@ button {
 
 /* כרטיס מטרה אפשרית — גבול ירוק בהובר */
 .student-card.pick-mode:not(.my-creature) {
-    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ctext y='28' font-size='28'%3E⚔️%3C/text%3E%3C/svg%3E") 16 16, crosshair !important;
+    cursor: crosshair !important;
 }
 .student-card.pick-mode:not(.my-creature):hover .card-inner {
     box-shadow: 0 0 0 3px #43a047, 0 0 14px rgba(67,160,71,0.4);
@@ -642,6 +643,12 @@ button {
     </div>
 
     <hr style="width:100%; margin: 15px 0;">
+
+    <div style="width:100%; text-align:center;">
+        <button onclick="toggleCreatureTypesPanel()" style="background:#7b1fa2; padding:11px 24px; font-size:1em;">🐾 ניהול מתקפות דמויות</button>
+    </div>
+
+    <hr style="width:100%; margin: 15px 0;">
     
     <div style="width:100%; background:#fff3e0; padding:15px; border-radius:10px; border:1px solid #ffcc80; text-align:right; box-sizing:border-box;">
         <h4 style="margin:0 0 10px 0; color:#e65100; cursor:pointer; display:flex; justify-content:space-between; align-items:center;" onclick="toggleAdminSection('announcements-collapse', this)">
@@ -734,7 +741,20 @@ button {
     </div>
 </div>
 
-<div id="tasks-area" style="display:none; width:90%; max-width:1200px; margin-bottom:20px; text-align:right;">
+<!-- ========== ניהול סוגי דמויות ========== -->
+<div id="creature-types-panel" style="display:none; width:90%; max-width:900px; background:rgba(255,255,255,0.95); border-radius:20px; box-shadow:0 10px 30px rgba(0,0,0,0.15); padding:25px; margin-bottom:30px; border:2px solid #7b1fa2; text-align:right;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <h3 style="margin:0; color:#6a1b9a;">🐾 ניהול מתקפות דמויות</h3>
+        <div style="display:flex; gap:8px;">
+            <button onclick="seedCreatureTypes()" style="background:#7b1fa2; font-size:0.85em; padding:8px 14px;">העלה נתוני ברירת מחדל ⬆️</button>
+            <button onclick="document.getElementById('creature-types-panel').style.display='none'" style="background:#999; padding:8px 14px; font-size:0.85em;">סגור ✕</button>
+        </div>
+    </div>
+    <div style="font-size:0.82em; color:#888; margin-bottom:12px;">לחץ על שדה כדי לערוך — השינויים נשמרים מיד ל-Appwrite.</div>
+    <div id="creature-types-list" style="display:flex; flex-direction:column; gap:8px;">
+        <div style="color:#aaa; text-align:center;">טוען...</div>
+    </div>
+</div> style="display:none; width:90%; max-width:1200px; margin-bottom:20px; text-align:right;">
     <h3 style="margin-bottom:10px;">משימות להשלמה 📝</h3>
     <div id="tasks-list"></div>
 </div>
@@ -800,12 +820,13 @@ const dbSvc = new Databases(client);
 // מזהים של הפרויקט
 const DB_ID  = '69ba8e8e00096cab7d99';
 const TABLES = {
-    students:      'students',
-    tasks:         'tasks',
-    submissions:   'submissions',
-    announcements: 'announcements',
-    welcomeImage:  'welcomeimage',
-    battles:       'battles'
+    students:       'students',
+    tasks:          'tasks',
+    submissions:    'submissions',
+    announcements:  'announcements',
+    welcomeImage:   'welcomeimage',
+    battles:        'battles',
+    creatureTypes:  'creature_types'
 };
 
 // ========== קבועי מערכת הקרבות ==========
@@ -830,33 +851,36 @@ function getCreatureStage(level) {
     return 'מפותח';
 }
 
-// מתקפות לפי סוג הדמות (3 מתקפות לכל דמות, כמות פעילה נקבעת לפי רמה)
-const ATTACKS_BY_TYPE = {
-    trt: ['רובה 🔫',            'צלף 🎯',              'מיני-גאן 💥'],
-    snk: ['הכשה כפולה 🐍',      'יריקת ארס ☠️',        'נשיפת דרקון 🔥'],
-    hnd: ['חץ וקשת 🏹',         'רובה 🔫',             'שוט-גאן 💢'],
-    cat: ['חרב עץ 🪵',          'קטאנה ⚔️',            'חרב כפולה ⚔️⚔️'],
-    crw: ['צווחה 🖤',            'מקור בזק ⚡',         'מקור זהב 🥇'],
-    fsh: ['פטיש 🔨',            'מסור יד 🪚',          'מסור חשמלי ⚙️'],
-    chk: ['ניקור 🐥',           'סכין שף 🔪',          'סכין קצבים 🩸'],
-    fox: ['נשיכה 🦊',           'ריצת אש 🔥',          'דש חם 🌋'],
-    zbr: ['זברה קדברה 🦓',      'קללת הפסים 🌀',       'מבוך צללים 🌑'],
-    mnk: ['סטירת מצילתיים 🥁',  'אגרוף תוף 💪',        'בום על-קולי 💣'],
-    shp: ['מכת פרסה 🐑',        'מהה-טורפת 😈',        'טורף פראי 🐺'],
-    cow: ['נגיחה 🐄',           'מוו-זרק 🌪️',          'פרה משוגעת 🤯'],
-    ost: ['בעיטה חופשית 🦵',    'פנדל ⚽',             'מספרת ✂️'],
-    rbt: ['אגרוף מהיר 🐇',      'קומבו ממוקד 🎯',      'נוק-אאוט 🥊'],
-    dnk: ['חמור גרם 🫏',        'בעיטת חמור 💢',       'חמורו של משיח ✨'],
-    duk: ['אל תיגע-גע 🦆',      'פגע-גע וברח 💨',      'קרב מגע-גע 🥋'],
-    snl: ['באג בתוכנה 🐛',      "וירוס 'שבלול' 💻",    'קריסת מערכות 💀'],
-    owl: ['מבט אימה 👁️',        'פגיון לילה 🌙',       'חיסול אפל 🕶️'],
-    spd: ['קורים 🕸️',           'משחק מסוכן 🕷️',       'המופע האחרון 🎭'],
-    wsl: ['חבטת זנב 🦦',        'גרזן מלחמה 🪓',       'פשיטת זעם ⚡'],
-    lio: ['שריטה בצבע 🦁',      'שאגת קשת 🌈',         'שיסוע רב-גוונים 💥'],
-    lmb: ['ניגוח זהב 🐂',       'חבטת 24 קראט 👑',     'חרב מיליון דולר 💰'],
-    egl: ['ניקור על-חלל 🦅',    'כנף גלקטי 🌌',        'חור שחור 🌀'],
-    hlz: ['מכחול טועה 🎨',      'מברשת קטלנית 🖌️',     'צביעת נשמה 🌈'],
-};
+// מתקפות — נטענות מ-Appwrite. משמש כ-fallback עד שהטעינה מסתיימת
+let ATTACKS_BY_TYPE = {};
+
+// נתוני ברירת מחדל לשימוש ב-seed (פעם אחת מהמנהל)
+const CREATURE_SEED_DATA = [
+    { typeId:'trt', label:'צב',            attack1:'רובה 🔫',           attack2:'צלף 🎯',             attack3:'מיני-גאן 💥',          icon1:'', icon2:'', icon3:'' },
+    { typeId:'snk', label:'נחש',           attack1:'הכשה כפולה 🐍',     attack2:'יריקת ארס ☠️',       attack3:'נשיפת דרקון 🔥',       icon1:'', icon2:'', icon3:'' },
+    { typeId:'hnd', label:'כלב הציד',      attack1:'חץ וקשת 🏹',        attack2:'רובה 🔫',            attack3:'שוט-גאן 💢',           icon1:'', icon2:'', icon3:'' },
+    { typeId:'cat', label:'חתול',          attack1:'חרב עץ 🪵',         attack2:'קטאנה ⚔️',           attack3:'חרב כפולה ⚔️⚔️',      icon1:'', icon2:'', icon3:'' },
+    { typeId:'crw', label:'עורב',          attack1:'צווחה 🖤',           attack2:'מקור בזק ⚡',        attack3:'מקור זהב 🥇',          icon1:'', icon2:'', icon3:'' },
+    { typeId:'fsh', label:'דג',            attack1:'פטיש 🔨',           attack2:'מסור יד 🪚',         attack3:'מסור חשמלי ⚙️',        icon1:'', icon2:'', icon3:'' },
+    { typeId:'chk', label:'אפרוח',         attack1:'ניקור 🐥',          attack2:'סכין שף 🔪',         attack3:'סכין קצבים 🩸',        icon1:'', icon2:'', icon3:'' },
+    { typeId:'fox', label:'שועל',          attack1:'נשיכה 🦊',          attack2:'ריצת אש 🔥',         attack3:'דש חם 🌋',             icon1:'', icon2:'', icon3:'' },
+    { typeId:'zbr', label:'זברה',          attack1:'זברה קדברה 🦓',     attack2:'קללת הפסים 🌀',      attack3:'מבוך צללים 🌑',        icon1:'', icon2:'', icon3:'' },
+    { typeId:'mnk', label:'קוף',           attack1:'סטירת מצילתיים 🥁', attack2:'אגרוף תוף 💪',       attack3:'בום על-קולי 💣',       icon1:'', icon2:'', icon3:'' },
+    { typeId:'shp', label:'כבשה',          attack1:'מכת פרסה 🐑',       attack2:'מהה-טורפת 😈',       attack3:'טורף פראי 🐺',         icon1:'', icon2:'', icon3:'' },
+    { typeId:'cow', label:'פרה',           attack1:'נגיחה 🐄',          attack2:'מוו-זרק 🌪️',         attack3:'פרה משוגעת 🤯',        icon1:'', icon2:'', icon3:'' },
+    { typeId:'ost', label:'יען',           attack1:'בעיטה חופשית 🦵',   attack2:'פנדל ⚽',            attack3:'מספרת ✂️',             icon1:'', icon2:'', icon3:'' },
+    { typeId:'rbt', label:'ארנב',          attack1:'אגרוף מהיר 🐇',     attack2:'קומבו ממוקד 🎯',     attack3:'נוק-אאוט 🥊',          icon1:'', icon2:'', icon3:'' },
+    { typeId:'dnk', label:'חמור',          attack1:'חמור גרם 🫏',       attack2:'בעיטת חמור 💢',      attack3:'חמורו של משיח ✨',      icon1:'', icon2:'', icon3:'' },
+    { typeId:'duk', label:'ברווז',         attack1:'אל תיגע-גע 🦆',     attack2:'פגע-גע וברח 💨',     attack3:'קרב מגע-גע 🥋',        icon1:'', icon2:'', icon3:'' },
+    { typeId:'snl', label:'חילזון',        attack1:'באג בתוכנה 🐛',     attack2:"וירוס 'שבלול' 💻",   attack3:'קריסת מערכות 💀',      icon1:'', icon2:'', icon3:'' },
+    { typeId:'owl', label:'ינשוף',         attack1:'מבט אימה 👁️',       attack2:'פגיון לילה 🌙',      attack3:'חיסול אפל 🕶️',         icon1:'', icon2:'', icon3:'' },
+    { typeId:'spd', label:'עכביש',         attack1:'קורים 🕸️',          attack2:'משחק מסוכן 🕷️',      attack3:'המופע האחרון 🎭',       icon1:'', icon2:'', icon3:'' },
+    { typeId:'wsl', label:'לוטרה',         attack1:'חבטת זנב 🦦',       attack2:'גרזן מלחמה 🪓',      attack3:'פשיטת זעם ⚡',         icon1:'', icon2:'', icon3:'' },
+    { typeId:'lio', label:'אריה',          attack1:'שריטה בצבע 🦁',     attack2:'שאגת קשת 🌈',        attack3:'שיסוע רב-גוונים 💥',   icon1:'', icon2:'', icon3:'' },
+    { typeId:'lmb', label:'עגל',           attack1:'ניגוח זהב 🐂',      attack2:'חבטת 24 קראט 👑',    attack3:'חרב מיליון דולר 💰',   icon1:'', icon2:'', icon3:'' },
+    { typeId:'egl', label:'נשר',           attack1:'ניקור על-חלל 🦅',   attack2:'כנף גלקטי 🌌',       attack3:'חור שחור 🌀',           icon1:'', icon2:'', icon3:'' },
+    { typeId:'hlz', label:'חילזון התכלת', attack1:'מכחול טועה 🎨',     attack2:'מברשת קטלנית 🖌️',    attack3:'צביעת נשמה 🌈',        icon1:'', icon2:'', icon3:'' },
+];
 
 // מצב קרב פעיל (UI)
 let battleState = {
@@ -943,6 +967,49 @@ async function loadTasks() {
         allTasks = res.documents.map(docToTask);
         if (currentUser) renderTasks();
     } catch(e) { console.error('loadTasks error:', e); }
+}
+
+// ========== טעינת סוגי דמויות מ-Appwrite ==========
+async function loadCreatureTypes() {
+    try {
+        const res = await dbSvc.listDocuments(DB_ID, TABLES.creatureTypes, [Query.limit(100)]);
+        ATTACKS_BY_TYPE = {};
+        res.documents.forEach(doc => {
+            ATTACKS_BY_TYPE[doc.typeId] = [
+                { name: doc.attack1 || '', icon: doc.icon1 || '' },
+                { name: doc.attack2 || '', icon: doc.icon2 || '' },
+                { name: doc.attack3 || '', icon: doc.icon3 || '' },
+            ];
+        });
+    } catch(e) {
+        console.error('loadCreatureTypes error:', e);
+        // fallback — בנה מ-seed data אם Appwrite נכשל
+        CREATURE_SEED_DATA.forEach(d => {
+            ATTACKS_BY_TYPE[d.typeId] = [
+                { name: d.attack1, icon: d.icon1 },
+                { name: d.attack2, icon: d.icon2 },
+                { name: d.attack3, icon: d.icon3 },
+            ];
+        });
+    }
+}
+
+// seed — מעלה את כל הדמויות ל-Appwrite בלחיצה אחת (רק אם הטבלה ריקה)
+async function seedCreatureTypes() {
+    try {
+        const existing = await dbSvc.listDocuments(DB_ID, TABLES.creatureTypes, [Query.limit(1)]);
+        if (existing.documents.length > 0) {
+            if (!confirm(`הטבלה כבר מכילה נתונים!\nהמשך יוסיף רשומות כפולות. בטוח?`)) return;
+        }
+        let count = 0;
+        for (const d of CREATURE_SEED_DATA) {
+            await dbSvc.createDocument(DB_ID, TABLES.creatureTypes, ID.unique(), d);
+            count++;
+        }
+        alert(`✅ הועלו ${count} דמויות בהצלחה!`);
+        await loadCreatureTypes();
+        await initAdminCreatureTypes();
+    } catch(e) { alert('שגיאה ב-seed: ' + e.message); }
 }
 
 async function loadAnnouncements() {
@@ -1932,15 +1999,21 @@ function toggleAdminSection(sectionId, headerElement) {
 
 // בנה את סרגל המתקפות של המשתמש הנוכחי
 function buildBattleSidebar(me) {
-    const attacks = (ATTACKS_BY_TYPE[me.type] || []).slice(0, getAttackCount(me.level));
+    const rawAttacks = (ATTACKS_BY_TYPE[me.type] || []).slice(0, getAttackCount(me.level));
     const sidebar = document.getElementById('battle-sidebar');
-    // השאר רק את הכותרת, החלף כפתורים
     sidebar.innerHTML = `<div class="sidebar-title">⚔️ בחר מתקפה:</div>`;
-    attacks.forEach(atk => {
-        const btn = document.createElement('button');
+    rawAttacks.forEach(atk => {
+        const name = typeof atk === 'object' ? atk.name : atk;
+        const icon = typeof atk === 'object' ? atk.icon : '';
+        const btn  = document.createElement('button');
         btn.className   = 'attack-btn';
-        btn.textContent = atk;
-        btn.onclick     = () => enterPickMode(atk);
+        btn.title       = name;
+        if (icon) {
+            btn.innerHTML = `<img src="${icon}" style="width:28px;height:28px;object-fit:contain;display:block;margin:0 auto 2px;" onerror="this.style.display='none';this.nextSibling.style.display='block'"><span style="display:none;font-size:0.8em;">${name}</span>`;
+        } else {
+            btn.textContent = name;
+        }
+        btn.onclick = () => enterPickMode(name);
         sidebar.appendChild(btn);
     });
 }
@@ -1956,14 +2029,6 @@ function toggleBattleSidebar() {
 
 // כניסה למצב "בחר מטרה"
 function enterPickMode(skill) {
-    const lastAttack = parseInt(localStorage.getItem('last_attack_' + currentUser) || '0');
-    const cooldownMs = 15 * 60 * 1000;
-    const remaining  = cooldownMs - (Date.now() - lastAttack);
-    if (remaining > 0) {
-        const mins = Math.ceil(remaining / 60000);
-        alert(`⏳ קולדאון! תוכל לתקוף שוב בעוד ${mins} דקות.`);
-        return;
-    }
     battleState.selectedSkill = skill;
     // סגור סרגל
     document.getElementById('battle-sidebar').classList.remove('open');
@@ -2020,7 +2085,6 @@ async function pickTargetShield(targetId, shieldIndex) {
 
     // סגור overlay וביטול מצב
     cancelAttack();
-        localStorage.setItem('last_attack_' + currentUser, Date.now().toString());
 
     try {
         await dbSvc.createDocument(DB_ID, TABLES.battles, ID.unique(), {
@@ -2152,9 +2216,58 @@ async function resolveDefense(chosenIndex, battle) {
     await loadStudents();
 }
 
+// ========== ניהול סוגי דמויות — פאנל מנהל ==========
+function toggleCreatureTypesPanel() {
+    const panel = document.getElementById('creature-types-panel');
+    const visible = panel.style.display !== 'none';
+    panel.style.display = visible ? 'none' : 'block';
+    if (!visible) initAdminCreatureTypes();
+}
+
+async function initAdminCreatureTypes() {
+    const container = document.getElementById('creature-types-list');
+    container.innerHTML = '<div style="color:#aaa;text-align:center;">טוען...</div>';
+    try {
+        const res = await dbSvc.listDocuments(DB_ID, TABLES.creatureTypes, [Query.limit(100)]);
+        if (res.documents.length === 0) {
+            container.innerHTML = '<div style="color:#e53935;text-align:center;">אין נתונים — לחץ "העלה נתוני ברירת מחדל" להתחלה.</div>';
+            return;
+        }
+        container.innerHTML = '';
+        res.documents.forEach(doc => {
+            const row = document.createElement('div');
+            row.style = 'display:grid; grid-template-columns:60px 80px 1fr 1fr 1fr; gap:6px; align-items:center; background:#f9f0ff; padding:8px 10px; border-radius:8px; border:1px solid #ce93d8;';
+            row.innerHTML = `
+                <span style="font-weight:bold;color:#6a1b9a;font-size:0.85em;">${doc.typeId}</span>
+                <span style="font-size:0.85em;color:#333;">${doc.label || ''}</span>
+                ${[1,2,3].map(n => `
+                    <div style="display:flex;flex-direction:column;gap:3px;">
+                        <input value="${doc['attack'+n] || ''}" placeholder="מתקפה ${n}"
+                            style="font-size:0.8em;padding:5px 7px;border:1px solid #ce93d8;border-radius:6px;"
+                            onchange="saveCreatureField('${doc.$id}','attack${n}',this.value)">
+                        <input value="${doc['icon'+n] || ''}" placeholder="נתיב אייקון ${n}"
+                            style="font-size:0.72em;padding:4px 6px;border:1px solid #e1bee7;border-radius:6px;color:#888;"
+                            onchange="saveCreatureField('${doc.$id}','icon${n}',this.value)">
+                    </div>
+                `).join('')}
+            `;
+            container.appendChild(row);
+        });
+    } catch(e) {
+        container.innerHTML = `<div style="color:red;">שגיאה: ${e.message}</div>`;
+    }
+}
+
+async function saveCreatureField(docId, field, value) {
+    try {
+        await dbSvc.updateDocument(DB_ID, TABLES.creatureTypes, docId, { [field]: value });
+        await loadCreatureTypes(); // רענן את המטמון
+    } catch(e) { alert('שגיאה בשמירה: ' + e.message); }
+}
+
 // ========== אתחול ==========
 async function init() {
-    await Promise.all([loadStudents(), loadTasks(), loadAnnouncements()]);
+    await Promise.all([loadStudents(), loadTasks(), loadAnnouncements(), loadCreatureTypes()]);
     // אם המשתמש כבר מחובר מה-localStorage - נתחיל ישירות
     if (currentUser && currentUser !== 'admin') {
         const found = allStudents.find(s => s.id === currentUser);
