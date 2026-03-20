@@ -2004,12 +2004,20 @@ function buildBattleSidebar(me) {
         const lastAttack = parseInt(localStorage.getItem('last_attack_' + currentUser + '_' + name) || '0');
         const remaining  = (15 * 60 * 1000) - (Date.now() - lastAttack);
         if (remaining > 0) {
-            btn.style.opacity = '0.4';
-            btn.style.cursor  = 'not-allowed';
-            const mins = String(Math.floor(remaining / 60000)).padStart(2,'0');
-            const secs = String(Math.floor((remaining % 60000) / 1000)).padStart(2,'0');
-            btn.title = `קולדאון: ${mins}:${secs}`;
-        }
+    btn.style.cursor   = 'not-allowed';
+    btn.style.position = 'relative';
+    const mins = String(Math.floor(remaining / 60000)).padStart(2,'0');
+    const secs = String(Math.floor((remaining % 60000) / 1000)).padStart(2,'0');
+    btn.innerHTML += `
+        <div style="
+            position:absolute; inset:0;
+            background:rgba(30,30,30,0.7);
+            border-radius:8px;
+            display:flex; align-items:center; justify-content:center;
+            font-size:0.85em; font-weight:bold; color:white;
+            pointer-events:none;
+        ">${mins}:${secs}</div>`;
+}
 
         btn.onclick = () => enterPickMode(name);
         sidebar.appendChild(btn);
