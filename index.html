@@ -416,8 +416,8 @@ button {
     flex-direction: column;
     gap: 7px;
     box-shadow: 0 4px 20px rgba(229,57,53,0.25);
-    min-width: 100px;
-    max-width: 100px;
+    min-width: 50px;
+    max-width: 50px;
     animation: slideDownIn 0.2s ease;
 }
 #battle-sidebar.open { display: flex; }
@@ -1968,7 +1968,7 @@ function buildBattleSidebar(me) {
         btn.className = 'attack-btn';
         btn.title     = name;
        if (icon) {
-    btn.innerHTML = `<img src="${icon}" style="width:36px;height:36px;object-fit:contain;display:block;margin:0 auto;"
+    btn.innerHTML = `<img src="${icon}" style="width:54px;height:54px;object-fit:contain;display:block;margin:0 auto;"
         onerror="this.style.display='none'; if(this.nextSibling) this.nextSibling.style.display='block'">
         <span style="display:none;font-size:0.8em;">${name}</span>`;
     btn.style.background = 'none';
