@@ -208,7 +208,6 @@ button {
     border: none !important;
     cursor: pointer;
     display: block;
-    transform: translateZ(0);
 }
 .my-creature { transform: scale(1.05); z-index: 5; }
 
@@ -221,15 +220,12 @@ button {
     transform-style: preserve-3d;
     -webkit-transform-style: preserve-3d;
     will-change: transform;
-}
-    
+    transform: translateZ(0);
 }
 .student-card.flipped .card-inner { transform: rotateY(180deg); }
 
 .card-front, .card-back {
     position: absolute;
-    top: 0;     
-    left: 0;
     width: 100%;
     height: 100%;
     backface-visibility: hidden;
@@ -255,7 +251,6 @@ button {
     transform: rotateY(180deg);
     background: #f1f8e9;
     overflow-y: auto;
-    scrollbar-gutter: stable;
     display: block;
     text-align: right;
 }
@@ -411,19 +406,18 @@ button {
 #battle-sidebar {
     display: none;
     position: fixed;
-    top: 15px;
+    top: 84px;
     left: 14px;
     z-index: 499;
     background: rgba(255,255,255,0.98);
-    border: 7px solid #e53935;
+    border: 2px solid #e53935;
     border-radius: 14px;
     padding: 10px 8px;
-    align-items: flex-end;
     flex-direction: column;
     gap: 7px;
     box-shadow: 0 4px 20px rgba(229,57,53,0.25);
-    min-width: 40px;
-    max-width: 40px;
+    min-width: 100px;
+    max-width: 100px;
     animation: slideDownIn 0.2s ease;
 }
 #battle-sidebar.open { display: flex; }
@@ -437,7 +431,6 @@ button {
     color: #b71c1c;
     text-align: center;
     margin-bottom: 2px;
-    margin-top: 80px;
 }
 .attack-btn {
     background: linear-gradient(135deg, #ef5350, #b71c1c);
@@ -1157,12 +1150,11 @@ function updateView() {
         </div>`;
     }).join('');
 
-  flippedIds.forEach(id => {
-    document.querySelectorAll('.student-card').forEach(c => {
-        const match = c.getAttribute('onclick')?.match(/'([^']+)'\)$/);
-        if (match && match[1] === id) c.classList.add('flipped');
+    flippedIds.forEach(id => {
+        document.querySelectorAll('.student-card').forEach(c => {
+            if (c.getAttribute('onclick')?.includes(id)) c.classList.add('flipped');
+        });
     });
-});
 }
 
 // --- לייקים ---
