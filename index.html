@@ -406,19 +406,18 @@ button {
 #battle-sidebar {
     display: none;
     position: fixed;
-    top: 10px;
+    top: 84px;
     left: 14px;
     z-index: 499;
-    background: #F7C85C;
-    border: 2px solid #5E0006;
-    border-radius: 20px;
+    background: rgba(255,255,255,0.98);
+    border: 2px solid #e53935;
+    border-radius: 14px;
     padding: 10px 8px;
-    align-items: flex-end;
     flex-direction: column;
     gap: 7px;
     box-shadow: 0 4px 20px rgba(229,57,53,0.25);
-    min-width: 50px;
-    max-width: 50px;
+    min-width: 100px;
+    max-width: 100px;
     animation: slideDownIn 0.2s ease;
 }
 #battle-sidebar.open { display: flex; }
@@ -431,7 +430,6 @@ button {
     font-weight: bold;
     color: #b71c1c;
     text-align: center;
-    margin-top: 70px;
     margin-bottom: 2px;
 }
 .attack-btn {
@@ -591,23 +589,6 @@ button {
     border-radius: 8px;
     position: relative; 
     text-align: right; 
-}
-    #battle-float-btn.cooldown {
-    background: linear-gradient(135deg, #888, #555);
-    cursor: not-allowed;
-}
-#battle-cooldown-timer {
-    position: fixed;
-    top: 78px;
-    left: 14px;
-    font-size: 0.72em;
-    font-weight: bold;
-    color: white;
-    background: rgba(0,0,0,0.55);
-    padding: 2px 7px;
-    border-radius: 8px;
-    z-index: 501;
-    display: none;
 }
 </style>
 </head>
@@ -819,7 +800,6 @@ button {
 
 <!-- כפתור קרב צף + סרגל מתקפות -->
 <button id="battle-float-btn" onclick="toggleBattleSidebar()" title="תקוף תלמיד!">⚔️</button>
-    <div id="battle-cooldown-timer"></div>
 
 <div id="battle-sidebar">
     <div class="sidebar-title">⚔️ בחר מתקפה:</div>
@@ -1987,38 +1967,13 @@ function buildBattleSidebar(me) {
         const btn  = document.createElement('button');
         btn.className = 'attack-btn';
         btn.title     = name;
-
         if (icon) {
-            btn.innerHTML = `<img src="${icon}" style="width:65px;height:65px;object-fit:contain;display:block;margin:0 auto;"
-                onerror="this.style.display='none'; if(this.nextSibling) this.nextSibling.style.display='block'">
+            btn.innerHTML = `<img src="${icon}" style="width:28px;height:28px;object-fit:contain;display:block;margin:0 auto 2px;"
+                onerror="this.style.display='none';this.nextSibling.style.display='block'">
                 <span style="display:none;font-size:0.8em;">${name}</span>`;
-            btn.style.background = 'none';
-            btn.style.border = 'none';
-            btn.style.padding = '4px';
-            btn.style.boxShadow = 'none';
         } else {
             btn.textContent = name;
         }
-
-        // בדיקת קולדאון לפי מתקפה ספציפית
-        const lastAttack = parseInt(localStorage.getItem('last_attack_' + currentUser + '_' + name) || '0');
-        const remaining  = (15 * 60 * 1000) - (Date.now() - lastAttack);
-        if (remaining > 0) {
-    btn.style.cursor   = 'not-allowed';
-    btn.style.position = 'relative';
-    const mins = String(Math.floor(remaining / 60000)).padStart(2,'0');
-    const secs = String(Math.floor((remaining % 60000) / 1000)).padStart(2,'0');
-    btn.innerHTML += `
-        <div style="
-            position:absolute; inset:0;
-            background:rgba(30,30,30,0.7);
-            border-radius:8px;
-            display:flex; align-items:center; justify-content:center;
-            font-size:0.85em; font-weight:bold; color:white;
-            pointer-events:none;
-        ">${mins}:${secs}</div>`;
-}
-
         btn.onclick = () => enterPickMode(name);
         sidebar.appendChild(btn);
     });
@@ -2035,22 +1990,16 @@ function toggleBattleSidebar() {
 
 // כניסה למצב "בחר מטרה"
 function enterPickMode(skill) {
-    const lastAttack = parseInt(localStorage.getItem('last_attack_' + currentUser + '_' + skill) || '0');
-    const cooldownMs = 15 * 60 * 1000;
-    const remaining  = cooldownMs - (Date.now() - lastAttack);
-    if (remaining > 0) return;
     battleState.selectedSkill = skill;
+    // סגור סרגל
     document.getElementById('battle-sidebar').classList.remove('open');
     document.getElementById('battle-float-btn').classList.remove('active');
+    // הצג באנר
     document.getElementById('battle-pick-banner').classList.add('visible');
+    // הוסף pick-mode לכל הכרטיסים
     document.querySelectorAll('.student-card').forEach(c => c.classList.add('pick-mode'));
 }
 
-   function updateCooldownDisplay() {
-    if (!currentUser || currentUser === 'admin') return;
-    const me = allStudents.find(s => s.id === currentUser);
-    if (me) buildBattleSidebar(me);
-}
 // ביטול מצב תקיפה
 function cancelAttack() {
     battleState.selectedSkill = null;
@@ -2096,8 +2045,8 @@ async function pickTargetShield(targetId, shieldIndex) {
     const mineIndex     = activeIndices[Math.floor(Math.random() * activeIndices.length)];
 
     // סגור overlay וביטול מצב
-   cancelAttack();
-    localStorage.setItem('last_attack_' + currentUser + '_' + skill, Date.now().toString());
+    cancelAttack();
+
     try {
         await dbSvc.createDocument(DB_ID, TABLES.battles, ID.unique(), {
             attackerId: currentUser,
@@ -2310,51 +2259,9 @@ async function renderCreatureTypesList() {
             `;
             container.appendChild(row);
         });
-   } catch(e) {
+    } catch(e) {
         container.innerHTML = `<div style="color:red;text-align:center;">שגיאה: ${e.message}</div>`;
     }
-
-    // שורת הוספת דמות חדשה
-    const addRow = document.createElement('div');
-    addRow.style.cssText = 'display:grid; grid-template-columns:55px 75px 1fr 1fr 1fr; gap:5px; align-items:start; background:#e8f5e9; padding:7px 8px; border-radius:8px; border:2px dashed #4caf50; margin-top:8px;';
-    addRow.innerHTML = `
-        <input id="new-typeId"   placeholder="קוד"    style="font-size:0.8em;padding:5px 6px;border:1px solid #a5d6a7;border-radius:6px;width:100%;box-sizing:border-box;">
-        <input id="new-label"    placeholder="שם"     style="font-size:0.8em;padding:5px 6px;border:1px solid #a5d6a7;border-radius:6px;width:100%;box-sizing:border-box;">
-        ${[1,2,3].map(n => `
-            <div style="display:flex;flex-direction:column;gap:3px;">
-                <input id="new-attack${n}" placeholder="מתקפה ${n}" style="font-size:0.8em;padding:5px 6px;border:1px solid #a5d6a7;border-radius:6px;width:100%;box-sizing:border-box;">
-                <input id="new-icon${n}"   placeholder="אייקון ${n}" style="font-size:0.72em;padding:4px 6px;border:1px solid #c8e6c9;border-radius:6px;color:#888;width:100%;box-sizing:border-box;">
-            </div>
-        `).join('')}
-    `;
-    container.appendChild(addRow);
-
-    const addBtn = document.createElement('button');
-    addBtn.textContent = '➕ הוסף דמות חדשה';
-    addBtn.style.cssText = 'margin-top:8px; background:#4caf50; width:100%; padding:10px; font-size:0.95em; border-radius:8px;';
-    addBtn.onclick = addNewCreatureType;
-    container.appendChild(addBtn);
-}
-
-async function addNewCreatureType() {
-    const typeId  = document.getElementById('new-typeId').value.trim();
-    const label   = document.getElementById('new-label').value.trim();
-    const attack1 = document.getElementById('new-attack1').value.trim();
-    const attack2 = document.getElementById('new-attack2').value.trim();
-    const attack3 = document.getElementById('new-attack3').value.trim();
-    const icon1   = document.getElementById('new-icon1').value.trim();
-    const icon2   = document.getElementById('new-icon2').value.trim();
-    const icon3   = document.getElementById('new-icon3').value.trim();
-
-    if (!typeId || !label) { alert('חובה למלא קוד ושם!'); return; }
-
-    try {
-        await dbSvc.createDocument(DB_ID, TABLES.creatureTypes, ID.unique(), {
-            typeId, label, attack1, attack2, attack3, icon1, icon2, icon3
-        });
-        await loadCreatureTypes();
-        await renderCreatureTypesList();
-    } catch(e) { alert('שגיאה בהוספה: ' + e.message); }
 }
 
 async function saveCreatureField(docId, field, value) {
@@ -2365,7 +2272,6 @@ async function saveCreatureField(docId, field, value) {
 }
 
 // ========== אתחול ==========
-async function init() {
     await Promise.all([loadStudents(), loadTasks(), loadAnnouncements(), loadCreatureTypes()]);
     // אם המשתמש כבר מחובר מה-localStorage - נתחיל ישירות
     if (currentUser && currentUser !== 'admin') {
@@ -2383,8 +2289,8 @@ function logout() {
     localStorage.removeItem('farm_user_id');
     location.reload();
 }
-    setInterval(() => { updateAllTimers(); updateCooldownDisplay(); }, 1000);
-    init();
+setInterval(updateAllTimers, 1000);
+init();
 </script>
 </body>
 </html>
