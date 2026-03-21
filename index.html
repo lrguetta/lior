@@ -191,11 +191,10 @@ button {
 }
 #farm-grid { 
     display: none;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
     gap: 20px;
-    width: 90%;
-    max-width: 1200px;
-    justify-items: center;
+    width: 100%; 
+    max-width: 1200px; 
 }
 
 .student-card {
@@ -207,7 +206,7 @@ button {
     box-shadow: none !important;
     border: none !important;
     cursor: pointer;
-    display: block;
+    display: inline-block;
 }
 .my-creature { transform: scale(1.05); z-index: 5; }
 
@@ -377,198 +376,7 @@ button {
     100% { opacity: 0; transform: translate(-50%, -60px) scale(0.8); } 
 }
 
-/* ========== מערכת קרבות — אייקון צף בפינה ========== */
-
-/* כפתור ⚔️ צף — מסך התלמידים בלבד */
-#battle-float-btn {
-    display: none;
-    position: fixed;
-    top: 14px;
-    left: 14px;
-    width: 64px;
-    height: 64px;
-    font-size: 1.9em;
-    z-index: 500;
-    background: linear-gradient(135deg, #ff6f00, #e53935);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    box-shadow: 0 4px 14px rgba(229,57,53,0.5);
-    transition: transform 0.2s, box-shadow 0.2s;
-    align-items: center;
-    justify-content: center;
-}
-#battle-float-btn:hover { transform: scale(1.12); box-shadow: 0 6px 20px rgba(229,57,53,0.6); }
-#battle-float-btn.active { background: linear-gradient(135deg, #ffd600, #ff6f00); }
-
-/* סרגל מתקפות — נפתח מהכפתור הצף כלפי מעלה */
-#battle-sidebar {
-    display: none;
-    position: fixed;
-    top: 84px;
-    left: 14px;
-    z-index: 499;
-    background: rgba(255,255,255,0.98);
-    border: 2px solid #e53935;
-    border-radius: 14px;
-    padding: 10px 8px;
-    flex-direction: column;
-    gap: 7px;
-    box-shadow: 0 4px 20px rgba(229,57,53,0.25);
-    min-width: 100px;
-    max-width: 100px;
-    animation: slideDownIn 0.2s ease;
-}
-#battle-sidebar.open { display: flex; }
-@keyframes slideDownIn {
-    from { opacity: 0; transform: translateY(-12px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-#battle-sidebar .sidebar-title {
-    font-size: 0.8em;
-    font-weight: bold;
-    color: #b71c1c;
-    text-align: center;
-    margin-bottom: 2px;
-}
-.attack-btn {
-    background: linear-gradient(135deg, #ef5350, #b71c1c);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 8px 10px;
-    font-size: 0.85em;
-    cursor: pointer;
-    font-weight: bold;
-    text-align: center;
-    transition: transform 0.15s, filter 0.15s;
-}
-.attack-btn:hover { transform: scale(1.05); filter: brightness(1.15); }
-.attack-btn.selected-skill {
-    background: linear-gradient(135deg, #ffd600, #ff6f00);
-    color: #1a1a1a;
-    box-shadow: 0 0 0 2px #ff6f00;
-}
-
-/* מצב "בחר מטרה" — הוראה צפה */
-#battle-pick-banner {
-    display: none;
-    position: fixed;
-    top: 14px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 600;
-    background: linear-gradient(135deg, #e53935, #ff6f00);
-    color: white;
-    padding: 10px 22px;
-    border-radius: 30px;
-    font-size: 0.95em;
-    font-weight: bold;
-    box-shadow: 0 4px 14px rgba(229,57,53,0.4);
-    white-space: nowrap;
-    cursor: pointer;
-}
-#battle-pick-banner.visible { display: block; }
-
-/* כרטיס מטרה אפשרית — גבול ירוק בהובר */
-.student-card.pick-mode:not(.my-creature) {
-    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ctext y='28' font-size='28'%3E⚔️%3C/text%3E%3C/svg%3E") 16 16, crosshair !important;
-}
-.student-card.pick-mode:not(.my-creature):hover .card-inner {
-    box-shadow: 0 0 0 3px #43a047, 0 0 14px rgba(67,160,71,0.4);
-    transform: scale(1.03);
-    transition: transform 0.15s, box-shadow 0.15s;
-}
-
-/* כרטיס מותקף — מסגרת אדומה */
-.student-card.under-attack .card-inner {
-    box-shadow: 0 0 0 3px #e53935, 0 0 12px rgba(229,57,53,0.4);
-    animation: attackPulse 1.2s infinite alternate;
-}
-@keyframes attackPulse {
-    from { box-shadow: 0 0 0 3px #e53935, 0 0 8px rgba(229,57,53,0.3); }
-    to   { box-shadow: 0 0 0 4px #ff1744, 0 0 20px rgba(255,23,68,0.55); }
-}
-
-/* פאנל מגינים — מוצג בתוך כרטיס המטרה בזמן בחירה */
-.shields-overlay {
-    display: none;
-    position: absolute;
-    inset: 0;
-    background: rgba(255,255,255,0.96);
-    border-radius: 20px;
-    z-index: 50;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 14px;
-    border: 3px solid #e53935;
-}
-.shields-overlay.visible { display: flex; }
-.shields-overlay .shields-title {
-    font-size: 0.85em;
-    font-weight: bold;
-    color: #c62828;
-    text-align: center;
-}
-.shields-row {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-.shield-item {
-    font-size: 1.6em;
-    cursor: pointer;
-    transition: transform 0.15s;
-    user-select: none;
-}
-.shield-item:hover { transform: scale(1.35); }
-.shield-item.broken { filter: grayscale(1) opacity(0.3); cursor: default; pointer-events: none; }
-.shields-overlay .cancel-btn {
-    font-size: 0.78em;
-    background: #999;
-    padding: 5px 14px;
-    border-radius: 8px;
-    margin-top: 4px;
-}
-
-/* מגינים על הכרטיס שלי */
-.my-shields-row {
-    display: flex;
-    justify-content: center;
-    gap: 5px;
-    flex-wrap: wrap;
-    margin-top: 4px;
-}
-
-/* מודל הגנה */
-#defense-modal {
-    display: none;
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    border: 3px solid #e53935;
-    border-radius: 20px;
-    padding: 28px 24px;
-    z-index: 3500;
-    min-width: 300px;
-    max-width: 380px;
-    text-align: center;
-    box-shadow: 0 8px 40px rgba(229,57,53,0.3);
-}
-#defense-modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 3499;
-    backdrop-filter: blur(3px);
-}
-
+#tasks-area { width: 90%; max-width: 1200px; margin-bottom: 20px; display: none; }
 .task-card { 
     background: white; 
     padding: 15px;
@@ -639,11 +447,6 @@ button {
             <option value="class">מיין לפי כיתה</option>
         </select>
     <button onclick="logout()" style="background:#c62828;">התנתק 🚪</button>
-    </div>
-
-    <hr style="width:100%; margin: 15px 0;">
-    <div style="width:100%; text-align:center;">
-        <button onclick="toggleCreatureTypesPanel()" style="background:#7b1fa2; padding:11px 24px; font-size:1em;">🐾 ניהול מתקפות דמויות</button>
     </div>
 
     <hr style="width:100%; margin: 15px 0;">
@@ -739,25 +542,8 @@ button {
     </div>
 </div>
 
-<div id="creature-types-panel" style="display:none; width:90%; max-width:900px; background:rgba(255,255,255,0.97); border-radius:20px; box-shadow:0 10px 30px rgba(0,0,0,0.15); padding:25px; margin-bottom:24px; border:2px solid #7b1fa2; text-align:right;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <h3 style="margin:0; color:#6a1b9a;">🐾 ניהול מתקפות דמויות</h3>
-        <div style="display:flex; gap:8px;">
-            <button onclick="seedCreatureTypes()" style="background:#7b1fa2; font-size:0.82em; padding:7px 12px;">העלה ברירת מחדל ⬆️</button>
-            <button onclick="document.getElementById('creature-types-panel').style.display='none'" style="background:#999; padding:7px 12px; font-size:0.82em;">סגור ✕</button>
-        </div>
-    </div>
-    <div style="font-size:0.8em; color:#999; margin-bottom:10px;">שינוי בשדה נשמר אוטומטית ל-Appwrite. שדות אייקון — נתיב לתמונה (ריק = טקסט).</div>
-    <div style="display:grid; grid-template-columns: 55px 75px 1fr 1fr 1fr; gap:4px; font-size:0.75em; font-weight:bold; color:#7b1fa2; padding:0 4px; margin-bottom:4px;">
-        <span>קוד</span><span>דמות</span><span>מתקפה 1</span><span>מתקפה 2</span><span>מתקפה 3</span>
-    </div>
-    <div id="creature-types-list" style="display:flex; flex-direction:column; gap:5px;">
-        <div style="color:#aaa; text-align:center; padding:10px;">טוען...</div>
-    </div>
-</div>
-
-<div id="tasks-area" style="display:none; width:90%; max-width:1200px; margin-bottom:20px; text-align:right;">
-    <h3 style="margin-bottom:10px;">משימות להשלמה 📝</h3>
+<div id="tasks-area">
+    <h3>משימות להשלמה 📝</h3>
     <div id="tasks-list"></div>
 </div>
 
@@ -788,27 +574,6 @@ button {
     </div>
 </div>
 
-<div id="defense-modal-overlay" onclick="closeDefenseModal()"></div>
-<div id="defense-modal">
-    <div style="font-size:2em; margin-bottom:6px;">⚔️</div>
-    <h3 id="defense-modal-title" style="margin:0 0 6px 0; color:#c62828;">הכרטיס שלך תחת מתקפה!</h3>
-    <p id="defense-modal-desc" style="font-size:0.9em; color:#555; margin:0 0 14px 0;"></p>
-    <div id="defense-shields-row" class="shields-row" style="font-size:2em; justify-content:center; gap:12px; margin-bottom:16px;"></div>
-    <p style="font-size:0.85em; color:#888; margin:0 0 10px 0;">לחץ על מגן אחד לנסות לחסום!</p>
-    <button onclick="closeDefenseModal()" style="background:#999; padding:8px 20px; border-radius:8px; font-size:0.9em;">סגור (אפשר לנסות מאוחר יותר)</button>
-</div>
-
-<!-- כפתור קרב צף + סרגל מתקפות -->
-<button id="battle-float-btn" onclick="toggleBattleSidebar()" title="תקוף תלמיד!">⚔️</button>
-
-<div id="battle-sidebar">
-    <div class="sidebar-title">⚔️ בחר מתקפה:</div>
-    <!-- מתאכלס דינמית -->
-</div>
-
-<!-- באנר "בחר מטרה" -->
-<div id="battle-pick-banner" onclick="cancelAttack()">🎯 בחר כרטיס תלמיד לתקוף — לחץ כאן לביטול</div>
-
 <script>
 // ========== הגדרות Appwrite ==========
 const { Client, Databases, Query, ID } = Appwrite;
@@ -826,70 +591,7 @@ const TABLES = {
     tasks:         'tasks',
     submissions:   'submissions',
     announcements: 'announcements',
-    welcomeImage:  'welcomeimage',
-    battles:       'battles',
-    creatureTypes: 'creature_types'
-};
-
-// ========== קבועי מערכת הקרבות ==========
-// מספר מגינים לפי רמה: רמה 0 (ביצה)=3, 1-9 (תינוק)=4, 10-19 (בוגר)=5, 20+ (מפותח)=6
-function getShieldCount(level) {
-    if (level === 0) return 3;
-    if (level < 10)  return 4;
-    if (level < 20)  return 5;
-    return 6;
-}
-// מספר מתקפות לפי רמה
-function getAttackCount(level) {
-    if (level === 0) return 0;
-    if (level < 10)  return 1;
-    if (level < 20)  return 2;
-    return 3;
-}
-function getCreatureStage(level) {
-    if (level === 0) return 'ביצה';
-    if (level < 10)  return 'תינוק';
-    if (level < 20)  return 'בוגר';
-    return 'מפותח';
-}
-
-// מתקפות — נטענות מ-Appwrite בזמן אמת
-let ATTACKS_BY_TYPE = {};
-
-// נתוני ברירת מחדל לשימוש חד-פעמי (seed) ו-fallback
-const CREATURE_SEED_DATA = [
-    { typeId:'trt', label:'צב',            attack1:'רובה 🔫',           attack2:'צלף 🎯',             attack3:'מיני-גאן 💥',          icon1:'', icon2:'', icon3:'' },
-    { typeId:'snk', label:'נחש',           attack1:'הכשה כפולה 🐍',     attack2:'יריקת ארס ☠️',       attack3:'נשיפת דרקון 🔥',       icon1:'', icon2:'', icon3:'' },
-    { typeId:'hnd', label:'כלב הציד',      attack1:'חץ וקשת 🏹',        attack2:'רובה 🔫',            attack3:'שוט-גאן 💢',           icon1:'', icon2:'', icon3:'' },
-    { typeId:'cat', label:'חתול',          attack1:'חרב עץ 🪵',         attack2:'קטאנה ⚔️',           attack3:'חרב כפולה ⚔️⚔️',      icon1:'', icon2:'', icon3:'' },
-    { typeId:'crw', label:'עורב',          attack1:'צווחה 🖤',           attack2:'מקור בזק ⚡',        attack3:'מקור זהב 🥇',          icon1:'', icon2:'', icon3:'' },
-    { typeId:'fsh', label:'דג',            attack1:'פטיש 🔨',           attack2:'מסור יד 🪚',         attack3:'מסור חשמלי ⚙️',        icon1:'', icon2:'', icon3:'' },
-    { typeId:'chk', label:'אפרוח',         attack1:'ניקור 🐥',          attack2:'סכין שף 🔪',         attack3:'סכין קצבים 🩸',        icon1:'', icon2:'', icon3:'' },
-    { typeId:'fox', label:'שועל',          attack1:'נשיכה 🦊',          attack2:'ריצת אש 🔥',         attack3:'דש חם 🌋',             icon1:'', icon2:'', icon3:'' },
-    { typeId:'zbr', label:'זברה',          attack1:'זברה קדברה 🦓',     attack2:'קללת הפסים 🌀',      attack3:'מבוך צללים 🌑',        icon1:'', icon2:'', icon3:'' },
-    { typeId:'mnk', label:'קוף',           attack1:'סטירת מצילתיים 🥁', attack2:'אגרוף תוף 💪',       attack3:'בום על-קולי 💣',       icon1:'', icon2:'', icon3:'' },
-    { typeId:'shp', label:'כבשה',          attack1:'מכת פרסה 🐑',       attack2:'מהה-טורפת 😈',       attack3:'טורף פראי 🐺',         icon1:'', icon2:'', icon3:'' },
-    { typeId:'cow', label:'פרה',           attack1:'נגיחה 🐄',          attack2:'מוו-זרק 🌪️',         attack3:'פרה משוגעת 🤯',        icon1:'', icon2:'', icon3:'' },
-    { typeId:'ost', label:'יען',           attack1:'בעיטה חופשית 🦵',   attack2:'פנדל ⚽',            attack3:'מספרת ✂️',             icon1:'', icon2:'', icon3:'' },
-    { typeId:'rbt', label:'ארנב',          attack1:'אגרוף מהיר 🐇',     attack2:'קומבו ממוקד 🎯',     attack3:'נוק-אאוט 🥊',          icon1:'', icon2:'', icon3:'' },
-    { typeId:'dnk', label:'חמור',          attack1:'חמור גרם 🫏',       attack2:'בעיטת חמור 💢',      attack3:'חמורו של משיח ✨',      icon1:'', icon2:'', icon3:'' },
-    { typeId:'duk', label:'ברווז',         attack1:'אל תיגע-גע 🦆',     attack2:'פגע-גע וברח 💨',     attack3:'קרב מגע-גע 🥋',        icon1:'', icon2:'', icon3:'' },
-    { typeId:'snl', label:'חילזון',        attack1:'באג בתוכנה 🐛',     attack2:"וירוס 'שבלול' 💻",   attack3:'קריסת מערכות 💀',      icon1:'', icon2:'', icon3:'' },
-    { typeId:'owl', label:'ינשוף',         attack1:'מבט אימה 👁️',       attack2:'פגיון לילה 🌙',      attack3:'חיסול אפל 🕶️',         icon1:'', icon2:'', icon3:'' },
-    { typeId:'spd', label:'עכביש',         attack1:'קורים 🕸️',          attack2:'משחק מסוכן 🕷️',      attack3:'המופע האחרון 🎭',       icon1:'', icon2:'', icon3:'' },
-    { typeId:'wsl', label:'לוטרה',         attack1:'חבטת זנב 🦦',       attack2:'גרזן מלחמה 🪓',      attack3:'פשיטת זעם ⚡',         icon1:'', icon2:'', icon3:'' },
-    { typeId:'lio', label:'אריה',          attack1:'שריטה בצבע 🦁',     attack2:'שאגת קשת 🌈',        attack3:'שיסוע רב-גוונים 💥',   icon1:'', icon2:'', icon3:'' },
-    { typeId:'lmb', label:'עגל',           attack1:'ניגוח זהב 🐂',      attack2:'חבטת 24 קראט 👑',    attack3:'חרב מיליון דולר 💰',   icon1:'', icon2:'', icon3:'' },
-    { typeId:'egl', label:'נשר',           attack1:'ניקור על-חלל 🦅',   attack2:'כנף גלקטי 🌌',       attack3:'חור שחור 🌀',           icon1:'', icon2:'', icon3:'' },
-    { typeId:'hlz', label:'חילזון התכלת', attack1:'מכחול טועה 🎨',     attack2:'מברשת קטלנית 🖌️',    attack3:'צביעת נשמה 🌈',        icon1:'', icon2:'', icon3:'' },
-];
-
-// מצב קרב פעיל (UI)
-let battleState = {
-    open: false,
-    selectedSkill: null,
-    pendingBattleId: null,
-    pendingBattle: null
+    welcomeImage:  'welcomeimage'   // שם ה-table שנתת
 };
 
 // ========== משתנים גלובליים ==========
@@ -908,7 +610,6 @@ function safe(text) {
 
 // המרת document של Appwrite לאובייקט תלמיד
 function docToStudent(doc) {
-    const history = doc.history ? JSON.parse(doc.history) : {};
     return {
         id:           doc.$id,
         name:         doc.name         || '',
@@ -921,7 +622,7 @@ function docToStudent(doc) {
         personalNote: doc.personalNote || '',
         lastNote:     doc.lastNote     || '',
         likes:        doc.likes    ? JSON.parse(doc.likes)   : {},
-        history:      history
+        history:      doc.history  ? JSON.parse(doc.history) : {}
     };
 }
 
@@ -944,22 +645,7 @@ async function loadStudents() {
         const res = await dbSvc.listDocuments(DB_ID, TABLES.students, [Query.limit(500), Query.orderAsc('name')]);
         allStudents = res.documents.map(docToStudent);
         renderStudentSelect();
-        if (currentUser) {
-            updateView();
-            // עדכן כפתור קרב אם רמה השתנתה
-            if (currentUser !== 'admin') {
-                const me = allStudents.find(s => s.id === currentUser);
-                if (me) {
-                    const btn = document.getElementById('battle-float-btn');
-                    if (getAttackCount(me.level) > 0) {
-                        btn.style.display = 'flex';
-                        buildBattleSidebar(me);
-                    } else {
-                        btn.style.display = 'none';
-                    }
-                }
-            }
-        }
+        if (currentUser) updateView();
     } catch(e) { console.error('loadStudents error:', e); }
 }
 
@@ -1029,11 +715,6 @@ function subscribeAll() {
             () => initAdminSubmissions()
         );
     }
-    // האזנה לקרבות
-    client.subscribe(
-        `databases.${DB_ID}.collections.${TABLES.battles}.documents`,
-        () => checkPendingBattle()
-    );
 }
 
 // ========== לוח מודעות ==========
@@ -1126,16 +807,8 @@ async function startApp() {
         await loadWelcomeImageForAdmin();
         await initAdminSubmissions();
     } else {
-        document.getElementById('logout-btn-float').style.display = 'block';
+            document.getElementById('logout-btn-float').style.display = 'block';
         await showWelcomeImageIfExists();
-        // הצג כפתור קרב רק אם יש מתקפות (לא ביצה)
-        const me = allStudents.find(s => s.id === currentUser);
-        if (me && getAttackCount(me.level) > 0) {
-            const btn = document.getElementById('battle-float-btn');
-            btn.style.display = 'flex';
-            buildBattleSidebar(me);
-        }
-        setTimeout(() => checkPendingBattle(), 1500);
     }
 
     subscribeAll();
@@ -1215,9 +888,6 @@ function updateView() {
     const searchTerm = document.getElementById('search')  ? document.getElementById('search').value.toLowerCase()  : '';
     const sortBy     = document.getElementById('sortBy')  ? document.getElementById('sortBy').value                 : 'name';
 
-    // כרטיסים שנמצאים תחת מתקפה ממתינה (כדי לצבוע אותם)
-    const pendingBattlesTargetIds = window._pendingBattleTargets || [];
-
     let filtered = allStudents.filter(s => s.name.toLowerCase().includes(searchTerm));
 
     if (sortBy === 'name') {
@@ -1267,44 +937,11 @@ function updateView() {
             ? `<div style="background:#fff3e0; border-radius:6px; padding:8px; border-right:3px solid #ff9800; font-size:0.85em; color:#e65100;">📝 הערת מורה: ${s.lastNote}</div>`
             : '';
 
-        const shieldCount  = getShieldCount(s.level);
-        const brokenShields = (s.history && s.history['shields_broken']) ? s.history['shields_broken'] : [];
-
-        // מגינים על הכרטיס שלי — מוצגים תמיד בחזית
-        let myShieldsHtml = '';
-        if (isMine) {
-            const shields = Array.from({length: shieldCount}, (_, i) => {
-                const broken = brokenShields.includes(i);
-                return `<span class="shield-item ${broken ? 'broken' : ''}" title="${broken ? 'מגן שבור' : 'מגן פעיל'}" style="cursor:default;">${broken ? '💔' : '🛡️'}</span>`;
-            }).join('');
-            myShieldsHtml = `<div class="my-shields-row">${shields}</div>`;
-        }
-
-        // overlay מגינים לכרטיס מטרה — מוצג כשבמצב בחירת מטרה
-        let shieldsOverlayHtml = '';
-        if (!isMine && currentUser !== 'admin') {
-            const shieldsInOverlay = Array.from({length: shieldCount}, (_, i) => {
-                const broken = brokenShields.includes(i);
-                return `<span class="shield-item ${broken ? 'broken' : ''}"
-                    onclick="event.stopPropagation(); pickTargetShield('${s.id}', ${i})"
-                    title="${broken ? 'מגן שבור' : 'לחץ לבחור'}">${broken ? '💔' : '🛡️'}</span>`;
-            }).join('');
-            shieldsOverlayHtml = `
-                <div id="shields-overlay-${s.id}" class="shields-overlay">
-                    <div class="shields-title">⚔️ בחר מגן לתקוף!</div>
-                    <div class="shields-row">${shieldsInOverlay}</div>
-                    <button class="cancel-btn" onclick="event.stopPropagation(); cancelAttack()">ביטול</button>
-                </div>`;
-        }
-
         return `
-        <div class="student-card ${isMine ? 'my-creature' : ''} ${pendingBattlesTargetIds.includes(s.id) ? 'under-attack' : ''}"
-             onclick="handleCardClick(event, this, '${s.id}')">
-            <div class="card-inner" style="position:relative;">
+        <div class="student-card ${isMine ? 'my-creature' : ''}" onclick="this.classList.toggle('flipped')">
+            <div class="card-inner">
 
-            ${shieldsOverlayHtml}
-
-            <div class="card-front" style="display:flex; flex-direction:column; justify-content:space-between; align-items:center; height:100%; padding:15px; box-sizing:border-box; position:relative;">
+            <div class="card-front" style="display:flex; flex-direction:column; justify-content:space-between; align-items:center; height:100%; padding:15px; box-sizing:border-box;">
                 <div style="width:100%; display:flex; justify-content:space-between; align-items:flex-start;">
                     <div class="level-text-badge">Lv.${s.level}</div>
                     ${currentUser === 'admin'
@@ -1336,7 +973,6 @@ function updateView() {
                         ` : isMine ? `<span style="font-size:0.8em; color:#ccc;">🤍</span>` : ''}
                     </div>
                     <div style="color:#666; font-size:0.95em;">כיתה ${s.className}</div>
-                    ${myShieldsHtml}
                 </div>
 
                 <div style="width:100%; margin-top:10px;">
@@ -1954,334 +1590,9 @@ function toggleAdminSection(sectionId, headerElement) {
     }
 }
 
-// ========== מערכת קרבות — קונספט חדש ==========
-
-// בנה את סרגל המתקפות של המשתמש הנוכחי
-function buildBattleSidebar(me) {
-    const rawAttacks = (ATTACKS_BY_TYPE[me.type] || []).slice(0, getAttackCount(me.level));
-    const sidebar = document.getElementById('battle-sidebar');
-    sidebar.innerHTML = `<div class="sidebar-title">⚔️ בחר מתקפה:</div>`;
-    rawAttacks.forEach(atk => {
-        const name = typeof atk === 'object' ? atk.name : atk;
-        const icon = typeof atk === 'object' ? atk.icon : '';
-        const btn  = document.createElement('button');
-        btn.className = 'attack-btn';
-        btn.title     = name;
-        if (icon) {
-            btn.innerHTML = `<img src="${icon}" style="width:28px;height:28px;object-fit:contain;display:block;margin:0 auto 2px;"
-                onerror="this.style.display='none';this.nextSibling.style.display='block'">
-                <span style="display:none;font-size:0.8em;">${name}</span>`;
-        } else {
-            btn.textContent = name;
-        }
-        btn.onclick = () => enterPickMode(name);
-        sidebar.appendChild(btn);
-    });
-}
-
-// פתיחה/סגירה של סרגל המתקפות
-function toggleBattleSidebar() {
-    const sidebar = document.getElementById('battle-sidebar');
-    const btn     = document.getElementById('battle-float-btn');
-    const isOpen  = sidebar.classList.contains('open');
-    sidebar.classList.toggle('open', !isOpen);
-    btn.classList.toggle('active', !isOpen);
-}
-
-// כניסה למצב "בחר מטרה"
-function enterPickMode(skill) {
-    const lastAttack = parseInt(localStorage.getItem('last_attack_' + currentUser) || '0');
-    const cooldownMs = 15 * 60 * 1000;
-    const remaining  = cooldownMs - (Date.now() - lastAttack);
-    if (remaining > 0) {
-        const mins = Math.ceil(remaining / 60000);
-        alert(`⏳ קולדאון! תוכל לתקוף שוב בעוד ${mins} דקות.`);
-        return;
-    }
-    battleState.selectedSkill = skill;
-    // סגור סרגל
-    document.getElementById('battle-sidebar').classList.remove('open');
-    document.getElementById('battle-float-btn').classList.remove('active');
-    // הצג באנר
-    document.getElementById('battle-pick-banner').classList.add('visible');
-    // הוסף pick-mode לכל הכרטיסים
-    document.querySelectorAll('.student-card').forEach(c => c.classList.add('pick-mode'));
-}
-
-// ביטול מצב תקיפה
-function cancelAttack() {
-    battleState.selectedSkill = null;
-    document.getElementById('battle-pick-banner').classList.remove('visible');
-    document.querySelectorAll('.student-card').forEach(c => c.classList.remove('pick-mode'));
-    // סגור כל overlay מגינים
-    document.querySelectorAll('.shields-overlay').forEach(o => o.classList.remove('visible'));
-}
-
-// לחיצה על כרטיס תלמיד במצב pick-mode — הצג מגינים
-function handleCardClick(event, cardEl, studentId) {
-    if (battleState.selectedSkill) {
-        if (studentId === currentUser) return; // לא תוקפים את עצמך
-        event.stopPropagation();
-        // סגור כל overlay אחר
-        document.querySelectorAll('.shields-overlay').forEach(o => o.classList.remove('visible'));
-        // פתח overlay על הכרטיס הנבחר
-        const overlay = document.getElementById('shields-overlay-' + studentId);
-        if (overlay) overlay.classList.add('visible');
-        return;
-    }
-    cardEl.classList.toggle('flipped');
-}
-
-// לחיצה על מגן מסוים בכרטיס המטרה
-async function pickTargetShield(targetId, shieldIndex) {
-    if (!battleState.selectedSkill) return;
-    const skill    = battleState.selectedSkill;
-    const attacker = allStudents.find(s => s.id === currentUser);
-    const target   = allStudents.find(s => s.id === targetId);
-    if (!attacker || !target) return;
-
-    // בדוק שהמגן לא שבור
-    const brokenShields = (target.history && target.history['shields_broken']) ? [...target.history['shields_broken']] : [];
-    if (brokenShields.includes(shieldIndex)) {
-        alert('המגן הזה כבר שבור! בחר אחר.');
-        return;
-    }
-
-    // בחר אינדקס מוקש אקראי מבין המגינים הפעילים
-    const totalShields  = getShieldCount(target.level);
-    const activeIndices = Array.from({length: totalShields}, (_, i) => i).filter(i => !brokenShields.includes(i));
-    const mineIndex     = activeIndices[Math.floor(Math.random() * activeIndices.length)];
-
-    // סגור overlay וביטול מצב
-   cancelAttack();
-    localStorage.setItem('last_attack_' + currentUser, Date.now().toString());
-    try {
-        await dbSvc.createDocument(DB_ID, TABLES.battles, ID.unique(), {
-            attackerId: currentUser,
-            targetId:   targetId,
-            skill:      skill,
-            mineIndex:  mineIndex,
-            status:     'pending'
-        });
-        alert(`המתקפה נשלחה! 🚀\n${target.name} יראה את ההתראה בכניסה הבאה שלו.`);
-    } catch(e) {
-        alert('שגיאה בשליחת קרב: ' + e.message);
-    }
-}
-
-// בדיקת מתקפות ממתינות על הכרטיס של המשתמש הנוכחי
-async function checkPendingBattle() {
-    if (!currentUser || currentUser === 'admin') return;
-    try {
-        const res = await dbSvc.listDocuments(DB_ID, TABLES.battles, [
-            Query.equal('targetId', currentUser),
-            Query.equal('status', 'pending'),
-            Query.limit(50)
-        ]);
-
-        if (res.documents.length > 0) {
-            battleState.pendingBattle   = res.documents[0];
-            battleState.pendingBattleId = res.documents[0].$id;
-            openDefenseModal(res.documents[0]);
-        } else {
-            battleState.pendingBattle   = null;
-            battleState.pendingBattleId = null;
-        }
-
-        // סמן כרטיסים שהמשתמש הנוכחי תקף ועדיין ממתינים
-        const attackerRes = await dbSvc.listDocuments(DB_ID, TABLES.battles, [
-            Query.equal('attackerId', currentUser),
-            Query.equal('status', 'pending'),
-            Query.limit(50)
-        ]);
-        window._pendingBattleTargets = attackerRes.documents.map(d => d.targetId);
-        updateView();
-    } catch(e) { console.error('checkPendingBattle:', e); }
-}
-
-// פתיחת מודל ההגנה (כשהמשתמש נכנס ויש לו מתקפה ממתינה)
-function openDefenseModal(battle) {
-    const attacker = allStudents.find(s => s.id === battle.attackerId);
-    const me       = allStudents.find(s => s.id === currentUser);
-    if (!me) return;
-
-    const totalShields  = getShieldCount(me.level);
-    const brokenShields = (me.history && me.history['shields_broken']) ? [...me.history['shields_broken']] : [];
-
-    document.getElementById('defense-modal-title').innerText = `⚔️ ${attacker ? attacker.name : 'מישהו'} תקף אותך!`;
-    document.getElementById('defense-modal-desc').innerHTML  =
-        `המתקפה: <b>${battle.skill}</b><br>לחץ על מגן אחד — אם תנחש נכון, חסמת!`;
-
-    const row = document.getElementById('defense-shields-row');
-    row.innerHTML = '';
-    for (let i = 0; i < totalShields; i++) {
-        const broken = brokenShields.includes(i);
-        const span   = document.createElement('span');
-        span.className   = 'shield-item' + (broken ? ' broken' : '');
-        span.textContent = broken ? '💔' : '🛡️';
-        span.title       = broken ? 'מגן שבור' : 'לחץ לבחור';
-        if (!broken) span.onclick = () => resolveDefense(i, battle);
-        row.appendChild(span);
-    }
-
-    document.getElementById('defense-modal-overlay').style.display = 'block';
-    document.getElementById('defense-modal').style.display          = 'block';
-}
-
-function closeDefenseModal() {
-    document.getElementById('defense-modal-overlay').style.display = 'none';
-    document.getElementById('defense-modal').style.display          = 'none';
-}
-
-// הכרעת ההגנה
-async function resolveDefense(chosenIndex, battle) {
-    closeDefenseModal();
-
-    const me       = allStudents.find(s => s.id === currentUser);
-    const attacker = allStudents.find(s => s.id === battle.attackerId);
-    if (!me || !attacker) return;
-
-    const hit = (chosenIndex === battle.mineIndex);
-
-    if (hit) {
-        const totalShields  = getShieldCount(me.level);
-        const brokenShields = me.history['shields_broken'] ? [...me.history['shields_broken']] : [];
-        brokenShields.push(battle.mineIndex);
-
-        const history   = { ...me.history };
-        const allBroken = brokenShields.length >= totalShields;
-        let   newXP     = me.xp;
-
-        if (allBroken) {
-            newXP = Math.max(0, me.xp - 10);
-            history['shields_broken'] = [];
-            history['battle_' + Date.now()] = { msg: `💥 כל המגינים נשברו! ${attacker.name} פגע. -10XP, מגינים חודשו`, xp: -10, time: Date.now() };
-        } else {
-            history['shields_broken'] = brokenShields;
-            history['battle_' + Date.now()] = { msg: `🛡️ ${attacker.name} הפיל מגן! (${battle.skill})`, xp: 0, time: Date.now() };
-        }
-
-        await dbSvc.updateDocument(DB_ID, TABLES.students, currentUser, { xp: newXP, history: JSON.stringify(history) });
-
-        // XP לתוקף
-        const xpReward   = 10 * (me.level || 1);
-        const atkHistory = { ...attacker.history };
-        atkHistory['battle_win_' + Date.now()] = { msg: `⚔️ פגעת ב-${me.name}! (+${xpReward}XP)`, xp: xpReward, time: Date.now() };
-        let atkXP  = attacker.xp + xpReward;
-        let atkLvl = attacker.level;
-        while (atkXP >= 100) { atkLvl++; atkXP -= 100; }
-        await dbSvc.updateDocument(DB_ID, TABLES.students, attacker.id, { xp: atkXP, level: atkLvl, history: JSON.stringify(atkHistory) });
-
-        alert(allBroken
-            ? `💥 פגע! ${attacker.name} פגע בך!\nכל המגינים נשברו — -10XP, מגינים חודשו.`
-            : `🛡️ פגע! ${attacker.name} הפיל מגן אחד שלך!`);
-    } else {
-        alert(`✅ חסמת! בחרת נכון — המתקפה של ${attacker.name} נחסמה!`);
-    }
-
-    try { await dbSvc.updateDocument(DB_ID, TABLES.battles, battle.$id, { status: 'resolved' }); }
-    catch(e) { console.error('resolve battle error:', e); }
-
-    await loadStudents();
-}
-
-// ========== אתחול ==========
-// ========== ניהול סוגי דמויות ==========
-
-async function loadCreatureTypes() {
-    try {
-        const res = await dbSvc.listDocuments(DB_ID, TABLES.creatureTypes, [Query.limit(100)]);
-        if (res.documents.length === 0) throw new Error('empty');
-        ATTACKS_BY_TYPE = {};
-        res.documents.forEach(doc => {
-            ATTACKS_BY_TYPE[doc.typeId] = [
-                { name: doc.attack1 || '', icon: doc.icon1 || '' },
-                { name: doc.attack2 || '', icon: doc.icon2 || '' },
-                { name: doc.attack3 || '', icon: doc.icon3 || '' },
-            ];
-        });
-    } catch(e) {
-        // fallback לנתוני ה-seed המקומיים
-        ATTACKS_BY_TYPE = {};
-        CREATURE_SEED_DATA.forEach(d => {
-            ATTACKS_BY_TYPE[d.typeId] = [
-                { name: d.attack1, icon: d.icon1 },
-                { name: d.attack2, icon: d.icon2 },
-                { name: d.attack3, icon: d.icon3 },
-            ];
-        });
-        console.warn('loadCreatureTypes: משתמש ב-fallback מקומי.', e.message);
-    }
-}
-
-async function seedCreatureTypes() {
-    try {
-        const existing = await dbSvc.listDocuments(DB_ID, TABLES.creatureTypes, [Query.limit(1)]);
-        if (existing.documents.length > 0) {
-            if (!confirm('הטבלה כבר מכילה נתונים! המשך יוסיף כפילויות. בטוח?')) return;
-        }
-        for (const d of CREATURE_SEED_DATA) {
-            await dbSvc.createDocument(DB_ID, TABLES.creatureTypes, ID.unique(), d);
-        }
-        alert(`✅ הועלו ${CREATURE_SEED_DATA.length} דמויות בהצלחה!`);
-        await loadCreatureTypes();
-        await renderCreatureTypesList();
-    } catch(e) { alert('שגיאה ב-seed: ' + e.message); }
-}
-
-function toggleCreatureTypesPanel() {
-    const panel = document.getElementById('creature-types-panel');
-    const isHidden = panel.style.display === 'none';
-    panel.style.display = isHidden ? 'block' : 'none';
-    if (isHidden) renderCreatureTypesList();
-}
-
-async function renderCreatureTypesList() {
-    const container = document.getElementById('creature-types-list');
-    container.innerHTML = '<div style="color:#aaa;text-align:center;padding:10px;">טוען...</div>';
-    try {
-        const res = await dbSvc.listDocuments(DB_ID, TABLES.creatureTypes, [Query.limit(100)]);
-        if (res.documents.length === 0) {
-            container.innerHTML = '<div style="color:#e53935;text-align:center;padding:10px;">אין נתונים — לחץ "העלה ברירת מחדל" להתחלה.</div>';
-            return;
-        }
-        container.innerHTML = '';
-        res.documents.forEach(doc => {
-            const row = document.createElement('div');
-            row.style.cssText = 'display:grid; grid-template-columns:55px 75px 1fr 1fr 1fr; gap:5px; align-items:start; background:#f9f0ff; padding:7px 8px; border-radius:8px; border:1px solid #ce93d8;';
-            row.innerHTML = `
-                <span style="font-weight:bold;color:#6a1b9a;font-size:0.82em;padding-top:8px;">${doc.typeId}</span>
-                <span style="font-size:0.82em;color:#333;padding-top:8px;">${doc.label || ''}</span>
-                ${[1,2,3].map(n => `
-                    <div style="display:flex;flex-direction:column;gap:3px;">
-                        <input value="${(doc['attack'+n] || '').replace(/"/g,'&quot;')}"
-                            placeholder="מתקפה ${n}"
-                            style="font-size:0.8em;padding:5px 6px;border:1px solid #ce93d8;border-radius:6px;width:100%;box-sizing:border-box;"
-                            onchange="saveCreatureField('${doc.$id}','attack${n}',this.value)">
-                        <input value="${(doc['icon'+n] || '').replace(/"/g,'&quot;')}"
-                            placeholder="נתיב אייקון (ריק=טקסט)"
-                            style="font-size:0.72em;padding:4px 6px;border:1px solid #e1bee7;border-radius:6px;color:#888;width:100%;box-sizing:border-box;"
-                            onchange="saveCreatureField('${doc.$id}','icon${n}',this.value)">
-                    </div>
-                `).join('')}
-            `;
-            container.appendChild(row);
-        });
-    } catch(e) {
-        container.innerHTML = `<div style="color:red;text-align:center;">שגיאה: ${e.message}</div>`;
-    }
-}
-
-async function saveCreatureField(docId, field, value) {
-    try {
-        await dbSvc.updateDocument(DB_ID, TABLES.creatureTypes, docId, { [field]: value });
-        await loadCreatureTypes(); // רענן מטמון
-    } catch(e) { alert('שגיאה בשמירה: ' + e.message); }
-}
-
 // ========== אתחול ==========
 async function init() {
-    await Promise.all([loadStudents(), loadTasks(), loadAnnouncements(), loadCreatureTypes()]);
+    await Promise.all([loadStudents(), loadTasks(), loadAnnouncements()]);
     // אם המשתמש כבר מחובר מה-localStorage - נתחיל ישירות
     if (currentUser && currentUser !== 'admin') {
         const found = allStudents.find(s => s.id === currentUser);
