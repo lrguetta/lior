@@ -2267,51 +2267,9 @@ async function renderCreatureTypesList() {
             `;
             container.appendChild(row);
         });
-   } catch(e) {
+    } catch(e) {
         container.innerHTML = `<div style="color:red;text-align:center;">שגיאה: ${e.message}</div>`;
     }
-
-    // שורת הוספת דמות חדשה
-    const addRow = document.createElement('div');
-    addRow.style.cssText = 'display:grid; grid-template-columns:55px 75px 1fr 1fr 1fr; gap:5px; align-items:start; background:#e8f5e9; padding:7px 8px; border-radius:8px; border:2px dashed #4caf50; margin-top:8px;';
-    addRow.innerHTML = `
-        <input id="new-typeId"   placeholder="קוד"    style="font-size:0.8em;padding:5px 6px;border:1px solid #a5d6a7;border-radius:6px;width:100%;box-sizing:border-box;">
-        <input id="new-label"    placeholder="שם"     style="font-size:0.8em;padding:5px 6px;border:1px solid #a5d6a7;border-radius:6px;width:100%;box-sizing:border-box;">
-        ${[1,2,3].map(n => `
-            <div style="display:flex;flex-direction:column;gap:3px;">
-                <input id="new-attack${n}" placeholder="מתקפה ${n}" style="font-size:0.8em;padding:5px 6px;border:1px solid #a5d6a7;border-radius:6px;width:100%;box-sizing:border-box;">
-                <input id="new-icon${n}"   placeholder="אייקון ${n}" style="font-size:0.72em;padding:4px 6px;border:1px solid #c8e6c9;border-radius:6px;color:#888;width:100%;box-sizing:border-box;">
-            </div>
-        `).join('')}
-    `;
-    container.appendChild(addRow);
-
-    const addBtn = document.createElement('button');
-    addBtn.textContent = '➕ הוסף דמות חדשה';
-    addBtn.style.cssText = 'margin-top:8px; background:#4caf50; width:100%; padding:10px; font-size:0.95em; border-radius:8px;';
-    addBtn.onclick = addNewCreatureType;
-    container.appendChild(addBtn);
-}
-
-async function addNewCreatureType() {
-    const typeId  = document.getElementById('new-typeId').value.trim();
-    const label   = document.getElementById('new-label').value.trim();
-    const attack1 = document.getElementById('new-attack1').value.trim();
-    const attack2 = document.getElementById('new-attack2').value.trim();
-    const attack3 = document.getElementById('new-attack3').value.trim();
-    const icon1   = document.getElementById('new-icon1').value.trim();
-    const icon2   = document.getElementById('new-icon2').value.trim();
-    const icon3   = document.getElementById('new-icon3').value.trim();
-
-    if (!typeId || !label) { alert('חובה למלא קוד ושם!'); return; }
-
-    try {
-        await dbSvc.createDocument(DB_ID, TABLES.creatureTypes, ID.unique(), {
-            typeId, label, attack1, attack2, attack3, icon1, icon2, icon3
-        });
-        await loadCreatureTypes();
-        await renderCreatureTypesList();
-    } catch(e) { alert('שגיאה בהוספה: ' + e.message); }
 }
 
 async function saveCreatureField(docId, field, value) {
