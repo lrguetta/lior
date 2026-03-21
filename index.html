@@ -651,8 +651,8 @@ button {
     </div>
 
     <div style="width:100%; display:flex; gap:10px; margin-top:10px;">
-        <input type="text" id="search" placeholder="חפש לפי שם..." oninput="" style="flex:2;">
-        <select id="sortBy" onchange="" style="flex:1;">
+        <input type="text" id="search" placeholder="חפש לפי שם..." oninput="updateView()" style="flex:2;">
+        <select id="sortBy" onchange="updateView()" style="flex:1;">
             <option value="name">מיין לפי שם</option>
             <option value="level">מיין לפי רמה</option>
             <option value="class">מיין לפי כיתה</option>
@@ -965,7 +965,7 @@ async function loadStudents() {
         allStudents = res.documents.map(docToStudent);
         renderStudentSelect();
         if (currentUser) {
-            ;
+            updateView();
             // עדכן כפתור קרב אם רמה השתנתה
             if (currentUser !== 'admin') {
                 const me = allStudents.find(s => s.id === currentUser);
@@ -1159,7 +1159,7 @@ async function startApp() {
     }
 
     subscribeAll();
-    ;
+    updateView();
     renderTasks();
 }
 
@@ -1230,15 +1230,8 @@ async function addXP(id, xp, lvl) {
 
 // ========== תצוגת כרטיסים ==========
 function updateView() {
-    
     const grid = document.getElementById('farm-grid');
     if (!currentUser) return;
-    // שמור כרטיסים הפוכים לפני רענון
-    const flippedIds = new Set(
-        [...document.querySelectorAll('.student-card.flipped')]
-        .map(c => c.getAttribute('onclick').match(/'([^']+)'\)$/)?.[1])
-        .filter(Boolean)
-    );
     const searchTerm = document.getElementById('search')  ? document.getElementById('search').value.toLowerCase()  : '';
     const sortBy     = document.getElementById('sortBy')  ? document.getElementById('sortBy').value                 : 'name';
 
@@ -1322,11 +1315,6 @@ function updateView() {
                     <div class="shields-row">${shieldsInOverlay}</div>
                     <button class="cancel-btn" onclick="event.stopPropagation(); cancelAttack()">ביטול</button>
                 </div>`;
-                // שחזר כרטיסים הפוכים
-            flippedIds.forEach(id => {
-                const card = document.querySelector(`[onclick*="${id}"]`);
-                if (card) card.classList.add('flipped');
-                });
         }
 
         return `
