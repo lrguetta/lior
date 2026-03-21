@@ -410,14 +410,15 @@ button {
     left: 14px;
     z-index: 499;
     background: rgba(255,255,255,0.98);
-    border: 10px solid #e53935;
+    border: 7px solid #e53935;
     border-radius: 14px;
     padding: 10px 8px;
+    align-items: flex-end;
     flex-direction: column;
     gap: 7px;
     box-shadow: 0 4px 20px rgba(229,57,53,0.25);
-    min-width: 50px;
-    max-width: 50px;
+    min-width: 40px;
+    max-width: 40px;
     animation: slideDownIn 0.2s ease;
 }
 #battle-sidebar.open { display: flex; }
@@ -431,6 +432,7 @@ button {
     color: #b71c1c;
     text-align: center;
     margin-bottom: 2px;
+    margin-top: 20px;
 }
 .attack-btn {
     background: linear-gradient(135deg, #ef5350, #b71c1c);
@@ -1150,11 +1152,12 @@ function updateView() {
         </div>`;
     }).join('');
 
-    flippedIds.forEach(id => {
-        document.querySelectorAll('.student-card').forEach(c => {
-            if (c.getAttribute('onclick')?.includes(id)) c.classList.add('flipped');
-        });
+  flippedIds.forEach(id => {
+    document.querySelectorAll('.student-card').forEach(c => {
+        const match = c.getAttribute('onclick')?.match(/'([^']+)'\)$/);
+        if (match && match[1] === id) c.classList.add('flipped');
     });
+});
 }
 
 // --- לייקים ---
