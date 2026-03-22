@@ -1115,7 +1115,7 @@ function updateView() {
             </div>` : isMine ? '<span style="font-size:0.8em;color:#ccc;">🤍</span>' : '';
 
         return `
-        <div class="student-card ${isMine?'my-creature':''} ${pending.includes(s.id)?'under-attack':''}" data-sid="${s.id}" onclick="this.classList.toggle('flipped')">
+        <div class="student-card ${isMine?'my-creature':''} ${pending.includes(s.id)?'under-attack':''}" data-sid="${s.id}" onclick="handleCardClick(event, this, '${s.id}')">
             <div class="card-inner">
             ${shieldsOverlay}
             <div class="card-front" style="display:flex;flex-direction:column;justify-content:space-between;align-items:center;height:100%;padding:15px;box-sizing:border-box;">
