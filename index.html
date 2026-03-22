@@ -447,7 +447,7 @@ button {
     align-items: center;
     justify-content: center;
     position: relative; /* מאפשר הצבת הקולדאון מעליו */
-    overflow: hidden;   /* חשוב: גורם לתוכן (והקולדאון) להיחתך לצורת עיגול */
+    overflow: visible;   /* חשוב: גורם לתוכן (והקולדאון) להיחתך לצורת עיגול */
     z-index: 501;       /* מוודא שהם מעל הסייד-באר */
     font-size: 0.85em;
     cursor: pointer;
@@ -465,12 +465,22 @@ button {
 .attack-btn.cooldown::after {
     content: "";
     position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     inset: 0;           /* נצמד לקצוות הלחצן בדיוק */
     background: rgba(0, 0, 0, 0.6); /* הצבע השחור השקוף */
     border-radius: 50%; /* הופך גם את האפקט לעגול */
     pointer-events: none; /* מאפשר ללחוץ "דרך" האפקט אם צריך */
+    z-index: 10;
 }
-
+    /* אם האייקון עצמו הוא תמונה בתוך הכפתור */
+.attack-btn img {
+    position: relative;
+    z-index: 1;
+    /* כאן אין overflow: hidden ולכן הוא יוכל לצאת מהגבולות */
+}
 /* מצב "בחר מטרה" — הוראה צפה */
 #battle-pick-banner {
     display: none;
