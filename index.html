@@ -1576,8 +1576,7 @@ function buildBattleSidebar(me) {
         if (rem>0) {
             btn.style.cursor='not-allowed'; btn.style.position='relative';
             const m=String(Math.floor(rem/60000)).padStart(2,'0'), s=String(Math.floor((rem%60000)/1000)).padStart(2,'0');
-            HTML+=`<div style="position:absolute;inset:0;background:rgba(30,30,30,0.7);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.85em;font-weight:bold;color:white;pointer-events:none;">${m}:${s}</div>`;
-        }
+btn.innerHTML += `<div style="position:absolute;inset:0;background:rgba(30,30,30,0.7);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.85em;font-weight:bold;color:white;pointer-events:none;">${m}:${s}</div>`;        }
         btn.onclick=()=>enterPickMode(name);
         sidebar.appendChild(btn);
     });
