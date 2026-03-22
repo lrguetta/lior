@@ -447,48 +447,39 @@ button {
     align-items: center;
     justify-content: center;
     position: relative;
-    /* אנחנו משאירים visible כדי שהאייקון יוכל לצאת החוצה */
-    overflow: visible; 
+    overflow: visible; /* מאפשר לאייקון לצאת החוצה */
     z-index: 501;
     cursor: pointer;
     transition: transform 0.15s;
+    flex-shrink: 0; /* מונע מהכפתורים להימחץ אחד על השני */
+    margin: 5px 0;  /* רווח בין הכפתורים כדי שלא יגעו זה בזה */
 }
 
-/* האייקון עצמו - הגדרות שיאפשרו לו לבלוט בלי להחתך */
+/* כשהכפתור בקולדאון - אנחנו משתמשים בצל פנימי ענק שמכסה הכל */
+.attack-btn.cooldown {
+    box-shadow: inset 0 0 0 44px rgba(0, 0, 0, 0.7); /* יוצר עיגול שחור פנימי מושלם */
+    filter: grayscale(0.5); /* בונוס: הופך את האייקון לקצת אפרפר בזמן המתנה */
+}
+
+/* האייקון עצמו */
 .attack-btn img {
-    position: absolute; /* משתמשים ב-absolute כדי למרכז אותו בלי קשר לזרימה */
-    z-index: 5; /* האייקון יהיה באמצע (בין הכפתור לקולדאון) */
-    width: 60px; /* כאן אתה יכול להגדיר גודל שגדול מהכפתור (44px) */
-    height: 60px;
+    width: 55px;  /* הגודל שאתה רוצה - גדול מהכפתור */
+    height: 55px;
     object-fit: contain;
-    pointer-events: none;
-}
-
-/* אפקט הקולדאון - התיקון הסופי */
-.attack-btn.cooldown::after {
-    content: "";
     position: absolute;
-    /* כאן הסוד: אנחנו מצמידים אותו לגבולות הלחצן */
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%;
-    height: 100%;
-    
-    background: rgba(0, 0, 0, 0.6);
-    border-radius: 50% !important; /* חובה עגול */
-    
-    /* ה-Z-INDEX חייב להיות גבוה יותר מהאייקון! */
-    z-index: 100; 
-    
+    z-index: -1; /* הסוד: האייקון עובר *מתחת* לצל הפנימי של הכפתור */
     pointer-events: none;
-    display: block;
 }
 
-/* תיקון למצב בחירה - שלא יפריע לקולדאון */
+/* תיקון למצב בחירה */
 .attack-btn.selected-skill {
     background: linear-gradient(135deg, #ffd600, #ff6f00);
-    box-shadow: 0 0 0 2px #ff6f00;
+    box-shadow: 0 0 10px #ff6f00; /* זוהר חיצוני במקום פנימי כדי לא להרוס את הקולדאון */
+}
+
+/* ביטול ה-after הקודם כדי שלא יפריע */
+.attack-btn.cooldown::after {
+    display: none !important;
 }
 /* מצב "בחר מטרה" — הוראה צפה */
 #battle-pick-banner {
