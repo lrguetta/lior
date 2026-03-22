@@ -439,8 +439,16 @@ button {
     background: linear-gradient(135deg, #ef5350, #b71c1c);
     color: white;
     border: none;
-    border-radius: 8px;
-    padding: 8px 10px;
+    width: 44px;      /* גובה ורוחב שווים ליצירת עיגול */
+    height: 44px;
+    border-radius: 50%; /* הופך את הלחצן לעגול */
+    padding: 0;        /* ביטול פדינג כדי שהאייקון יהיה במרכז */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative; /* מאפשר הצבת הקולדאון מעליו */
+    overflow: hidden;   /* חשוב: גורם לתוכן (והקולדאון) להיחתך לצורת עיגול */
+    z-index: 501;       /* מוודא שהם מעל הסייד-באר */
     font-size: 0.85em;
     cursor: pointer;
     font-weight: bold;
@@ -452,6 +460,15 @@ button {
     background: linear-gradient(135deg, #ffd600, #ff6f00);
     color: #1a1a1a;
     box-shadow: 0 0 0 2px #ff6f00;
+}
+    /* עיצוב אפקט הקולדאון - הריבוע השחור שהופך לעיגול */
+.attack-btn.cooldown::after {
+    content: "";
+    position: absolute;
+    inset: 0;           /* נצמד לקצוות הלחצן בדיוק */
+    background: rgba(0, 0, 0, 0.6); /* הצבע השחור השקוף */
+    border-radius: 50%; /* הופך גם את האפקט לעגול */
+    pointer-events: none; /* מאפשר ללחוץ "דרך" האפקט אם צריך */
 }
 
 /* מצב "בחר מטרה" — הוראה צפה */
