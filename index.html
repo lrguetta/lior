@@ -935,7 +935,7 @@ function toggleBoard() {
     const board = document.getElementById('announcements-board');
     const btn   = document.getElementById('toggle-board');
     board.classList.toggle('minimized');
-    btn.innerText = board.classList.contains('minimized') ? '📢' : '−';
+    Text = board.classList.contains('minimized') ? '📢' : '−';
     btn.title     = board.classList.contains('minimized') ? 'פתח לוח מודעות' : 'מזער לוח';
 }
 async function saveAnnouncements() {
@@ -1253,7 +1253,7 @@ function editTask(id) {
     document.getElementById('questions-constructor').innerHTML='';
     if (t.questions) t.questions.forEach(q=>addQuestionField(q.type,q));
     const btn = document.querySelector('#task-builder button[onclick="saveNewTask()"]');
-    if (btn) btn.innerHTML='עדכן מטלה 💾';
+    if (btn) HTML='עדכן מטלה 💾';
     document.getElementById('task-builder').scrollIntoView({behavior:'smooth'});
 }
 
@@ -1402,9 +1402,9 @@ function updateAllTimers() {
         const start=new Date(now.getFullYear(),now.getMonth(),now.getDate(),sH,sM,0);
         const end  =new Date(now.getFullYear(),now.getMonth(),now.getDate(),eH,eM,0);
         const pad  =n=>String(Math.floor(n)).padStart(2,'0');
-        if (now<start) { const d=start-now; span.innerText=`תיפתח בעוד ${pad(d/60000)}:${pad((d%60000)/1000)}`; span.style.color='#ff9800'; btn.disabled=true; btn.innerText='טרם נפתח 🔒'; btn.style.background='#999'; }
-        else if (now<end) { const d=end-now; span.innerText=`נותרו: ${pad(d/60000)}:${pad((d%60000)/1000)}`; span.style.color='#d32f2f'; btn.disabled=false; btn.innerText='פתח משימה ✍️'; btn.style.background='#1976d2'; }
-        else { span.innerText='הזמן נגמר!'; span.style.color='#555'; btn.disabled=true; btn.innerText='הזמן נגמר! ⏳'; btn.style.background='#555'; }
+        if (now<start) { const d=start-now; span.innerText=`תיפתח בעוד ${pad(d/60000)}:${pad((d%60000)/1000)}`; span.style.color='#ff9800'; btn.disabled=true; Text='טרם נפתח 🔒'; btn.style.background='#999'; }
+        else if (now<end) { const d=end-now; span.innerText=`נותרו: ${pad(d/60000)}:${pad((d%60000)/1000)}`; span.style.color='#d32f2f'; btn.disabled=false; Text='פתח משימה ✍️'; btn.style.background='#1976d2'; }
+        else { span.innerText='הזמן נגמר!'; span.style.color='#555'; btn.disabled=true; Text='הזמן נגמר! ⏳'; btn.style.background='#555'; }
     });
 }
 
@@ -1568,7 +1568,7 @@ function buildBattleSidebar(me) {
         const btn=document.createElement('button');
         btn.className='attack-btn'; btn.title=name;
         if (icon) {
-            btn.innerHTML=`<img src="${icon}" style="width:65px;height:65px;object-fit:contain;display:block;margin-left:auto;" onerror="this.style.display='none';if(this.nextSibling)this.nextSibling.style.display='block'"><span style="display:none;font-size:0.8em;">${name}</span>`;
+           btn.innerHTML=`<img src="${icon}" style="width:65px;height:65px;object-fit:contain;display:block;position:relative;right:-15px;" onerror="this.style.display='none';if(this.nextSibling)this.nextSibling.style.display='block'"><span style="display:none;font-size:0.8em;">${name}</span>`;
             btn.style.background='none'; btn.style.border='none'; btn.style.padding='4px'; btn.style.boxShadow='none';
         } else btn.textContent=name;
         const last=parseInt(localStorage.getItem('last_attack_'+currentUser+'_'+name)||'0');
@@ -1576,7 +1576,7 @@ function buildBattleSidebar(me) {
         if (rem>0) {
             btn.style.cursor='not-allowed'; btn.style.position='relative';
             const m=String(Math.floor(rem/60000)).padStart(2,'0'), s=String(Math.floor((rem%60000)/1000)).padStart(2,'0');
-            btn.innerHTML+=`<div style="position:absolute;inset:0;background:rgba(30,30,30,0.7);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.85em;font-weight:bold;color:white;pointer-events:none;">${m}:${s}</div>`;
+            HTML+=`<div style="position:absolute;inset:0;background:rgba(30,30,30,0.7);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.85em;font-weight:bold;color:white;pointer-events:none;">${m}:${s}</div>`;
         }
         btn.onclick=()=>enterPickMode(name);
         sidebar.appendChild(btn);
