@@ -1623,7 +1623,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.stopPropagation();
         document.querySelectorAll('.shields-overlay').forEach(o => o.classList.remove('visible'));
         document.getElementById('shields-overlay-' + studentId)?.classList.add('visible');
-    }, true);
+    });
 });
 async function pickTargetShield(targetId, shieldIndex) {
     if (!battleState.selectedSkill) return;
