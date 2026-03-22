@@ -1302,17 +1302,10 @@ function openSubmitModal(id, title) {
         d.style='margin-bottom:15px;padding:15px;background:#f0f7ff;border-radius:8px;border:1px solid #bbdefb;';
         d.innerHTML=`<strong>${i+1}. ${q.text}</strong><br>`;
         if (q.type==='open') d.innerHTML+=`<textarea class="ans-input" data-index="${i}" style="width:100%;margin-top:10px;height:60px;" placeholder="תשובתך כאן..."></textarea>`;
-else if (q.type==='boolean') d.innerHTML += `<div style="margin-top:10px;">
-    <label style="margin-left:20px;cursor:pointer;">
-        <input type="radio" name="q${i}" value="נכון"> נכון
-    </label>
-    <label style="cursor:pointer;">
-        <input type="radio" name="q${i}" value="לא נכון"> לא נכון
-    </label>
-</div>`;
+        else if (q.type==='boolean') d.innerHTML+=`<div style="margin-top:10px;"><label style="margin-left:20px;cursor:pointer;"><input type="radio" name="q${i}" value="נכון"> נכון</label><label style="cursor:pointer;"><input type="radio" name="q${i}" value="לא נכון"> לא נכון</label></div>`;
         else if (q.type==='multiple') [q.correct,...(q.others||[])].sort(()=>Math.random()-.5).forEach(opt=>{ d.innerHTML+=`<label style="display:block;margin-top:8px;cursor:pointer;background:white;padding:8px;border-radius:5px;border:1px solid #ddd;"><input type="radio" name="q${i}" value="${opt}"> ${opt}</label>`; });
         else if (q.type==='survey') (q.options||[]).forEach(opt=>{ d.innerHTML+=`<label style="display:block;margin-top:8px;cursor:pointer;background:white;padding:8px;border-radius:5px;border:1px solid #ddd;"><input type="checkbox" name="q${i}" value="${opt}"> ${opt}</label>`; });
-        else if (q.type==='study_unit') d.inner style="display:flex;gap:5px;margin-top:10px;"><input type="text" id="study_chapter_${i}" placeholder="פרק" style="width:30%;padding:8px;border:1px solid #ccc;border-radius:4px;"><input type="text" id="study_start_${i}" placeholder="מפסוק" style="width:35%;padding:8px;border:1px solid #ccc;border-radius:4px;"><input type="text" id="study_end_${i}" placeholder="עד פסוק" style="width:35%;padding:8px;border:1px solid #ccc;border-radius:4px;"></div>`;
+        else if (q.type==='study_unit') d.innerHTML+=`<div style="display:flex;gap:5px;margin-top:10px;"><input type="text" id="study_chapter_${i}" placeholder="פרק" style="width:30%;padding:8px;border:1px solid #ccc;border-radius:4px;"><input type="text" id="study_start_${i}" placeholder="מפסוק" style="width:35%;padding:8px;border:1px solid #ccc;border-radius:4px;"><input type="text" id="study_end_${i}" placeholder="עד פסוק" style="width:35%;padding:8px;border:1px solid #ccc;border-radius:4px;"></div>`;
         container.appendChild(d);
     });
     document.getElementById('submit-modal').style.display='block';
@@ -1583,7 +1576,8 @@ function buildBattleSidebar(me) {
         if (rem>0) {
             btn.style.cursor='not-allowed'; btn.style.position='relative';
             const m=String(Math.floor(rem/60000)).padStart(2,'0'), s=String(Math.floor((rem%60000)/1000)).padStart(2,'0');
-            btn.innerHTML += `<div style="position:absolute;inset:0;background:rgba(30,30,30,0.7);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.85em;font-weight:bold;color:white;pointer-events:none;">${m}:${s}</div>`;        }
+            HTML+=`<div style="position:absolute;inset:0;background:rgba(30,30,30,0.7);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.85em;font-weight:bold;color:white;pointer-events:none;">${m}:${s}</div>`;
+        }
         btn.onclick=()=>enterPickMode(name);
         sidebar.appendChild(btn);
     });
@@ -1629,7 +1623,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.stopPropagation();
         document.querySelectorAll('.shields-overlay').forEach(o => o.classList.remove('visible'));
         document.getElementById('shields-overlay-' + studentId)?.classList.add('visible');
-    });
+    }, true);
 });
 async function pickTargetShield(targetId, shieldIndex) {
     if (!battleState.selectedSkill) return;
