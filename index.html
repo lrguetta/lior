@@ -1567,16 +1567,47 @@ function buildBattleSidebar(me) {
         const icon=typeof atk==='object'?atk.icon:'';
         const btn=document.createElement('button');
         btn.className='attack-btn'; btn.title=name;
-        if (icon) {
-           btn.innerHTML=`<img src="${icon}" style="width:65px;height:65px;object-fit:contain;display:block;position:relative;right:-25px;" onerror="this.style.display='none';if(this.nextSibling)this.nextSibling.style.display='block'"><span style="display:none;font-size:0.8em;">${name}</span>`;
-            btn.style.background='none'; btn.style.border='none'; btn.style.padding='4px'; btn.style.boxShadow='none';
-        } else btn.textContent=name;
+        
+        // חישוב הקולדאון
         const last=parseInt(localStorage.getItem('last_attack_'+currentUser+'_'+name)||'0');
         const rem=(15*60*1000)-(Date.now()-last);
-        if (rem>0) {
-            btn.style.cursor='not-allowed'; btn.style.position='relative';
-            const m=String(Math.floor(rem/60000)).padStart(2,'0'), s=String(Math.floor((rem%60000)/1000)).padStart(2,'0');
-btn.innerHTML += `<div style="position:absolute;inset:0;background:rgba(30,30,30,0.7);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.85em;font-weight:bold;color:white;pointer-events:none;">${m}:${s}</div>`;        }
+        const isOnCooldown = rem > 0;
+        
+        let m, s;
+        if (isOnCooldown) {
+            btn.style.cursor='not-allowed'; 
+            btn.style.position='relative';
+            m=String(Math.floor(rem/60000)).padStart(2,'0');
+            s=String(Math.floor((rem%60000)/1000)).padStart(2,'0');
+        }
+
+        if (icon) {
+            // עיצוב שקוף לכפתור כשיש תמונה
+            btn.style.background='none'; 
+            btn.style.border='none'; 
+            btn.style.padding='4px'; 
+            btn.style.boxShadow='none';
+            
+            // עוטפים את התמונה ואת רקע הקולדאון יחד כדי שיחפפו בדיוק
+            let content = `<div style="position:relative; width:65px; height:65px; right:-25px; display:inline-block;">
+                <img src="${icon}" style="width:100%; height:100%; object-fit:contain; display:block;" onerror="this.style.display='none';if(this.nextSibling)this.nextSibling.style.display='block'">
+                <span style="display:none;font-size:0.8em;">${name}</span>`;
+                
+            if (isOnCooldown) {
+                // border-radius: 50% הופך את הרקע לעיגול מושלם
+                content += `<div style="position:absolute; inset:0; background:rgba(30,30,30,0.7); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.9em; font-weight:bold; color:white; pointer-events:none;">${m}:${s}</div>`;
+            }
+            content += `</div>`;
+            btn.innerHTML = content;
+            
+        } else {
+            // מקרה גיבוי (כשאין אייקון אלא רק טקסט)
+            btn.textContent = name;
+            if (isOnCooldown) {
+                btn.innerHTML += `<div style="position:absolute; inset:0; background:rgba(30,30,30,0.7); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.85em; font-weight:bold; color:white; pointer-events:none;">${m}:${s}</div>`;
+            }
+        }
+  
         btn.onclick=()=>enterPickMode(name);
         sidebar.appendChild(btn);
     });
