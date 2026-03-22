@@ -190,7 +190,7 @@ button {
     font-weight: bold; 
 }
 #farm-grid { 
-    display: none;
+    display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
     gap: 20px;
     width: 90%;
@@ -208,6 +208,8 @@ button {
     border: none !important;
     cursor: pointer;
     display: inline-block;
+    vertical-align: top;
+    overflow: visible;
 }
 .my-creature { transform: scale(1.05); z-index: 5; }
 
@@ -221,6 +223,7 @@ button {
     -webkit-transform-style: preserve-3d;
     will-change: transform;
     transform: translateZ(0);
+    display: block;
 }
 .student-card.flipped .card-inner { transform: rotateY(180deg); }
 
