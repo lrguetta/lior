@@ -447,47 +447,48 @@ button {
     align-items: center;
     justify-content: center;
     position: relative;
-    overflow: visible; /* מאפשר לאייקון לבלוט החוצה */
+    /* אנחנו משאירים visible כדי שהאייקון יוכל לצאת החוצה */
+    overflow: visible; 
     z-index: 501;
-    font-size: 0.85em;
     cursor: pointer;
-    font-weight: bold;
-    text-align: center;
-    transition: transform 0.15s, filter 0.15s;
+    transition: transform 0.15s;
 }
 
-.attack-btn:hover { transform: scale(1.05); filter: brightness(1.15); }
-
-.attack-btn.selected-skill {
-    background: linear-gradient(135deg, #ffd600, #ff6f00);
-    color: #1a1a1a;
-    box-shadow: 0 0 0 2px #ff6f00;
+/* האייקון עצמו - הגדרות שיאפשרו לו לבלוט בלי להחתך */
+.attack-btn img {
+    position: absolute; /* משתמשים ב-absolute כדי למרכז אותו בלי קשר לזרימה */
+    z-index: 5; /* האייקון יהיה באמצע (בין הכפתור לקולדאון) */
+    width: 60px; /* כאן אתה יכול להגדיר גודל שגדול מהכפתור (44px) */
+    height: 60px;
+    object-fit: contain;
+    pointer-events: none;
 }
 
-/* התיקון לאפקט הקולדאון */
+/* אפקט הקולדאון - התיקון הסופי */
 .attack-btn.cooldown::after {
     content: "";
     position: absolute;
-    /* במקום inset נשתמש בהגדרה מפורשת */
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    /* כאן הסוד: אנחנו מצמידים אותו לגבולות הלחצן */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
     
-    background: rgba(0, 0, 0, 0.7); /* הצבע השחור */
-    border-radius: 50% !important;  /* הוספת important כדי לוודא ששום דבר לא דורס את העיגול */
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 50% !important; /* חובה עגול */
+    
+    /* ה-Z-INDEX חייב להיות גבוה יותר מהאייקון! */
+    z-index: 100; 
+    
     pointer-events: none;
-    z-index: 999; /* ערך גבוה מאוד כדי לוודא שזה מעל האייקון */
-    display: block; /* מוודא שהאלמנט מוצג */
+    display: block;
 }
 
-/* מוודא שהאייקון לא "קופץ" מעל הקולדאון */
-.attack-btn img {
-    position: relative;
-    z-index: 1; /* נמוך יותר מה-999 של הקולדאון */
-    max-width: 120%; /* דוגמה: אם אתה רוצה שהאייקון יבלוט מעבר לעיגול */
-    max-height: 120%;
-    pointer-events: none;
+/* תיקון למצב בחירה - שלא יפריע לקולדאון */
+.attack-btn.selected-skill {
+    background: linear-gradient(135deg, #ffd600, #ff6f00);
+    box-shadow: 0 0 0 2px #ff6f00;
 }
 /* מצב "בחר מטרה" — הוראה צפה */
 #battle-pick-banner {
