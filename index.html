@@ -635,7 +635,7 @@ button {
     </div>
 
     <div style="width:100%; display:flex; gap:10px; margin-top:10px;">
-        <input type="text" id="search" placeholder="חפש לפי שם..." oninput="" style="flex:2;">
+<input type="text" id="search" placeholder="חפש לפי שם..." oninput="updateView()" style="flex:2;">
         <select id="sortBy" onchange="updateView()" style="flex:1;">
             <option value="name">מיין לפי שם</option>
             <option value="level">מיין לפי רמה</option>
