@@ -1715,7 +1715,7 @@ async function resolveDefense(chosen, battle) {
         if (allBroken) { nxp=Math.max(0,me.xp-10); history.shields_broken=[]; history['battle_'+Date.now()]={msg:`💥 ${att.name} פגע. -10XP, מגינים חודשו`,xp:-10,time:Date.now()}; }
         else           { history.shields_broken=broken; history['battle_'+Date.now()]={msg:`🛡️ ${att.name} הפיל מגן! (${battle.skill})`,xp:0,time:Date.now()}; }
         await dbSvc.updateDocument(DB_ID,TABLES.students,currentUser,{xp:nxp,history:JSON.stringify(history)});
-        const xpR=10*(me.level||1), ah={...att.history};
+        const xpR = Math.max(5, 10 * ((me.level || 1) - (att.level || 1))); ah={...att.history};
         ah['win_'+Date.now()]={msg:`⚔️ פגעת ב-${me.name}! (+${xpR}XP)`,xp:xpR,time:Date.now()};
         let ax=att.xp+xpR, al=att.level; while(ax>=100){al++;ax-=100;}
         await dbSvc.updateDocument(DB_ID,TABLES.students,att.id,{xp:ax,level:al,history:JSON.stringify(ah)});
