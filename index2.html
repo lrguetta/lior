@@ -1708,14 +1708,18 @@ if (!wrapper) return;
     const currentCard = wrapper.querySelector('.student-card');
     const currentSid = currentCard?.dataset.sid;
 
-    // הכרטיס הבא — הראשון ברשימת extra
+   // הכרטיס הבא — הראשון ברשימת extra
     const nextId = extraIds[0];
-    const nextData = allExtra.find(e => e.id === nextId);
+    
+    // שינוי 1: חיפוש הנתונים גם במערך הקלפים הנוספים וגם במערך התלמידים הראשי
+    const nextData = allExtra.find(e => e.id === nextId) || allStudents.find(s => s.id === nextId);
     if (!nextData) return;
 
-    // עדכן את רשימת extra: הסר את הראשון, הוסף את הנוכחי לסוף
+    // עדכן את רשימת extra: הסר את הראשון, ותמיד הוסף את הנוכחי לסוף
     const newExtraIds = [...extraIds.slice(1)];
-    if (currentSid !== ownerId) newExtraIds.push(currentSid);
+    
+    // שינוי 2: הסרת התנאי, כדי שגם הקלף הראשי יחזור לרוטציה כשהוא מוחלף
+    newExtraIds.push(currentSid);
     wrapper.dataset.extraIds = JSON.stringify(newExtraIds);
 
     // אנימציה יציאה
