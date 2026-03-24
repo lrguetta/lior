@@ -619,24 +619,30 @@ button {
     pointer-events: none;
 }
 .stack-peek:nth-child(2) { bottom: -14px; transform: translateX(-50%) rotate(2deg); filter: brightness(0.96); z-index: -2; }
-.next-card-btn {
-    position: absolute;
-    bottom: 28px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: linear-gradient(135deg, #43a047, #1b5e20);
-    color: white;
-    border: none;
-    border-radius: 20px;
-    padding: 5px 14px;
-    font-size: 0.75em;
+.card-footer-actions {
+    margin-top: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 0.78em;
     font-weight: bold;
-    cursor: pointer;
-    z-index: 20;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    white-space: nowrap;
 }
-.next-card-btn:hover { filter: brightness(1.15); transform: translateX(-50%) scale(1.05); }
+.card-action-link {
+    background: none;
+    border: none;
+    padding: 2px 4px;
+    margin: 0;
+    font: inherit;
+    font-weight: bold;
+    color: #2e7d32;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.card-action-link:hover { color: #1b5e20; }
+.card-footer-sep { color: #bdbdbd; font-weight: normal; user-select: none; }
 </style>
 </head>
 <body>
@@ -679,7 +685,7 @@ button {
     </div>
 
     <div style="width:100%; display:flex; gap:10px; margin-top:10px;">
-        <input type="text" id="search" placeholder="חפש לפי שם..." oninput="" style="flex:2;">
+        <input type="text" id="search" placeholder="חפש לפי שם..." oninput="updateView()" style="flex:2;">
         <select id="sortBy" onchange="updateView()" style="flex:1;">
             <option value="name">מיין לפי שם</option>
             <option value="level">מיין לפי רמה</option>
@@ -1202,9 +1208,9 @@ function updateView() {
                 </div>
                 <div style="width:100%;margin-top:10px;">
                     <div class="xp-container"><div class="xp-bar" style="width:${s.xp}%;"></div></div>
-                    <div style="font-size:0.75em;color:#2e7d32;font-weight:bold;margin-top:5px;text-align:center;display:flex;justify-content:center;gap:10px;align-items:center;">
-                        <span>🔄 לחץ להיפוך</span>
-                        ${stackCount > 0 ? `<button class="next-card-btn" onclick="event.stopPropagation();cycleCard('${s.id}')">הבא ▶</button>` : ''}
+                    <div class="card-footer-actions" style="color:#2e7d32;">
+                        <button type="button" class="card-action-link" onclick="flipCardFromFooter(event)">הפוך קלף</button>
+                        ${stackCount > 0 ? `<span class="card-footer-sep">|</span><button type="button" class="card-action-link" onclick="event.stopPropagation();cycleCard('${s.id}')">הקלף הבא</button>` : ''}
                     </div>
                 </div>
             </div>
@@ -1757,9 +1763,10 @@ function cycleCard(ownerId) {
                     </div>
                     <div style="width:100%;margin-top:10px;">
                         <div class="xp-container"><div class="xp-bar" style="width:${nextData.xp}%;"></div></div>
-                        <div style="font-size:0.75em;color:#2e7d32;font-weight:bold;margin-top:5px;text-align:center;display:flex;justify-content:center;gap:10px;align-items:center;">
-                            <span>🔄 לחץ להיפוך</span>
-                            <button class="next-card-btn" onclick="event.stopPropagation();cycleCard('${ownerId}')">הבא ▶</button>
+                        <div class="card-footer-actions" style="color:#2e7d32;">
+                            <button type="button" class="card-action-link" onclick="flipCardFromFooter(event)">הפוך קלף</button>
+                            <span class="card-footer-sep">|</span>
+                            <button type="button" class="card-action-link" onclick="event.stopPropagation();cycleCard('${ownerId}')">הקלף הבא</button>
                         </div>
                     </div>
                 </div>
@@ -1802,6 +1809,13 @@ function cancelAttack() {
     document.querySelectorAll('.student-card').forEach(c=>c.classList.remove('pick-mode'));
     document.querySelectorAll('.shields-overlay').forEach(o=>o.classList.remove('visible'));
 }
+function flipCardFromFooter(event) {
+    event.stopPropagation();
+    const cardEl = event.currentTarget.closest('.student-card');
+    if (!cardEl) return;
+    handleCardClick(event, cardEl, cardEl.dataset.sid);
+}
+
 function handleCardClick(event, cardEl, studentId) {
     if (battleState.selectedSkill) {
         if (studentId===currentUser) return;
