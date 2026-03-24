@@ -846,6 +846,7 @@ button {
 </div>
 
 <script>
+    window.activeStackFront = window.activeStackFront || {};
 const { Client, Databases, Query, ID } = Appwrite;
 const client = new Client().setEndpoint('https://cloud.appwrite.io/v1').setProject('69ba8bd200228971c224');
 const dbSvc  = new Databases(client);
@@ -1247,12 +1248,21 @@ function updateView() {
                 members.unshift(me);
             }
         }
-        const s = members[0];
-        const extraCards = allExtra.filter(e => e.ownerId && memberIds.has(e.ownerId));
-        const stackBehindIds = [
-            ...members.slice(1).map(m => m.id),
-            ...extraCards.map(e => e.id).sort((a, b) => String(a.id).localeCompare(String(b.id)))
-        ];
+     const extraCards = allExtra.filter(e => e.ownerId && memberIds.has(e.ownerId));
+        let combinedDocs = [...members, ...extraCards];
+        
+        // אם שמרנו בזיכרון שקלף אחר אמור להיות למעלה, נזיז אותו לתחילת המערך
+        if (window.activeStackFront && window.activeStackFront[canonicalOwnerId]) {
+            const activeId = window.activeStackFront[canonicalOwnerId];
+            const activeIdx = combinedDocs.findIndex(x => x.id === activeId);
+            if (activeIdx > -1) {
+                const [moved] = combinedDocs.splice(activeIdx, 1);
+                combinedDocs.unshift(moved);
+            }
+        }
+        
+        const s = combinedDocs[0];
+        const stackBehindIds = combinedDocs.slice(1).map(x => x.id);
         const stackCount = stackBehindIds.length;
         const isMine  = members.some(m => m.id === currentUser);
         const eggNum  = (s.egg??0)+1;
@@ -1811,6 +1821,7 @@ function cycleCard(ownerId) {
 
     const nextId = extraIds[0];
     const nextData = allExtra.find(e => e.id === nextId) || allStudents.find(s => s.id === nextId);
+    window.activeStackFront[ownerId] = nextData.id;
     if (!nextData) return;
 
     const newExtraIds = [...extraIds.slice(1)];
