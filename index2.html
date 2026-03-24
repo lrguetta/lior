@@ -1176,8 +1176,12 @@ grid.innerHTML = filtered.map(s => {
             <div class="card-front" style="display:flex;flex-direction:column;justify-content:space-between;align-items:center;height:100%;padding:15px;box-sizing:border-box;">
                 <div style="width:100%;display:flex;justify-content:space-between;align-items:flex-start;">
                     <div class="level-text-badge">Lv.${s.level}</div>
-                    ${currentUser==='admin'?`<button class="remove-btn" onclick="event.stopPropagation();deleteStudent('${s.id}')">✖</button>`:`<div></div>`}
-                </div>
+${currentUser==='admin'?`
+    <div style="display:flex;flex-direction:column;gap:4px;">
+        <button class="remove-btn" onclick="event.stopPropagation();deleteStudent('${s.id}')">✖</button>
+        <button onclick="event.stopPropagation();addExtraCard('${s.id}')" style="position:absolute;top:42px;left:10px;background:#7b1fa2;color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:1.1em;padding:0;" title="הוסף כרטיס נוסף">＋</button>
+    </div>`:`<div></div>`}
+    </div>
                 <div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;">
                     <img id="img-${s.id}" src="${imgPath}" class="creature-img" style="max-height:135px;object-fit:contain;margin-bottom:8px;" onclick="event.stopPropagation();addXP('${s.id}',${s.xp},${s.level})">
                     <div style="font-weight:bold;font-size:1.3em;line-height:1.2;display:flex;align-items:center;gap:6px;">
@@ -1673,6 +1677,26 @@ function buildBattleSidebar(me) {
         sidebar.appendChild(btn);
     });
 }
+    async function addExtraCard(ownerId) {
+    const owner = allStudents.find(s => s.id === ownerId);
+    if (!owner) return;
+    const existing = allExtra.filter(e => e.ownerId === ownerId).length;
+    if (existing >= 4) { alert('תלמיד זה כבר הגיע למקסימום של 5 כרטיסים!'); return; }
+    if (!confirm(`להוסיף כרטיס נוסף ל-${owner.name}? (${existing+1}/4 נוספים)`)) return;
+    try {
+        await dbSvc.createDocument(DB_ID, TABLES.extra, ID.unique(), {
+            ownerId, name:owner.name, className:owner.className,
+            xp:0, level:0,
+            type:CREATURE_TYPES[Math.floor(Math.random()*CREATURE_TYPES.length)],
+            egg:Math.floor(Math.random()*5),
+            likes:'{}', history:'{}'
+        });
+        await loadExtra();
+        updateView();
+        alert(`✅ כרטיס נוסף נוצר ל-${owner.name}!`);
+    } catch(e) { alert('שגיאה: ' + e.message); }
+}
+    
     function cycleCard(ownerId) {
     const wrapper = document.querySelector(`.card-stack-wrapper[data-owner="${ownerId}"]`);
     if (!wrapper) return;
