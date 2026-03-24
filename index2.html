@@ -1144,9 +1144,11 @@ async function addXP(id) {
 
 // --- תצוגת כרטיסים ---
 // --- תצוגת כרטיסים ---
+// --- תצוגת כרטיסים מעודכנת ---
 function updateView() {
     const grid = document.getElementById('farm-grid');
-    if (!currentUser) return;
+    if (!currentUser || !grid) return;
+
     const flippedIds = new Set(
         [...document.querySelectorAll('.student-card.flipped')]
         .map(c => c.dataset.sid)
@@ -1157,20 +1159,27 @@ function updateView() {
     const pending    = window._pendingBattleTargets || [];
 
     let filtered = allStudents.filter(s => s.name.toLowerCase().includes(searchTerm));
-    if (sortBy==='name')  filtered.sort((a,b) => a.name.localeCompare(b.name,'he'));
-    if (sortBy==='level') filtered.sort((a,b) => b.level-a.level);
-    if (sortBy==='class') {
-        const parse = cls => { const m=cls?.match(/([א-ת])'?(\d+)/);
-        if(!m) return {g:0,n:0}; return {g:'אבגדהוזחטיכלמנסעפצקרשת'.indexOf(m[1]),n:+m[2]}; };
-        filtered.sort((a,b)=>{ const ca=parse(a.className),cb=parse(b.className); return ca.g!==cb.g?ca.g-cb.g:ca.n-cb.n; });
+    
+    // מיון
+    if (sortBy === 'name') filtered.sort((a,b) => a.name.localeCompare(b.name,'he'));
+    if (sortBy === 'level') filtered.sort((a,b) => b.level - a.level);
+    if (sortBy === 'class') {
+        const parse = cls => { 
+            const m = cls?.match(/([א-ת])'?(\d+)/);
+            if(!m) return {g:0,n:0}; 
+            return {g:'אבגדהוזחטיכלמנסעפצקרשת'.indexOf(m[1]), n:+m[2]}; 
+        };
+        filtered.sort((a,b) => { 
+            const ca = parse(a.className), cb = parse(b.className); 
+            return ca.g !== cb.g ? ca.g - cb.g : ca.n - cb.n; 
+        });
     }
 
     grid.innerHTML = filtered.map(s => {
         const extraCards = allExtra.filter(e => e.ownerId === s.id);
         const stackCount = extraCards.length;
         
-        // --- שמירת מצב הרוטציה ---
-        // כאן המערכת בודקת מי היה הקלף שעמד מקדימה לפני שהמסך התרענן
+        // ניהול זיכרון המחסנית
         window.stackStates = window.stackStates || {};
         let currentStackIds = window.stackStates[s.id];
         if (!currentStackIds || currentStackIds.length !== stackCount) {
@@ -1179,57 +1188,60 @@ function updateView() {
         }
         
         const allOwnerCards = [s, ...extraCards];
-        // 'f' מייצג את הקלף שיופיע בפרונט (Front)
         const f = allOwnerCards.find(c => !currentStackIds.includes(c.id)) || s;
-        // -------------------------
 
-        const isMine  = currentUser===s.id;
-        const eggNum  = (f.egg??0)+1;
-        const imgPath = f.level===0 ? `images/egg${eggNum}.png` : `images/${f.type}${f.level>=20?3:f.level>=10?2:1}.png`;
+        // הגדרות בסיסיות לכרטיס
+        const isMine  = currentUser === s.id;
+        const eggNum  = (f.egg ?? 0) + 1;
+        const imgPath = f.level === 0 ? `images/egg${eggNum}.png` : `images/${f.type}${f.level>=20?3:f.level>=10?2:1}.png`;
         const brokenShields = f.history?.shields_broken || [];
         const sc = shieldsByLevel(f.level);
        
-        const histHtml = Object.values(f.history).filter(h=>h.msg).reverse().slice(0,3)
+        const histHtml = Object.values(f.history || {}).filter(h=>h.msg).reverse().slice(0,3)
             .map(h=>`<div class="history-item">✨ ${h.msg}: <b>+${h.xp}XP</b></div>`).join('');
 
-        const likes     = f.likes||{};
+        const likes     = f.likes || {};
         const likeCount = Object.keys(likes).length;
-        const iLiked    = likes[currentUser]===true;
+        const iLiked    = likes[currentUser] === true;
         const likerNames = Object.keys(likes).map(uid => allStudents.find(x=>x.id===uid)?.name).filter(Boolean);
 
-        const noteHtml = f.lastNote ? `<div style="background:#fff3e0;border-radius:6px;padding:8px;border-right:3px solid #ff9800;font-size:0.85em;color:#e65100;">📝 ${f.lastNote}</div>` : '';
-        const personalNoteHtml = f.personalNote ? `<div style="background:#e8f5e9;border-radius:6px;padding:8px;border-right:3px solid #4caf50;font-size:0.85em;color:#1b5e20;">💬 <b>על עצמי:</b> ${f.personalNote}</div>` : '';
+        // --- פתרון לשגיאת ה-Reference: הגדרת המשתנים שחסרו ---
+        const likeBtn = (!isMine && currentUser !== 'admin') ? `
+            <button class="like-btn ${iLiked ? 'liked' : ''}" onclick="event.stopPropagation();toggleLike('${f.id}')">
+                ${iLiked ? '❤️' : '🤍'}
+            </button>` : '';
+                
+        const likeDisplay = (isMine && likeCount > 0) ? `
+            <div style="position:relative;display:inline-block;">
+                <span class="like-btn" onmouseenter="document.getElementById('likes-tip-${f.id}').style.display='block'" onmouseleave="document.getElementById('likes-tip-${f.id}').style.display='none'">❤️ ${likeCount}</span>
+                <div id="likes-tip-${f.id}" class="likes-tooltip" style="display:none;position:absolute;bottom:130%;left:50%;transform:translateX(-50%);background:white;border:2px solid #f48fb1;border-radius:12px;padding:10px 14px;white-space:nowrap;box-shadow:0 4px 15px rgba(233,30,99,0.25);z-index:9999;font-size:0.8em;color:#880e4f;">
+                    💌 ${likerNames.join(' | ')}
+                </div>
+            </div>` : (isMine ? '<span style="font-size:0.8em;color:#ccc;">🤍</span>' : '');
+            
+        const noteHtml = f.lastNote ? `<div class="note-box">📝 ${f.lastNote}</div>` : '';
+        const personalNoteHtml = f.personalNote ? `<div class="personal-note-box">💬 <b>על עצמי:</b> ${f.personalNote}</div>` : '';
 
         const myShields = isMine ? `<div class="my-shields-row">${Array.from({length:sc},(_,i)=>
             `<span class="shield-item ${brokenShields.includes(i)?'broken':''}" style="cursor:default;">${brokenShields.includes(i)?'💔':'🛡️'}</span>`
         ).join('')}</div>` : '';
         
-        const shieldsOverlay = (!isMine && currentUser !== 'admin') ? `
-    <div id="shields-overlay-${f.id}" class="shields-overlay">
-        <div class="shields-title">⚔️ בחר מגן לתקוף!</div>
-        <div class="shields-row">
-            ${Array.from({ length: sc }, (_, i) => {
-                const broken = brokenShields.includes(i);
-                // שימוש בגרש רגיל (') בתוך המחרוזת מונע את הצורך בלוכסנים הפוכים מסובכים
-                return '<span class="shield-item ' + (broken ? 'broken' : '') + '" ' +
-                       'onclick="event.stopPropagation();pickTargetShield(\'' + f.id + '\',' + i + ')" ' +
-                       'title="' + (broken ? 'שבור' : 'בחר') + '">' + 
-                       (broken ? '💔' : '🛡️') + '</span>';
-            }).join('')}
-        </div>
-        <button class="cancel-btn" onclick="event.stopPropagation();cancelAttack()">ביטול</button>
-    </div>` : '';
-                
-        const likeDisplay = isMine && likeCount>0 ? `
-            <div style="position:relative;display:inline-block;">
-                <span class="like-btn" onmouseenter="document.getElementById('likes-tip-${f.id}').style.display='block'" onmouseleave="document.getElementById('likes-tip-${f.id}').style.display='none'">❤️ ${likeCount}</span>
-                <div id="likes-tip-${f.id}" style="display:none;position:absolute;bottom:130%;left:50%;transform:translateX(-50%);background:white;border:2px solid #f48fb1;border-radius:12px;padding:10px 14px;white-space:nowrap;box-shadow:0 4px 15px rgba(233,30,99,0.25);z-index:9999;font-size:0.8em;color:#880e4f;">
-                    💌 ${likerNames.join(' | ')}
-                    <div style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid #f48fb1;"></div>
-                </div>
-            </div>` : isMine ? '<span style="font-size:0.8em;color:#ccc;">🤍</span>' : '';
-            
-       const cardHtml = `
+        // מגיני יריב (בצורה נקייה ללא תווים מיותרים)
+        let shieldsOverlay = '';
+        if (!isMine && currentUser !== 'admin') {
+            let sHtml = '';
+            for(let i=0; i<sc; i++) {
+                const brk = brokenShields.includes(i);
+                sHtml += `<span class="shield-item ${brk?'broken':''}" onclick="event.stopPropagation();pickTargetShield('${f.id}',${i})">${brk?'💔':'🛡️'}</span>`;
+            }
+            shieldsOverlay = `<div id="shields-overlay-${f.id}" class="shields-overlay">
+                <div class="shields-title">⚔️ בחר מגן לתקוף!</div>
+                <div class="shields-row">${sHtml}</div>
+                <button class="cancel-btn" onclick="event.stopPropagation();cancelAttack()">ביטול</button>
+            </div>`;
+        }
+
+        const cardHtml = `
         <div class="student-card ${isMine?'my-creature':''} ${pending.includes(f.id)?'under-attack':''}" data-sid="${f.id}" onclick="handleCardClick(event, this, '${f.id}')">
             <div class="card-inner">
             ${shieldsOverlay}
@@ -1239,7 +1251,7 @@ function updateView() {
                     ${currentUser==='admin'?`
                     <div style="display:flex;flex-direction:column;gap:4px;">
                         <button class="remove-btn" onclick="event.stopPropagation();deleteStudent('${f.id}')">✖</button>
-                        <button onclick="event.stopPropagation();addExtraCard('${s.id}')" style="position:absolute;top:42px;left:10px;background:#7b1fa2;color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:1.1em;padding:0;" title="הוסף כרטיס נוסף">＋</button>
+                        <button onclick="event.stopPropagation();addExtraCard('${s.id}')" class="add-extra-btn" title="הוסף כרטיס נוסף">＋</button>
                     </div>`:`<div></div>`}
                 </div>
                 <div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;">
@@ -1252,40 +1264,39 @@ function updateView() {
                 </div>
                 <div style="width:100%;margin-top:10px;">
                     <div class="xp-container"><div class="xp-bar" style="width:${f.xp}%;"></div></div>
-                  <div style="font-size:0.75em;color:#2e7d32;font-weight:bold;margin-top:5px;text-align:center;display:flex;justify-content:center;gap:10px;align-items:center;">
+                    <div style="font-size:0.75em;color:#2e7d32;font-weight:bold;margin-top:5px;text-align:center;display:flex;justify-content:center;gap:10px;align-items:center;">
                         <span>🔄 לחץ להיפוך</span>
                         ${stackCount > 0 ? `<button class="next-card-btn" onclick="event.stopPropagation();cycleCard('${s.id}')">הבא ▶</button>` : ''}
                     </div>
                 </div>
             </div>
             <div class="card-back" style="padding:12px;display:flex;flex-direction:column;gap:8px;">
-                <h4 style="margin:0 0 6px 0;color:#2e7d32;border-bottom:1px solid #ccc;padding-bottom:5px;">יומן פעילות</h4>
-                <div style="font-size:0.8em;color:#777;border-top:1px solid #eee;padding-top:6px;">
-                    ${histHtml || 'אין פעילות לאחרונה'} ${noteHtml}
+                <h4 style="margin:0;color:#2e7d32;border-bottom:1px solid #ccc;padding-bottom:5px;">יומן פעילות</h4>
+                <div style="font-size:0.8em;color:#777;">
+                    ${histHtml || 'אין פעילות לאחרונה'} 
+                    ${noteHtml}
                 </div>
                 ${personalNoteHtml}
                 ${isMine ? `
-                    <div style="margin-top:8px;border-top:1px solid #c8e6c9;padding-top:8px;">
-                        <div style="font-size:0.85em;color:#2e7d32;font-weight:bold;margin-bottom:5px;">✏️ ערוך הערה:</div>
-                        <textarea id="note-${f.id}" onclick="event.stopPropagation()" style="width:100%;height:60px;font-size:0.85em;border-radius:6px;border:1px solid #a5d6a7;resize:none;padding:6px;box-sizing:border-box;" placeholder="כתוב הערה קצרה...">${f.personalNote||''}</textarea>
-                        <button onclick="event.stopPropagation();savePersonalNote('${f.id}')" style="width:100%;margin-top:5px;background:#4caf50;padding:6px;font-size:0.85em;">שמור 💾</button>
-                    </div>` : `<div style="font-size:0.75em;color:#999;text-align:center;margin-top:8px;">לחץ לחזרה</div>`}
+                    <div style="margin-top:auto;border-top:1px solid #c8e6c9;padding-top:8px;">
+                        <textarea id="note-${f.id}" onclick="event.stopPropagation()" style="width:100%;height:50px;font-size:0.8em;border-radius:4px;border:1px solid #ddd;" placeholder="כתוב הערה...">${f.personalNote||''}</textarea>
+                        <button onclick="event.stopPropagation();savePersonalNote('${f.id}')" style="width:100%;margin-top:4px;background:#4caf50;color:white;border:none;padding:4px;border-radius:4px;cursor:pointer;">שמור 💾</button>
+                    </div>` : `<div style="text-align:center;font-size:0.7em;color:#aaa;margin-top:auto;">לחץ לחזרה</div>`}
             </div>
             </div>
        </div>`;
        
         if (stackCount === 0) return cardHtml;
-        const peeks = Array.from({length: Math.min(stackCount, 2)}, (_,i) => `<div class="stack-peek"></div>`).join('');
+        const peeks = Array.from({length: Math.min(stackCount, 2)}, () => `<div class="stack-peek"></div>`).join('');
         return `<div class="card-stack-wrapper" data-owner="${s.id}" data-extra-ids='${JSON.stringify(currentStackIds)}'>${cardHtml}${peeks}</div>`;
     }).join('');
     
+    // החזרת מצב "הפוך" לקלפים שהיו הפוכים
     flippedIds.forEach(id => {
         const card = document.querySelector(`.student-card[data-sid="${id}"]`);
         if (card) card.classList.add('flipped');
     });
 }
-
-// --- לייקים ---
 async function toggleLike(studentId) {
     if (currentUser==='admin' || currentUser===studentId) return;
     const s = allStudents.find(x=>x.id===studentId);
