@@ -213,6 +213,60 @@ button {
 }
 .my-creature { transform: scale(1.05); z-index: 5; }
 
+/* מיכל כפתורי ניהול - בפינה השמאלית העליונה */
+.admin-controls {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 20;
+}
+
+.remove-btn {
+    background: #ff5252;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.add-extra-btn {
+    background: #7b1fa2; /* סגול */
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    /* הזזה קלה ימינה ולמטה כדי שלא יסתיר ויהיה מדורג */
+    margin-left: 8px; 
+}
+
+/* אפקט זוהר משופר ליצור */
+.glow-effect {
+    animation: creature-hit 0.6s ease-out;
+}
+
+@keyframes creature-hit {
+    0% { filter: brightness(1) drop-shadow(0 0 0px gold); transform: scale(1); }
+    50% { filter: brightness(1.5) drop-shadow(0 0 20px yellow); transform: scale(1.1); }
+    100% { filter: brightness(1) drop-shadow(0 0 0px gold); transform: scale(1); }
+}
+    
 .card-inner {
     position: relative;
     width: 100%;
@@ -330,34 +384,6 @@ button {
     height: 100%;
     background: linear-gradient(90deg, #4caf50, #81c784);
     transition: width 0.5s ease-in-out;
-}
-.remove-btn { 
-    position: absolute; 
-    top: 10px; 
-    left: 10px;
-    background: #ff5252; 
-    color: white; 
-    border-radius: 50%; 
-    width: 28px;
-    height: 28px; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-}
-    .add-extra-btn {
-    background: #7b1fa2; /* סגול */
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 26px;
-    height: 26px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    transition: transform 0.2s;
 }
 .add-extra-btn:hover { transform: scale(1.1); background: #9c27b0; }
 .xp-float { 
@@ -1098,53 +1124,53 @@ async function savePersonalNote(id) {
 }
 
 // --- XP (מנהל) ---
-// --- XP (מנהל) ---
-// --- XP (מנהל) ---
 async function addXP(id) {
     if (currentUser !== 'admin') return;
     
-    let targetObj = allStudents.find(x => x.id === id);
-    let targetTable = TABLES.students;
-
-    if (!targetObj) {
-        targetObj = allExtra.find(x => x.id === id);
-        targetTable = TABLES.extra;
-    }
-
+    let targetObj = allStudents.find(x => x.id === id) || allExtra.find(x => x.id === id);
     if (!targetObj) return;
 
-    // 1. עדכון מקומי של האובייקט בזיכרון (זה מה שיזיז את המד ב-updateView)
+    // 1. עדכון הנתונים
     targetObj.xp = (targetObj.xp || 0) + 10;
-    
-    // בדיקת עליית רמה
-    if (targetObj.xp >= 100) { 
-        targetObj.level = (targetObj.level || 0) + 1; 
-        targetObj.xp = 0; 
+    if (targetObj.xp >= 100) {
+        targetObj.level = (targetObj.level || 0) + 1;
+        targetObj.xp = 0;
+        // במידה ועלה רמה, כאן כן נרצה לרענן את כל הכרטיס כדי להחליף תמונה/מגינים
+        setTimeout(() => updateView(), 600); 
     }
 
-    // 2. הפעלת האנימציה הוויזואלית (Glow וציפה)
-    const img = document.getElementById('img-'+id);
-    if (img) {
-        img.classList.remove('glow-effect');
-        requestAnimationFrame(() => img.classList.add('glow-effect'));
+    // 2. עדכון ויזואלי מיידי ב-DOM (בלי לרענן את כל הדף)
+    const cardEl = document.querySelector(`[data-sid="${id}"]`) || document.querySelector(`.card-stack-wrapper[data-owner="${id}"]`);
+    if (cardEl) {
+        // עדכון פס ה-XP
+        const bar = cardEl.querySelector('.xp-bar');
+        if (bar) bar.style.width = targetObj.xp + '%';
+        
+        // עדכון טקסט הרמה
+        const lvlBadge = cardEl.querySelector('.level-text-badge');
+        if (lvlBadge) lvlBadge.innerText = `Lv.${targetObj.level}`;
+        
+        // הפעלת האנימציה על התמונה
+        const img = cardEl.querySelector('.creature-img');
+        if (img) {
+            img.classList.remove('glow-effect');
+            void img.offsetWidth; // טריק קטן להפעלה מחדש של האנימציה
+            img.classList.add('glow-effect');
+        }
     }
 
-    // 3. עדכון התצוגה מיד!
-    updateView();
-
-    // 4. שליחה לשרת (קורה ברקע)
+    // 3. סנכרון מול השרת (קורה בשקט ברקע)
     const history = {...(targetObj.history || {})};
     history['tap_'+Date.now()] = { msg:'לחיצת מורה', xp:10, time:Date.now() };
+    const table = allStudents.find(x => x.id === id) ? TABLES.students : TABLES.extra;
 
-    try { 
-        await dbSvc.updateDocument(DB_ID, targetTable, id, {
-            xp: targetObj.xp, 
-            level: targetObj.level, 
+    try {
+        await dbSvc.updateDocument(DB_ID, table, id, {
+            xp: targetObj.xp,
+            level: targetObj.level,
             history: JSON.stringify(history)
-        }); 
-    } catch(e) {
-        console.error('שגיאה בסנכרון מול השרת:', e);
-    } 
+        });
+    } catch(e) { console.error("Server sync error:", e); }
 }
     
 function updateView() {
@@ -1209,41 +1235,42 @@ function updateView() {
         const histHtml = Object.values(f.history || {}).filter(h=>h.msg).reverse().slice(0,3)
             .map(h=>`<div class="history-item">✨ ${h.msg}: <b>+${h.xp}XP</b></div>`).join('');
 
-        const cardHtml = `
-        <div class="student-card ${isMine?'my-creature':''} ${pending.includes(f.id)?'under-attack':''}" data-sid="${f.id}" onclick="handleCardClick(event, this, '${f.id}')">
-            <div class="card-inner">
-            <div class="card-front">
-                <div style="position:absolute; top:10px; left:10px; display:flex; flex-direction:column; gap:8px; z-index:10;">
-                    ${currentUser==='admin' ? `
-                        <button class="remove-btn" onclick="event.stopPropagation();deleteStudent('${f.id}')" title="מחק">✖</button>
-                        <button class="add-extra-btn" onclick="event.stopPropagation();addExtraCard('${s.id}')" title="הוסף כרטיס">＋</button>
-                    ` : '<div></div>'}
+       // ... בתוך ה-map של updateView ...
+const cardHtml = `
+<div class="student-card ${isMine?'my-creature':''} ${pending.includes(f.id)?'under-attack':''}" data-sid="${f.id}" onclick="handleCardClick(event, this, '${f.id}')">
+    <div class="card-inner">
+        <div class="card-front">
+            ${currentUser==='admin' ? `
+                <div class="admin-controls">
+                    <button class="remove-btn" onclick="event.stopPropagation();deleteStudent('${f.id}')">✖</button>
+                    <button class="add-extra-btn" onclick="event.stopPropagation();addExtraCard('${s.id}')">＋</button>
                 </div>
+            ` : ''}
 
-                <div class="level-text-badge" style="position:absolute; top:10px; right:10px;">Lv.${f.level}</div>
+            <div class="level-text-badge">Lv.${f.level}</div>
 
-                <div class="card-content-wrapper">
-                    <img id="img-${f.id}" src="${imgPath}" class="creature-img" onclick="event.stopPropagation();addXP('${f.id}')">
-                    <div class="creature-name">${f.name} ${likeBtn} ${likeDisplay}</div>
-                    <div class="class-name">כיתה ${f.className}</div>
-                    ${isMine ? `<div class="my-shields-row">${Array.from({length:sc},(_,i)=>`<span class="shield-item ${brokenShields.includes(i)?'broken':''}">${brokenShields.includes(i)?'💔':'🛡️'}</span>`).join('')}</div>` : ''}
-                </div>
+            <div class="card-content-wrapper">
+                <img id="img-${f.id}" src="${imgPath}" class="creature-img" onclick="event.stopPropagation();addXP('${f.id}')">
+                <div class="creature-name">${f.name} ${likeBtn} ${likeDisplay}</div>
+                <div class="class-name">כיתה ${f.className}</div>
+                ${isMine ? `<div class="my-shields-row">${Array.from({length:sc},(_,i)=>`<span class="shield-item ${brokenShields.includes(i)?'broken':''}">${brokenShields.includes(i)?'💔':'🛡️'}</span>`).join('')}</div>` : ''}
+            </div>
 
-                <div class="card-footer">
-                    <div class="xp-container"><div class="xp-bar" style="width:${f.xp}%;"></div></div>
-                    <div class="card-actions-hint">
-                        <span>🔄 לחץ להיפוך</span>
-                        ${stackCount > 0 ? `<button class="next-card-btn" onclick="event.stopPropagation();cycleCard('${s.id}')">הבא ▶</button>` : ''}
-                    </div>
+            <div class="card-footer">
+                <div class="xp-container"><div class="xp-bar" style="width:${f.xp}%;"></div></div>
+                <div class="card-actions-hint">
+                    <span>🔄 לחץ להיפוך</span>
+                    ${stackCount > 0 ? `<button class="next-card-btn" onclick="event.stopPropagation();cycleCard('${s.id}')">הבא ▶</button>` : ''}
                 </div>
             </div>
-            <div class="card-back">
-                <h4>יומן פעילות</h4>
-                <div class="history-list">${histHtml || 'אין פעילות לאחרונה'}</div>
-                ${isMine ? `<textarea id="note-${f.id}" onclick="event.stopPropagation()">${f.personalNote||''}</textarea><button class="save-btn" onclick="event.stopPropagation();savePersonalNote('${f.id}')">שמור 💾</button>` : ''}
-            </div>
-            </div>
-       </div>`;
+        </div>
+        <div class="card-back">
+            <h4>יומן פעילות</h4>
+            <div class="history-list">${histHtml || 'אין פעילות לאחרונה'}</div>
+            ${isMine ? `<textarea id="note-${f.id}" onclick="event.stopPropagation()">${f.personalNote||''}</textarea><button class="save-btn" onclick="event.stopPropagation();savePersonalNote('${f.id}')">שמור 💾</button>` : ''}
+        </div>
+    </div>
+</div>`;
        
         if (stackCount === 0) return cardHtml;
         const peeks = Array.from({length: Math.min(stackCount, 2)}, () => `<div class="stack-peek"></div>`).join('');
