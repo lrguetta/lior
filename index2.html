@@ -1700,37 +1700,84 @@ function buildBattleSidebar(me) {
     function cycleCard(ownerId) {
     const wrapper = document.querySelector(`.card-stack-wrapper[data-owner="${ownerId}"]`);
     if (!wrapper) return;
+
     const extraIds = JSON.parse(wrapper.dataset.extraIds || '[]');
     if (!extraIds.length) return;
 
-    // הכרטיס הנוכחי בקדמה — נזיז אותו לסוף המערך
     const currentCard = wrapper.querySelector('.student-card');
     const currentSid = currentCard?.dataset.sid;
 
-    // מצא את הנתונים של הכרטיס הבא
+    // הכרטיס הבא — הראשון ברשימת extra
     const nextId = extraIds[0];
-    const nextStudent = allExtra.find(e => e.id === nextId);
-    if (!nextStudent) return;
+    const nextData = allExtra.find(e => e.id === nextId);
+    if (!nextData) return;
 
-    // בנה את עטיפת הנתונים המעודכנת
+    // עדכן את רשימת extra: הסר את הראשון, הוסף את הנוכחי לסוף
     const newExtraIds = [...extraIds.slice(1)];
-    if (currentSid && currentSid !== ownerId) {
-        // הכרטיס הנוכחי הוא extra — נחזיר אותו לסוף
-        newExtraIds.push(currentSid);
-    }
-    // עדכן data-extra-ids
+    if (currentSid !== ownerId) newExtraIds.push(currentSid);
     wrapper.dataset.extraIds = JSON.stringify(newExtraIds);
 
-    // אנימציה — הכרטיס הנוכחי יורד
-    currentCard.style.transition = 'transform 0.35s ease, opacity 0.35s';
-    currentCard.style.transform = 'translateY(30px) scale(0.92)';
-    currentCard.style.opacity = '0.3';
+    // אנימציה יציאה
+    currentCard.style.transition = 'transform 0.3s ease, opacity 0.3s';
+    currentCard.style.transform = 'translateY(40px) scale(0.88)';
+    currentCard.style.opacity = '0';
 
     setTimeout(() => {
-        // החלף את הכרטיס הנוכחי בכרטיס הבא
-        // rebuild updateView עבור הכרטיס הזה בלבד
-        updateView();
-    }, 350);
+        // בנה HTML של הכרטיס הבא
+        const isMine = currentUser === nextData.id;
+        const eggNum = (nextData.egg ?? 0) + 1;
+        const imgPath = nextData.level === 0
+            ? `images/egg${eggNum}.png`
+            : `images/${nextData.type}${nextData.level>=20?3:nextData.level>=10?2:1}.png`;
+        const brokenShields = nextData.history?.shields_broken || [];
+        const sc = shieldsByLevel(nextData.level);
+        const pending = window._pendingBattleTargets || [];
+        const newExtraCount = newExtraIds.length;
+
+        const newCardHtml = `
+        <div class="student-card ${isMine?'my-creature':''} ${pending.includes(nextData.id)?'under-attack':''}" 
+             data-sid="${nextData.id}" onclick="handleCardClick(event, this, '${nextData.id}')">
+            <div class="card-inner">
+            <div class="card-front" style="display:flex;flex-direction:column;justify-content:space-between;align-items:center;height:100%;padding:15px;box-sizing:border-box;">
+                <div style="width:100%;display:flex;justify-content:space-between;align-items:flex-start;">
+                    <div class="level-text-badge">Lv.${nextData.level}</div>
+                    ${currentUser==='admin'?`<button class="remove-btn" onclick="event.stopPropagation();deleteStudent('${nextData.id}')">✖</button>`:`<div></div>`}
+                </div>
+                <div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;">
+                    <img id="img-${nextData.id}" src="${imgPath}" class="creature-img" 
+                         style="max-height:135px;object-fit:contain;margin-bottom:8px;" 
+                         onclick="event.stopPropagation();addXP('${nextData.id}',${nextData.xp},${nextData.level})">
+                    <div style="font-weight:bold;font-size:1.3em;">${nextData.name}</div>
+                    <div style="color:#666;font-size:0.95em;">כיתה ${nextData.className}</div>
+                </div>
+                <div style="width:100%;margin-top:10px;">
+                    <div class="xp-container"><div class="xp-bar" style="width:${nextData.xp}%;"></div></div>
+                    <div style="font-size:0.75em;color:#2e7d32;font-weight:bold;margin-top:5px;text-align:center;display:flex;justify-content:center;gap:10px;align-items:center;">
+                        <span>🔄 לחץ להיפוך</span>
+                        ${newExtraCount > 0 ? `<button class="next-card-btn" onclick="event.stopPropagation();cycleCard('${ownerId}')">הבא ▶</button>` : ''}
+                    </div>
+                </div>
+            </div>
+            <div class="card-back" style="padding:12px;">
+                <h4 style="margin:0 0 6px 0;color:#2e7d32;">יומן פעילות</h4>
+                <div style="font-size:0.8em;color:#777;">אין פעילות לאחרונה</div>
+            </div>
+            </div>
+        </div>`;
+
+        // החלף את הכרטיס הישן בחדש
+        currentCard.outerHTML = newCardHtml;
+
+        // כניסה אנימציה
+        const newCard = wrapper.querySelector('.student-card');
+        newCard.style.transform = 'translateY(-20px) scale(0.95)';
+        newCard.style.opacity = '0';
+        requestAnimationFrame(() => {
+            newCard.style.transition = 'transform 0.3s ease, opacity 0.3s';
+            newCard.style.transform = 'translateY(0) scale(1)';
+            newCard.style.opacity = '1';
+        });
+    }, 300);
 }
     
 function toggleBattleSidebar() {
