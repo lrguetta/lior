@@ -1320,7 +1320,6 @@ function updateView() {
                     ${currentUser==='admin'?`
     <div style="display:flex;flex-direction:column;gap:4px;">
         <button class="remove-btn" onclick="event.stopPropagation();deleteStudent('${s.id}')">✖</button>
-        <button onclick="event.stopPropagation();addExtraCard('${s.id}')" style="position:absolute;top:42px;left:10px;background:#7b1fa2;color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:1.1em;padding:0;" title="הוסף כרטיס נוסף">＋</button>
     </div>`:`<div></div>`}
                 </div>
                 <div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;">
