@@ -682,6 +682,7 @@ button {
             <option value="ה2">כיתה ה'2</option>
         </select>
         <button onclick="addStudent()">צרף יצור לחווה 🐾</button>
+        <button type="button" onclick="startStackLinkPairing()" style="background:#5e35b1;">🔗 חבר קלפים לחפיסה</button>
     </div>
 
     <div style="width:100%; display:flex; gap:10px; margin-top:10px;">
@@ -839,6 +840,10 @@ button {
 
 <!-- באנר "בחר מטרה" -->
 <div id="battle-pick-banner" onclick="cancelAttack()">🎯 בחר כרטיס תלמיד לתקוף — לחץ כאן לביטול</div>
+<div id="stack-link-banner" style="display:none; position:fixed; bottom:70px; left:50%; transform:translateX(-50%); z-index:1500; background:#5e35b1; color:white; padding:12px 18px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.3); text-align:center; max-width:92vw; font-size:0.95em;">
+    🔗 לחץ על <b>קלף ראשון</b> ואז על <b>קלף שני</b> כדי לחברם לחפיסה אחת
+    <button type="button" onclick="cancelStackLink()" style="margin-inline-start:12px; background:#fff; color:#5e35b1; border:none; padding:6px 12px; border-radius:8px; font-weight:bold; cursor:pointer;">ביטול</button>
+</div>
 
 <script>
 const { Client, Databases, Query, ID } = Appwrite;
@@ -848,7 +853,7 @@ const DB_ID  = '69ba8e8e00096cab7d99';
 const TABLES = {
     students:'students', tasks:'tasks', submissions:'submissions',
     announcements:'announcements', welcomeImage:'welcomeimage',
-    battles:'battles', creatureTypes:'creature_types'
+    battles:'battles', creatureTypes:'creature_types', extra:'extra'
 };
 
 // --- קרבות: קבועים ---
@@ -887,14 +892,20 @@ let battleState = { selectedSkill:null, pendingBattleId:null, pendingBattle:null
 const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
 let allStudents=[], allExtra=[], allTasks=[], editingTaskId=null, currentTaskToSubmit=null;
 let currentUser = localStorage.getItem('farm_user_id') || null;
+/** מצב מנהל: חיבור שני קלפים קיימים לאותה חפיסה (stackGroupId) */
+let stackLinkAwaitingFirst = false;
+let stackLinkFirstId = null;
 
 const safe = t => typeof t!=='string' ? t : t.replace(/'/g,"&#39;").replace(/"/g,"&quot;");
 
 function docToStudent(d) {
     const history = d.history ? JSON.parse(d.history) : {};
+    const sg = d.stackGroupId != null && String(d.stackGroupId).trim() !== '' ? String(d.stackGroupId).trim() : null;
     return { id:d.$id, name:d.name||'', className:d.className||'', xp:d.xp??0, level:d.level??0,
              type:d.type||'cat', egg:d.egg??0, password:d.password||null,
              personalNote:d.personalNote||'', lastNote:d.lastNote||'',
+             stackGroupId: sg,
+             ownerId: d.ownerId || null,
              likes:d.likes?JSON.parse(d.likes):{}, history };
 }
 function docToTask(d) {
@@ -904,13 +915,14 @@ function docToTask(d) {
 }
 
 // --- טעינה ---
-async function loadStudents() {
+async function loadStudents(opts) {
+    const skipView = opts && opts.skipView === true;
     try {
         const res = await dbSvc.listDocuments(DB_ID, TABLES.students, [Query.limit(500), Query.orderAsc('name')]);
         allStudents = res.documents.map(docToStudent);
         renderStudentSelect();
         if (!currentUser) return;
-        updateView();
+        if (!skipView) updateView();
         if (currentUser !== 'admin') {
             const me = allStudents.find(s => s.id === currentUser);
             if (!me) return;
@@ -925,6 +937,65 @@ async function loadExtra() {
         const res = await dbSvc.listDocuments(DB_ID, TABLES.extra, [Query.limit(500)]);
         allExtra = res.documents.map(docToStudent);
     } catch(e) { console.error('loadExtra:', e); allExtra = []; }
+}
+
+function clearFarmStackSessions() {
+    try {
+        for (let i = sessionStorage.length - 1; i >= 0; i--) {
+            const k = sessionStorage.key(i);
+            if (k && k.startsWith('farm_stack_')) sessionStorage.removeItem(k);
+        }
+    } catch(e) {}
+}
+
+function syncCardXpInDom(id) {
+    const rec = allStudents.find(s => s.id === id) || allExtra.find(e => e.id === id);
+    if (!rec) return;
+    const card = document.querySelector('.student-card[data-sid="' + id + '"]');
+    if (!card) return;
+    const bar = card.querySelector('.xp-bar');
+    if (bar) bar.style.width = rec.xp + '%';
+    const badge = card.querySelector('.level-text-badge');
+    if (badge) badge.textContent = 'Lv.' + rec.level;
+    const img = document.getElementById('img-' + id);
+    if (img) {
+        const eggNum = (rec.egg ?? 0) + 1;
+        img.src = rec.level === 0
+            ? 'images/egg' + eggNum + '.png'
+            : 'images/' + rec.type + (rec.level >= 20 ? 3 : rec.level >= 10 ? 2 : 1) + '.png';
+    }
+}
+
+async function mergeStackGroupRecords(idA, idB) {
+    if (idA === idB) return;
+    const a = allStudents.find(s => s.id === idA);
+    const b = allStudents.find(s => s.id === idB);
+    if (!a || !b) throw new Error('קלף לא נמצא');
+    const expand = p => {
+        const g = p.stackGroupId;
+        if (!g) return [p];
+        return allStudents.filter(s => s.stackGroupId === g);
+    };
+    const m = new Map([...expand(a), ...expand(b)].map(s => [s.id, s]));
+    const union = Array.from(m.values());
+    const newGid = ID.unique();
+    clearFarmStackSessions();
+    await Promise.all(union.map(s => dbSvc.updateDocument(DB_ID, TABLES.students, s.id, { stackGroupId: newGid })));
+}
+
+function startStackLinkPairing() {
+    if (currentUser !== 'admin') return;
+    stackLinkAwaitingFirst = true;
+    stackLinkFirstId = null;
+    const b = document.getElementById('stack-link-banner');
+    if (b) { b.style.display = 'block'; b.classList.add('visible'); }
+}
+
+function cancelStackLink() {
+    stackLinkAwaitingFirst = false;
+    stackLinkFirstId = null;
+    const b = document.getElementById('stack-link-banner');
+    if (b) { b.style.display = 'none'; b.classList.remove('visible'); }
 }
 async function loadTasks() {
     try {
@@ -1065,13 +1136,23 @@ async function addStudent() {
     const nameInput = document.getElementById('studentName');
     if (!nameInput.value.trim()) return;
     try {
-        await dbSvc.createDocument(DB_ID, TABLES.students, ID.unique(), {
+        const created = await dbSvc.createDocument(DB_ID, TABLES.students, ID.unique(), {
             name:nameInput.value.trim(), className:document.getElementById('studentClass').value,
             xp:0, level:0, type:CREATURE_TYPES[Math.floor(Math.random()*CREATURE_TYPES.length)],
             egg:Math.floor(Math.random()*5), likes:'{}', history:'{}'
         });
         nameInput.value = '';
         await loadStudents();
+        const newId = created.$id;
+        const newbie = allStudents.find(s => s.id === newId);
+        if (newbie) {
+            const twin = allStudents.find(s => s.id !== newId && s.name === newbie.name && s.className === newbie.className);
+            if (twin) {
+                try { await mergeStackGroupRecords(twin.id, newbie.id); }
+                catch(e) { console.error(e); alert('התלמיד נוצר, אך חיבור אוטומטי לחפיסה נכשל (בדוק שדה stackGroupId ב-Appwrite או חבר ידנית): ' + (e.message || e)); }
+                await loadStudents();
+            }
+        }
     } catch(e) { alert('שגיאה: '+e.message); }
 }
 async function deleteStudent(id) {
@@ -1083,6 +1164,7 @@ async function deleteStudent(id) {
         } else {
             await dbSvc.deleteDocument(DB_ID, TABLES.students, id);
         }
+        clearFarmStackSessions();
         await loadStudents();
     } catch(e) { alert(e.message); }
 }
@@ -1111,7 +1193,8 @@ async function addXP(id, xp, lvl) {
     setTimeout(async()=>{ try{
         await dbSvc.updateDocument(DB_ID, collection, id, {xp:nxp,level:nlv,history:JSON.stringify(history)});
         await loadExtra();
-        await loadStudents();
+        await loadStudents({ skipView: true });
+        syncCardXpInDom(id);
     }catch(e){console.error(e);} }, 500);
 }
 
@@ -1136,19 +1219,23 @@ function updateView() {
         filtered.sort((a,b)=>{ const ca=parse(a.className),cb=parse(b.className); return ca.g!==cb.g?ca.g-cb.g:ca.n-cb.n; });
     }
 
+    const emittedGid = new Set();
     const groupOrder = [];
-    const groups = new Map();
     for (const st of filtered) {
-        const gkey = `${st.name}|||${st.className || ''}`;
-        if (!groups.has(gkey)) {
-            groups.set(gkey, []);
-            groupOrder.push(gkey);
+        const gid = (st.stackGroupId || '').trim();
+        if (!gid) {
+            groupOrder.push([st]);
+            continue;
         }
-        groups.get(gkey).push(st);
+        if (emittedGid.has(gid)) continue;
+        emittedGid.add(gid);
+        const allInGroup = allStudents.filter(s => (s.stackGroupId || '').trim() === gid)
+            .sort((a, b) => String(a.id).localeCompare(String(b.id)));
+        const anyShown = allInGroup.some(m => filtered.some(f => f.id === m.id));
+        if (anyShown) groupOrder.push(allInGroup);
     }
 
-    grid.innerHTML = groupOrder.map(gkey => {
-        const rawMembers = groups.get(gkey);
+    grid.innerHTML = groupOrder.map(rawMembers => {
         const memberIds = new Set(rawMembers.map(m => m.id));
         const sortedById = [...rawMembers].sort((a, b) => String(a.id).localeCompare(String(b.id)));
         const canonicalOwnerId = sortedById[0].id;
@@ -1845,6 +1932,25 @@ function flipCardFromFooter(event) {
 }
 
 function handleCardClick(event, cardEl, studentId) {
+    if (currentUser === 'admin' && stackLinkAwaitingFirst && !battleState.selectedSkill) {
+        event.stopPropagation();
+        const sid = studentId;
+        if (stackLinkFirstId == null) {
+            stackLinkFirstId = sid;
+            alert('נבחר קלף ראשון. עכשיו לחץ על הקלף השני.');
+            return;
+        }
+        if (stackLinkFirstId === sid) {
+            alert('בחר קלף אחר (לא אותו קלף).');
+            return;
+        }
+        const a = stackLinkFirstId;
+        stackLinkAwaitingFirst = false;
+        stackLinkFirstId = null;
+        cancelStackLink();
+        mergeStackGroupRecords(a, sid).then(() => loadStudents()).catch(e => alert(e.message || e));
+        return;
+    }
     if (battleState.selectedSkill) {
         if (studentId===currentUser) return;
         event.stopPropagation();
