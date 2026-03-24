@@ -1697,8 +1697,9 @@ function buildBattleSidebar(me) {
     } catch(e) { alert('שגיאה: ' + e.message); }
 }
     
-    function cycleCard(ownerId) {
-    const wrapper = document.querySelector(`.card-stack-wrapper[data-owner="${ownerId}"]`);
+    function cycleCard(event, ownerId) {
+    const wrapper = event.target.closest('.card-stack-wrapper');
+if (!wrapper) return;
     if (!wrapper) return;
 
     const extraIds = JSON.parse(wrapper.dataset.extraIds || '[]');
@@ -1755,7 +1756,7 @@ const hasMore = allExtra.filter(e => e.ownerId === ownerId).length > 0;
                     <div class="xp-container"><div class="xp-bar" style="width:${nextData.xp}%;"></div></div>
                     <div style="font-size:0.75em;color:#2e7d32;font-weight:bold;margin-top:5px;text-align:center;display:flex;justify-content:center;gap:10px;align-items:center;">
                         <span>🔄 לחץ להיפוך</span>
-                        ${hasMore ? `<button class="next-card-btn" onclick="event.stopPropagation();cycleCard('${ownerId}')">הבא ▶</button>` : ''}
+                        ${hasMore ? `<button class="next-card-btn" onclick="event.stopPropagation();cycleCard(event, '${ownerId}')">הבא ▶</button>` : ''}
                     </div>
                 </div>
             </div>
