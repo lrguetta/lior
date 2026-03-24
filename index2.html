@@ -1136,10 +1136,38 @@ function updateView() {
         filtered.sort((a,b)=>{ const ca=parse(a.className),cb=parse(b.className); return ca.g!==cb.g?ca.g-cb.g:ca.n-cb.n; });
     }
 
-    grid.innerHTML = filtered.map(s => {
-        const extraCards = allExtra.filter(e => e.ownerId === s.id);
-        const stackCount = extraCards.length;
-        const isMine  = currentUser===s.id;
+    const groupOrder = [];
+    const groups = new Map();
+    for (const st of filtered) {
+        const gkey = `${st.name}|||${st.className || ''}`;
+        if (!groups.has(gkey)) {
+            groups.set(gkey, []);
+            groupOrder.push(gkey);
+        }
+        groups.get(gkey).push(st);
+    }
+
+    grid.innerHTML = groupOrder.map(gkey => {
+        const rawMembers = groups.get(gkey);
+        const memberIds = new Set(rawMembers.map(m => m.id));
+        const sortedById = [...rawMembers].sort((a, b) => String(a.id).localeCompare(String(b.id)));
+        const canonicalOwnerId = sortedById[0].id;
+        let members = [...sortedById];
+        if (currentUser && currentUser !== 'admin') {
+            const idx = members.findIndex(m => m.id === currentUser);
+            if (idx > 0) {
+                const [me] = members.splice(idx, 1);
+                members.unshift(me);
+            }
+        }
+        const s = members[0];
+        const extraCards = allExtra.filter(e => e.ownerId && memberIds.has(e.ownerId));
+        const stackBehindIds = [
+            ...members.slice(1).map(m => m.id),
+            ...extraCards.map(e => e.id).sort((a, b) => String(a.id).localeCompare(String(b.id)))
+        ];
+        const stackCount = stackBehindIds.length;
+        const isMine  = members.some(m => m.id === currentUser);
         const eggNum  = (s.egg??0)+1;
         const imgPath = s.level===0 ? `images/egg${eggNum}.png` : `images/${s.type}${s.level>=20?3:s.level>=10?2:1}.png`;
         const brokenShields = s.history?.shields_broken || [];
@@ -1186,7 +1214,7 @@ function updateView() {
             </div>` : isMine ? '<span style="font-size:0.8em;color:#ccc;">🤍</span>' : '';
 
         const cardHtml = `
-        <div class="student-card ${isMine?'my-creature':''} ${pending.includes(s.id)?'under-attack':''}" data-sid="${s.id}" onclick="handleCardClick(event, this, '${s.id}')">
+        <div class="student-card ${isMine?'my-creature':''} ${members.some(m => pending.includes(m.id))?'under-attack':''}" data-sid="${s.id}" onclick="handleCardClick(event, this, '${s.id}')">
             <div class="card-inner">
             ${shieldsOverlay}
             <div class="card-front" style="display:flex;flex-direction:column;justify-content:space-between;align-items:center;height:100%;padding:15px;box-sizing:border-box;">
@@ -1210,7 +1238,7 @@ function updateView() {
                     <div class="xp-container"><div class="xp-bar" style="width:${s.xp}%;"></div></div>
                     <div class="card-footer-actions" style="color:#2e7d32;">
                         <button type="button" class="card-action-link" onclick="flipCardFromFooter(event)">הפוך קלף</button>
-                        ${stackCount > 0 ? `<span class="card-footer-sep">|</span><button type="button" class="card-action-link" onclick="event.stopPropagation();cycleCard('${s.id}')">הקלף הבא</button>` : ''}
+                        ${stackCount > 0 ? `<span class="card-footer-sep">|</span><button type="button" class="card-action-link" onclick="event.stopPropagation();cycleCard('${canonicalOwnerId}')">הקלף הבא</button>` : ''}
                     </div>
                 </div>
             </div>
@@ -1232,7 +1260,7 @@ function updateView() {
 
         if (stackCount === 0) return cardHtml;
         const peeks = Array.from({length: Math.min(stackCount, 2)}, () => `<div class="stack-peek"></div>`).join('');
-        return `<div class="card-stack-wrapper" data-owner="${s.id}" data-extra-ids='${JSON.stringify(extraCards.map(e=>e.id))}'>${cardHtml}${peeks}</div>`;
+        return `<div class="card-stack-wrapper" data-owner="${canonicalOwnerId}" data-extra-ids='${JSON.stringify(stackBehindIds)}'>${cardHtml}${peeks}</div>`;
     }).join('');
 
     flippedIds.forEach(id => {
