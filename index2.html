@@ -1082,6 +1082,7 @@ async function savePersonalNote(id) {
 }
 
 // --- XP (מנהל) ---
+// --- XP (מנהל) ---
 async function addXP(id, xp, lvl) {
     if (currentUser !== 'admin') return;
     const img  = document.getElementById('img-'+id);
@@ -1092,12 +1093,52 @@ async function addXP(id, xp, lvl) {
         const f = document.createElement('div'); f.className='xp-float'; f.innerText='+10 XP';
         card.appendChild(f); setTimeout(()=>f.remove(), 800);
     }
+    
     let nxp=xp+10, nlv=lvl;
-    if (nxp>=100) { nlv++; nxp=0; if(card){const t=document.createElement('div');t.className='levelup';t.innerText='LEVEL UP! ✨';card.appendChild(t);setTimeout(()=>t.remove(),2000);} }
-    const s = allStudents.find(x=>x.id===id);
-    const history = s?{...s.history}:{};
+    if (nxp>=100) { 
+        nlv++; nxp=0; 
+        if(card){
+            const t=document.createElement('div');t.className='levelup';t.innerText='LEVEL UP! ✨';
+            card.appendChild(t);setTimeout(()=>t.remove(),2000);
+        } 
+    }
+
+    // שלב 1: חיפוש הכרטיס והטבלה הנכונה (ראשי או נוסף)
+    let targetObj = allStudents.find(x => x.id === id);
+    let targetTable = TABLES.students;
+
+    if (!targetObj) {
+        targetObj = allExtra.find(x => x.id === id);
+        targetTable = TABLES.extra;
+    }
+
+    // אם הקלף לא נמצא באף אחת מהטבלאות (לא סביר, אבל למקרה קצה)
+    if (!targetObj) return;
+
+    // שלב 2: יצירת היסטוריה
+    const history = {...targetObj.history};
     history['tap_'+Date.now()] = { msg:'לחיצת מורה', xp:10, time:Date.now() };
-    setTimeout(async()=>{ try{ await dbSvc.updateDocument(DB_ID,TABLES.students,id,{xp:nxp,level:nlv,history:JSON.stringify(history)}); await loadStudents(); }catch(e){console.error(e);} }, 500);
+
+    // שלב 3: עדכון במסד הנתונים
+    setTimeout(async()=>{ 
+        try { 
+            await dbSvc.updateDocument(DB_ID, targetTable, id, {
+                xp: nxp, 
+                level: nlv, 
+                history: JSON.stringify(history)
+            }); 
+            
+            // שלב 4: רענון הנתונים מהטבלה הנכונה
+            if (targetTable === TABLES.students) {
+                await loadStudents(); 
+            } else {
+                await loadExtra();
+                updateView(); // הכרחי כדי לרענן קלף נוסף שמוצג כרגע בפרונט
+            }
+        } catch(e) {
+            console.error('שגיאה בהוספת XP:', e);
+        } 
+    }, 500);
 }
 
 // --- תצוגת כרטיסים ---
