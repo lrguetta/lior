@@ -593,7 +593,7 @@ button {
     position: relative; 
     text-align: right; 
 }
-    /* ===== חפיסת כרטיסים ===== */
+/* ===== חפיסת כרטיסים (דמויות נוספות) ===== */
 .card-stack-wrapper {
     position: relative;
     width: 220px;
@@ -637,7 +637,6 @@ button {
     white-space: nowrap;
 }
 .next-card-btn:hover { filter: brightness(1.15); transform: translateX(-50%) scale(1.05); }
-    
 </style>
 </head>
 <body>
@@ -680,7 +679,7 @@ button {
     </div>
 
     <div style="width:100%; display:flex; gap:10px; margin-top:10px;">
-<input type="text" id="search" placeholder="חפש לפי שם..." oninput="updateView()" style="flex:2;">
+        <input type="text" id="search" placeholder="חפש לפי שם..." oninput="" style="flex:2;">
         <select id="sortBy" onchange="updateView()" style="flex:1;">
             <option value="name">מיין לפי שם</option>
             <option value="level">מיין לפי רמה</option>
@@ -843,7 +842,7 @@ const DB_ID  = '69ba8e8e00096cab7d99';
 const TABLES = {
     students:'students', tasks:'tasks', submissions:'submissions',
     announcements:'announcements', welcomeImage:'welcomeimage',
-    battles:'battles', creatureTypes:'creature_types', extra:'extra'
+    battles:'battles', creatureTypes:'creature_types'
 };
 
 // --- קרבות: קבועים ---
@@ -881,7 +880,7 @@ const CREATURE_SEED_DATA = [
 let battleState = { selectedSkill:null, pendingBattleId:null, pendingBattle:null };
 const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
 let allStudents=[], allExtra=[], allTasks=[], editingTaskId=null, currentTaskToSubmit=null;
-    let currentUser = localStorage.getItem('farm_user_id') || null;
+let currentUser = localStorage.getItem('farm_user_id') || null;
 
 const safe = t => typeof t!=='string' ? t : t.replace(/'/g,"&#39;").replace(/"/g,"&quot;");
 
@@ -890,10 +889,8 @@ function docToStudent(d) {
     return { id:d.$id, name:d.name||'', className:d.className||'', xp:d.xp??0, level:d.level??0,
              type:d.type||'cat', egg:d.egg??0, password:d.password||null,
              personalNote:d.personalNote||'', lastNote:d.lastNote||'',
-             ownerId:d.ownerId||null,
              likes:d.likes?JSON.parse(d.likes):{}, history };
 }
-    
 function docToTask(d) {
     return { id:d.$id, title:d.title||'', deadline:d.deadline||'', xp:d.xp??20,
              startTime:d.startTime||'', endTime:d.endTime||'',
@@ -917,13 +914,12 @@ async function loadStudents() {
         }
     } catch(e) { console.error(e); }
 }
-    async function loadExtra() {
+async function loadExtra() {
     try {
         const res = await dbSvc.listDocuments(DB_ID, TABLES.extra, [Query.limit(500)]);
         allExtra = res.documents.map(docToStudent);
     } catch(e) { console.error('loadExtra:', e); allExtra = []; }
 }
-    
 async function loadTasks() {
     try {
         const res = await dbSvc.listDocuments(DB_ID, TABLES.tasks, [Query.limit(200)]);
@@ -978,6 +974,7 @@ async function loadCreatureTypes() {
 function subscribeAll() {
     const sub = (col, fn) => client.subscribe(`databases.${DB_ID}.collections.${col}.documents`, fn);
     sub(TABLES.students,      () => { loadStudents(); loadExtra(); });
+    sub(TABLES.extra,         () => { loadExtra().then(() => { if (currentUser) updateView(); }); });
     sub(TABLES.tasks,         () => loadTasks());
     sub(TABLES.announcements, () => loadAnnouncements());
     sub(TABLES.battles,       () => checkPendingBattle());
@@ -989,7 +986,7 @@ function toggleBoard() {
     const board = document.getElementById('announcements-board');
     const btn   = document.getElementById('toggle-board');
     board.classList.toggle('minimized');
-    Text = board.classList.contains('minimized') ? '📢' : '−';
+    btn.innerText = board.classList.contains('minimized') ? '📢' : '−';
     btn.title     = board.classList.contains('minimized') ? 'פתח לוח מודעות' : 'מזער לוח';
 }
 async function saveAnnouncements() {
@@ -1073,15 +1070,22 @@ async function addStudent() {
 }
 async function deleteStudent(id) {
     if (!confirm('למחוק?')) return;
-    try { await dbSvc.deleteDocument(DB_ID, TABLES.students, id); await loadStudents(); }
-    catch(e) { alert(e.message); }
+    try {
+        if (allExtra.some(e => e.id === id)) {
+            await dbSvc.deleteDocument(DB_ID, TABLES.extra, id);
+            await loadExtra();
+        } else {
+            await dbSvc.deleteDocument(DB_ID, TABLES.students, id);
+        }
+        await loadStudents();
+    } catch(e) { alert(e.message); }
 }
 async function savePersonalNote(id) {
     try { await dbSvc.updateDocument(DB_ID, TABLES.students, id, { personalNote:document.getElementById('note-'+id).value.trim() }); await loadStudents(); }
     catch(e) { alert(e.message); }
 }
 
-// --- XP (מנהל) ---
+// --- XP (מנהל) — מסמך ראשי ב-students, דמות נוספת ב-extra ---
 async function addXP(id, xp, lvl) {
     if (currentUser !== 'admin') return;
     const img  = document.getElementById('img-'+id);
@@ -1094,10 +1098,15 @@ async function addXP(id, xp, lvl) {
     }
     let nxp=xp+10, nlv=lvl;
     if (nxp>=100) { nlv++; nxp=0; if(card){const t=document.createElement('div');t.className='levelup';t.innerText='LEVEL UP! ✨';card.appendChild(t);setTimeout(()=>t.remove(),2000);} }
-    const s = allStudents.find(x=>x.id===id);
+    const s = allStudents.find(x=>x.id===id) || allExtra.find(x=>x.id===id);
     const history = s?{...s.history}:{};
     history['tap_'+Date.now()] = { msg:'לחיצת מורה', xp:10, time:Date.now() };
-    setTimeout(async()=>{ try{ await dbSvc.updateDocument(DB_ID,TABLES.students,id,{xp:nxp,level:nlv,history:JSON.stringify(history)}); await loadStudents(); }catch(e){console.error(e);} }, 500);
+    const collection = allExtra.some(e => e.id === id) ? TABLES.extra : TABLES.students;
+    setTimeout(async()=>{ try{
+        await dbSvc.updateDocument(DB_ID, collection, id, {xp:nxp,level:nlv,history:JSON.stringify(history)});
+        await loadExtra();
+        await loadStudents();
+    }catch(e){console.error(e);} }, 500);
 }
 
 // --- תצוגת כרטיסים ---
@@ -1121,7 +1130,7 @@ function updateView() {
         filtered.sort((a,b)=>{ const ca=parse(a.className),cb=parse(b.className); return ca.g!==cb.g?ca.g-cb.g:ca.n-cb.n; });
     }
 
-grid.innerHTML = filtered.map(s => {
+    grid.innerHTML = filtered.map(s => {
         const extraCards = allExtra.filter(e => e.ownerId === s.id);
         const stackCount = extraCards.length;
         const isMine  = currentUser===s.id;
@@ -1129,6 +1138,7 @@ grid.innerHTML = filtered.map(s => {
         const imgPath = s.level===0 ? `images/egg${eggNum}.png` : `images/${s.type}${s.level>=20?3:s.level>=10?2:1}.png`;
         const brokenShields = s.history?.shields_broken || [];
         const sc = shieldsByLevel(s.level);
+
         const histHtml = Object.values(s.history).filter(h=>h.msg).reverse().slice(0,3)
             .map(h=>`<div class="history-item">✨ ${h.msg}: <b>+${h.xp}XP</b></div>`).join('');
 
@@ -1168,19 +1178,20 @@ grid.innerHTML = filtered.map(s => {
                     <div style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid #f48fb1;"></div>
                 </div>
             </div>` : isMine ? '<span style="font-size:0.8em;color:#ccc;">🤍</span>' : '';
-       const cardHtml = `
+
+        const cardHtml = `
         <div class="student-card ${isMine?'my-creature':''} ${pending.includes(s.id)?'under-attack':''}" data-sid="${s.id}" onclick="handleCardClick(event, this, '${s.id}')">
             <div class="card-inner">
             ${shieldsOverlay}
             <div class="card-front" style="display:flex;flex-direction:column;justify-content:space-between;align-items:center;height:100%;padding:15px;box-sizing:border-box;">
                 <div style="width:100%;display:flex;justify-content:space-between;align-items:flex-start;">
                     <div class="level-text-badge">Lv.${s.level}</div>
-${currentUser==='admin'?`
+                    ${currentUser==='admin'?`
     <div style="display:flex;flex-direction:column;gap:4px;">
         <button class="remove-btn" onclick="event.stopPropagation();deleteStudent('${s.id}')">✖</button>
         <button onclick="event.stopPropagation();addExtraCard('${s.id}')" style="position:absolute;top:42px;left:10px;background:#7b1fa2;color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:1.1em;padding:0;" title="הוסף כרטיס נוסף">＋</button>
     </div>`:`<div></div>`}
-    </div>
+                </div>
                 <div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;">
                     <img id="img-${s.id}" src="${imgPath}" class="creature-img" style="max-height:135px;object-fit:contain;margin-bottom:8px;" onclick="event.stopPropagation();addXP('${s.id}',${s.xp},${s.level})">
                     <div style="font-weight:bold;font-size:1.3em;line-height:1.2;display:flex;align-items:center;gap:6px;">
@@ -1191,7 +1202,7 @@ ${currentUser==='admin'?`
                 </div>
                 <div style="width:100%;margin-top:10px;">
                     <div class="xp-container"><div class="xp-bar" style="width:${s.xp}%;"></div></div>
-                  <div style="font-size:0.75em;color:#2e7d32;font-weight:bold;margin-top:5px;text-align:center;display:flex;justify-content:center;gap:10px;align-items:center;">
+                    <div style="font-size:0.75em;color:#2e7d32;font-weight:bold;margin-top:5px;text-align:center;display:flex;justify-content:center;gap:10px;align-items:center;">
                         <span>🔄 לחץ להיפוך</span>
                         ${stackCount > 0 ? `<button class="next-card-btn" onclick="event.stopPropagation();cycleCard('${s.id}')">הבא ▶</button>` : ''}
                     </div>
@@ -1211,12 +1222,13 @@ ${currentUser==='admin'?`
                     </div>` : `<div style="font-size:0.75em;color:#999;text-align:center;margin-top:8px;">לחץ לחזרה</div>`}
             </div>
             </div>
-       </div>`;
+        </div>`;
 
         if (stackCount === 0) return cardHtml;
-        const peeks = Array.from({length: Math.min(stackCount, 2)}, (_,i) => `<div class="stack-peek"></div>`).join('');
+        const peeks = Array.from({length: Math.min(stackCount, 2)}, () => `<div class="stack-peek"></div>`).join('');
         return `<div class="card-stack-wrapper" data-owner="${s.id}" data-extra-ids='${JSON.stringify(extraCards.map(e=>e.id))}'>${cardHtml}${peeks}</div>`;
     }).join('');
+
     flippedIds.forEach(id => {
         const card = document.querySelector(`.student-card[data-sid="${id}"]`);
         if (card) card.classList.add('flipped');
@@ -1631,52 +1643,22 @@ function buildBattleSidebar(me) {
         const icon=typeof atk==='object'?atk.icon:'';
         const btn=document.createElement('button');
         btn.className='attack-btn'; btn.title=name;
-        
-        // חישוב הקולדאון
+        if (icon) {
+           btn.innerHTML=`<img src="${icon}" style="width:65px;height:65px;object-fit:contain;display:block;position:relative;right:-25px;" onerror="this.style.display='none';if(this.nextSibling)this.nextSibling.style.display='block'"><span style="display:none;font-size:0.8em;">${name}</span>`;
+            btn.style.background='none'; btn.style.border='none'; btn.style.padding='4px'; btn.style.boxShadow='none';
+        } else btn.textContent=name;
         const last=parseInt(localStorage.getItem('last_attack_'+currentUser+'_'+name)||'0');
         const rem=(15*60*1000)-(Date.now()-last);
-        const isOnCooldown = rem > 0;
-        
-        let m, s;
-        if (isOnCooldown) {
-            btn.style.cursor='not-allowed'; 
-            btn.style.position='relative';
-            m=String(Math.floor(rem/60000)).padStart(2,'0');
-            s=String(Math.floor((rem%60000)/1000)).padStart(2,'0');
-        }
-
-        if (icon) {
-            // עיצוב שקוף לכפתור כשיש תמונה
-            btn.style.background='none'; 
-            btn.style.border='none'; 
-            btn.style.padding='4px'; 
-            btn.style.boxShadow='none';
-            
-            // עוטפים את התמונה ואת רקע הקולדאון יחד כדי שיחפפו בדיוק
-            let content = `<div style="position:relative; width:65px; height:65px; right:-25px; display:inline-block;">
-                <img src="${icon}" style="width:100%; height:100%; object-fit:contain; display:block;" onerror="this.style.display='none';if(this.nextSibling)this.nextSibling.style.display='block'">
-                <span style="display:none;font-size:0.8em;">${name}</span>`;
-                
-            if (isOnCooldown) {
-                // border-radius: 50% הופך את הרקע לעיגול מושלם
-                content += `<div style="position:absolute; inset:0; background:rgba(30,30,30,0.7); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.9em; font-weight:bold; color:white; pointer-events:none;">${m}:${s}</div>`;
-            }
-            content += `</div>`;
-            btn.innerHTML = content;
-            
-        } else {
-            // מקרה גיבוי (כשאין אייקון אלא רק טקסט)
-            btn.textContent = name;
-            if (isOnCooldown) {
-                btn.innerHTML += `<div style="position:absolute; inset:0; background:rgba(30,30,30,0.7); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.85em; font-weight:bold; color:white; pointer-events:none;">${m}:${s}</div>`;
-            }
-        }
-  
+        if (rem>0) {
+            btn.style.cursor='not-allowed'; btn.style.position='relative';
+            const m=String(Math.floor(rem/60000)).padStart(2,'0'), s=String(Math.floor((rem%60000)/1000)).padStart(2,'0');
+btn.innerHTML += `<div style="position:absolute;inset:0;background:rgba(30,30,30,0.7);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.85em;font-weight:bold;color:white;pointer-events:none;">${m}:${s}</div>`;        }
         btn.onclick=()=>enterPickMode(name);
         sidebar.appendChild(btn);
     });
 }
-    async function addExtraCard(ownerId) {
+
+async function addExtraCard(ownerId) {
     const owner = allStudents.find(s => s.id === ownerId);
     if (!owner) return;
     const existing = allExtra.filter(e => e.ownerId === ownerId).length;
@@ -1684,19 +1666,19 @@ function buildBattleSidebar(me) {
     if (!confirm(`להוסיף כרטיס נוסף ל-${owner.name}? (${existing+1}/4 נוספים)`)) return;
     try {
         await dbSvc.createDocument(DB_ID, TABLES.extra, ID.unique(), {
-            ownerId, name:owner.name, className:owner.className,
-            xp:0, level:0,
-            type:CREATURE_TYPES[Math.floor(Math.random()*CREATURE_TYPES.length)],
-            egg:Math.floor(Math.random()*5),
-            likes:'{}', history:'{}'
+            ownerId, name: owner.name, className: owner.className,
+            xp: 0, level: 0,
+            type: CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)],
+            egg: Math.floor(Math.random() * 5),
+            likes: '{}', history: '{}'
         });
         await loadExtra();
         updateView();
         alert(`✅ כרטיס נוסף נוצר ל-${owner.name}!`);
     } catch(e) { alert('שגיאה: ' + e.message); }
 }
-    
-   function cycleCard(ownerId) {
+
+function cycleCard(ownerId) {
     const wrapper = document.querySelector(`.card-stack-wrapper[data-owner="${ownerId}"]`);
     if (!wrapper) return;
 
@@ -1706,44 +1688,37 @@ function buildBattleSidebar(me) {
     const currentCard = wrapper.querySelector('.student-card');
     const currentSid = currentCard?.dataset.sid;
 
-    // שליפת המזהה הבא בתור
     const nextId = extraIds[0];
-    
-    // חיפוש הנתונים (במערך הנוספים או בראשי)
     const nextData = allExtra.find(e => e.id === nextId) || allStudents.find(s => s.id === nextId);
     if (!nextData) return;
 
-    // עדכון מערך המזהים לסיבוב הבא
     const newExtraIds = [...extraIds.slice(1)];
     newExtraIds.push(currentSid);
     wrapper.dataset.extraIds = JSON.stringify(newExtraIds);
 
-    // אנימציית יציאה
     currentCard.style.transition = 'transform 0.3s ease, opacity 0.3s';
     currentCard.style.transform = 'translateY(40px) scale(0.88)';
     currentCard.style.opacity = '0';
 
     setTimeout(() => {
-        const isMine = (currentUser === nextData.id);
+        const isMine = currentUser !== 'admin' && (currentUser === nextData.id || nextData.ownerId === currentUser);
         const eggNum = (nextData.egg ?? 0) + 1;
         const imgPath = nextData.level === 0
             ? `images/egg${eggNum}.png`
             : `images/${nextData.type}${nextData.level >= 20 ? 3 : nextData.level >= 10 ? 2 : 1}.png`;
-        
+
         const brokenShields = nextData.history?.shields_broken || [];
         const sc = shieldsByLevel(nextData.level);
         const pending = window._pendingBattleTargets || [];
-        const hasMore = allExtra.some(e => e.ownerId === ownerId);
 
-        // שכבת מגינים ליריב (שימוש בגרש רגיל למניעת שגיאת טוקן)
         let shieldsOverlay = '';
         if (!isMine && currentUser !== 'admin') {
             let shieldsHtml = '';
-            for(let i=0; i<sc; i++) {
+            for (let i = 0; i < sc; i++) {
                 const isBroken = brokenShields.includes(i);
-                shieldsHtml += `<span class="shield-item ${isBroken?'broken':''}" 
+                shieldsHtml += `<span class="shield-item ${isBroken ? 'broken' : ''}" 
                     onclick="event.stopPropagation();pickTargetShield('${nextData.id}',${i})" 
-                    title="${isBroken?'שבור':'בחר'}">${isBroken?'💔':'🛡️'}</span>`;
+                    title="${isBroken ? 'שבור' : 'בחר'}">${isBroken ? '💔' : '🛡️'}</span>`;
             }
             shieldsOverlay = `
                 <div id="shields-overlay-${nextData.id}" class="shields-overlay">
@@ -1753,12 +1728,11 @@ function buildBattleSidebar(me) {
                 </div>`;
         }
 
-        // מגינים לכרטיס שלי
         let myShields = '';
         if (isMine) {
             let myShieldsHtml = '';
-            for(let i=0; i<sc; i++) {
-                myShieldsHtml += `<span class="shield-item ${brokenShields.includes(i)?'broken':''}" style="cursor:default;">${brokenShields.includes(i)?'💔':'🛡️'}</span>`;
+            for (let i = 0; i < sc; i++) {
+                myShieldsHtml += `<span class="shield-item ${brokenShields.includes(i) ? 'broken' : ''}" style="cursor:default;">${brokenShields.includes(i) ? '💔' : '🛡️'}</span>`;
             }
             myShields = `<div class="my-shields-row">${myShieldsHtml}</div>`;
         }
@@ -1798,7 +1772,6 @@ function buildBattleSidebar(me) {
 
         currentCard.outerHTML = newCardHtml;
 
-        // אנימציית כניסה
         const newCard = wrapper.querySelector('.student-card');
         newCard.style.transform = 'translateY(-20px) scale(0.95)';
         newCard.style.opacity = '0';
@@ -1809,7 +1782,7 @@ function buildBattleSidebar(me) {
         }, 50);
     }, 300);
 }
-    
+
 function toggleBattleSidebar() {
     const sb=document.getElementById('battle-sidebar'), btn=document.getElementById('battle-float-btn');
     sb.classList.toggle('open'); btn.classList.toggle('active', sb.classList.contains('open'));
@@ -1913,7 +1886,7 @@ async function resolveDefense(chosen, battle) {
         if (allBroken) { nxp=Math.max(0,me.xp-10); history.shields_broken=[]; history['battle_'+Date.now()]={msg:`💥 ${att.name} פגע. -10XP, מגינים חודשו`,xp:-10,time:Date.now()}; }
         else           { history.shields_broken=broken; history['battle_'+Date.now()]={msg:`🛡️ ${att.name} הפיל מגן! (${battle.skill})`,xp:0,time:Date.now()}; }
         await dbSvc.updateDocument(DB_ID,TABLES.students,currentUser,{xp:nxp,history:JSON.stringify(history)});
-        const xpR = Math.max(5, 10 * ((me.level || 1) - (att.level || 1))); ah={...att.history};
+        const xpR=10*(me.level||1), ah={...att.history};
         ah['win_'+Date.now()]={msg:`⚔️ פגעת ב-${me.name}! (+${xpR}XP)`,xp:xpR,time:Date.now()};
         let ax=att.xp+xpR, al=att.level; while(ax>=100){al++;ax-=100;}
         await dbSvc.updateDocument(DB_ID,TABLES.students,att.id,{xp:ax,level:al,history:JSON.stringify(ah)});
@@ -1930,7 +1903,8 @@ function updateCooldownDisplay() {
 
 // --- אתחול ---
 async function init() {
-    await Promise.all([loadStudents(), loadExtra(), loadTasks(), loadAnnouncements(), loadCreatureTypes()]);
+    await loadExtra();
+    await Promise.all([loadStudents(), loadTasks(), loadAnnouncements(), loadCreatureTypes()]);
     if (currentUser && currentUser!=='admin') {
         const found=allStudents.find(s=>s.id===currentUser);
         if (found) startApp();
