@@ -1732,8 +1732,9 @@ function buildBattleSidebar(me) {
         const brokenShields = nextData.history?.shields_broken || [];
         const sc = shieldsByLevel(nextData.level);
         const pending = window._pendingBattleTargets || [];
-        const newExtraCount = newExtraIds.length;
-
+// הכרטיס המקורי תמיד קיים, אז תמיד יש לאן לחזור
+const newExtraCount = newExtraIds.length + (currentSid !== ownerId ? 0 : 1);
+const hasMore = allExtra.filter(e => e.ownerId === ownerId).length > 0;
         const newCardHtml = `
         <div class="student-card ${isMine?'my-creature':''} ${pending.includes(nextData.id)?'under-attack':''}" 
              data-sid="${nextData.id}" onclick="handleCardClick(event, this, '${nextData.id}')">
@@ -1754,7 +1755,7 @@ function buildBattleSidebar(me) {
                     <div class="xp-container"><div class="xp-bar" style="width:${nextData.xp}%;"></div></div>
                     <div style="font-size:0.75em;color:#2e7d32;font-weight:bold;margin-top:5px;text-align:center;display:flex;justify-content:center;gap:10px;align-items:center;">
                         <span>🔄 לחץ להיפוך</span>
-                        ${newExtraCount > 0 ? `<button class="next-card-btn" onclick="event.stopPropagation();cycleCard('${ownerId}')">הבא ▶</button>` : ''}
+                        ${hasMore ? `<button class="next-card-btn" onclick="event.stopPropagation();cycleCard('${ownerId}')">הבא ▶</button>` : ''}
                     </div>
                 </div>
             </div>
