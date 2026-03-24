@@ -1168,7 +1168,6 @@ grid.innerHTML = filtered.map(s => {
                     <div style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid #f48fb1;"></div>
                 </div>
             </div>` : isMine ? '<span style="font-size:0.8em;color:#ccc;">🤍</span>' : '';
-
        const cardHtml = `
         <div class="student-card ${isMine?'my-creature':''} ${pending.includes(s.id)?'under-attack':''}" data-sid="${s.id}" onclick="handleCardClick(event, this, '${s.id}')">
             <div class="card-inner">
@@ -1707,61 +1706,72 @@ function buildBattleSidebar(me) {
     const currentCard = wrapper.querySelector('.student-card');
     const currentSid = currentCard?.dataset.sid;
 
-    // הכרטיס הבא — הראשון ברשימת extra
+    // שליפת המזהה הבא בתור
     const nextId = extraIds[0];
     
-    // שליפת הנתונים - גם ממערך הנוספים וגם מהראשי
+    // חיפוש הנתונים (במערך הנוספים או בראשי)
     const nextData = allExtra.find(e => e.id === nextId) || allStudents.find(s => s.id === nextId);
     if (!nextData) return;
 
-    // עדכון הרשימה - תמיד דוחפים את הקלף היוצא לסוף התור לרוטציה אינסופית
+    // עדכון מערך המזהים לסיבוב הבא
     const newExtraIds = [...extraIds.slice(1)];
     newExtraIds.push(currentSid);
     wrapper.dataset.extraIds = JSON.stringify(newExtraIds);
 
-    // אנימציה יציאה
+    // אנימציית יציאה
     currentCard.style.transition = 'transform 0.3s ease, opacity 0.3s';
     currentCard.style.transform = 'translateY(40px) scale(0.88)';
     currentCard.style.opacity = '0';
 
     setTimeout(() => {
-        const isMine = currentUser === nextData.id;
+        const isMine = (currentUser === nextData.id);
         const eggNum = (nextData.egg ?? 0) + 1;
         const imgPath = nextData.level === 0
             ? `images/egg${eggNum}.png`
-            : `images/${nextData.type}${nextData.level>=20?3:nextData.level>=10?2:1}.png`;
+            : `images/${nextData.type}${nextData.level >= 20 ? 3 : nextData.level >= 10 ? 2 : 1}.png`;
         
         const brokenShields = nextData.history?.shields_broken || [];
         const sc = shieldsByLevel(nextData.level);
         const pending = window._pendingBattleTargets || [];
-        const hasMore = allExtra.filter(e => e.ownerId === ownerId).length > 0;
+        const hasMore = allExtra.some(e => e.ownerId === ownerId);
 
-        // המגינים של הכרטיס שלי
-        const myShields = isMine ? 
-            `<div class="my-shields-row">${Array.from({length:sc},(_,i)=>
-            `<span class="shield-item ${brokenShields.includes(i)?'broken':''}" style="cursor:default;">${brokenShields.includes(i)?'💔':'🛡️'}</span>`
-            ).join('')}</div>` : '';
+        // שכבת מגינים ליריב (שימוש בגרש רגיל למניעת שגיאת טוקן)
+        let shieldsOverlay = '';
+        if (!isMine && currentUser !== 'admin') {
+            let shieldsHtml = '';
+            for(let i=0; i<sc; i++) {
+                const isBroken = brokenShields.includes(i);
+                shieldsHtml += `<span class="shield-item ${isBroken?'broken':''}" 
+                    onclick="event.stopPropagation();pickTargetShield('${nextData.id}',${i})" 
+                    title="${isBroken?'שבור':'בחר'}">${isBroken?'💔':'🛡️'}</span>`;
+            }
+            shieldsOverlay = `
+                <div id="shields-overlay-${nextData.id}" class="shields-overlay">
+                    <div class="shields-title">⚔️ בחר מגן לתקוף!</div>
+                    <div class="shields-row">${shieldsHtml}</div>
+                    <button class="cancel-btn" onclick="event.stopPropagation();cancelAttack()">ביטול</button>
+                </div>`;
+        }
 
-        // שכבת המגינים של יריב (כדי שיהיה אפשר לתקוף את הקלף גם אחרי החלפה)
-        const shieldsOverlay = (!isMine && currentUser!=='admin') ? `
-            <div id="shields-overlay-${nextData.id}" class="shields-overlay">
-                <div class="shields-title">⚔️ בחר מגן לתקוף!</div>
-                <div class="shields-row">${Array.from({length:sc},(_,i)=>{
-                    const broken=brokenShields.includes(i);
-                    return \`<span class="shield-item \${broken?'broken':''}" onclick="event.stopPropagation();pickTargetShield('\${nextData.id}',\${i})" title="\${broken?'שבור':'בחר'}">\${broken?'💔':'🛡️'}</span>\`;
-                }).join('')}</div>
-                <button class="cancel-btn" onclick="event.stopPropagation();cancelAttack()">ביטול</button>
-            </div>` : '';
+        // מגינים לכרטיס שלי
+        let myShields = '';
+        if (isMine) {
+            let myShieldsHtml = '';
+            for(let i=0; i<sc; i++) {
+                myShieldsHtml += `<span class="shield-item ${brokenShields.includes(i)?'broken':''}" style="cursor:default;">${brokenShields.includes(i)?'💔':'🛡️'}</span>`;
+            }
+            myShields = `<div class="my-shields-row">${myShieldsHtml}</div>`;
+        }
 
         const newCardHtml = `
-        <div class="student-card ${isMine?'my-creature':''} ${pending.includes(nextData.id)?'under-attack':''}" 
+        <div class="student-card ${isMine ? 'my-creature' : ''} ${pending.includes(nextData.id) ? 'under-attack' : ''}" 
              data-sid="${nextData.id}" onclick="handleCardClick(event, this, '${nextData.id}')">
             <div class="card-inner">
                 ${shieldsOverlay}
                 <div class="card-front" style="display:flex;flex-direction:column;justify-content:space-between;align-items:center;height:100%;padding:15px;box-sizing:border-box;">
                     <div style="width:100%;display:flex;justify-content:space-between;align-items:flex-start;">
                         <div class="level-text-badge">Lv.${nextData.level}</div>
-                        ${currentUser==='admin'?`<button class="remove-btn" onclick="event.stopPropagation();deleteStudent('${nextData.id}')">✖</button>`:`<div></div>`}
+                        ${currentUser === 'admin' ? `<button class="remove-btn" onclick="event.stopPropagation();deleteStudent('${nextData.id}')">✖</button>` : '<div></div>'}
                     </div>
                     <div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;">
                         <img id="img-${nextData.id}" src="${imgPath}" class="creature-img" 
@@ -1775,7 +1785,7 @@ function buildBattleSidebar(me) {
                         <div class="xp-container"><div class="xp-bar" style="width:${nextData.xp}%;"></div></div>
                         <div style="font-size:0.75em;color:#2e7d32;font-weight:bold;margin-top:5px;text-align:center;display:flex;justify-content:center;gap:10px;align-items:center;">
                             <span>🔄 לחץ להיפוך</span>
-                            ${hasMore ? `<button class="next-card-btn" onclick="event.stopPropagation();cycleCard('${ownerId}')">הבא ▶</button>` : ''}
+                            <button class="next-card-btn" onclick="event.stopPropagation();cycleCard('${ownerId}')">הבא ▶</button>
                         </div>
                     </div>
                 </div>
@@ -1788,15 +1798,15 @@ function buildBattleSidebar(me) {
 
         currentCard.outerHTML = newCardHtml;
 
-        // כניסה אנימציה
+        // אנימציית כניסה
         const newCard = wrapper.querySelector('.student-card');
         newCard.style.transform = 'translateY(-20px) scale(0.95)';
         newCard.style.opacity = '0';
-        requestAnimationFrame(() => {
+        setTimeout(() => {
             newCard.style.transition = 'transform 0.3s ease, opacity 0.3s';
             newCard.style.transform = 'translateY(0) scale(1)';
             newCard.style.opacity = '1';
-        });
+        }, 50);
     }, 300);
 }
     
