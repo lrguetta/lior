@@ -1204,19 +1204,21 @@ function updateView() {
             `<span class="shield-item ${brokenShields.includes(i)?'broken':''}" style="cursor:default;">${brokenShields.includes(i)?'💔':'🛡️'}</span>`
         ).join('')}</div>` : '';
         
-        const shieldsOverlay = (!isMine && currentUser!=='admin') ? `
-            <div id="shields-overlay-${f.id}" class="shields-overlay">
-                <div class="shields-title">⚔️ בחר מגן לתקוף!</div>
-                <div class="shields-row">${Array.from({length:sc},(_,i)=>{
-                    const broken=brokenShields.includes(i);
-                    return \`<span class="shield-item \${broken?'broken':''}" onclick="event.stopPropagation();pickTargetShield('\${f.id}',\${i})" title="\${broken?'שבור':'בחר'}">\${broken?'💔':'🛡️'}</span>\`;
-                }).join('')}</div>
-                <button class="cancel-btn" onclick="event.stopPropagation();cancelAttack()">ביטול</button>
-            </div>` : '';
-            
-        const likeBtn = !isMine && currentUser!=='admin' ? `
-            <button class="like-btn ${iLiked?'liked':''}" onclick="event.stopPropagation();toggleLike('${f.id}')">
-                ${iLiked?'❤️':'🤍'}</button>` : '';
+        const shieldsOverlay = (!isMine && currentUser !== 'admin') ? `
+    <div id="shields-overlay-${f.id}" class="shields-overlay">
+        <div class="shields-title">⚔️ בחר מגן לתקוף!</div>
+        <div class="shields-row">
+            ${Array.from({ length: sc }, (_, i) => {
+                const broken = brokenShields.includes(i);
+                // שימוש בגרש רגיל (') בתוך המחרוזת מונע את הצורך בלוכסנים הפוכים מסובכים
+                return '<span class="shield-item ' + (broken ? 'broken' : '') + '" ' +
+                       'onclick="event.stopPropagation();pickTargetShield(\'' + f.id + '\',' + i + ')" ' +
+                       'title="' + (broken ? 'שבור' : 'בחר') + '">' + 
+                       (broken ? '💔' : '🛡️') + '</span>';
+            }).join('')}
+        </div>
+        <button class="cancel-btn" onclick="event.stopPropagation();cancelAttack()">ביטול</button>
+    </div>` : '';
                 
         const likeDisplay = isMine && likeCount>0 ? `
             <div style="position:relative;display:inline-block;">
