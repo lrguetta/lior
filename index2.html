@@ -213,60 +213,6 @@ button {
 }
 .my-creature { transform: scale(1.05); z-index: 5; }
 
-/* מיכל כפתורי ניהול - בפינה השמאלית העליונה */
-.admin-controls {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    z-index: 20;
-}
-
-.remove-btn {
-    background: #ff5252;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 28px;
-    height: 28px;
-    cursor: pointer;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-.add-extra-btn {
-    background: #7b1fa2; /* סגול */
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 28px;
-    height: 28px;
-    cursor: pointer;
-    font-size: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    /* הזזה קלה ימינה ולמטה כדי שלא יסתיר ויהיה מדורג */
-    margin-left: 8px; 
-}
-
-/* אפקט זוהר משופר ליצור */
-.glow-effect {
-    animation: creature-hit 0.6s ease-out;
-}
-
-@keyframes creature-hit {
-    0% { filter: brightness(1) drop-shadow(0 0 0px gold); transform: scale(1); }
-    50% { filter: brightness(1.5) drop-shadow(0 0 20px yellow); transform: scale(1.1); }
-    100% { filter: brightness(1) drop-shadow(0 0 0px gold); transform: scale(1); }
-}
-    
 .card-inner {
     position: relative;
     width: 100%;
@@ -385,7 +331,19 @@ button {
     background: linear-gradient(90deg, #4caf50, #81c784);
     transition: width 0.5s ease-in-out;
 }
-.add-extra-btn:hover { transform: scale(1.1); background: #9c27b0; }
+.remove-btn { 
+    position: absolute; 
+    top: 10px; 
+    left: 10px;
+    background: #ff5252; 
+    color: white; 
+    border-radius: 50%; 
+    width: 28px;
+    height: 28px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+}
 .xp-float { 
     position: absolute;
     font-weight: bold; 
@@ -663,8 +621,8 @@ button {
 .stack-peek:nth-child(2) { bottom: -14px; transform: translateX(-50%) rotate(2deg); filter: brightness(0.96); z-index: -2; }
 .next-card-btn {
     position: absolute;
-    bottom: 10px;
-    left: 85%;
+    bottom: 28px;
+    left: 50%;
     transform: translateX(-50%);
     background: linear-gradient(135deg, #43a047, #1b5e20);
     color: white;
@@ -697,7 +655,7 @@ button {
 <div id="login-screen">
     <h2>החווה המופלאה 🐾</h2>
     <div id="admin-login-area">
-        <input type="password" id="adminPass" placeholder="סיסמת " style="width:80%; margin-bottom:10px;">
+        <input type="password" id="adminPass" placeholder="סיסמת מנהל" style="width:80%; margin-bottom:10px;">
         <button onclick="checkAdmin()" style="width:90%;">כניסת מנהל 🔑</button>
     </div>
     <hr style="margin:20px 0;">
@@ -1124,59 +1082,28 @@ async function savePersonalNote(id) {
 }
 
 // --- XP (מנהל) ---
-async function addXP(id) {
+async function addXP(id, xp, lvl) {
     if (currentUser !== 'admin') return;
-    
-    let targetObj = allStudents.find(x => x.id === id) || allExtra.find(x => x.id === id);
-    if (!targetObj) return;
-
-    // 1. עדכון הנתונים
-    targetObj.xp = (targetObj.xp || 0) + 10;
-    if (targetObj.xp >= 100) {
-        targetObj.level = (targetObj.level || 0) + 1;
-        targetObj.xp = 0;
-        // במידה ועלה רמה, כאן כן נרצה לרענן את כל הכרטיס כדי להחליף תמונה/מגינים
-        setTimeout(() => updateView(), 600); 
+    const img  = document.getElementById('img-'+id);
+    const card = img?.closest('.student-card');
+    if (img) {
+        img.classList.remove('glow-effect');
+        requestAnimationFrame(() => img.classList.add('glow-effect'));
+        const f = document.createElement('div'); f.className='xp-float'; f.innerText='+10 XP';
+        card.appendChild(f); setTimeout(()=>f.remove(), 800);
     }
-
-    // 2. עדכון ויזואלי מיידי ב-DOM (בלי לרענן את כל הדף)
-    const cardEl = document.querySelector(`[data-sid="${id}"]`) || document.querySelector(`.card-stack-wrapper[data-owner="${id}"]`);
-    if (cardEl) {
-        // עדכון פס ה-XP
-        const bar = cardEl.querySelector('.xp-bar');
-        if (bar) bar.style.width = targetObj.xp + '%';
-        
-        // עדכון טקסט הרמה
-        const lvlBadge = cardEl.querySelector('.level-text-badge');
-        if (lvlBadge) lvlBadge.innerText = `Lv.${targetObj.level}`;
-        
-        // הפעלת האנימציה על התמונה
-        const img = cardEl.querySelector('.creature-img');
-        if (img) {
-            img.classList.remove('glow-effect');
-            void img.offsetWidth; // טריק קטן להפעלה מחדש של האנימציה
-            img.classList.add('glow-effect');
-        }
-    }
-
-    // 3. סנכרון מול השרת (קורה בשקט ברקע)
-    const history = {...(targetObj.history || {})};
+    let nxp=xp+10, nlv=lvl;
+    if (nxp>=100) { nlv++; nxp=0; if(card){const t=document.createElement('div');t.className='levelup';t.innerText='LEVEL UP! ✨';card.appendChild(t);setTimeout(()=>t.remove(),2000);} }
+    const s = allStudents.find(x=>x.id===id);
+    const history = s?{...s.history}:{};
     history['tap_'+Date.now()] = { msg:'לחיצת מורה', xp:10, time:Date.now() };
-    const table = allStudents.find(x => x.id === id) ? TABLES.students : TABLES.extra;
-
-    try {
-        await dbSvc.updateDocument(DB_ID, table, id, {
-            xp: targetObj.xp,
-            level: targetObj.level,
-            history: JSON.stringify(history)
-        });
-    } catch(e) { console.error("Server sync error:", e); }
+    setTimeout(async()=>{ try{ await dbSvc.updateDocument(DB_ID,TABLES.students,id,{xp:nxp,level:nlv,history:JSON.stringify(history)}); await loadStudents(); }catch(e){console.error(e);} }, 500);
 }
-    
+
+// --- תצוגת כרטיסים ---
 function updateView() {
     const grid = document.getElementById('farm-grid');
-    if (!currentUser || !grid) return;
-
+    if (!currentUser) return;
     const flippedIds = new Set(
         [...document.querySelectorAll('.student-card.flipped')]
         .map(c => c.dataset.sid)
@@ -1187,102 +1114,116 @@ function updateView() {
     const pending    = window._pendingBattleTargets || [];
 
     let filtered = allStudents.filter(s => s.name.toLowerCase().includes(searchTerm));
-    
-    // מיון (לפי שם, רמה או כיתה)
-    if (sortBy === 'name') filtered.sort((a,b) => a.name.localeCompare(b.name,'he'));
-    if (sortBy === 'level') filtered.sort((a,b) => b.level - a.level);
-    if (sortBy === 'class') {
-        const parse = cls => { 
-            const m = cls?.match(/([א-ת])'?(\d+)/);
-            if(!m) return {g:0,n:0}; 
-            return {g:'אבגדהוזחטיכלמנסעפצקרשת'.indexOf(m[1]), n:+m[2]}; 
-        };
-        filtered.sort((a,b) => { 
-            const ca = parse(a.className), cb = parse(b.className); 
-            return ca.g !== cb.g ? ca.g - cb.g : ca.n - cb.n; 
-        });
+    if (sortBy==='name')  filtered.sort((a,b) => a.name.localeCompare(b.name,'he'));
+    if (sortBy==='level') filtered.sort((a,b) => b.level-a.level);
+    if (sortBy==='class') {
+        const parse = cls => { const m=cls?.match(/([א-ת])'?(\d+)/); if(!m) return {g:0,n:0}; return {g:'אבגדהוזחטיכלמנסעפצקרשת'.indexOf(m[1]),n:+m[2]}; };
+        filtered.sort((a,b)=>{ const ca=parse(a.className),cb=parse(b.className); return ca.g!==cb.g?ca.g-cb.g:ca.n-cb.n; });
     }
 
-    grid.innerHTML = filtered.map(s => {
+grid.innerHTML = filtered.map(s => {
         const extraCards = allExtra.filter(e => e.ownerId === s.id);
         const stackCount = extraCards.length;
-        
-        window.stackStates = window.stackStates || {};
-        let currentStackIds = window.stackStates[s.id];
-        if (!currentStackIds || currentStackIds.length !== stackCount) {
-            currentStackIds = extraCards.map(e => e.id);
-            window.stackStates[s.id] = currentStackIds;
-        }
-        
-        const allOwnerCards = [s, ...extraCards];
-        const f = allOwnerCards.find(c => !currentStackIds.includes(c.id)) || s;
-
-        const isMine  = currentUser === s.id;
-        const eggNum  = (f.egg ?? 0) + 1;
-        const imgPath = f.level === 0 ? `images/egg${eggNum}.png` : `images/${f.type}${f.level>=20?3:f.level>=10?2:1}.png`;
-        const brokenShields = f.history?.shields_broken || [];
-        const sc = shieldsByLevel(f.level);
-       
-        const likes = f.likes || {};
-        const likeCount = Object.keys(likes).length;
-        const iLiked = likes[currentUser] === true;
-        const likerNames = Object.keys(likes).map(uid => allStudents.find(x=>x.id===uid)?.name).filter(Boolean);
-
-        const likeBtn = (!isMine && currentUser !== 'admin') ? `
-            <button class="like-btn ${iLiked ? 'liked' : ''}" onclick="event.stopPropagation();toggleLike('${f.id}')">${iLiked ? '❤️' : '🤍'}</button>` : '';
-        const likeDisplay = (isMine && likeCount > 0) ? `<span class="like-count-badge">❤️ ${likeCount}</span>` : '';
-            
-        const histHtml = Object.values(f.history || {}).filter(h=>h.msg).reverse().slice(0,3)
+        const isMine  = currentUser===s.id;
+        const eggNum  = (s.egg??0)+1;
+        const imgPath = s.level===0 ? `images/egg${eggNum}.png` : `images/${s.type}${s.level>=20?3:s.level>=10?2:1}.png`;
+        const brokenShields = s.history?.shields_broken || [];
+        const sc = shieldsByLevel(s.level);
+        const histHtml = Object.values(s.history).filter(h=>h.msg).reverse().slice(0,3)
             .map(h=>`<div class="history-item">✨ ${h.msg}: <b>+${h.xp}XP</b></div>`).join('');
 
-       // ... בתוך ה-map של updateView ...
-const cardHtml = `
-<div class="student-card ${isMine?'my-creature':''} ${pending.includes(f.id)?'under-attack':''}" data-sid="${f.id}" onclick="handleCardClick(event, this, '${f.id}')">
-    <div class="card-inner">
-        <div class="card-front">
-            ${currentUser==='admin' ? `
-                <div class="admin-controls">
-                    <button class="remove-btn" onclick="event.stopPropagation();deleteStudent('${f.id}')">✖</button>
-                    <button class="add-extra-btn" onclick="event.stopPropagation();addExtraCard('${s.id}')">＋</button>
+        const likes     = s.likes||{};
+        const likeCount = Object.keys(likes).length;
+        const iLiked    = likes[currentUser]===true;
+        const likerNames = Object.keys(likes).map(uid => allStudents.find(x=>x.id===uid)?.name).filter(Boolean);
+
+        const noteHtml = s.lastNote
+            ? `<div style="background:#fff3e0;border-radius:6px;padding:8px;border-right:3px solid #ff9800;font-size:0.85em;color:#e65100;">📝 ${s.lastNote}</div>` : '';
+        const personalNoteHtml = s.personalNote
+            ? `<div style="background:#e8f5e9;border-radius:6px;padding:8px;border-right:3px solid #4caf50;font-size:0.85em;color:#1b5e20;">💬 <b>על עצמי:</b> ${s.personalNote}</div>` : '';
+
+        const myShields = isMine ? `<div class="my-shields-row">${Array.from({length:sc},(_,i)=>
+            `<span class="shield-item ${brokenShields.includes(i)?'broken':''}" style="cursor:default;">${brokenShields.includes(i)?'💔':'🛡️'}</span>`
+        ).join('')}</div>` : '';
+
+        const shieldsOverlay = (!isMine && currentUser!=='admin') ? `
+            <div id="shields-overlay-${s.id}" class="shields-overlay">
+                <div class="shields-title">⚔️ בחר מגן לתקוף!</div>
+                <div class="shields-row">${Array.from({length:sc},(_,i)=>{
+                    const broken=brokenShields.includes(i);
+                    return `<span class="shield-item ${broken?'broken':''}" onclick="event.stopPropagation();pickTargetShield('${s.id}',${i})" title="${broken?'שבור':'בחר'}">${broken?'💔':'🛡️'}</span>`;
+                }).join('')}</div>
+                <button class="cancel-btn" onclick="event.stopPropagation();cancelAttack()">ביטול</button>
+            </div>` : '';
+
+        const likeBtn = !isMine && currentUser!=='admin' ? `
+            <button class="like-btn ${iLiked?'liked':''}" onclick="event.stopPropagation();toggleLike('${s.id}')">
+                ${iLiked?'❤️':'🤍'}</button>` : '';
+
+        const likeDisplay = isMine && likeCount>0 ? `
+            <div style="position:relative;display:inline-block;">
+                <span class="like-btn" onmouseenter="document.getElementById('likes-tip-${s.id}').style.display='block'" onmouseleave="document.getElementById('likes-tip-${s.id}').style.display='none'">❤️ ${likeCount}</span>
+                <div id="likes-tip-${s.id}" style="display:none;position:absolute;bottom:130%;left:50%;transform:translateX(-50%);background:white;border:2px solid #f48fb1;border-radius:12px;padding:10px 14px;white-space:nowrap;box-shadow:0 4px 15px rgba(233,30,99,0.25);z-index:9999;font-size:0.8em;color:#880e4f;">
+                    💌 ${likerNames.join(' | ')}
+                    <div style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid #f48fb1;"></div>
                 </div>
-            ` : ''}
-
-            <div class="level-text-badge">Lv.${f.level}</div>
-
-            <div class="card-content-wrapper">
-                <img id="img-${f.id}" src="${imgPath}" class="creature-img" onclick="event.stopPropagation();addXP('${f.id}')">
-                <div class="creature-name">${f.name} ${likeBtn} ${likeDisplay}</div>
-                <div class="class-name">כיתה ${f.className}</div>
-                ${isMine ? `<div class="my-shields-row">${Array.from({length:sc},(_,i)=>`<span class="shield-item ${brokenShields.includes(i)?'broken':''}">${brokenShields.includes(i)?'💔':'🛡️'}</span>`).join('')}</div>` : ''}
-            </div>
-
-            <div class="card-footer">
-                <div class="xp-container"><div class="xp-bar" style="width:${f.xp}%;"></div></div>
-                <div class="card-actions-hint">
-                    <span>🔄 לחץ להיפוך</span>
-                    ${stackCount > 0 ? `<button class="next-card-btn" onclick="event.stopPropagation();cycleCard('${s.id}')">הבא ▶</button>` : ''}
-                </div>
-            </div>
-        </div>
-        <div class="card-back">
-            <h4>יומן פעילות</h4>
-            <div class="history-list">${histHtml || 'אין פעילות לאחרונה'}</div>
-            ${isMine ? `<textarea id="note-${f.id}" onclick="event.stopPropagation()">${f.personalNote||''}</textarea><button class="save-btn" onclick="event.stopPropagation();savePersonalNote('${f.id}')">שמור 💾</button>` : ''}
-        </div>
+            </div>` : isMine ? '<span style="font-size:0.8em;color:#ccc;">🤍</span>' : '';
+       const cardHtml = `
+        <div class="student-card ${isMine?'my-creature':''} ${pending.includes(s.id)?'under-attack':''}" data-sid="${s.id}" onclick="handleCardClick(event, this, '${s.id}')">
+            <div class="card-inner">
+            ${shieldsOverlay}
+            <div class="card-front" style="display:flex;flex-direction:column;justify-content:space-between;align-items:center;height:100%;padding:15px;box-sizing:border-box;">
+                <div style="width:100%;display:flex;justify-content:space-between;align-items:flex-start;">
+                    <div class="level-text-badge">Lv.${s.level}</div>
+${currentUser==='admin'?`
+    <div style="display:flex;flex-direction:column;gap:4px;">
+        <button class="remove-btn" onclick="event.stopPropagation();deleteStudent('${s.id}')">✖</button>
+        <button onclick="event.stopPropagation();addExtraCard('${s.id}')" style="position:absolute;top:42px;left:10px;background:#7b1fa2;color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:1.1em;padding:0;" title="הוסף כרטיס נוסף">＋</button>
+    </div>`:`<div></div>`}
     </div>
-</div>`;
-       
+                <div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;">
+                    <img id="img-${s.id}" src="${imgPath}" class="creature-img" style="max-height:135px;object-fit:contain;margin-bottom:8px;" onclick="event.stopPropagation();addXP('${s.id}',${s.xp},${s.level})">
+                    <div style="font-weight:bold;font-size:1.3em;line-height:1.2;display:flex;align-items:center;gap:6px;">
+                        ${s.name} ${likeBtn} ${likeDisplay}
+                    </div>
+                    <div style="color:#666;font-size:0.95em;">כיתה ${s.className}</div>
+                    ${myShields}
+                </div>
+                <div style="width:100%;margin-top:10px;">
+                    <div class="xp-container"><div class="xp-bar" style="width:${s.xp}%;"></div></div>
+                  <div style="font-size:0.75em;color:#2e7d32;font-weight:bold;margin-top:5px;text-align:center;display:flex;justify-content:center;gap:10px;align-items:center;">
+                        <span>🔄 לחץ להיפוך</span>
+                        ${stackCount > 0 ? `<button class="next-card-btn" onclick="event.stopPropagation();cycleCard('${s.id}')">הבא ▶</button>` : ''}
+                    </div>
+                </div>
+            </div>
+            <div class="card-back" style="padding:12px;display:flex;flex-direction:column;gap:8px;">
+                <h4 style="margin:0 0 6px 0;color:#2e7d32;border-bottom:1px solid #ccc;padding-bottom:5px;">יומן פעילות</h4>
+                <div style="font-size:0.8em;color:#777;border-top:1px solid #eee;padding-top:6px;">
+                    ${histHtml || 'אין פעילות לאחרונה'} ${noteHtml}
+                </div>
+                ${personalNoteHtml}
+                ${isMine ? `
+                    <div style="margin-top:8px;border-top:1px solid #c8e6c9;padding-top:8px;">
+                        <div style="font-size:0.85em;color:#2e7d32;font-weight:bold;margin-bottom:5px;">✏️ ערוך הערה:</div>
+                        <textarea id="note-${s.id}" onclick="event.stopPropagation()" style="width:100%;height:60px;font-size:0.85em;border-radius:6px;border:1px solid #a5d6a7;resize:none;padding:6px;box-sizing:border-box;" placeholder="כתוב הערה קצרה...">${s.personalNote||''}</textarea>
+                        <button onclick="event.stopPropagation();savePersonalNote('${s.id}')" style="width:100%;margin-top:5px;background:#4caf50;padding:6px;font-size:0.85em;">שמור 💾</button>
+                    </div>` : `<div style="font-size:0.75em;color:#999;text-align:center;margin-top:8px;">לחץ לחזרה</div>`}
+            </div>
+            </div>
+       </div>`;
+
         if (stackCount === 0) return cardHtml;
-        const peeks = Array.from({length: Math.min(stackCount, 2)}, () => `<div class="stack-peek"></div>`).join('');
-        return `<div class="card-stack-wrapper" data-owner="${s.id}" data-extra-ids='${JSON.stringify(currentStackIds)}'>${cardHtml}${peeks}</div>`;
+        const peeks = Array.from({length: Math.min(stackCount, 2)}, (_,i) => `<div class="stack-peek"></div>`).join('');
+        return `<div class="card-stack-wrapper" data-owner="${s.id}" data-extra-ids='${JSON.stringify(extraCards.map(e=>e.id))}'>${cardHtml}${peeks}</div>`;
     }).join('');
-    
     flippedIds.forEach(id => {
         const card = document.querySelector(`.student-card[data-sid="${id}"]`);
         if (card) card.classList.add('flipped');
     });
 }
-    
+
+// --- לייקים ---
 async function toggleLike(studentId) {
     if (currentUser==='admin' || currentUser===studentId) return;
     const s = allStudents.find(x=>x.id===studentId);
@@ -1777,11 +1718,6 @@ function buildBattleSidebar(me) {
     newExtraIds.push(currentSid);
     wrapper.dataset.extraIds = JSON.stringify(newExtraIds);
 
-    // --- הוספה קריטית: שמירת מצב התור בזיכרון הגלובלי ---
-    window.stackStates = window.stackStates || {};
-    window.stackStates[ownerId] = newExtraIds;
-    // ---------------------------------------------
-
     // אנימציית יציאה
     currentCard.style.transition = 'transform 0.3s ease, opacity 0.3s';
     currentCard.style.transform = 'translateY(40px) scale(0.88)';
@@ -1799,12 +1735,15 @@ function buildBattleSidebar(me) {
         const pending = window._pendingBattleTargets || [];
         const hasMore = allExtra.some(e => e.ownerId === ownerId);
 
+        // שכבת מגינים ליריב (שימוש בגרש רגיל למניעת שגיאת טוקן)
         let shieldsOverlay = '';
         if (!isMine && currentUser !== 'admin') {
             let shieldsHtml = '';
             for(let i=0; i<sc; i++) {
                 const isBroken = brokenShields.includes(i);
-                shieldsHtml += `<span class="shield-item ${isBroken?'broken':''}" onclick="event.stopPropagation();pickTargetShield('${nextData.id}',${i})" title="${isBroken?'שבור':'בחר'}">${isBroken?'💔':'🛡️'}</span>`;
+                shieldsHtml += `<span class="shield-item ${isBroken?'broken':''}" 
+                    onclick="event.stopPropagation();pickTargetShield('${nextData.id}',${i})" 
+                    title="${isBroken?'שבור':'בחר'}">${isBroken?'💔':'🛡️'}</span>`;
             }
             shieldsOverlay = `
                 <div id="shields-overlay-${nextData.id}" class="shields-overlay">
@@ -1814,6 +1753,7 @@ function buildBattleSidebar(me) {
                 </div>`;
         }
 
+        // מגינים לכרטיס שלי
         let myShields = '';
         if (isMine) {
             let myShieldsHtml = '';
@@ -1834,7 +1774,9 @@ function buildBattleSidebar(me) {
                         ${currentUser === 'admin' ? `<button class="remove-btn" onclick="event.stopPropagation();deleteStudent('${nextData.id}')">✖</button>` : '<div></div>'}
                     </div>
                     <div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;">
-                        <img id="img-${nextData.id}" src="${imgPath}" class="creature-img" style="max-height:135px;object-fit:contain;margin-bottom:8px;" onclick="event.stopPropagation();addXP('${nextData.id}')">
+                        <img id="img-${nextData.id}" src="${imgPath}" class="creature-img" 
+                             style="max-height:135px;object-fit:contain;margin-bottom:8px;" 
+                             onclick="event.stopPropagation();addXP('${nextData.id}',${nextData.xp},${nextData.level})">
                         <div style="font-weight:bold;font-size:1.3em;">${nextData.name}</div>
                         <div style="color:#666;font-size:0.95em;">כיתה ${nextData.className}</div>
                         ${myShields}
@@ -1856,6 +1798,7 @@ function buildBattleSidebar(me) {
 
         currentCard.outerHTML = newCardHtml;
 
+        // אנימציית כניסה
         const newCard = wrapper.querySelector('.student-card');
         newCard.style.transform = 'translateY(-20px) scale(0.95)';
         newCard.style.opacity = '0';
