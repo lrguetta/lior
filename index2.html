@@ -1697,9 +1697,8 @@ function buildBattleSidebar(me) {
     } catch(e) { alert('שגיאה: ' + e.message); }
 }
     
-    function cycleCard(event, ownerId) {
-    const wrapper = event.target.closest('.card-stack-wrapper');
-if (!wrapper) return;
+   function cycleCard(ownerId) {
+    const wrapper = document.querySelector(`.card-stack-wrapper[data-owner="${ownerId}"]`);
     if (!wrapper) return;
 
     const extraIds = JSON.parse(wrapper.dataset.extraIds || '[]');
@@ -1708,17 +1707,15 @@ if (!wrapper) return;
     const currentCard = wrapper.querySelector('.student-card');
     const currentSid = currentCard?.dataset.sid;
 
-   // הכרטיס הבא — הראשון ברשימת extra
+    // הכרטיס הבא — הראשון ברשימת extra
     const nextId = extraIds[0];
     
-    // שינוי 1: חיפוש הנתונים גם במערך הקלפים הנוספים וגם במערך התלמידים הראשי
+    // שליפת הנתונים - גם ממערך הנוספים וגם מהראשי
     const nextData = allExtra.find(e => e.id === nextId) || allStudents.find(s => s.id === nextId);
     if (!nextData) return;
 
-    // עדכן את רשימת extra: הסר את הראשון, ותמיד הוסף את הנוכחי לסוף
+    // עדכון הרשימה - תמיד דוחפים את הקלף היוצא לסוף התור לרוטציה אינסופית
     const newExtraIds = [...extraIds.slice(1)];
-    
-    // שינוי 2: הסרת התנאי, כדי שגם הקלף הראשי יחזור לרוטציה כשהוא מוחלף
     newExtraIds.push(currentSid);
     wrapper.dataset.extraIds = JSON.stringify(newExtraIds);
 
@@ -1728,50 +1725,67 @@ if (!wrapper) return;
     currentCard.style.opacity = '0';
 
     setTimeout(() => {
-        // בנה HTML של הכרטיס הבא
         const isMine = currentUser === nextData.id;
         const eggNum = (nextData.egg ?? 0) + 1;
         const imgPath = nextData.level === 0
             ? `images/egg${eggNum}.png`
             : `images/${nextData.type}${nextData.level>=20?3:nextData.level>=10?2:1}.png`;
+        
         const brokenShields = nextData.history?.shields_broken || [];
         const sc = shieldsByLevel(nextData.level);
         const pending = window._pendingBattleTargets || [];
-// הכרטיס המקורי תמיד קיים, אז תמיד יש לאן לחזור
-const newExtraCount = newExtraIds.length + (currentSid !== ownerId ? 0 : 1);
-const hasMore = allExtra.filter(e => e.ownerId === ownerId).length > 0;
+        const hasMore = allExtra.filter(e => e.ownerId === ownerId).length > 0;
+
+        // המגינים של הכרטיס שלי
+        const myShields = isMine ? 
+            `<div class="my-shields-row">${Array.from({length:sc},(_,i)=>
+            `<span class="shield-item ${brokenShields.includes(i)?'broken':''}" style="cursor:default;">${brokenShields.includes(i)?'💔':'🛡️'}</span>`
+            ).join('')}</div>` : '';
+
+        // שכבת המגינים של יריב (כדי שיהיה אפשר לתקוף את הקלף גם אחרי החלפה)
+        const shieldsOverlay = (!isMine && currentUser!=='admin') ? `
+            <div id="shields-overlay-${nextData.id}" class="shields-overlay">
+                <div class="shields-title">⚔️ בחר מגן לתקוף!</div>
+                <div class="shields-row">${Array.from({length:sc},(_,i)=>{
+                    const broken=brokenShields.includes(i);
+                    return \`<span class="shield-item \${broken?'broken':''}" onclick="event.stopPropagation();pickTargetShield('\${nextData.id}',\${i})" title="\${broken?'שבור':'בחר'}">\${broken?'💔':'🛡️'}</span>\`;
+                }).join('')}</div>
+                <button class="cancel-btn" onclick="event.stopPropagation();cancelAttack()">ביטול</button>
+            </div>` : '';
+
         const newCardHtml = `
         <div class="student-card ${isMine?'my-creature':''} ${pending.includes(nextData.id)?'under-attack':''}" 
              data-sid="${nextData.id}" onclick="handleCardClick(event, this, '${nextData.id}')">
             <div class="card-inner">
-            <div class="card-front" style="display:flex;flex-direction:column;justify-content:space-between;align-items:center;height:100%;padding:15px;box-sizing:border-box;">
-                <div style="width:100%;display:flex;justify-content:space-between;align-items:flex-start;">
-                    <div class="level-text-badge">Lv.${nextData.level}</div>
-                    ${currentUser==='admin'?`<button class="remove-btn" onclick="event.stopPropagation();deleteStudent('${nextData.id}')">✖</button>`:`<div></div>`}
-                </div>
-                <div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;">
-                    <img id="img-${nextData.id}" src="${imgPath}" class="creature-img" 
-                         style="max-height:135px;object-fit:contain;margin-bottom:8px;" 
-                         onclick="event.stopPropagation();addXP('${nextData.id}',${nextData.xp},${nextData.level})">
-                    <div style="font-weight:bold;font-size:1.3em;">${nextData.name}</div>
-                    <div style="color:#666;font-size:0.95em;">כיתה ${nextData.className}</div>
-                </div>
-                <div style="width:100%;margin-top:10px;">
-                    <div class="xp-container"><div class="xp-bar" style="width:${nextData.xp}%;"></div></div>
-                    <div style="font-size:0.75em;color:#2e7d32;font-weight:bold;margin-top:5px;text-align:center;display:flex;justify-content:center;gap:10px;align-items:center;">
-                        <span>🔄 לחץ להיפוך</span>
-                        ${hasMore ? `<button class="next-card-btn" onclick="event.stopPropagation();cycleCard(event, '${ownerId}')">הבא ▶</button>` : ''}
+                ${shieldsOverlay}
+                <div class="card-front" style="display:flex;flex-direction:column;justify-content:space-between;align-items:center;height:100%;padding:15px;box-sizing:border-box;">
+                    <div style="width:100%;display:flex;justify-content:space-between;align-items:flex-start;">
+                        <div class="level-text-badge">Lv.${nextData.level}</div>
+                        ${currentUser==='admin'?`<button class="remove-btn" onclick="event.stopPropagation();deleteStudent('${nextData.id}')">✖</button>`:`<div></div>`}
+                    </div>
+                    <div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;">
+                        <img id="img-${nextData.id}" src="${imgPath}" class="creature-img" 
+                             style="max-height:135px;object-fit:contain;margin-bottom:8px;" 
+                             onclick="event.stopPropagation();addXP('${nextData.id}',${nextData.xp},${nextData.level})">
+                        <div style="font-weight:bold;font-size:1.3em;">${nextData.name}</div>
+                        <div style="color:#666;font-size:0.95em;">כיתה ${nextData.className}</div>
+                        ${myShields}
+                    </div>
+                    <div style="width:100%;margin-top:10px;">
+                        <div class="xp-container"><div class="xp-bar" style="width:${nextData.xp}%;"></div></div>
+                        <div style="font-size:0.75em;color:#2e7d32;font-weight:bold;margin-top:5px;text-align:center;display:flex;justify-content:center;gap:10px;align-items:center;">
+                            <span>🔄 לחץ להיפוך</span>
+                            ${hasMore ? `<button class="next-card-btn" onclick="event.stopPropagation();cycleCard('${ownerId}')">הבא ▶</button>` : ''}
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="card-back" style="padding:12px;">
-                <h4 style="margin:0 0 6px 0;color:#2e7d32;">יומן פעילות</h4>
-                <div style="font-size:0.8em;color:#777;">אין פעילות לאחרונה</div>
-            </div>
+                <div class="card-back" style="padding:12px;">
+                    <h4 style="margin:0 0 6px 0;color:#2e7d32;">יומן פעילות</h4>
+                    <div style="font-size:0.8em;color:#777;">אין פעילות לאחרונה</div>
+                </div>
             </div>
         </div>`;
 
-        // החלף את הכרטיס הישן בחדש
         currentCard.outerHTML = newCardHtml;
 
         // כניסה אנימציה
