@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>חוות הטמגוצ'י - גרסת ניהול ותלמידים</title>
-<!-- Appwrite SDK במקום Firebase -->
 <script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.2/dist/iife/sdk.js"></script>
 <style>
 body { 
@@ -153,7 +152,7 @@ body {
 #login-screen { 
     background: rgba(255, 255, 255, 0.95);
     padding: 30px; 
-    border-radius: 20px; 
+    border-radius: 20px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
     text-align: center; 
     width: 320px;
@@ -293,12 +292,39 @@ button {
     z-index: 1999;
 }
 
+/* DECK MODAL CSS */
+#deck-modal {
+    display: none;
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border: 3px solid #1976d2;
+    border-radius: 20px;
+    padding: 25px;
+    z-index: 4000;
+    min-width: 320px;
+    max-width: 90vw;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    text-align: right;
+}
+#deck-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 3999;
+    backdrop-filter: blur(2px);
+}
+#deck-list::-webkit-scrollbar { height: 8px; }
+#deck-list::-webkit-scrollbar-thumb { background: #1976d2; border-radius: 4px; }
+
 .level-text-badge { 
     position: absolute;
     top: 5px; 
     right: 15px; 
     font-family: 'Arial Black', sans-serif; 
-    font-size: 1.7em; 
+    font-size: 1.7em;
     font-weight: 900;
     color: #2e7d32; 
     z-index: 10;
@@ -381,8 +407,6 @@ button {
 }
 
 /* ========== מערכת קרבות — אייקון צף בפינה ========== */
-
-/* כפתור ⚔️ צף — מסך התלמידים בלבד */
 #battle-float-btn {
     display: none;
     position: fixed;
@@ -405,7 +429,6 @@ button {
 #battle-float-btn:hover { transform: scale(1.12); box-shadow: 0 6px 20px rgba(229,57,53,0.6); }
 #battle-float-btn.active { background: linear-gradient(135deg, #ffd600, #ff6f00); }
 
-/* סרגל מתקפות — נפתח מהכפתור הצף כלפי מעלה */
 #battle-sidebar {
     display: none;
     position: fixed;
@@ -454,7 +477,6 @@ button {
     box-shadow: 0 0 0 2px #ff6f00;
 }
 
-/* מצב "בחר מטרה" — הוראה צפה */
 #battle-pick-banner {
     display: none;
     position: fixed;
@@ -474,7 +496,6 @@ button {
 }
 #battle-pick-banner.visible { display: block; }
 
-/* כרטיס מטרה אפשרית — גבול ירוק בהובר */
 .student-card.pick-mode:not(.my-creature) {
     cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ctext y='28' font-size='28'%3E⚔️%3C/text%3E%3C/svg%3E") 16 16, crosshair !important;
 }
@@ -483,8 +504,6 @@ button {
     transform: scale(1.03);
     transition: transform 0.15s, box-shadow 0.15s;
 }
-
-/* כרטיס מותקף — מסגרת אדומה */
 .student-card.under-attack .card-inner {
     box-shadow: 0 0 0 3px #e53935, 0 0 12px rgba(229,57,53,0.4);
     animation: attackPulse 1.2s infinite alternate;
@@ -494,7 +513,6 @@ button {
     to   { box-shadow: 0 0 0 4px #ff1744, 0 0 20px rgba(255,23,68,0.55); }
 }
 
-/* פאנל מגינים — מוצג בתוך כרטיס המטרה בזמן בחירה */
 .shields-overlay {
     display: none;
     position: absolute;
@@ -538,7 +556,6 @@ button {
     margin-top: 4px;
 }
 
-/* מגינים על הכרטיס שלי */
 .my-shields-row {
     display: flex;
     justify-content: center;
@@ -547,7 +564,6 @@ button {
     margin-top: 4px;
 }
 
-/* מודל הגנה */
 #defense-modal {
     display: none;
     position: fixed;
@@ -575,7 +591,7 @@ button {
 .task-card { 
     background: white; 
     padding: 15px;
-    border-radius: 12px; 
+    border-radius: 12px;
     margin-bottom: 10px;
     border-right: 6px solid #1976d2; 
     display: flex; 
@@ -586,68 +602,17 @@ button {
 .task-info h4 { margin: 0; color: #333; }
 .question-item { 
     background: white; 
-    padding: 15px; 
+    padding: 15px;
     border: 1px solid #81c784; 
     margin-bottom: 10px;
     border-radius: 8px;
     position: relative; 
-    text-align: right; 
+    text-align: right;
 }
-/* ===== חפיסת כרטיסים (דמויות נוספות) ===== */
-.card-stack-wrapper {
-    position: relative;
-    width: 220px;
-    margin: 10px;
-}
-.card-stack-wrapper .student-card {
-    margin: 0;
-    position: relative;
-    transition: transform 0.4s ease, box-shadow 0.3s;
-}
-.stack-peek {
-    position: absolute;
-    bottom: -8px;
-    left: 50%;
-    transform: translateX(-50%) rotate(-2deg);
-    width: 210px;
-    height: 340px;
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    border-bottom: 5px solid #a5d6a7;
-    z-index: -1;
-    pointer-events: none;
-}
-.stack-peek:nth-child(2) { bottom: -14px; transform: translateX(-50%) rotate(2deg); filter: brightness(0.96); z-index: -2; }
-.card-footer-actions {
-    margin-top: 6px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    font-size: 0.78em;
-    font-weight: bold;
-}
-.card-action-link {
-    background: none;
-    border: none;
-    padding: 2px 4px;
-    margin: 0;
-    font: inherit;
-    font-weight: bold;
-    color: #2e7d32;
-    cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-}
-.card-action-link:hover { color: #1b5e20; }
-.card-footer-sep { color: #bdbdbd; font-weight: normal; user-select: none; }
 </style>
 </head>
 <body>
-    <!-- כפתור התנתקות צף לתלמידים -->
-<div id="logout-btn-float" style="display:none; position:fixed; bottom:20px; left:20px; z-index:200;">
+    <div id="logout-btn-float" style="display:none; position:fixed; bottom:20px; left:20px; z-index:200;">
     <button onclick="logout()" style="background:#c62828; border-radius:50px; padding:10px 18px; font-size:0.9em; box-shadow:0 4px 10px rgba(0,0,0,0.2);">🚪 התנתק</button>
 </div>
 
@@ -682,7 +647,7 @@ button {
             <option value="ה2">כיתה ה'2</option>
         </select>
         <button onclick="addStudent()">צרף יצור לחווה 🐾</button>
-        <button type="button" onclick="startStackLinkPairing()" style="background:#5e35b1;">🔗 חבר קלפים לחפיסה</button>
+        <button id="magic-btn" onclick="fixDatabase()" style="background:#8e24aa;">✨ סידור דמויות אוטומטי</button>
     </div>
 
     <div style="width:100%; display:flex; gap:10px; margin-top:10px;">
@@ -692,12 +657,11 @@ button {
             <option value="level">מיין לפי רמה</option>
             <option value="class">מיין לפי כיתה</option>
         </select>
-    <button onclick="logout()" style="background:#c62828;">התנתק 🚪</button>
+        <button onclick="logout()" style="background:#c62828;">התנתק 🚪</button>
     </div>
 
     <hr style="width:100%; margin: 15px 0;">
 
-    <!-- כפתורי ניווט מהירים -->
     <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center; width:100%;">
         <button onclick="togglePanel('panel-announcements')" style="background:#ff9800; padding:10px 14px; font-size:0.88em;">📢 לוח מודעות</button>
         <button onclick="togglePanel('panel-banner')"        style="background:#283593; padding:10px 14px; font-size:0.88em;">🖼️ פרסום כרזה</button>
@@ -706,14 +670,12 @@ button {
         <button onclick="togglePanel('panel-creatures')"     style="background:#7b1fa2; padding:10px 14px; font-size:0.88em;">🐾 ניהול דמויות</button>
     </div>
 
-    <!-- לוח מודעות -->
     <div id="panel-announcements" style="display:none; width:100%; background:#fff3e0; padding:15px; border-radius:10px; border:1px solid #ffcc80; text-align:right; box-sizing:border-box; margin-top:12px;">
         <h4 style="margin:0 0 10px 0; color:#e65100;">📢 ניהול לוח מודעות</h4>
         <textarea id="adminAnnouncementsText" style="width:100%; height:80px; resize:vertical; margin-bottom:10px; padding:10px; border-radius:8px; border:1px solid #ffb74d;" placeholder="כתוב כאן את העדכונים החדשים..."></textarea>
         <button onclick="saveAnnouncements()" style="background:#ff9800; width:100%; padding:10px; font-size:1.1em;">עדכן ופרסם לתלמידים 💾</button>
     </div>
 
-    <!-- כרזה -->
     <div id="panel-banner" style="display:none; width:100%; background:#e8eaf6; padding:15px; border-radius:10px; border:1px solid #9fa8da; text-align:right; box-sizing:border-box; margin-top:12px;">
         <h4 style="margin:0 0 10px 0; color:#283593;">🖼️ פרסום כרזה</h4>
         <div id="current-welcome-img-preview" style="margin-bottom:12px; display:none; text-align:center;">
@@ -730,7 +692,6 @@ button {
         <div id="upload-status" style="margin-top:8px; font-size:0.85em; color:#555; text-align:center;"></div>
     </div>
 
-    <!-- פרסום מטלה -->
     <div id="panel-newtask" style="display:none; width:100%; background:#e3f2fd; padding:15px; border-radius:10px; border:1px solid #90caf9; text-align:right; box-sizing:border-box; margin-top:12px;">
         <h4 style="margin:0 0 12px 0; color:#1565c0;">➕ פרסום מטלה חדשה</h4>
         <div id="task-builder" style="width:100%; background:#f1f8e9; padding:15px; border-radius:10px; border:1px solid #c5e1a5; text-align:right; box-sizing:border-box;">
@@ -742,10 +703,8 @@ button {
             </div>
             <div id="time-limit-container" style="display:none; gap:10px; margin-bottom:15px; background:#e1bee7; padding:10px; border-radius:8px; align-items:center;">
                 <strong>🕒 הגבלת שעות:</strong>
-                <span>משעה:</span>
-                <input type="time" id="taskStartTime" style="flex:1;">
-                <span>עד שעה:</span>
-                <input type="time" id="taskEndTime" style="flex:1;">
+                <span>משעה:</span> <input type="time" id="taskStartTime" style="flex:1;">
+                <span>עד שעה:</span> <input type="time" id="taskEndTime" style="flex:1;">
                 <button type="button" onclick="document.getElementById('time-limit-container').style.display='none'; document.getElementById('taskStartTime').value=''; document.getElementById('taskEndTime').value='';" style="background:#d32f2f; padding:8px;">ביטול שעון</button>
             </div>
             <div id="questions-constructor"></div>
@@ -764,13 +723,11 @@ button {
         </div>
     </div>
 
-    <!-- ניהול הגשות -->
     <div id="panel-submissions" style="display:none; width:100%; background:#f1f8e9; padding:15px; border-radius:10px; border:1px dashed #2e7d32; text-align:right; margin-top:12px;">
         <h4 style="margin:0 0 10px 0; color:#2e7d32;">📥 הגשות שממתינות לבדיקה</h4>
         <div id="submissions-list">אין הגשות חדשות</div>
     </div>
 
-    <!-- ניהול דמויות -->
     <div id="panel-creatures" style="display:none; width:100%; margin-top:12px;">
         <div style="background:rgba(255,255,255,0.97); border-radius:14px; padding:20px; border:2px solid #7b1fa2;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -794,6 +751,14 @@ button {
 </div>
 
 <div id="farm-grid"></div>
+
+<div id="deck-modal-overlay" onclick="closeDeck()"></div>
+<div id="deck-modal">
+    <div style="font-size:2.5em; margin-bottom:10px; text-align:center;">🎴</div>
+    <h3 style="margin:0 0 15px 0; color:#1976d2; text-align:center;">מחסן הדמויות של <span id="deck-student-name"></span></h3>
+    <div id="deck-list" style="display:flex; gap:15px; overflow-x:auto; padding-bottom:15px; justify-content:center;"></div>
+    <button onclick="closeDeck()" style="margin-top:15px; background:#999; width:100%; padding:10px; border-radius:10px;">סגור מחסן</button>
+</div>
 
 <div id="submit-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:25px; border-radius:15px; box-shadow:0 0 30px rgba(0,0,0,0.5); z-index:1000; width:90%; max-width:500px; max-height:85vh; overflow-y:auto; text-align:right; border:3px solid #1976d2;">
     <h3 id="modal-task-title" style="text-align:center; margin-top:0;">הגשת מטלה</h3>
@@ -830,23 +795,11 @@ button {
     <button onclick="closeDefenseModal()" style="background:#999; padding:8px 20px; border-radius:8px; font-size:0.9em;">סגור (אפשר לנסות מאוחר יותר)</button>
 </div>
 
-<!-- כפתור קרב צף + סרגל מתקפות -->
 <button id="battle-float-btn" onclick="toggleBattleSidebar()" title="תקוף תלמיד!">⚔️</button>
-
-<div id="battle-sidebar">
-    <div class="sidebar-title">⚔️ בחר מתקפה:</div>
-    <!-- מתאכלס דינמית -->
-</div>
-
-<!-- באנר "בחר מטרה" -->
+<div id="battle-sidebar"><div class="sidebar-title">⚔️ בחר מתקפה:</div></div>
 <div id="battle-pick-banner" onclick="cancelAttack()">🎯 בחר כרטיס תלמיד לתקוף — לחץ כאן לביטול</div>
-<div id="stack-link-banner" style="display:none; position:fixed; bottom:70px; left:50%; transform:translateX(-50%); z-index:1500; background:#5e35b1; color:white; padding:12px 18px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.3); text-align:center; max-width:92vw; font-size:0.95em;">
-    🔗 לחץ על <b>קלף ראשון</b> ואז על <b>קלף שני</b> כדי לחברם לחפיסה אחת
-    <button type="button" onclick="cancelStackLink()" style="margin-inline-start:12px; background:#fff; color:#5e35b1; border:none; padding:6px 12px; border-radius:8px; font-weight:bold; cursor:pointer;">ביטול</button>
-</div>
 
 <script>
-    window.activeStackFront = window.activeStackFront || {};
 const { Client, Databases, Query, ID } = Appwrite;
 const client = new Client().setEndpoint('https://cloud.appwrite.io/v1').setProject('69ba8bd200228971c224');
 const dbSvc  = new Databases(client);
@@ -854,10 +807,9 @@ const DB_ID  = '69ba8e8e00096cab7d99';
 const TABLES = {
     students:'students', tasks:'tasks', submissions:'submissions',
     announcements:'announcements', welcomeImage:'welcomeimage',
-    battles:'battles', creatureTypes:'creature_types', extra:'extra'
+    battles:'battles', creatureTypes:'creature_types'
 };
 
-// --- קרבות: קבועים ---
 const shieldsByLevel = l => l===0?3 : l<10?4 : l<20?5 : 6;
 const attacksByLevel = l => l===0?0 : l<10?1 : l<20?2 : 3;
 
@@ -891,23 +843,18 @@ const CREATURE_SEED_DATA = [
 
 let battleState = { selectedSkill:null, pendingBattleId:null, pendingBattle:null };
 const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
-let allStudents=[], allExtra=[], allTasks=[], editingTaskId=null, currentTaskToSubmit=null;
+let allStudents=[], allTasks=[], editingTaskId=null, currentTaskToSubmit=null;
 let currentUser = localStorage.getItem('farm_user_id') || null;
-/** מצב מנהל: חיבור שני קלפים קיימים לאותה חפיסה (stackGroupId) */
-let stackLinkAwaitingFirst = false;
-let stackLinkFirstId = null;
 
 const safe = t => typeof t!=='string' ? t : t.replace(/'/g,"&#39;").replace(/"/g,"&quot;");
 
 function docToStudent(d) {
     const history = d.history ? JSON.parse(d.history) : {};
-    const sg = d.stackGroupId != null && String(d.stackGroupId).trim() !== '' ? String(d.stackGroupId).trim() : null;
     return { id:d.$id, name:d.name||'', className:d.className||'', xp:d.xp??0, level:d.level??0,
              type:d.type||'cat', egg:d.egg??0, password:d.password||null,
              personalNote:d.personalNote||'', lastNote:d.lastNote||'',
-             stackGroupId: sg,
-             ownerId: d.ownerId || null,
-             likes:d.likes?JSON.parse(d.likes):{}, history };
+             likes:d.likes?JSON.parse(d.likes):{}, history, 
+             isActive: d.isActive ?? false }; // <--- הוספנו תמיכה ב-isActive
 }
 function docToTask(d) {
     return { id:d.$id, title:d.title||'', deadline:d.deadline||'', xp:d.xp??20,
@@ -916,14 +863,14 @@ function docToTask(d) {
 }
 
 // --- טעינה ---
-async function loadStudents(opts) {
-    const skipView = opts && opts.skipView === true;
+async function loadStudents() {
     try {
         const res = await dbSvc.listDocuments(DB_ID, TABLES.students, [Query.limit(500), Query.orderAsc('name')]);
         allStudents = res.documents.map(docToStudent);
         renderStudentSelect();
         if (!currentUser) return;
-        if (!skipView) updateView();
+        updateView();
+        
         if (currentUser !== 'admin') {
             const me = allStudents.find(s => s.id === currentUser);
             if (!me) return;
@@ -932,71 +879,6 @@ async function loadStudents(opts) {
             else btn.style.display = 'none';
         }
     } catch(e) { console.error(e); }
-}
-async function loadExtra() {
-    try {
-        const res = await dbSvc.listDocuments(DB_ID, TABLES.extra, [Query.limit(500)]);
-        allExtra = res.documents.map(docToStudent);
-    } catch(e) { console.error('loadExtra:', e); allExtra = []; }
-}
-
-function clearFarmStackSessions() {
-    try {
-        for (let i = sessionStorage.length - 1; i >= 0; i--) {
-            const k = sessionStorage.key(i);
-            if (k && k.startsWith('farm_stack_')) sessionStorage.removeItem(k);
-        }
-    } catch(e) {}
-}
-
-function syncCardXpInDom(id) {
-    const rec = allStudents.find(s => s.id === id) || allExtra.find(e => e.id === id);
-    if (!rec) return;
-    const card = document.querySelector('.student-card[data-sid="' + id + '"]');
-    if (!card) return;
-    const bar = card.querySelector('.xp-bar');
-    if (bar) bar.style.width = rec.xp + '%';
-    const badge = card.querySelector('.level-text-badge');
-    if (badge) badge.textContent = 'Lv.' + rec.level;
-    const img = document.getElementById('img-' + id);
-    if (img) {
-        const eggNum = (rec.egg ?? 0) + 1;
-        img.src = rec.level === 0
-            ? 'images/egg' + eggNum + '.png'
-            : 'images/' + rec.type + (rec.level >= 20 ? 3 : rec.level >= 10 ? 2 : 1) + '.png';
-    }
-}
-
-async function mergeStackGroupRecords(idA, idB) {
-    if (idA === idB) return;
-    const a = allStudents.find(s => s.id === idA);
-    const b = allStudents.find(s => s.id === idB);
-    if (!a || !b) throw new Error('קלף לא נמצא');
-    const expand = p => {
-        const g = p.stackGroupId;
-        if (!g) return [p];
-        return allStudents.filter(s => s.stackGroupId === g);
-    };
-    const m = new Map([...expand(a), ...expand(b)].map(s => [s.id, s]));
-    const union = Array.from(m.values());
-    const newGid = ID.unique();
-    clearFarmStackSessions();
-    await Promise.all(union.map(s => dbSvc.updateDocument(DB_ID, TABLES.students, s.id, { stackGroupId: newGid })));
-}
-
-function startStackLinkPairing() {
-    if (currentUser !== 'admin') return;
-    stackLinkAwaitingFirst = true;
-    stackLinkFirstId = null;
-    const b = document.getElementById('stack-link-banner');
-    if (b) { b.style.display = 'block'; b.classList.add('visible'); }
-}
-
-function cancelStackLink() {
-    stackLinkAwaitingFirst = false;
-    stackLinkFirstId = null;
-    const b = document.getElementById('stack-link-banner');
-    if (b) { b.style.display = 'none'; b.classList.remove('visible'); }
 }
 async function loadTasks() {
     try {
@@ -1048,18 +930,15 @@ async function loadCreatureTypes() {
     }
 }
 
-// --- Realtime ---
 function subscribeAll() {
     const sub = (col, fn) => client.subscribe(`databases.${DB_ID}.collections.${col}.documents`, fn);
-    sub(TABLES.students,      () => { loadStudents(); loadExtra(); });
-    sub(TABLES.extra,         () => { loadExtra().then(() => { if (currentUser) updateView(); }); });
+    sub(TABLES.students,      () => loadStudents());
     sub(TABLES.tasks,         () => loadTasks());
     sub(TABLES.announcements, () => loadAnnouncements());
     sub(TABLES.battles,       () => checkPendingBattle());
     if (currentUser === 'admin') sub(TABLES.submissions, () => initAdminSubmissions());
 }
 
-// --- לוח מודעות ---
 function toggleBoard() {
     const board = document.getElementById('announcements-board');
     const btn   = document.getElementById('toggle-board');
@@ -1071,16 +950,13 @@ async function saveAnnouncements() {
     const text = document.getElementById('adminAnnouncementsText').value;
     try {
         const res = await dbSvc.listDocuments(DB_ID, TABLES.announcements, [Query.limit(1)]);
-        if (res.documents.length)
-            await dbSvc.updateDocument(DB_ID, TABLES.announcements, res.documents[0].$id, { text });
-        else
-            await dbSvc.createDocument(DB_ID, TABLES.announcements, ID.unique(), { text });
+        if (res.documents.length) await dbSvc.updateDocument(DB_ID, TABLES.announcements, res.documents[0].$id, { text });
+        else await dbSvc.createDocument(DB_ID, TABLES.announcements, ID.unique(), { text });
         alert('לוח המודעות עודכן! 📢');
         await loadAnnouncements();
     } catch(e) { alert('שגיאה: ' + e.message); }
 }
 
-// --- כניסה ---
 function checkAdmin() {
     if (document.getElementById('adminPass').value === 'rabenu247') { currentUser='admin'; startApp(); }
     else alert('סיסמה שגויה');
@@ -1092,11 +968,19 @@ async function studentLogin() {
     if (!pass) { alert('חובה סיסמה!'); return; }
     const s = allStudents.find(s => s.id === id);
     if (!s) { alert('תלמיד לא נמצא'); return; }
+    
     if (!s.password) {
         if (!confirm("שמור '"+pass+"' כסיסמה קבועה?")) return;
-        await dbSvc.updateDocument(DB_ID, TABLES.students, id, { password:pass });
+        
+        // מעדכן את הסיסמה לכל הדמויות תחת אותו שם
+        const sameNameDocs = allStudents.filter(x => x.name === s.name);
+        await Promise.all(sameNameDocs.map(doc => 
+            dbSvc.updateDocument(DB_ID, TABLES.students, doc.id, { password:pass })
+        ));
+        
         alert('הסיסמה נשמרה!');
     } else if (s.password !== pass) { alert('סיסמה שגויה!'); return; }
+    
     currentUser = id;
     localStorage.setItem('farm_user_id', id);
     document.getElementById('studentPass').value = '';
@@ -1107,7 +991,10 @@ function renderStudentSelect() {
     const sel = document.getElementById('studentSelect');
     if (!sel) return;
     sel.innerHTML = '<option value="">בחר את שמך...</option>';
-    allStudents.forEach(s => { const o=document.createElement('option'); o.value=s.id; o.textContent=s.name; sel.appendChild(o); });
+    // בתיבת ההתחברות מציגים רק שמות ייחודיים שכרגע מוגדרים כ-active
+    allStudents.filter(s => s.isActive).forEach(s => { 
+        const o=document.createElement('option'); o.value=s.id; o.textContent=s.name; sel.appendChild(o); 
+    });
 }
 
 async function startApp() {
@@ -1132,71 +1019,222 @@ async function startApp() {
     renderTasks();
 }
 
-// --- תלמיד ---
-async function addStudent() {
-    const nameInput = document.getElementById('studentName');
-    if (!nameInput.value.trim()) return;
-    try {
-        const created = await dbSvc.createDocument(DB_ID, TABLES.students, ID.unique(), {
-            name:nameInput.value.trim(), className:document.getElementById('studentClass').value,
-            xp:0, level:0, type:CREATURE_TYPES[Math.floor(Math.random()*CREATURE_TYPES.length)],
-            egg:Math.floor(Math.random()*5), likes:'{}', history:'{}'
-        });
-        nameInput.value = '';
-        await loadStudents();
-        const newId = created.$id;
-        const newbie = allStudents.find(s => s.id === newId);
-        if (newbie) {
-            const twin = allStudents.find(s => s.id !== newId && s.name === newbie.name && s.className === newbie.className);
-            if (twin) {
-                try { await mergeStackGroupRecords(twin.id, newbie.id); }
-                catch(e) { console.error(e); alert('התלמיד נוצר, אך חיבור אוטומטי לחפיסה נכשל (בדוק שדה stackGroupId ב-Appwrite או חבר ידנית): ' + (e.message || e)); }
-                await loadStudents();
+// --- תיקון מסד הנתונים אוטומטית (Magic Button) ---
+async function fixDatabase() {
+    if(!confirm("פעולה זו תסדר את מצב 'פעיל' וסיסמאות לכל הדמויות במסד הנתונים. להמשיך?")) return;
+    const btn = document.getElementById('magic-btn');
+    btn.innerText = '⏳ מעדכן...';
+    btn.disabled = true;
+
+    const nameGroups = {};
+    allStudents.forEach(s => {
+        if(!nameGroups[s.name]) nameGroups[s.name] = [];
+        nameGroups[s.name].push(s);
+    });
+
+    const updates = [];
+    for (const name in nameGroups) {
+        const group = nameGroups[name];
+        const passDoc = group.find(s => s.password);
+        const sharedPass = passDoc ? passDoc.password : null;
+        
+        let hasActive = group.some(s => s.isActive);
+        
+        for (let i = 0; i < group.length; i++) {
+            const doc = group[i];
+            let shouldBeActive = false;
+            
+            if (!hasActive && i === 0) {
+                shouldBeActive = true;
+                hasActive = true; 
+            } else if (hasActive && doc.isActive && group.findIndex(s=>s.isActive) === i) {
+                shouldBeActive = true;
+            } else {
+                shouldBeActive = false;
+            }
+
+            const needsUpdate = doc.isActive !== shouldBeActive || doc.password !== sharedPass;
+            if (needsUpdate) {
+                updates.push(dbSvc.updateDocument(DB_ID, TABLES.students, doc.id, {
+                    isActive: shouldBeActive,
+                    password: sharedPass
+                }));
             }
         }
+    }
+    try {
+        await Promise.all(updates);
+        alert("✅ הנתונים סודרו בהצלחה!");
+        await loadStudents();
+    } catch(e) {
+        alert("❌ שגיאה: " + e.message);
+    }
+    btn.innerText = '✨ סידור דמויות אוטומטי';
+    btn.disabled = false;
+}
+
+// --- תלמיד ---
+async function addStudent() {
+    const nameInput = document.getElementById('studentName').value.trim();
+    if (!nameInput) return;
+    try {
+        // מציאת קבוצת דמויות קיימת לשם זה
+        const existingGroup = allStudents.filter(s => s.name === nameInput);
+        const isFirst = existingGroup.length === 0;
+        const sharedPass = isFirst ? null : existingGroup.find(s => s.password)?.password || null;
+
+        await dbSvc.createDocument(DB_ID, TABLES.students, ID.unique(), {
+            name: nameInput, 
+            className: document.getElementById('studentClass').value,
+            xp: 0, level: 0, 
+            type: CREATURE_TYPES[Math.floor(Math.random()*CREATURE_TYPES.length)],
+            egg: Math.floor(Math.random()*5), 
+            likes: '{}', history: '{}',
+            isActive: isFirst, 
+            password: sharedPass
+        });
+        document.getElementById('studentName').value = '';
+        await loadStudents();
+        alert('הדמות צורפה בהצלחה!');
     } catch(e) { alert('שגיאה: '+e.message); }
 }
+
 async function deleteStudent(id) {
     if (!confirm('למחוק?')) return;
-    try {
-        if (allExtra.some(e => e.id === id)) {
-            await dbSvc.deleteDocument(DB_ID, TABLES.extra, id);
-            await loadExtra();
-        } else {
-            await dbSvc.deleteDocument(DB_ID, TABLES.students, id);
+    try { 
+        const s = allStudents.find(x => x.id === id);
+        await dbSvc.deleteDocument(DB_ID, TABLES.students, id); 
+        
+        // אם מוחקים דמות שהיא פעילה ויש לו עוד, מעבירים פעילות לדמות אחרת אוטומטית
+        if (s && s.isActive) {
+            const remaining = allStudents.filter(x => x.name === s.name && x.id !== id);
+            if (remaining.length > 0) {
+                await dbSvc.updateDocument(DB_ID, TABLES.students, remaining[0].id, { isActive: true });
+            }
         }
-        clearFarmStackSessions();
-        await loadStudents();
-    } catch(e) { alert(e.message); }
+        await loadStudents(); 
+    }
+    catch(e) { alert(e.message); }
 }
+
 async function savePersonalNote(id) {
     try { await dbSvc.updateDocument(DB_ID, TABLES.students, id, { personalNote:document.getElementById('note-'+id).value.trim() }); await loadStudents(); }
     catch(e) { alert(e.message); }
 }
 
-// --- XP (מנהל) — מסמך ראשי ב-students, דמות נוספת ב-extra ---
-async function addXP(id, xp, lvl) {
+// --- XP (מנהל) + פתרון לבאג הלחיצות המהירות ---
+let isUpdatingXP = false;
+async function addXP(id) {
     if (currentUser !== 'admin') return;
+    if (isUpdatingXP) return; 
+    
+    const s = allStudents.find(x=>x.id===id);
+    if (!s) return;
+
+    isUpdatingXP = true;
+    
     const img  = document.getElementById('img-'+id);
     const card = img?.closest('.student-card');
+    
+    // אנימציית קלף ו-XP צף במיידי
     if (img) {
         img.classList.remove('glow-effect');
         requestAnimationFrame(() => img.classList.add('glow-effect'));
         const f = document.createElement('div'); f.className='xp-float'; f.innerText='+10 XP';
         card.appendChild(f); setTimeout(()=>f.remove(), 800);
     }
-    let nxp=xp+10, nlv=lvl;
-    if (nxp>=100) { nlv++; nxp=0; if(card){const t=document.createElement('div');t.className='levelup';t.innerText='LEVEL UP! ✨';card.appendChild(t);setTimeout(()=>t.remove(),2000);} }
-    const s = allStudents.find(x=>x.id===id) || allExtra.find(x=>x.id===id);
-    const history = s?{...s.history}:{};
+    
+    let nxp = s.xp + 10;
+    let nlv = s.level;
+    if (nxp >= 100) { 
+        nlv++; nxp -= 100; 
+        if(card){
+            const t=document.createElement('div');
+            t.className='levelup'; t.innerText='LEVEL UP! ✨';
+            card.appendChild(t); setTimeout(()=>t.remove(),2000);
+        } 
+    }
+    
+    // עדכון DOM אופטימי (כדי שלא נצטרך לחכות לשרת בשביל לראות שינוי מד)
+    s.xp = nxp; s.level = nlv;
+    const bar = card?.querySelector('.xp-bar');
+    if(bar) bar.style.width = nxp + '%';
+    const badge = card?.querySelector('.level-text-badge');
+    if(badge) badge.innerText = 'Lv.' + nlv;
+
+    const history = {...s.history};
     history['tap_'+Date.now()] = { msg:'לחיצת מורה', xp:10, time:Date.now() };
-    const collection = allExtra.some(e => e.id === id) ? TABLES.extra : TABLES.students;
-    setTimeout(async()=>{ try{
-        await dbSvc.updateDocument(DB_ID, collection, id, {xp:nxp,level:nlv,history:JSON.stringify(history)});
-        await loadExtra();
-        await loadStudents({ skipView: true });
-        syncCardXpInDom(id);
-    }catch(e){console.error(e);} }, 500);
+    
+    try {
+        await dbSvc.updateDocument(DB_ID, TABLES.students, id, {
+            xp: nxp, level: nlv, history: JSON.stringify(history)
+        });
+    } catch(e) {
+        console.error("שגיאה בהעלאת ה-XP:", e);
+    } finally {
+        setTimeout(() => { isUpdatingXP = false; }, 300); // 300ms חסימת לחיצות כפולה
+    }
+}
+
+// --- מנגנון DECK (החלפת דמויות) ---
+function openDeck(name) {
+    document.getElementById('deck-student-name').innerText = name;
+    const deckList = document.getElementById('deck-list');
+    const myCards = allStudents.filter(s => s.name === name);
+    
+    if(myCards.length <= 1 && currentUser !== 'admin') {
+        alert("אין לך דמויות נוספות במחסן.");
+        return;
+    }
+    
+    deckList.innerHTML = myCards.map(s => {
+        const eggNum = (s.egg??0)+1;
+        const imgPath = s.level===0 ? `images/egg${eggNum}.png` : `images/${s.type}${s.level>=20?3:s.level>=10?2:1}.png`;
+        return `
+        <div style="border:3px solid ${s.isActive ? '#4caf50' : '#ddd'}; border-radius:12px; padding:10px; min-width:110px; text-align:center; background:${s.isActive?'#e8f5e9':'#fff'}; position:relative;">
+            ${s.isActive ? '<div style="position:absolute; top:-10px; left:50%; transform:translateX(-50%); background:#4caf50; color:white; font-size:0.7em; padding:2px 6px; border-radius:10px; font-weight:bold;">פעיל</div>' : ''}
+            <img src="${imgPath}" style="height:70px; object-fit:contain; margin-bottom:8px;">
+            <div style="font-weight:bold; color:#333;">Lv.${s.level}</div>
+            <div style="font-size:0.85em; color:#666; margin-bottom:8px;">XP: ${s.xp}</div>
+            ${!s.isActive ? `<button onclick="switchActiveCharacter('${s.id}', '${name}')" style="font-size:0.8em; padding:5px 10px; width:100%;">בחר</button>` : `<button disabled style="font-size:0.8em; padding:5px 10px; width:100%; background:#ccc;">מוצג</button>`}
+        </div>`;
+    }).join('');
+    
+    document.getElementById('deck-modal-overlay').style.display = 'block';
+    document.getElementById('deck-modal').style.display = 'block';
+}
+
+function closeDeck() {
+    document.getElementById('deck-modal-overlay').style.display = 'none';
+    document.getElementById('deck-modal').style.display = 'none';
+}
+
+async function switchActiveCharacter(newId, name) {
+    if(!confirm("להחליף לדמות זו?")) return;
+    closeDeck();
+    
+    const group = allStudents.filter(s => s.name === name);
+    const updates = group.map(s => {
+        const shouldBeActive = s.id === newId;
+        if(s.isActive !== shouldBeActive) {
+            return dbSvc.updateDocument(DB_ID, TABLES.students, s.id, { isActive: shouldBeActive });
+        }
+    }).filter(Boolean);
+    
+    try {
+        await Promise.all(updates);
+        // אם התלמיד מחובר עכשיו והחליף את שלו, חייבים לעדכן את ה-ID שהוא עובד איתו כדי שיקבל שליטה על הקלף החדש
+        if (currentUser && currentUser !== 'admin' && allStudents.find(s=>s.id === currentUser)?.name === name) {
+            currentUser = newId;
+            localStorage.setItem('farm_user_id', newId);
+            const newMe = allStudents.find(s=>s.id === newId);
+            if(newMe) buildBattleSidebar(newMe);
+        }
+        await loadStudents();
+        alert("הדמות הוחלפה בהצלחה!");
+    } catch(e) {
+        alert("שגיאה בהחלפת הדמות: " + e.message);
+    }
 }
 
 // --- תצוגת כרטיסים ---
@@ -1212,59 +1250,18 @@ function updateView() {
     const sortBy     = document.getElementById('sortBy')?.value || 'name';
     const pending    = window._pendingBattleTargets || [];
 
-    let filtered = allStudents.filter(s => s.name.toLowerCase().includes(searchTerm));
+    // סינון להצגת *רק הדמויות הפעילות*
+    let filtered = allStudents.filter(s => s.isActive).filter(s => s.name.toLowerCase().includes(searchTerm));
     if (sortBy==='name')  filtered.sort((a,b) => a.name.localeCompare(b.name,'he'));
     if (sortBy==='level') filtered.sort((a,b) => b.level-a.level);
     if (sortBy==='class') {
-        const parse = cls => { const m=cls?.match(/([א-ת])'?(\d+)/); if(!m) return {g:0,n:0}; return {g:'אבגדהוזחטיכלמנסעפצקרשת'.indexOf(m[1]),n:+m[2]}; };
+        const parse = cls => { const m=cls?.match(/([א-ת])'?(\d+)/);
+        if(!m) return {g:0,n:0}; return {g:'אבגדהוזחטיכלמנסעפצקרשת'.indexOf(m[1]),n:+m[2]}; };
         filtered.sort((a,b)=>{ const ca=parse(a.className),cb=parse(b.className); return ca.g!==cb.g?ca.g-cb.g:ca.n-cb.n; });
     }
 
-    const emittedGid = new Set();
-    const groupOrder = [];
-    for (const st of filtered) {
-        const gid = (st.stackGroupId || '').trim();
-        if (!gid) {
-            groupOrder.push([st]);
-            continue;
-        }
-        if (emittedGid.has(gid)) continue;
-        emittedGid.add(gid);
-        const allInGroup = allStudents.filter(s => (s.stackGroupId || '').trim() === gid)
-            .sort((a, b) => String(a.id).localeCompare(String(b.id)));
-        const anyShown = allInGroup.some(m => filtered.some(f => f.id === m.id));
-        if (anyShown) groupOrder.push(allInGroup);
-    }
-
-    grid.innerHTML = groupOrder.map(rawMembers => {
-        const memberIds = new Set(rawMembers.map(m => m.id));
-        const sortedById = [...rawMembers].sort((a, b) => String(a.id).localeCompare(String(b.id)));
-        const canonicalOwnerId = sortedById[0].id;
-        let members = [...sortedById];
-        if (currentUser && currentUser !== 'admin') {
-            const idx = members.findIndex(m => m.id === currentUser);
-            if (idx > 0) {
-                const [me] = members.splice(idx, 1);
-                members.unshift(me);
-            }
-        }
-     const extraCards = allExtra.filter(e => e.ownerId && memberIds.has(e.ownerId));
-        let combinedDocs = [...members, ...extraCards];
-        
-        // אם שמרנו בזיכרון שקלף אחר אמור להיות למעלה, נזיז אותו לתחילת המערך
-        if (window.activeStackFront && window.activeStackFront[canonicalOwnerId]) {
-            const activeId = window.activeStackFront[canonicalOwnerId];
-            const activeIdx = combinedDocs.findIndex(x => x.id === activeId);
-            if (activeIdx > -1) {
-                const [moved] = combinedDocs.splice(activeIdx, 1);
-                combinedDocs.unshift(moved);
-            }
-        }
-        
-        const s = combinedDocs[0];
-        const stackBehindIds = combinedDocs.slice(1).map(x => x.id);
-        const stackCount = stackBehindIds.length;
-        const isMine  = members.some(m => m.id === currentUser);
+    grid.innerHTML = filtered.map(s => {
+        const isMine  = currentUser===s.id;
         const eggNum  = (s.egg??0)+1;
         const imgPath = s.level===0 ? `images/egg${eggNum}.png` : `images/${s.type}${s.level>=20?3:s.level>=10?2:1}.png`;
         const brokenShields = s.history?.shields_broken || [];
@@ -1283,10 +1280,11 @@ function updateView() {
         const personalNoteHtml = s.personalNote
             ? `<div style="background:#e8f5e9;border-radius:6px;padding:8px;border-right:3px solid #4caf50;font-size:0.85em;color:#1b5e20;">💬 <b>על עצמי:</b> ${s.personalNote}</div>` : '';
 
-        const myShields = isMine ? `<div class="my-shields-row">${Array.from({length:sc},(_,i)=>
+        const myShields = isMine ?
+            `<div class="my-shields-row">${Array.from({length:sc},(_,i)=>
             `<span class="shield-item ${brokenShields.includes(i)?'broken':''}" style="cursor:default;">${brokenShields.includes(i)?'💔':'🛡️'}</span>`
         ).join('')}</div>` : '';
-
+        
         const shieldsOverlay = (!isMine && currentUser!=='admin') ? `
             <div id="shields-overlay-${s.id}" class="shields-overlay">
                 <div class="shields-title">⚔️ בחר מגן לתקוף!</div>
@@ -1296,11 +1294,11 @@ function updateView() {
                 }).join('')}</div>
                 <button class="cancel-btn" onclick="event.stopPropagation();cancelAttack()">ביטול</button>
             </div>` : '';
-
+            
         const likeBtn = !isMine && currentUser!=='admin' ? `
             <button class="like-btn ${iLiked?'liked':''}" onclick="event.stopPropagation();toggleLike('${s.id}')">
                 ${iLiked?'❤️':'🤍'}</button>` : '';
-
+                
         const likeDisplay = isMine && likeCount>0 ? `
             <div style="position:relative;display:inline-block;">
                 <span class="like-btn" onmouseenter="document.getElementById('likes-tip-${s.id}').style.display='block'" onmouseleave="document.getElementById('likes-tip-${s.id}').style.display='none'">❤️ ${likeCount}</span>
@@ -1310,20 +1308,18 @@ function updateView() {
                 </div>
             </div>` : isMine ? '<span style="font-size:0.8em;color:#ccc;">🤍</span>' : '';
 
-        const cardHtml = `
-        <div class="student-card ${isMine?'my-creature':''} ${members.some(m => pending.includes(m.id))?'under-attack':''}" data-sid="${s.id}" onclick="handleCardClick(event, this, '${s.id}')">
+        return `
+        <div class="student-card ${isMine?'my-creature':''} ${pending.includes(s.id)?'under-attack':''}" data-sid="${s.id}" onclick="handleCardClick(event, this, '${s.id}')">
             <div class="card-inner">
             ${shieldsOverlay}
             <div class="card-front" style="display:flex;flex-direction:column;justify-content:space-between;align-items:center;height:100%;padding:15px;box-sizing:border-box;">
                 <div style="width:100%;display:flex;justify-content:space-between;align-items:flex-start;">
                     <div class="level-text-badge">Lv.${s.level}</div>
-                    ${currentUser==='admin'?`
-    <div style="display:flex;flex-direction:column;gap:4px;">
-        <button class="remove-btn" onclick="event.stopPropagation();deleteStudent('${s.id}')">✖</button>
-    </div>`:`<div></div>`}
+                    ${currentUser==='admin'?`<button class="remove-btn" onclick="event.stopPropagation();deleteStudent('${s.id}')">✖</button>`:`<div></div>`}
                 </div>
                 <div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;">
-                    <img id="img-${s.id}" src="${imgPath}" class="creature-img" style="max-height:135px;object-fit:contain;margin-bottom:8px;" onclick="event.stopPropagation();addXP('${s.id}',${s.xp},${s.level})">
+                    <img id="img-${s.id}" src="${imgPath}" class="creature-img" style="max-height:135px;object-fit:contain;margin-bottom:8px;"
+onclick="event.stopPropagation();addXP('${s.id}')">
                     <div style="font-weight:bold;font-size:1.3em;line-height:1.2;display:flex;align-items:center;gap:6px;">
                         ${s.name} ${likeBtn} ${likeDisplay}
                     </div>
@@ -1332,9 +1328,10 @@ function updateView() {
                 </div>
                 <div style="width:100%;margin-top:10px;">
                     <div class="xp-container"><div class="xp-bar" style="width:${s.xp}%;"></div></div>
-                    <div class="card-footer-actions" style="color:#2e7d32;">
-                        <button type="button" class="card-action-link" onclick="flipCardFromFooter(event)">הפוך קלף</button>
-                        ${stackCount > 0 ? `<span class="card-footer-sep">|</span><button type="button" class="card-action-link" onclick="event.stopPropagation();cycleCard('${canonicalOwnerId}')">הקלף הבא</button>` : ''}
+                    <div style="font-size:0.75em;color:#2e7d32;font-weight:bold;margin-top:5px;text-align:center;">
+                        <span style="cursor:pointer;" onclick="event.stopPropagation(); event.currentTarget.closest('.student-card').classList.toggle('flipped')">🔄 לחץ להיפוך</span>
+                        &nbsp;|&nbsp;
+                        <span style="cursor:pointer; color:#1976d2;" onclick="event.stopPropagation(); openDeck('${s.name}')">🎴 מחסן דמויות</span>
                     </div>
                 </div>
             </div>
@@ -1344,19 +1341,16 @@ function updateView() {
                     ${histHtml || 'אין פעילות לאחרונה'} ${noteHtml}
                 </div>
                 ${personalNoteHtml}
-                ${isMine ? `
-                    <div style="margin-top:8px;border-top:1px solid #c8e6c9;padding-top:8px;">
+                ${isMine ?
+                    `<div style="margin-top:8px;border-top:1px solid #c8e6c9;padding-top:8px;">
                         <div style="font-size:0.85em;color:#2e7d32;font-weight:bold;margin-bottom:5px;">✏️ ערוך הערה:</div>
-                        <textarea id="note-${s.id}" onclick="event.stopPropagation()" style="width:100%;height:60px;font-size:0.85em;border-radius:6px;border:1px solid #a5d6a7;resize:none;padding:6px;box-sizing:border-box;" placeholder="כתוב הערה קצרה...">${s.personalNote||''}</textarea>
+                        <textarea id="note-${s.id}" onclick="event.stopPropagation()" style="width:100%;height:60px;font-size:0.85em;border-radius:6px;border:1px solid #a5d6a7;resize:none;padding:6px;box-sizing:border-box;"
+placeholder="כתוב הערה קצרה...">${s.personalNote||''}</textarea>
                         <button onclick="event.stopPropagation();savePersonalNote('${s.id}')" style="width:100%;margin-top:5px;background:#4caf50;padding:6px;font-size:0.85em;">שמור 💾</button>
                     </div>` : `<div style="font-size:0.75em;color:#999;text-align:center;margin-top:8px;">לחץ לחזרה</div>`}
             </div>
             </div>
         </div>`;
-
-        if (stackCount === 0) return cardHtml;
-        const peeks = Array.from({length: Math.min(stackCount, 2)}, () => `<div class="stack-peek"></div>`).join('');
-        return `<div class="card-stack-wrapper" data-owner="${canonicalOwnerId}" data-extra-ids='${JSON.stringify(stackBehindIds)}'>${cardHtml}${peeks}</div>`;
     }).join('');
 
     flippedIds.forEach(id => {
@@ -1435,12 +1429,11 @@ async function saveNewTask() {
     const payload = { title, deadline, xp, startTime, endTime, questions:JSON.stringify(questions) };
     try {
         if (editingTaskId) { await dbSvc.updateDocument(DB_ID, TABLES.tasks, editingTaskId, payload); alert('עודכן! 💾'); }
-        else               { await dbSvc.createDocument(DB_ID, TABLES.tasks, ID.unique(), payload);    alert('פורסם! 🚀'); }
+        else               { await dbSvc.createDocument(DB_ID, TABLES.tasks, ID.unique(), payload); alert('פורסם! 🚀'); }
     } catch(e) { alert(e.message); return; }
     editingTaskId=null;
-    ['taskTitle','taskDeadline'].forEach(id => document.getElementById(id).value='');
+    ['taskTitle','taskDeadline','taskStartTime','taskEndTime'].forEach(id => document.getElementById(id).value='');
     document.getElementById('taskXP').value='20';
-    ['taskStartTime','taskEndTime'].forEach(id => document.getElementById(id).value='');
     document.getElementById('time-limit-container').style.display='none';
     document.getElementById('questions-constructor').innerHTML='';
     togglePanel('panel-newtask');
@@ -1448,7 +1441,8 @@ async function saveNewTask() {
 }
 
 function editTask(id) {
-    const t = allTasks.find(t=>t.id===id); if (!t) return;
+    const t = allTasks.find(t=>t.id===id);
+    if (!t) return;
     editingTaskId=id;
     togglePanel('panel-newtask');
     document.getElementById('taskTitle').value    = t.title||'';
@@ -1458,8 +1452,6 @@ function editTask(id) {
     else document.getElementById('time-limit-container').style.display='none';
     document.getElementById('questions-constructor').innerHTML='';
     if (t.questions) t.questions.forEach(q=>addQuestionField(q.type,q));
-    const btn = document.querySelector('#task-builder button[onclick="saveNewTask()"]');
-    if (btn) HTML='עדכן מטלה 💾';
     document.getElementById('task-builder').scrollIntoView({behavior:'smooth'});
 }
 
@@ -1608,6 +1600,7 @@ function updateAllTimers() {
         const start=new Date(now.getFullYear(),now.getMonth(),now.getDate(),sH,sM,0);
         const end  =new Date(now.getFullYear(),now.getMonth(),now.getDate(),eH,eM,0);
         const pad  =n=>String(Math.floor(n)).padStart(2,'0');
+    
         if (now<start) { const d=start-now; span.innerText=`תיפתח בעוד ${pad(d/60000)}:${pad((d%60000)/1000)}`; span.style.color='#ff9800'; btn.disabled=true; Text='טרם נפתח 🔒'; btn.style.background='#999'; }
         else if (now<end) { const d=end-now; span.innerText=`נותרו: ${pad(d/60000)}:${pad((d%60000)/1000)}`; span.style.color='#d32f2f'; btn.disabled=false; Text='פתח משימה ✍️'; btn.style.background='#1976d2'; }
         else { span.innerText='הזמן נגמר!'; span.style.color='#555'; btn.disabled=true; Text='הזמן נגמר! ⏳'; btn.style.background='#555'; }
@@ -1627,7 +1620,8 @@ async function showWelcomeImageIfExists() {
             imgEl.style.display='none';
             const iframe=document.createElement('iframe');
             iframe.id='welcome-video-frame'; iframe.src='https://streamable.com/e/'+data.url.split('streamable.com/').pop().split('?')[0];
-            iframe.setAttribute('allowfullscreen',''); iframe.setAttribute('frameborder','0');
+            iframe.setAttribute('allowfullscreen','');
+            iframe.setAttribute('frameborder','0');
             iframe.style='width:80vw;max-width:800px;height:45vw;max-height:450px;border-radius:12px;display:block;';
             imgEl.parentNode.insertBefore(iframe,imgEl);
         } else { imgEl.style.display='block'; imgEl.src=data.url; }
@@ -1666,7 +1660,6 @@ function closeWelcomeImage() {
 }
 function handleOverlayClick(e) { if (e.target===document.getElementById('welcome-image-overlay')) closeWelcomeImage(); }
 document.addEventListener('keydown', e => { if (e.key==='Escape') closeWelcomeImage(); });
-
 // --- פאנל מנהל ---
 function togglePanel(id) {
     const all=['panel-announcements','panel-banner','panel-newtask','panel-submissions','panel-creatures'];
@@ -1677,7 +1670,7 @@ function togglePanel(id) {
             el.style.display=opening?'block':'none';
             if (opening) {
                 if (p==='panel-submissions')   initAdminSubmissions();
-                if (p==='panel-creatures')     renderCreatureTypesList();
+                if (p==='panel-creatures') renderCreatureTypesList();
                 if (p==='panel-announcements') loadAnnouncements();
                 if (p==='panel-banner')        loadWelcomeImageForAdmin();
             }
@@ -1688,28 +1681,6 @@ function toggleCreatureTypesPanel() { togglePanel('panel-creatures'); }
 function toggleTaskBuilder()        { togglePanel('panel-newtask'); }
 
 // --- ניהול דמויות ---
-async function loadCreatureTypes() {
-    try {
-        const res=await dbSvc.listDocuments(DB_ID,TABLES.creatureTypes,[Query.limit(100)]);
-        if (!res.documents.length) throw new Error('empty');
-        ATTACKS_BY_TYPE={};
-        res.documents.forEach(d => {
-            ATTACKS_BY_TYPE[d.typeId]=[1,2,3].map(n=>({name:d['attack'+n]||'',icon:d['icon'+n]||''}));
-        });
-    } catch(e) {
-        ATTACKS_BY_TYPE={};
-        CREATURE_SEED_DATA.forEach(d => { ATTACKS_BY_TYPE[d.typeId]=[1,2,3].map(n=>({name:d['attack'+n],icon:d['icon'+n]})); });
-    }
-}
-async function seedCreatureTypes() {
-    try {
-        const ex=await dbSvc.listDocuments(DB_ID,TABLES.creatureTypes,[Query.limit(1)]);
-        if (ex.documents.length && !confirm('הטבלה קיימת! המשך יוסיף כפילויות. בטוח?')) return;
-        for (const d of CREATURE_SEED_DATA) await dbSvc.createDocument(DB_ID,TABLES.creatureTypes,ID.unique(),d);
-        alert(`✅ הועלו ${CREATURE_SEED_DATA.length} דמויות!`);
-        await loadCreatureTypes(); await renderCreatureTypesList();
-    } catch(e) { alert(e.message); }
-}
 async function renderCreatureTypesList() {
     const container=document.getElementById('creature-types-list');
     if (!container) return;
@@ -1728,7 +1699,7 @@ async function renderCreatureTypesList() {
                         <input value="${(doc['attack'+n]||''). replace(/"/g,'&quot;')}" placeholder="מתקפה ${n}"
                             style="font-size:0.8em;padding:5px 6px;border:1px solid #ce93d8;border-radius:6px;width:100%;box-sizing:border-box;"
                             onchange="saveCreatureField('${doc.$id}','attack${n}',this.value)">
-                        <input value="${(doc['icon'+n]||''). replace(/"/g,'&quot;')}" placeholder="אייקון"
+                        <input value="${(doc['icon'+n]||'').replace(/"/g,'&quot;')}" placeholder="אייקון"
                             style="font-size:0.72em;padding:4px 6px;border:1px solid #e1bee7;border-radius:6px;color:#888;width:100%;box-sizing:border-box;"
                             onchange="saveCreatureField('${doc.$id}','icon${n}',this.value)">
                     </div>`).join('')}`;
@@ -1748,6 +1719,15 @@ async function renderCreatureTypesList() {
     const btn=document.createElement('button');
     btn.textContent='➕ הוסף דמות'; btn.style.cssText='margin-top:8px;background:#4caf50;width:100%;padding:10px;font-size:0.95em;border-radius:8px;';
     btn.onclick=addNewCreatureType; container.appendChild(btn);
+}
+async function seedCreatureTypes() {
+    try {
+        const ex=await dbSvc.listDocuments(DB_ID,TABLES.creatureTypes,[Query.limit(1)]);
+        if (ex.documents.length && !confirm('הטבלה קיימת! המשך יוסיף כפילויות. בטוח?')) return;
+        for (const d of CREATURE_SEED_DATA) await dbSvc.createDocument(DB_ID,TABLES.creatureTypes,ID.unique(),d);
+        alert(`✅ הועלו ${CREATURE_SEED_DATA.length} דמויות!`);
+        await loadCreatureTypes(); await renderCreatureTypesList();
+    } catch(e) { alert(e.message); }
 }
 async function addNewCreatureType() {
     const typeId=document.getElementById('new-typeId').value.trim();
@@ -1773,148 +1753,46 @@ function buildBattleSidebar(me) {
         const icon=typeof atk==='object'?atk.icon:'';
         const btn=document.createElement('button');
         btn.className='attack-btn'; btn.title=name;
-        if (icon) {
-           btn.innerHTML=`<img src="${icon}" style="width:65px;height:65px;object-fit:contain;display:block;position:relative;right:-25px;" onerror="this.style.display='none';if(this.nextSibling)this.nextSibling.style.display='block'"><span style="display:none;font-size:0.8em;">${name}</span>`;
-            btn.style.background='none'; btn.style.border='none'; btn.style.padding='4px'; btn.style.boxShadow='none';
-        } else btn.textContent=name;
+        
         const last=parseInt(localStorage.getItem('last_attack_'+currentUser+'_'+name)||'0');
         const rem=(15*60*1000)-(Date.now()-last);
-        if (rem>0) {
-            btn.style.cursor='not-allowed'; btn.style.position='relative';
-            const m=String(Math.floor(rem/60000)).padStart(2,'0'), s=String(Math.floor((rem%60000)/1000)).padStart(2,'0');
-btn.innerHTML += `<div style="position:absolute;inset:0;background:rgba(30,30,30,0.7);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.85em;font-weight:bold;color:white;pointer-events:none;">${m}:${s}</div>`;        }
+        const isOnCooldown = rem > 0;
+   
+        let m, s;
+        if (isOnCooldown) {
+            btn.style.cursor='not-allowed'; 
+            btn.style.position='relative';
+            m=String(Math.floor(rem/60000)).padStart(2,'0');
+            s=String(Math.floor((rem%60000)/1000)).padStart(2,'0');
+        }
+
+        if (icon) {
+            btn.style.background='none'; 
+            btn.style.border='none'; 
+            btn.style.padding='4px'; 
+            btn.style.boxShadow='none';
+            
+            let content = `<div style="position:relative; width:65px; height:65px; right:-25px; display:inline-block;">
+                <img src="${icon}" style="width:100%; height:100%; object-fit:contain; display:block;" onerror="this.style.display='none';if(this.nextSibling)this.nextSibling.style.display='block'">
+                <span style="display:none;font-size:0.8em;">${name}</span>`;
+                
+            if (isOnCooldown) {
+                content += `<div style="position:absolute; inset:0; background:rgba(30,30,30,0.7); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.9em; font-weight:bold; color:white; pointer-events:none;">${m}:${s}</div>`;
+            }
+            content += `</div>`;
+            btn.innerHTML = content;
+            
+        } else {
+            btn.textContent = name;
+            if (isOnCooldown) {
+                btn.innerHTML += `<div style="position:absolute; inset:0; background:rgba(30,30,30,0.7); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.85em; font-weight:bold; color:white; pointer-events:none;">${m}:${s}</div>`;
+            }
+        }
+  
         btn.onclick=()=>enterPickMode(name);
         sidebar.appendChild(btn);
     });
 }
-
-async function addExtraCard(ownerId) {
-    const owner = allStudents.find(s => s.id === ownerId);
-    if (!owner) return;
-    const existing = allExtra.filter(e => e.ownerId === ownerId).length;
-    if (existing >= 4) { alert('תלמיד זה כבר הגיע למקסימום של 5 כרטיסים!'); return; }
-    if (!confirm(`להוסיף כרטיס נוסף ל-${owner.name}? (${existing+1}/4 נוספים)`)) return;
-    try {
-        await dbSvc.createDocument(DB_ID, TABLES.extra, ID.unique(), {
-            ownerId, name: owner.name, className: owner.className,
-            xp: 0, level: 0,
-            type: CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)],
-            egg: Math.floor(Math.random() * 5),
-            likes: '{}', history: '{}'
-        });
-        await loadExtra();
-        updateView();
-        alert(`✅ כרטיס נוסף נוצר ל-${owner.name}!`);
-    } catch(e) { alert('שגיאה: ' + e.message); }
-}
-
-function cycleCard(ownerId) {
-    const wrapper = document.querySelector(`.card-stack-wrapper[data-owner="${ownerId}"]`);
-    if (!wrapper) return;
-
-    const extraIds = JSON.parse(wrapper.dataset.extraIds || '[]');
-    if (!extraIds.length) return;
-
-    const currentCard = wrapper.querySelector('.student-card');
-    const currentSid = currentCard?.dataset.sid;
-
-    const nextId = extraIds[0];
-    const nextData = allExtra.find(e => e.id === nextId) || allStudents.find(s => s.id === nextId);
-    window.activeStackFront[ownerId] = nextData.id;
-    if (!nextData) return;
-
-    const newExtraIds = [...extraIds.slice(1)];
-    newExtraIds.push(currentSid);
-    wrapper.dataset.extraIds = JSON.stringify(newExtraIds);
-
-    currentCard.style.transition = 'transform 0.3s ease, opacity 0.3s';
-    currentCard.style.transform = 'translateY(40px) scale(0.88)';
-    currentCard.style.opacity = '0';
-
-    setTimeout(() => {
-        const isMine = currentUser !== 'admin' && (currentUser === nextData.id || nextData.ownerId === currentUser);
-        const eggNum = (nextData.egg ?? 0) + 1;
-        const imgPath = nextData.level === 0
-            ? `images/egg${eggNum}.png`
-            : `images/${nextData.type}${nextData.level >= 20 ? 3 : nextData.level >= 10 ? 2 : 1}.png`;
-
-        const brokenShields = nextData.history?.shields_broken || [];
-        const sc = shieldsByLevel(nextData.level);
-        const pending = window._pendingBattleTargets || [];
-
-        let shieldsOverlay = '';
-        if (!isMine && currentUser !== 'admin') {
-            let shieldsHtml = '';
-            for (let i = 0; i < sc; i++) {
-                const isBroken = brokenShields.includes(i);
-                shieldsHtml += `<span class="shield-item ${isBroken ? 'broken' : ''}" 
-                    onclick="event.stopPropagation();pickTargetShield('${nextData.id}',${i})" 
-                    title="${isBroken ? 'שבור' : 'בחר'}">${isBroken ? '💔' : '🛡️'}</span>`;
-            }
-            shieldsOverlay = `
-                <div id="shields-overlay-${nextData.id}" class="shields-overlay">
-                    <div class="shields-title">⚔️ בחר מגן לתקוף!</div>
-                    <div class="shields-row">${shieldsHtml}</div>
-                    <button class="cancel-btn" onclick="event.stopPropagation();cancelAttack()">ביטול</button>
-                </div>`;
-        }
-
-        let myShields = '';
-        if (isMine) {
-            let myShieldsHtml = '';
-            for (let i = 0; i < sc; i++) {
-                myShieldsHtml += `<span class="shield-item ${brokenShields.includes(i) ? 'broken' : ''}" style="cursor:default;">${brokenShields.includes(i) ? '💔' : '🛡️'}</span>`;
-            }
-            myShields = `<div class="my-shields-row">${myShieldsHtml}</div>`;
-        }
-
-        const newCardHtml = `
-        <div class="student-card ${isMine ? 'my-creature' : ''} ${pending.includes(nextData.id) ? 'under-attack' : ''}" 
-             data-sid="${nextData.id}" onclick="handleCardClick(event, this, '${nextData.id}')">
-            <div class="card-inner">
-                ${shieldsOverlay}
-                <div class="card-front" style="display:flex;flex-direction:column;justify-content:space-between;align-items:center;height:100%;padding:15px;box-sizing:border-box;">
-                    <div style="width:100%;display:flex;justify-content:space-between;align-items:flex-start;">
-                        <div class="level-text-badge">Lv.${nextData.level}</div>
-                        ${currentUser === 'admin' ? `<button class="remove-btn" onclick="event.stopPropagation();deleteStudent('${nextData.id}')">✖</button>` : '<div></div>'}
-                    </div>
-                    <div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;">
-                        <img id="img-${nextData.id}" src="${imgPath}" class="creature-img" 
-                             style="max-height:135px;object-fit:contain;margin-bottom:8px;" 
-                             onclick="event.stopPropagation();addXP('${nextData.id}',${nextData.xp},${nextData.level})">
-                        <div style="font-weight:bold;font-size:1.3em;">${nextData.name}</div>
-                        <div style="color:#666;font-size:0.95em;">כיתה ${nextData.className}</div>
-                        ${myShields}
-                    </div>
-                    <div style="width:100%;margin-top:10px;">
-                        <div class="xp-container"><div class="xp-bar" style="width:${nextData.xp}%;"></div></div>
-                        <div class="card-footer-actions" style="color:#2e7d32;">
-                            <button type="button" class="card-action-link" onclick="flipCardFromFooter(event)">הפוך קלף</button>
-                            <span class="card-footer-sep">|</span>
-                            <button type="button" class="card-action-link" onclick="event.stopPropagation();cycleCard('${ownerId}')">הקלף הבא</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-back" style="padding:12px;">
-                    <h4 style="margin:0 0 6px 0;color:#2e7d32;">יומן פעילות</h4>
-                    <div style="font-size:0.8em;color:#777;">אין פעילות לאחרונה</div>
-                </div>
-            </div>
-        </div>`;
-
-        currentCard.outerHTML = newCardHtml;
-
-        const newCard = wrapper.querySelector('.student-card');
-        newCard.style.transform = 'translateY(-20px) scale(0.95)';
-        newCard.style.opacity = '0';
-        setTimeout(() => {
-            newCard.style.transition = 'transform 0.3s ease, opacity 0.3s';
-            newCard.style.transform = 'translateY(0) scale(1)';
-            newCard.style.opacity = '1';
-        }, 50);
-    }, 300);
-}
-
 function toggleBattleSidebar() {
     const sb=document.getElementById('battle-sidebar'), btn=document.getElementById('battle-float-btn');
     sb.classList.toggle('open'); btn.classList.toggle('active', sb.classList.contains('open'));
@@ -1934,33 +1812,7 @@ function cancelAttack() {
     document.querySelectorAll('.student-card').forEach(c=>c.classList.remove('pick-mode'));
     document.querySelectorAll('.shields-overlay').forEach(o=>o.classList.remove('visible'));
 }
-function flipCardFromFooter(event) {
-    event.stopPropagation();
-    const cardEl = event.currentTarget.closest('.student-card');
-    if (!cardEl) return;
-    handleCardClick(event, cardEl, cardEl.dataset.sid);
-}
-
 function handleCardClick(event, cardEl, studentId) {
-    if (currentUser === 'admin' && stackLinkAwaitingFirst && !battleState.selectedSkill) {
-        event.stopPropagation();
-        const sid = studentId;
-        if (stackLinkFirstId == null) {
-            stackLinkFirstId = sid;
-            alert('נבחר קלף ראשון. עכשיו לחץ על הקלף השני.');
-            return;
-        }
-        if (stackLinkFirstId === sid) {
-            alert('בחר קלף אחר (לא אותו קלף).');
-            return;
-        }
-        const a = stackLinkFirstId;
-        stackLinkAwaitingFirst = false;
-        stackLinkFirstId = null;
-        cancelStackLink();
-        mergeStackGroupRecords(a, sid).then(() => loadStudents()).catch(e => alert(e.message || e));
-        return;
-    }
     if (battleState.selectedSkill) {
         if (studentId===currentUser) return;
         event.stopPropagation();
@@ -2044,7 +1896,7 @@ async function resolveDefense(chosen, battle) {
         if (allBroken) { nxp=Math.max(0,me.xp-10); history.shields_broken=[]; history['battle_'+Date.now()]={msg:`💥 ${att.name} פגע. -10XP, מגינים חודשו`,xp:-10,time:Date.now()}; }
         else           { history.shields_broken=broken; history['battle_'+Date.now()]={msg:`🛡️ ${att.name} הפיל מגן! (${battle.skill})`,xp:0,time:Date.now()}; }
         await dbSvc.updateDocument(DB_ID,TABLES.students,currentUser,{xp:nxp,history:JSON.stringify(history)});
-        const xpR=10*(me.level||1), ah={...att.history};
+        const xpR = Math.max(5, 10 * ((me.level || 1) - (att.level || 1))); ah={...att.history};
         ah['win_'+Date.now()]={msg:`⚔️ פגעת ב-${me.name}! (+${xpR}XP)`,xp:xpR,time:Date.now()};
         let ax=att.xp+xpR, al=att.level; while(ax>=100){al++;ax-=100;}
         await dbSvc.updateDocument(DB_ID,TABLES.students,att.id,{xp:ax,level:al,history:JSON.stringify(ah)});
@@ -2061,7 +1913,6 @@ function updateCooldownDisplay() {
 
 // --- אתחול ---
 async function init() {
-    await loadExtra();
     await Promise.all([loadStudents(), loadTasks(), loadAnnouncements(), loadCreatureTypes()]);
     if (currentUser && currentUser!=='admin') {
         const found=allStudents.find(s=>s.id===currentUser);
