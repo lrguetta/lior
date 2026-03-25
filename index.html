@@ -1851,44 +1851,44 @@ function toggleBattleSidebar() {
     
 async function activateSpecialSkill(student) {
     const now = Date.now();
-    const oneHour = 60 * 60 * 1000;
+    const oneHour = 3600000;
 
-    // בדיקת Cooldown (נשמר בתוך שדה history של הסטודנט)
-    let history = JSON.parse(student.history || "{}");
-    if (history.last_skill_use && (now - history.last_skill_use < oneHour)) {
-        const remaining = Math.ceil((oneHour - (now - history.last_skill_use)) / 60000);
-        alert(`היכולת בטעינה... נותרו עוד ${remaining} דקות.`);
+    // 1. בדיקת Cooldown
+    if (student.last_skill && (now - parseInt(student.last_skill) < oneHour)) {
+        const mins = Math.ceil((oneHour - (now - parseInt(student.last_skill))) / 60000);
+        alert(`היכולת בטעינה... נותרו עוד ${mins} דקות.`);
         return;
     }
 
-    const skillFn = CreatureSkills[student.creature_type];
-    if (!skillFn) {
-        alert("לדמות זו אין עדיין יכולת מיוחדת!");
+    // 2. שליפת הפונקציה מהקובץ החיצוני
+    const skill = CreatureSkills[student.type];
+    if (!skill) {
+        alert("לדמות זו אין עדיין יכולת מיוחדת.");
         return;
     }
 
     try {
-        // במידה והיכולת דורשת מטרה (כמו העורב)
-        let target = null;
-        if (student.creature_type === "עורב העסקים") {
-            const targetId = prompt("הכנס את שם התלמיד שממנו תרצה לקחת XP:");
-            target = allStudents.find(s => s.name === targetId);
-            if (!target) return alert("תלמיד לא נמצא.");
-        }
+        // 3. הפעלה גנרית - אנחנו שולחים את כל הכלים, והיכולת תחליט במה להשתמש
+        const result = await skill({
+            attacker: student,
+            allStudents: allStudents, // כדי שהיכולת תוכל לחפש מטרה בעצמה אם צריך
+            dbSvc: dbSvc,
+            DB_ID: DB_ID,
+            TABLES: TABLES
+        });
 
-        // הפעלת היכולת מהקובץ החיצוני
-        const result = await skillFn(student, target, dbSvc, DB_ID, TABLES);
+        // 4. אם היכולת בוטלה (למשל המשתמש לא בחר מטרה) - לא נשנה Cooldown
+        if (!result) return; 
 
-        // עדכון זמן השימוש האחרון ב-DB
-        history.last_skill_use = now;
+        // 5. עדכון זמן שימוש ב-DB
         await dbSvc.updateDocument(DB_ID, TABLES.students, student.id, { 
-            history: JSON.stringify(history) 
+            last_skill: now.toString() 
         });
 
         alert(result.message);
-        loadStudents(); // רענון הנתונים במסך
+        loadStudents(); 
     } catch (e) {
-        console.error(e);
+        console.error("Skill Error:", e);
         alert("שגיאה בהפעלת היכולת.");
     }
 }
