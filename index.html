@@ -1788,13 +1788,51 @@ async function saveCreatureField(docId, field, value) {
 }
 
 // --- קרבות ---
-function buildBattleSidebar(me) {
-    // יכולות מיוחדות
+function buildBattleSidebar(student) {
+    if (!student) return;
+    
+    // 1. הגדרה נכונה של ה-sidebar כדי שלא נקבל ReferenceError
+    let sidebar = document.getElementById('battle-sidebar');
+    if (!sidebar) {
+        sidebar = document.createElement('div');
+        sidebar.id = 'battle-sidebar';
+        document.body.appendChild(sidebar);
+    }
+
+    sidebar.innerHTML = ''; // עכשיו זה בטוח לנקות
+
+    // 2. לוגיקת ה-Cooldown הקיימת שלך (שמרתי עליה בדיוק)
+    const now = Date.now();
+    const lastAtk = student.last_attack || 0;
+    const wait = 60 * 60 * 1000; // שעה אחת
+    const diff = now - lastAtk;
+
+    if (diff < wait) {
+        const remaining = Math.ceil((wait - diff) / 60000);
+        const cdMsg = document.createElement('div');
+        cdMsg.className = 'cooldown-msg';
+        cdMsg.innerHTML = `⏳ טעינה: ${remaining} דק'`;
+        sidebar.appendChild(cdMsg);
+    } else {
+        const btn = document.createElement('button');
+        btn.className = 'action-btn';
+        btn.innerText = '⚔️ קרב';
+        btn.onclick = () => startBattle(student);
+        sidebar.appendChild(btn);
+    }
+
+    // 3. הוספת כפתור היכולת המיוחדת (התוספת שלנו)
+    // הכפתור הזה תמיד יופיע, והבדיקה אם עברה שעה תתבצע בתוך activateSpecialSkill
     const skillBtn = document.createElement('button');
-    skillBtn.className = 'action-btn skill-btn';
+    skillBtn.className = 'action-btn';
+    skillBtn.style.backgroundColor = '#9c27b0'; // סגול
+    skillBtn.style.marginTop = '8px';
     skillBtn.innerText = '✨ יכולת מיוחדת';
     skillBtn.onclick = () => activateSpecialSkill(student);
     sidebar.appendChild(skillBtn);
+
+    sidebar.style.display = 'flex';
+}
     // כפתור קרב
     const attacks = (ATTACKS_BY_TYPE[me.type]||[]).slice(0,attacksByLevel(me.level));
     const sidebar = document.getElementById('battle-sidebar');
