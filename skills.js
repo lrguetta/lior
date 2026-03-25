@@ -1,50 +1,35 @@
-// skills.js - המוח של היכולות המיוחדות
+// skills.js
 const CreatureSkills = {
-    "crw": async (attacker, target, dbSvc, DB_ID, TABLES) => {
-        // גניבת XP: בין 10 ל-30
+    // עורב - גניבת XP
+    "crw": async (ctx) => {
+        const targetName = prompt("ממי תרצה לגנוב XP? (הכנס שם מדויק)");
+        if (!targetName) return null;
+        
+        const target = ctx.allStudents.find(s => s.name === targetName);
+        if (!target) {
+            alert("תלמיד לא נמצא.");
+            return null;
+        }
+
         const amount = Math.floor(Math.random() * 21) + 10;
-        
-        // וידוא שלמטרה יש מספיק XP (שלא ירד מתחת ל-0)
         const actualAmount = Math.min(amount, target.xp);
-        
-        const newAttackerXp = attacker.xp + actualAmount;
-        const newTargetXp = target.xp - actualAmount;
 
-        // עדכון התוקף
-        await dbSvc.updateDocument(DB_ID, TABLES.students, attacker.id, { xp: newAttackerXp });
-        // עדכון הנתקף
-        await dbSvc.updateDocument(DB_ID, TABLES.students, target.id, { xp: newTargetXp });
+        await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, ctx.attacker.id, { xp: ctx.attacker.xp + actualAmount });
+        await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, target.id, { xp: target.xp - actualAmount });
 
-        return { 
-            message: `עסקה מוצלחת! גנבת ${actualAmount} XP מ-${target.name}!`,
-            type: "success"
-        };
+        return { message: `בוצע! גנבת ${actualAmount} XP מ-${target.name}.` };
     },
 
-    "hnd": async (attacker) => {
-        // יכולת זו לא מעדכנת DB מיד, אלא מחזירה "מצב" לקרב הבא
-        // נשמור את זה ב-localStorage או כמשתנה גלובלי זמני
-        sessionStorage.setItem('next_attack_double_shield', 'true');
-        
-        return { 
-            message: "החושים התחדדו! בהתקפה הבאה תוכל לבחור 2 מגינים.",
-            type: "info"
-        };
+    // כלב ציד - 2 מגינים
+    "hnd": async (ctx) => {
+        // שומרים ב-Session כדי שהקרב הבא ידע להשתמש בזה
+        sessionStorage.setItem('special_skill_active', 'dog_double_shield');
+        return { message: "הכלב מוכן! בקרב הבא תוכל לבחור 2 מגינים במקום אחד." };
     },
 
-    "rbt": async (attacker, target, dbSvc, DB_ID, TABLES) => {
-        // סימון ב-DB שהארנב במצב "קוצים/קאונטר"
-        // נניח שיש לנו שדה history או שדה סטטוס
-        let history = JSON.parse(attacker.history || "{}");
-        history.counter_active = true;
-        
-        await dbSvc.updateDocument(DB_ID, TABLES.students, attacker.id, { 
-            history: JSON.stringify(history) 
-        });
-
-        return { 
-            message: "נכנסת למצב כוננות! מי שיתקוף אותך עכשיו עלול להיפגע.",
-            type: "warning"
-        };
+    // ארנב - קאונטר (נניח שהקוד שלו הוא rbt)
+    "rbt": async (ctx) => {
+        sessionStorage.setItem('special_skill_active', 'rbt_counter');
+        return { message: "הארנב דרוך! אם יתקפו אותך בשעה הקרובה, התוקף עלול להיפגע." };
     }
 };
