@@ -1331,7 +1331,7 @@ onclick="event.stopPropagation();addXP('${s.id}')">
                     <div style="font-size:0.75em;color:#2e7d32;font-weight:bold;margin-top:5px;text-align:center;">
                         <span style="cursor:pointer;" onclick="event.stopPropagation(); event.currentTarget.closest('.student-card').classList.toggle('flipped')">🔄 לחץ להיפוך</span>
                         &nbsp;|&nbsp;
-                        <span style="cursor:pointer; color:#1976d2;" onclick="event.stopPropagation(); openDeck('${s.name}')">🎴 מחסן דמויות</span>
+                       <span style="cursor:pointer; color:#1976d2;" data-deckname="${s.name.replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); openDeck(this.dataset.deckname)">🎴 מחסן דמויות</span>
                     </div>
                 </div>
             </div>
