@@ -1788,10 +1788,10 @@ async function saveCreatureField(docId, field, value) {
 }
 
 // --- קרבות ---
-function buildBattleSidebar(student) {
-    if (!student) return;
+function buildBattleSidebar(me) {
+    if (!me) return;
     
-    // 1. הגדרה נכונה של ה-sidebar כדי שלא נקבל ReferenceError
+    // 1. הגדרה ויצירה של ה-sidebar
     let sidebar = document.getElementById('battle-sidebar');
     if (!sidebar) {
         sidebar = document.createElement('div');
@@ -1799,67 +1799,36 @@ function buildBattleSidebar(student) {
         document.body.appendChild(sidebar);
     }
 
-    sidebar.innerHTML = ''; // עכשיו זה בטוח לנקות
+    // 2. ניקוי וכותרת
+    sidebar.innerHTML = `<div class="sidebar-title">⚔️ בחר מתקפה:</div>`;
 
-    // 2. לוגיקת ה-Cooldown הקיימת שלך (שמרתי עליה בדיוק)
-    const now = Date.now();
-    const lastAtk = student.last_attack || 0;
-    const wait = 60 * 60 * 1000; // שעה אחת
-    const diff = now - lastAtk;
-
-    if (diff < wait) {
-        const remaining = Math.ceil((wait - diff) / 60000);
-        const cdMsg = document.createElement('div');
-        cdMsg.className = 'cooldown-msg';
-        cdMsg.innerHTML = `⏳ טעינה: ${remaining} דק'`;
-        sidebar.appendChild(cdMsg);
-    } else {
-        const btn = document.createElement('button');
-        btn.className = 'action-btn';
-        btn.innerText = '⚔️ קרב';
-        btn.onclick = () => startBattle(student);
-        sidebar.appendChild(btn);
-    }
-
-    // 3. הוספת כפתור היכולת המיוחדת (התוספת שלנו)
-    // הכפתור הזה תמיד יופיע, והבדיקה אם עברה שעה תתבצע בתוך activateSpecialSkill
-    const skillBtn = document.createElement('button');
-    skillBtn.className = 'action-btn';
-    skillBtn.style.backgroundColor = '#9c27b0'; // סגול
-    skillBtn.style.marginTop = '8px';
-    skillBtn.innerText = '✨ יכולת מיוחדת';
-    skillBtn.onclick = () => activateSpecialSkill(student);
-    sidebar.appendChild(skillBtn);
-
-    sidebar.style.display = 'flex';
-}
-    // כפתור קרב
-    const attacks = (ATTACKS_BY_TYPE[me.type]||[]).slice(0,attacksByLevel(me.level));
-    const sidebar = document.getElementById('battle-sidebar');
-    sidebar.innerHTML=`<div class="sidebar-title">⚔️ בחר מתקפה:</div>`;
+    // 3. לוגיקת בחירת המתקפות הקיימת שלך
+    const attacks = (ATTACKS_BY_TYPE[me.type] || []).slice(0, attacksByLevel(me.level));
+    
     attacks.forEach(atk => {
-        const name=typeof atk==='object'?atk.name:atk;
-        const icon=typeof atk==='object'?atk.icon:'';
-        const btn=document.createElement('button');
-        btn.className='attack-btn'; btn.title=name;
+        const name = typeof atk === 'object' ? atk.name : atk;
+        const icon = typeof atk === 'object' ? atk.icon : '';
+        const btn = document.createElement('button');
+        btn.className = 'attack-btn';
+        btn.title = name;
         
-        const last=parseInt(localStorage.getItem('last_attack_'+currentUser+'_'+name)||'0');
-        const rem=(15*60*1000)-(Date.now()-last);
+        const last = parseInt(localStorage.getItem('last_attack_' + currentUser + '_' + name) || '0');
+        const rem = (15 * 60 * 1000) - (Date.now() - last);
         const isOnCooldown = rem > 0;
    
         let m, s;
         if (isOnCooldown) {
-            btn.style.cursor='not-allowed'; 
-            btn.style.position='relative';
-            m=String(Math.floor(rem/60000)).padStart(2,'0');
-            s=String(Math.floor((rem%60000)/1000)).padStart(2,'0');
+            btn.style.cursor = 'not-allowed'; 
+            btn.style.position = 'relative';
+            m = String(Math.floor(rem / 60000)).padStart(2, '0');
+            s = String(Math.floor((rem % 60000) / 1000)).padStart(2, '0');
         }
 
         if (icon) {
-            btn.style.background='none'; 
-            btn.style.border='none'; 
-            btn.style.padding='4px'; 
-            btn.style.boxShadow='none';
+            btn.style.background = 'none'; 
+            btn.style.border = 'none'; 
+            btn.style.padding = '4px'; 
+            btn.style.boxShadow = 'none';
             
             let content = `<div style="position:relative; width:65px; height:65px; right:-25px; display:inline-block;">
                 <img src="${icon}" style="width:100%; height:100%; object-fit:contain; display:block;" onerror="this.style.display='none';if(this.nextSibling)this.nextSibling.style.display='block'">
@@ -1878,10 +1847,26 @@ function buildBattleSidebar(student) {
             }
         }
   
-        btn.onclick=()=>enterPickMode(name);
+        btn.onclick = () => {
+            if (!isOnCooldown) enterPickMode(name);
+        };
         sidebar.appendChild(btn);
     });
+
+    // 4. הוספת כפתור היכולת המיוחדת (התוספת החדשה)
+    const skillBtn = document.createElement('button');
+    skillBtn.className = 'action-btn'; // משתמש בעיצוב הכללי של כפתורי פעולה
+    skillBtn.style.backgroundColor = '#9c27b0'; // סגול ייחודי
+    skillBtn.style.color = 'white';
+    skillBtn.style.marginTop = '15px';
+    skillBtn.style.width = '100%';
+    skillBtn.innerText = '✨ יכולת מיוחדת';
+    skillBtn.onclick = () => activateSpecialSkill(me);
+    sidebar.appendChild(skillBtn);
+
+    sidebar.style.display = 'flex';
 }
+    
 function toggleBattleSidebar() {
     const sb=document.getElementById('battle-sidebar'), btn=document.getElementById('battle-float-btn');
     sb.classList.toggle('open'); btn.classList.toggle('active', sb.classList.contains('open'));
