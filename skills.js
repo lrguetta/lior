@@ -93,3 +93,16 @@ const CreatureSkills = {
         return { message: "הכלב מוכן! בקרב הבא תוכל לבחור 2 מגינים במקום אחד." };
     }
 };
+// 9. ארנב - קאונטר (נזק חוזר לתוקף)
+    "rbt": async (ctx) => {
+        // מכיוון שהקרב יכול לקרות מתישהו אחר כך מול מחשב אחר,
+        // אנחנו שומרים את "מצב הקאונטר" בתוך מסד הנתונים (ב-history)
+        let history = JSON.parse(ctx.attacker.history || "{}");
+        history.counter_active = true;
+        
+        await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, ctx.attacker.id, { 
+            history: JSON.stringify(history) 
+        });
+
+        return { message: "🐇 נכנסת למצב מגננה! התלמיד הבא שיצליח לפגוע בך יספוג נזק חזרה." };
+    }
