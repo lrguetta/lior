@@ -86,14 +86,6 @@ const CreatureSkills = {
         sessionStorage.setItem('next_attack_double_shield', 'true');
         return { message: "הכלב מוכן! בקרב הבא תוכל לבחור 2 מגינים במקום אחד." };
     },
-
-    // 9. ארנב - קאונטר (שמירה ב-DB ולא sessionStorage)
-    "rbt": async (ctx) => {
-        let history = { ...ctx.attacker.history };
-        history.counter_active = true;
-        await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, ctx.attacker.id, { history: JSON.stringify(history) });
-        return { message: "🐇 הארנב דרוך! אם יפגעו בך בשעה הקרובה, התוקף יספוג 15XP נזק חזרה." };
-    }
 };
 // 9. ארנב - קאונטר (נזק חוזר לתוקף)
     "rbt": async (ctx) => {
