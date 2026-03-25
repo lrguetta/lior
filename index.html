@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>חוות הטמגוצ'י - גרסת ניהול ותלמידים</title>
 <script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.2/dist/iife/sdk.js"></script>
-<script src="skills.js"></script>
 <style>
 body { 
     font-family: 'Segoe UI', Tahoma, sans-serif;
@@ -756,9 +755,9 @@ button {
 <div id="deck-modal-overlay" onclick="closeDeck()"></div>
 <div id="deck-modal">
     <div style="font-size:2.5em; margin-bottom:10px; text-align:center;">🎴</div>
-    <h3 style="margin:0 0 15px 0; color:#1976d2; text-align:center;">הקבוצה של <span id="deck-student-name"></span></h3>
+    <h3 style="margin:0 0 15px 0; color:#1976d2; text-align:center;">מחסן הדמויות של <span id="deck-student-name"></span></h3>
     <div id="deck-list" style="display:flex; gap:15px; overflow-x:auto; padding-bottom:15px; justify-content:center;"></div>
-    <button onclick="closeDeck()" style="margin-top:15px; background:#999; width:100%; padding:10px; border-radius:10px;">סגור חפיסה</button>
+    <button onclick="closeDeck()" style="margin-top:15px; background:#999; width:100%; padding:10px; border-radius:10px;">סגור מחסן</button>
 </div>
 
 <div id="submit-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:25px; border-radius:15px; box-shadow:0 0 30px rgba(0,0,0,0.5); z-index:1000; width:90%; max-width:500px; max-height:85vh; overflow-y:auto; text-align:right; border:3px solid #1976d2;">
@@ -855,7 +854,9 @@ function docToStudent(d) {
              type:d.type||'cat', egg:d.egg??0, password:d.password||null,
              personalNote:d.personalNote||'', lastNote:d.lastNote||'',
              likes:d.likes?JSON.parse(d.likes):{}, history, 
-             isActive: d.isActive ?? false }; // <--- הוספנו תמיכה ב-isActive
+             isActive: d.isActive ?? false,
+             last_skill: d.last_skill || null // תוספת ליכולות
+           }; 
 }
 function docToTask(d) {
     return { id:d.$id, title:d.title||'', deadline:d.deadline||'', xp:d.xp??20,
@@ -1184,7 +1185,7 @@ function openDeck(name) {
     const myCards = allStudents.filter(s => s.name === name);
     
     if(myCards.length <= 1 && currentUser !== 'admin') {
-        alert("אין לך דמויות נוספות בחפיסה.");
+        alert("אין לך דמויות נוספות במחסן.");
         return;
     }
     
@@ -1332,7 +1333,7 @@ onclick="event.stopPropagation();addXP('${s.id}')">
                     <div style="font-size:0.75em;color:#2e7d32;font-weight:bold;margin-top:5px;text-align:center;">
                         <span style="cursor:pointer;" onclick="event.stopPropagation(); event.currentTarget.closest('.student-card').classList.toggle('flipped')">🔄 לחץ להיפוך</span>
                         &nbsp;|&nbsp;
-                       <span style="cursor:pointer; color:#1976d2;" data-deckname="${s.name.replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); openDeck(this.dataset.deckname)">🎴 חפיסת דמויות</span>
+                       <span style="cursor:pointer; color:#1976d2;" data-deckname="${s.name.replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); openDeck(this.dataset.deckname)">🎴 מחסן דמויות</span>
                     </div>
                 </div>
             </div>
@@ -1789,46 +1790,39 @@ async function saveCreatureField(docId, field, value) {
 
 // --- קרבות ---
 function buildBattleSidebar(me) {
-    if (!me) return;
-    
-    // 1. הגדרה ויצירה של ה-sidebar
+    const attacks = (ATTACKS_BY_TYPE[me.type]||[]).slice(0,attacksByLevel(me.level));
     let sidebar = document.getElementById('battle-sidebar');
     if (!sidebar) {
         sidebar = document.createElement('div');
         sidebar.id = 'battle-sidebar';
         document.body.appendChild(sidebar);
     }
-
-    // 2. ניקוי וכותרת
-    sidebar.innerHTML = `<div class="sidebar-title">⚔️ בחר מתקפה:</div>`;
-
-    // 3. לוגיקת בחירת המתקפות הקיימת שלך
-    const attacks = (ATTACKS_BY_TYPE[me.type] || []).slice(0, attacksByLevel(me.level));
+    
+    sidebar.innerHTML=`<div class="sidebar-title">⚔️ בחר מתקפה:</div>`;
     
     attacks.forEach(atk => {
-        const name = typeof atk === 'object' ? atk.name : atk;
-        const icon = typeof atk === 'object' ? atk.icon : '';
-        const btn = document.createElement('button');
-        btn.className = 'attack-btn';
-        btn.title = name;
+        const name=typeof atk==='object'?atk.name:atk;
+        const icon=typeof atk==='object'?atk.icon:'';
+        const btn=document.createElement('button');
+        btn.className='attack-btn'; btn.title=name;
         
-        const last = parseInt(localStorage.getItem('last_attack_' + currentUser + '_' + name) || '0');
-        const rem = (15 * 60 * 1000) - (Date.now() - last);
+        const last=parseInt(localStorage.getItem('last_attack_'+currentUser+'_'+name)||'0');
+        const rem=(15*60*1000)-(Date.now()-last);
         const isOnCooldown = rem > 0;
    
         let m, s;
         if (isOnCooldown) {
-            btn.style.cursor = 'not-allowed'; 
-            btn.style.position = 'relative';
-            m = String(Math.floor(rem / 60000)).padStart(2, '0');
-            s = String(Math.floor((rem % 60000) / 1000)).padStart(2, '0');
+            btn.style.cursor='not-allowed'; 
+            btn.style.position='relative';
+            m=String(Math.floor(rem/60000)).padStart(2,'0');
+            s=String(Math.floor((rem%60000)/1000)).padStart(2,'0');
         }
 
         if (icon) {
-            btn.style.background = 'none'; 
-            btn.style.border = 'none'; 
-            btn.style.padding = '4px'; 
-            btn.style.boxShadow = 'none';
+            btn.style.background='none'; 
+            btn.style.border='none'; 
+            btn.style.padding='4px'; 
+            btn.style.boxShadow='none';
             
             let content = `<div style="position:relative; width:65px; height:65px; right:-25px; display:inline-block;">
                 <img src="${icon}" style="width:100%; height:100%; object-fit:contain; display:block;" onerror="this.style.display='none';if(this.nextSibling)this.nextSibling.style.display='block'">
@@ -1847,75 +1841,72 @@ function buildBattleSidebar(me) {
             }
         }
   
-        btn.onclick = () => {
-            if (!isOnCooldown) enterPickMode(name);
-        };
+        btn.onclick=()=> { if (!isOnCooldown) enterPickMode(name); };
         sidebar.appendChild(btn);
     });
 
-    // 4. הוספת כפתור היכולת המיוחדת (התוספת החדשה)
     const skillBtn = document.createElement('button');
-    skillBtn.className = 'action-btn'; // משתמש בעיצוב הכללי של כפתורי פעולה
-    skillBtn.style.backgroundColor = '#9c27b0'; // סגול ייחודי
+    skillBtn.className = 'attack-btn';
+    skillBtn.style.background = 'linear-gradient(135deg, #ab47bc, #6a1b9a)'; 
     skillBtn.style.color = 'white';
     skillBtn.style.marginTop = '15px';
-    skillBtn.style.width = '100%';
-    skillBtn.innerText = '✨ יכולת מיוחדת';
+    skillBtn.style.width = '85%';
+    skillBtn.style.alignSelf = 'center';
+    skillBtn.innerText = '✨ יכולת';
     skillBtn.onclick = () => activateSpecialSkill(me);
     sidebar.appendChild(skillBtn);
-
+    
     sidebar.style.display = 'flex';
 }
-    
-function toggleBattleSidebar() {
-    const sb=document.getElementById('battle-sidebar'), btn=document.getElementById('battle-float-btn');
-    sb.classList.toggle('open'); btn.classList.toggle('active', sb.classList.contains('open'));
-}
-    
+
 async function activateSpecialSkill(student) {
     const now = Date.now();
     const oneHour = 3600000;
 
-    // 1. בדיקת Cooldown
     if (student.last_skill && (now - parseInt(student.last_skill) < oneHour)) {
-        const mins = Math.ceil((oneHour - (now - parseInt(student.last_skill))) / 60000);
-        alert(`היכולת בטעינה... נותרו עוד ${mins} דקות.`);
+        const remainingMins = Math.ceil((oneHour - (now - parseInt(student.last_skill))) / 60000);
+        alert(`היכולת בטעינה... נותרו עוד ${remainingMins} דקות.`);
         return;
     }
 
-    // 2. שליפת הפונקציה מהקובץ החיצוני
-    const skill = CreatureSkills[student.type];
-    if (!skill) {
-        alert("לדמות זו אין עדיין יכולת מיוחדת.");
+    if (typeof CreatureSkills === 'undefined') {
+        alert("שגיאה: קובץ skills.js לא נטען!");
+        return;
+    }
+
+    const skillFn = CreatureSkills[student.type];
+    if (!skillFn) {
+        alert("לדמות זו אין עדיין יכולת מיוחדת פעילה.");
         return;
     }
 
     try {
-        // 3. הפעלה גנרית - אנחנו שולחים את כל הכלים, והיכולת תחליט במה להשתמש
-        const result = await skill({
+        const result = await skillFn({
             attacker: student,
-            allStudents: allStudents, // כדי שהיכולת תוכל לחפש מטרה בעצמה אם צריך
+            allStudents: allStudents,
             dbSvc: dbSvc,
             DB_ID: DB_ID,
             TABLES: TABLES
         });
 
-        // 4. אם היכולת בוטלה (למשל המשתמש לא בחר מטרה) - לא נשנה Cooldown
         if (!result) return; 
 
-        // 5. עדכון זמן שימוש ב-DB
         await dbSvc.updateDocument(DB_ID, TABLES.students, student.id, { 
             last_skill: now.toString() 
         });
-
+        
+        student.last_skill = now.toString(); 
         alert(result.message);
         loadStudents(); 
     } catch (e) {
         console.error("Skill Error:", e);
-        alert("שגיאה בהפעלת היכולת.");
+        alert("חלה שגיאה בהפעלת היכולת.");
     }
 }
-    
+function toggleBattleSidebar() {
+    const sb=document.getElementById('battle-sidebar'), btn=document.getElementById('battle-float-btn');
+    sb.classList.toggle('open'); btn.classList.toggle('active', sb.classList.contains('open'));
+}
 function enterPickMode(skill) {
     const last=parseInt(localStorage.getItem('last_attack_'+currentUser+'_'+skill)||'0');
     if ((15*60*1000)-(Date.now()-last)>0) return;
@@ -2049,7 +2040,7 @@ async function resolveDefense(chosen, battle) {
         
         alert(allBroken ? `💥 ${attackerName} פגע בך! ספגת -10XP ומגיניך חודשו.` : `💥 פספסת! ${attackerName} הפיל לך מגן!`);
     } else { // הצלחה של הנתקף
-        alert(`✅ אלוף! חסמת את המתקפה של ${att?.name || 'התוקף'} במדויק!`);
+        alert(`✅ אלופים! חסמת את המתקפה של ${att?.name || 'התוקף'} במדויק!`);
     }
     
     // סגירת הקרב בכל מקרה, כדי שלא ייתקע
@@ -2076,5 +2067,6 @@ function logout() { localStorage.removeItem('farm_user_id'); location.reload(); 
 setInterval(()=>{ updateAllTimers(); updateCooldownDisplay(); }, 1000);
 init();
 </script>
+<script src="skills.js"></script>
 </body>
 </html>
