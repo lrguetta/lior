@@ -1511,23 +1511,66 @@ function openSubmitModal(id, title) {
 function closeModal() { document.getElementById('submit-modal').style.display='none'; }
 
 async function sendSubmission() {
-    const task=allTasks.find(t=>t.id===currentTaskToSubmit);
-    const answers=[]; let allAnswered=true;
-    if (task?.questions) task.questions.forEach((q,i) => {
-        let val='';
-        if (q.type==='open') val=document.querySelector(`textarea[data-index="${i}"]`).value.trim();
-        else if (q.type==='survey') val=Array.from(document.querySelectorAll(`input[name="q${i}"]:checked`)).map(c=>c.value).join(' | ');
-        else if (q.type==='study_unit') { const ch=document.getElementById(`study_chapter_${i}`).value.trim(); const st=document.getElementById(`study_start_${i}`).value.trim(); const en=document.getElementById(`study_end_${i}`).value.trim(); val=(ch||st||en)?`פרק ${ch}, פסוקים ${st}-${en}`:''; }
-        else { const c=document.querySelector(`input[name="q${i}"]:checked`); val=c?c.value:''; }
-        if (!val) allAnswered=false;
-        answers.push({q:q.text, a:safe(val)});
-    });
-    if (!allAnswered && !confirm('לא ענית על הכל. לשלוח?')) return;
-    const s=allStudents.find(s=>s.id===currentUser);
+    const task = allTasks.find(t => t.id === currentTaskToSubmit);
+    
+    // --- בדיקת כפילויות לפני הכל ---
     try {
-        await dbSvc.createDocument(DB_ID, TABLES.submissions, ID.unique(), { studentName:s.name, studentId:s.id, taskId:currentTaskToSubmit, answers:JSON.stringify(answers), time:Date.now() });
-        alert('נשלח! 🎉'); closeModal(); await renderTasks();
-    } catch(e) { alert(e.message); }
+        const existing = await dbSvc.listDocuments(DB_ID, TABLES.submissions, [
+            Appwrite.Query.equal('studentId', currentUser),
+            Appwrite.Query.equal('taskId', currentTaskToSubmit)
+        ]);
+
+        if (existing.total > 0) {
+            alert("כבר הגשת את המטלה הזו בעבר! ניתן להגיש כל מטלה פעם אחת בלבד.");
+            closeModal();
+            return; // עוצר את הפונקציה ולא ממשיך לשליחה
+        }
+    } catch (e) {
+        console.error("בדיקת הגשות קודמות נכשלה:", e);
+    }
+    // ------------------------------
+
+    const answers = []; 
+    let allAnswered = true;
+    
+    if (task?.questions) {
+        task.questions.forEach((q, i) => {
+            let val = '';
+            if (q.type === 'open') {
+                val = document.querySelector(`textarea[data-index="${i}"]`).value.trim();
+            } else if (q.type === 'survey') {
+                val = Array.from(document.querySelectorAll(`input[name="q${i}"]:checked`)).map(c => c.value).join(' | ');
+            } else if (q.type === 'study_unit') {
+                const ch = document.getElementById(`study_chapter_${i}`).value.trim();
+                const st = document.getElementById(`study_start_${i}`).value.trim();
+                const en = document.getElementById(`study_end_${i}`).value.trim();
+                val = (ch || st || en) ? `פרק ${ch}, פסוקים ${st}-${en}` : '';
+            } else {
+                const c = document.querySelector(`input[name="q${i}"]:checked`);
+                val = c ? c.value : '';
+            }
+            if (!val) allAnswered = false;
+            answers.push({ q: q.text, a: safe(val) });
+        });
+    }
+
+    if (!allAnswered && !confirm('לא ענית על הכל. לשלוח?')) return;
+
+    const s = allStudents.find(s => s.id === currentUser);
+    try {
+        await dbSvc.createDocument(DB_ID, TABLES.submissions, ID.unique(), { 
+            studentName: s.name, 
+            studentId: s.id, 
+            taskId: currentTaskToSubmit, 
+            answers: JSON.stringify(answers), 
+            time: Date.now() 
+        });
+        alert('נשלח בהצלחה! 🎉'); 
+        closeModal(); 
+        await renderTasks();
+    } catch (e) { 
+        alert(e.message); 
+    }
 }
 
 // --- הגשות מנהל ---
