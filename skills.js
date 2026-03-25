@@ -6,7 +6,6 @@ const CreatureSkills = {
             enterStealMode(async (targetId) => {
                 const target = ctx.allStudents.find(s => s.id === targetId);
                 if (!target) { resolve(null); return; }
-
                 if (Math.random() > 0.5) {
                     const damage = 15;
                     await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, target.id, { xp: Math.max(0, target.xp - damage) });
@@ -34,7 +33,6 @@ const CreatureSkills = {
             enterStealMode(async (targetId) => {
                 const target = ctx.allStudents.find(s => s.id === targetId);
                 if (!target) { resolve(null); return; }
-
                 sessionStorage.setItem('fake_identity', JSON.stringify({ name: target.name, type: target.type }));
                 resolve({ message: `🐺 התחפשת ל-${target.name}! עכשיו אף אחד לא יזהה אותך.` });
             });
@@ -55,7 +53,6 @@ const CreatureSkills = {
             enterStealMode(async (targetId) => {
                 const target = ctx.allStudents.find(s => s.id === targetId);
                 if (!target) { resolve(null); return; }
-
                 const blockTime = Date.now().toString();
                 await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, target.id, { last_skill: blockTime });
                 resolve({ message: `🔮 הכישוף הצליח! ${target.name} לא יוכל להשתמש ביכולת שלו בשעה הקרובה.` });
@@ -66,7 +63,7 @@ const CreatureSkills = {
     // 6. עכביש - קורי השהייה
     "spd": async (ctx) => {
         sessionStorage.setItem('spider_trap', 'true');
-        return { message: "🕸️ טווית רשת! התלמיד הבא שינסה לתקוף אותך יאבד את התור שלו." };
+        return { message: "🕸️ טווית רשת! התוקף הבא שיפגע בך יספוג קאונטר." };
     },
 
     // 7. עורב - גניבת XP
@@ -75,13 +72,10 @@ const CreatureSkills = {
             enterStealMode(async (targetId) => {
                 const target = ctx.allStudents.find(s => s.id === targetId);
                 if (!target) { resolve(null); return; }
-
                 const amount = Math.floor(Math.random() * 21) + 10;
                 const actualAmount = Math.min(amount, target.xp);
-
                 await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, ctx.attacker.id, { xp: ctx.attacker.xp + actualAmount });
                 await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, target.id, { xp: target.xp - actualAmount });
-
                 resolve({ message: `בוצע! העורב גנב ${actualAmount} XP מ-${target.name} 🐦‍⬛` });
             });
         });
@@ -91,6 +85,14 @@ const CreatureSkills = {
     "hnd": async (ctx) => {
         sessionStorage.setItem('next_attack_double_shield', 'true');
         return { message: "הכלב מוכן! בקרב הבא תוכל לבחור 2 מגינים במקום אחד." };
+    },
+
+    // 9. ארנב - קאונטר (שמירה ב-DB ולא sessionStorage)
+    "rbt": async (ctx) => {
+        let history = { ...ctx.attacker.history };
+        history.counter_active = true;
+        await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, ctx.attacker.id, { history: JSON.stringify(history) });
+        return { message: "🐇 הארנב דרוך! אם יפגעו בך בשעה הקרובה, התוקף יספוג 15XP נזק חזרה." };
     }
 };
 // 9. ארנב - קאונטר (נזק חוזר לתוקף)
