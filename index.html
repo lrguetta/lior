@@ -2116,16 +2116,38 @@ async function resolveDefense(chosen, battle) {
         
         await dbSvc.updateDocument(DB_ID,TABLES.students,currentUser,{xp:nxp,history:JSON.stringify(history)});
         
-        // מעדכנים את ה-XP של התוקף רק אם הוא עדיין קיים במערכת (פותר את היתמות נתונים)
-        if (att) {
-            const xpR = Math.max(5, 10 * ((me.level || 1) - (att.level || 1))); 
-            const ah={...att.history};
-            ah['win_'+Date.now()]={msg:`⚔️ פגעת ב-${me.name}! (+${xpR}XP)`,xp:xpR,time:Date.now()};
-            let ax=att.xp+xpR, al=att.level; while(ax>=100){al++;ax-=100;}
-            await dbSvc.updateDocument(DB_ID,TABLES.students,att.id,{xp:ax,level:al,history:JSON.stringify(ah)});
+        // בדיקת קאונטר ארנב
+        if (me.history.counter_active && att) {
+            me.history.counter_active = false;
+            const newAttackerXp = Math.max(0, att.xp - 15);
+            const ah = {...att.history};
+            ah['counter_'+Date.now()] = {msg:`🐇 קאונטר של ${me.name}! ספגת -15XP`, xp:-15, time:Date.now()};
+            await dbSvc.updateDocument(DB_ID,TABLES.students,att.id,{xp:newAttackerXp,history:JSON.stringify(ah)});
+            await dbSvc.updateDocument(DB_ID,TABLES.students,currentUser,{history:JSON.stringify(me.history)});
+            alert(allBroken ? `💥 ${attackerName} פגע בך! אבל הקאונטר הופעל — הוא ספג 15XP נזק חזרה!` : `💥 פספסת! ${attackerName} הפיל מגן, אבל הקאונטר הופעל — הוא ספג 15XP נזק!`);
         }
-        
-        alert(allBroken ? `💥 ${attackerName} פגע בך! ספגת -10XP ומגיניך חודשו.` : `💥 פספסת! ${attackerName} הפיל לך מגן!`);
+        // בדיקת מלכודת עכביש
+        else if (sessionStorage.getItem('spider_trap') === 'true' && att) {
+            sessionStorage.removeItem('spider_trap');
+            await dbSvc.updateDocument(DB_ID,TABLES.battles,battle.$id,{status:'resolved'});
+            // מבטלים את הקרב הבא של התוקף ע"י סימון last_skill שלו (שימוש חוזר בשדה קיים)
+            const blockedUntil = (Date.now() + 15*60*1000).toString();
+            // שומרים "חסימת תור" על התוקף דרך שדה ייעודי בhistory
+            const ah = {...att.history};
+            ah['spider_blocked_'+Date.now()] = {msg:`🕸️ נלכדת במלכודת של ${me.name}! תור מבוטל`, xp:0, time:Date.now()};
+            await dbSvc.updateDocument(DB_ID,TABLES.students,att.id,{history:JSON.stringify(ah)});
+            alert(`🕸️ ${attackerName} נלכד ברשת! המתקפה הבאה שלו תתבטל.`);
+        } else {
+            // מעדכנים את ה-XP של התוקף רק אם הוא עדיין קיים במערכת
+            if (att) {
+                const xpR = Math.max(5, 10 * ((me.level || 1) - (att.level || 1)));
+                const ah={...att.history};
+                ah['win_'+Date.now()]={msg:`⚔️ פגעת ב-${me.name}! (+${xpR}XP)`,xp:xpR,time:Date.now()};
+                let ax=att.xp+xpR, al=att.level; while(ax>=100){al++;ax-=100;}
+                await dbSvc.updateDocument(DB_ID,TABLES.students,att.id,{xp:ax,level:al,history:JSON.stringify(ah)});
+            }
+            alert(allBroken ? `💥 ${attackerName} פגע בך! ספגת -10XP ומגיניך חודשו.` : `💥 פספסת! ${attackerName} הפיל לך מגן!`);
+        }
     } else { // הצלחה של הנתקף
         alert(`✅ אלופים! חסמת את המתקפה של ${att?.name || 'התוקף'} במדויק!`);
     }
