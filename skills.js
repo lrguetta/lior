@@ -1,6 +1,6 @@
 // skills.js - המוח של היכולות המיוחדות
 const CreatureSkills = {
-    "עורב העסקים": async (attacker, target, dbSvc, DB_ID, TABLES) => {
+    "crw": async (attacker, target, dbSvc, DB_ID, TABLES) => {
         // גניבת XP: בין 10 ל-30
         const amount = Math.floor(Math.random() * 21) + 10;
         
@@ -21,7 +21,7 @@ const CreatureSkills = {
         };
     },
 
-    "כלב הציד": async (attacker) => {
+    "hnd": async (attacker) => {
         // יכולת זו לא מעדכנת DB מיד, אלא מחזירה "מצב" לקרב הבא
         // נשמור את זה ב-localStorage או כמשתנה גלובלי זמני
         sessionStorage.setItem('next_attack_double_shield', 'true');
@@ -32,7 +32,7 @@ const CreatureSkills = {
         };
     },
 
-    "ארנב": async (attacker, target, dbSvc, DB_ID, TABLES) => {
+    "rbt": async (attacker, target, dbSvc, DB_ID, TABLES) => {
         // סימון ב-DB שהארנב במצב "קוצים/קאונטר"
         // נניח שיש לנו שדה history או שדה סטטוס
         let history = JSON.parse(attacker.history || "{}");
