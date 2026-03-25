@@ -520,6 +520,14 @@ button {
 .student-card.pick-mode:not(.my-creature) {
     cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ctext y='28' font-size='28'%3E⚔️%3C/text%3E%3C/svg%3E") 16 16, crosshair !important;
 }
+.student-card.steal-mode:not(.my-creature) {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ctext y='28' font-size='28'%3E🫳%3C/text%3E%3C/svg%3E") 16 16, grab !important;
+}
+.student-card.steal-mode:not(.my-creature):hover .card-inner {
+    box-shadow: 0 0 0 3px #ab47bc, 0 0 14px rgba(171,71,188,0.5);
+    transform: scale(1.03);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
 .student-card.pick-mode:not(.my-creature):hover .card-inner {
     box-shadow: 0 0 0 3px #43a047, 0 0 14px rgba(67,160,71,0.4);
     transform: scale(1.03);
@@ -863,7 +871,7 @@ const CREATURE_SEED_DATA = [
     { typeId:'hlz', label:'חילזון התכלת', attack1:'מכחול טועה 🎨',     attack2:'מברשת קטלנית 🖌️',    attack3:'צביעת נשמה 🌈',        icon1:'', icon2:'', icon3:'' },
 ];
 
-let battleState = { selectedSkill:null, pendingBattleId:null, pendingBattle:null };
+let battleState = { selectedSkill:null, pendingBattleId:null, pendingBattle:null, stealMode:false, stealCallback:null };
 const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
 let allStudents=[], allTasks=[], editingTaskId=null, currentTaskToSubmit=null;
 let currentUser = localStorage.getItem('farm_user_id') || null;
@@ -1820,7 +1828,8 @@ function buildBattleSidebar(me) {
         document.body.appendChild(sidebar);
     }
     
-    sidebar.innerHTML=`<div class="sidebar-title">⚔️ בחר מתקפה:</div>`;
+    const wasOpen = sidebar.classList.contains('open');
+    sidebar.classList.remove('open');
     
     attacks.forEach(atk => {
         const name=typeof atk==='object'?atk.name:atk;
@@ -1867,7 +1876,8 @@ function buildBattleSidebar(me) {
         sidebar.appendChild(btn);
     });
 
-    sidebar.style.display = 'flex';
+    // שומרים על מצב פתוח/סגור כפי שהיה לפני הבנייה מחדש
+    if (wasOpen) sidebar.classList.add('open');
 
     // עדכון כפתור היכולת הנפרד
     const skillFloatBtn = document.getElementById('skill-float-btn');
@@ -1965,13 +1975,37 @@ function enterPickMode(skill) {
     document.getElementById('battle-pick-banner').classList.add('visible');
     document.querySelectorAll('.student-card').forEach(c=>c.classList.add('pick-mode'));
 }
+function enterStealMode(callback) {
+    battleState.stealMode = true;
+    battleState.stealCallback = callback;
+    document.getElementById('battle-pick-banner').innerText = '🫳 בחר תלמיד לקחת ממנו XP — לחץ כאן לביטול';
+    document.getElementById('battle-pick-banner').classList.add('visible');
+    document.querySelectorAll('.student-card').forEach(c => c.classList.add('steal-mode'));
+}
+function cancelSteal() {
+    battleState.stealMode = false;
+    battleState.stealCallback = null;
+    document.getElementById('battle-pick-banner').innerText = '🎯 בחר כרטיס תלמיד לתקוף — לחץ כאן לביטול';
+    document.getElementById('battle-pick-banner').classList.remove('visible');
+    document.querySelectorAll('.student-card').forEach(c => c.classList.remove('steal-mode'));
+}
 function cancelAttack() {
+    if (battleState.stealMode) { cancelSteal(); return; }
     battleState.selectedSkill=null;
+    document.getElementById('battle-pick-banner').innerText = '🎯 בחר כרטיס תלמיד לתקוף — לחץ כאן לביטול';
     document.getElementById('battle-pick-banner').classList.remove('visible');
     document.querySelectorAll('.student-card').forEach(c=>c.classList.remove('pick-mode'));
     document.querySelectorAll('.shields-overlay').forEach(o=>o.classList.remove('visible'));
 }
 function handleCardClick(event, cardEl, studentId) {
+    if (battleState.stealMode) {
+        if (studentId === currentUser) return;
+        event.stopPropagation();
+        const cb = battleState.stealCallback;
+        cancelSteal();
+        if (cb) cb(studentId);
+        return;
+    }
     if (battleState.selectedSkill) {
         if (studentId===currentUser) return;
         event.stopPropagation();
