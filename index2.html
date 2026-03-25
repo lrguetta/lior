@@ -1842,13 +1842,16 @@ async function pickTargetShield(targetId, shieldIndex) {
     const target=allStudents.find(s=>s.id===targetId); if (!target) return;
     const broken=(target.history?.shields_broken||[]);
     if (broken.includes(shieldIndex)) { alert('מגן שבור!'); return; }
-    const active=Array.from({length:shieldsByLevel(target.level)},(_,i)=>i).filter(i=>!broken.includes(i));
-    const mine=active[Math.floor(Math.random()*active.length)];
+    
+    // התיקון: אנחנו לא מגרילים יותר! 
+    // mineIndex מקבל בדיוק את הערך של המגן שעליו התוקף בחר ללחוץ
+    const mine = parseInt(shieldIndex); 
+    
     cancelAttack();
     localStorage.setItem('last_attack_'+currentUser+'_'+skill, Date.now().toString());
     try {
         await dbSvc.createDocument(DB_ID,TABLES.battles,ID.unique(),{attackerId:currentUser,targetId,skill,mineIndex:mine,status:'pending'});
-        alert(`המתקפה נשלחה! 🚀\n${target.name} יראה זאת בכניסה הבאה.`);
+        alert(`המתקפה נשלחה לעבר המגן שבחרת! 🚀\n${target.name} יראה זאת בכניסה הבאה וייאלץ לנחש אותו.`);
     } catch(e) { alert(e.message); }
 }
 
@@ -1887,24 +1890,54 @@ async function resolveDefense(chosen, battle) {
     closeDefenseModal();
     const me=allStudents.find(s=>s.id===currentUser);
     const att=allStudents.find(s=>s.id===battle.attackerId);
-    if (!me||!att) return;
-    const hit=chosen===battle.mineIndex;
-    if (hit) {
-        const broken=[...(me.history.shields_broken||[])]; broken.push(battle.mineIndex);
+    if (!me) return;
+    
+    // התיקון: ההגנה תצליח (isBlocked) אך ורק אם המגן שנבחר שווה למגן שהתוקף סימן
+    const isBlocked = parseInt(chosen) === parseInt(battle.mineIndex);
+    
+    if (!isBlocked) { // פספוס של הנתקף -> המתקפה צלחה
+        const broken=[...(me.history.shields_broken||[])]; 
+        // מפילים לנתקף את המגן שהתוקף כיוון אליו
+        if (!broken.includes(battle.mineIndex)) {
+            broken.push(battle.mineIndex);
+        }
+        
         const history={...me.history}, allBroken=broken.length>=shieldsByLevel(me.level);
         let nxp=me.xp;
-        if (allBroken) { nxp=Math.max(0,me.xp-10); history.shields_broken=[]; history['battle_'+Date.now()]={msg:`💥 ${att.name} פגע. -10XP, מגינים חודשו`,xp:-10,time:Date.now()}; }
-        else           { history.shields_broken=broken; history['battle_'+Date.now()]={msg:`🛡️ ${att.name} הפיל מגן! (${battle.skill})`,xp:0,time:Date.now()}; }
+        
+        // שימוש ב- att?.name מונע קריסה אם התוקף נמחק
+        const attackerName = att?.name || 'תוקף לא ידוע';
+        
+        if (allBroken) { 
+            nxp=Math.max(0,me.xp-10); 
+            history.shields_broken=[]; 
+            history['battle_'+Date.now()]={msg:`💥 ${attackerName} פגע. -10XP, מגינים חודשו`,xp:-10,time:Date.now()}; 
+        } else { 
+            history.shields_broken=broken; 
+            history['battle_'+Date.now()]={msg:`🛡️ ${attackerName} הפיל מגן! (${battle.skill})`,xp:0,time:Date.now()}; 
+        }
+        
         await dbSvc.updateDocument(DB_ID,TABLES.students,currentUser,{xp:nxp,history:JSON.stringify(history)});
-        const xpR = Math.max(5, 10 * ((me.level || 1) - (att.level || 1))); ah={...att.history};
-        ah['win_'+Date.now()]={msg:`⚔️ פגעת ב-${me.name}! (+${xpR}XP)`,xp:xpR,time:Date.now()};
-        let ax=att.xp+xpR, al=att.level; while(ax>=100){al++;ax-=100;}
-        await dbSvc.updateDocument(DB_ID,TABLES.students,att.id,{xp:ax,level:al,history:JSON.stringify(ah)});
-        alert(allBroken?`💥 ${att.name} פגע! -10XP, מגינים חודשו.`:`🛡️ ${att.name} הפיל מגן!`);
-    } else alert(`✅ חסמת! המתקפה של ${att.name} נחסמה!`);
+        
+        // מעדכנים את ה-XP של התוקף רק אם הוא עדיין קיים במערכת (פותר את היתמות נתונים)
+        if (att) {
+            const xpR = Math.max(5, 10 * ((me.level || 1) - (att.level || 1))); 
+            const ah={...att.history};
+            ah['win_'+Date.now()]={msg:`⚔️ פגעת ב-${me.name}! (+${xpR}XP)`,xp:xpR,time:Date.now()};
+            let ax=att.xp+xpR, al=att.level; while(ax>=100){al++;ax-=100;}
+            await dbSvc.updateDocument(DB_ID,TABLES.students,att.id,{xp:ax,level:al,history:JSON.stringify(ah)});
+        }
+        
+        alert(allBroken ? `💥 ${attackerName} פגע בך! ספגת -10XP ומגיניך חודשו.` : `💥 פספסת! ${attackerName} הפיל לך מגן!`);
+    } else { // הצלחה של הנתקף
+        alert(`✅ אלופים! חסמת את המתקפה של ${att?.name || 'התוקף'} במדויק!`);
+    }
+    
+    // סגירת הקרב בכל מקרה, כדי שלא ייתקע
     try { await dbSvc.updateDocument(DB_ID,TABLES.battles,battle.$id,{status:'resolved'}); } catch(e){}
     await loadStudents();
 }
+    
 function updateCooldownDisplay() {
     if (!currentUser||currentUser==='admin') return;
     const me=allStudents.find(s=>s.id===currentUser);
