@@ -1829,7 +1829,7 @@ function buildBattleSidebar(me) {
     }
     
     const wasOpen = sidebar.classList.contains('open');
-    sidebar.classList.remove('open');
+    sidebar.innerHTML = `<div class="sidebar-title">⚔️ בחר מתקפה:</div>`;
     
     attacks.forEach(atk => {
         const name=typeof atk==='object'?atk.name:atk;
@@ -1837,46 +1837,57 @@ function buildBattleSidebar(me) {
         const btn=document.createElement('button');
         btn.className='attack-btn'; btn.title=name;
         
-        const last=parseInt(localStorage.getItem('last_attack_'+currentUser+'_'+name)||'0');
-        const rem=(15*60*1000)-(Date.now()-last);
-        const isOnCooldown = rem > 0;
-   
-        let m, s;
-        if (isOnCooldown) {
-            btn.style.cursor='not-allowed'; 
-            btn.style.position='relative';
-            m=String(Math.floor(rem/60000)).padStart(2,'0');
-            s=String(Math.floor((rem%60000)/1000)).padStart(2,'0');
-        }
+        const getLast = () => parseInt(localStorage.getItem('last_attack_'+currentUser+'_'+name)||'0');
+        const getRem  = () => (15*60*1000)-(Date.now()-getLast());
+        const isOnCooldown = () => getRem() > 0;
 
         if (icon) {
-            btn.style.background='none'; 
-            btn.style.border='none'; 
-            btn.style.padding='4px'; 
-            btn.style.boxShadow='none';
-            
-            let content = `<div style="position:relative; width:65px; height:65px; right:-25px; display:inline-block;">
-                <img src="${icon}" style="width:100%; height:100%; object-fit:contain; display:block;" onerror="this.style.display='none';if(this.nextSibling)this.nextSibling.style.display='block'">
-                <span style="display:none;font-size:0.8em;">${name}</span>`;
-                
-            if (isOnCooldown) {
-                content += `<div style="position:absolute; inset:0; background:rgba(30,30,30,0.7); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.9em; font-weight:bold; color:white; pointer-events:none;">${m}:${s}</div>`;
-            }
-            content += `</div>`;
-            btn.innerHTML = content;
-            
+            btn.style.cssText = 'background:none;border:none;padding:4px;box-shadow:none;position:relative;';
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = 'position:relative;width:65px;height:65px;right:-25px;display:inline-block;';
+            wrapper.innerHTML = `<img src="${icon}" style="width:100%;height:100%;object-fit:contain;display:block;" onerror="this.style.display='none';if(this.nextSibling)this.nextSibling.style.display='block'"><span style="display:none;font-size:0.8em;">${name}</span>`;
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'display:none;position:absolute;inset:0;background:rgba(30,30,30,0.7);border-radius:50%;align-items:center;justify-content:center;font-size:0.9em;font-weight:bold;color:white;pointer-events:none;';
+            wrapper.appendChild(overlay);
+            btn.appendChild(wrapper);
+            const tick = () => {
+                const rem = getRem();
+                if (rem > 0) {
+                    overlay.style.display = 'flex';
+                    btn.style.cursor = 'not-allowed';
+                    overlay.innerText = String(Math.floor(rem/60000)).padStart(2,'0')+':'+String(Math.floor((rem%60000)/1000)).padStart(2,'0');
+                    requestAnimationFrame(tick);
+                } else {
+                    overlay.style.display = 'none';
+                    btn.style.cursor = 'pointer';
+                }
+            };
+            tick();
         } else {
+            btn.style.position = 'relative';
             btn.textContent = name;
-            if (isOnCooldown) {
-                btn.innerHTML += `<div style="position:absolute; inset:0; background:rgba(30,30,30,0.7); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.85em; font-weight:bold; color:white; pointer-events:none;">${m}:${s}</div>`;
-            }
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'display:none;position:absolute;inset:0;background:rgba(30,30,30,0.7);border-radius:8px;align-items:center;justify-content:center;font-size:0.85em;font-weight:bold;color:white;pointer-events:none;';
+            btn.appendChild(overlay);
+            const tick = () => {
+                const rem = getRem();
+                if (rem > 0) {
+                    overlay.style.display = 'flex';
+                    btn.style.cursor = 'not-allowed';
+                    overlay.innerText = String(Math.floor(rem/60000)).padStart(2,'0')+':'+String(Math.floor((rem%60000)/1000)).padStart(2,'0');
+                    requestAnimationFrame(tick);
+                } else {
+                    overlay.style.display = 'none';
+                    btn.style.cursor = 'pointer';
+                }
+            };
+            tick();
         }
   
-        btn.onclick=()=> { if (!isOnCooldown) enterPickMode(name); };
+        btn.onclick=()=> { if (!isOnCooldown()) enterPickMode(name); };
         sidebar.appendChild(btn);
     });
 
-    // שומרים על מצב פתוח/סגור כפי שהיה לפני הבנייה מחדש
     if (wasOpen) sidebar.classList.add('open');
 
     // עדכון כפתור היכולת הנפרד
@@ -1887,35 +1898,29 @@ function buildBattleSidebar(me) {
 
         const oneHour = 3600000;
         const lastSkill = parseInt(me.last_skill || '0');
-        const remSkill = oneHour - (Date.now() - lastSkill);
 
-        // הסרת שכבת קולדאון קודמת אם קיימת
         const oldOverlay = skillFloatBtn.querySelector('.skill-cooldown-overlay');
         if (oldOverlay) oldOverlay.remove();
 
-        if (remSkill > 0) {
-            skillFloatBtn.style.cursor = 'not-allowed';
-            const overlay = document.createElement('div');
-            overlay.className = 'skill-cooldown-overlay';
-            overlay.style.cssText = 'position:absolute;inset:0;background:rgba(30,30,30,0.75);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72em;font-weight:bold;color:white;pointer-events:none;';
-            skillFloatBtn.style.position = 'relative';
-            const updateOverlay = () => {
-                const rem = oneHour - (Date.now() - lastSkill);
-                if (rem <= 0) {
-                    overlay.remove();
-                    skillFloatBtn.style.cursor = 'pointer';
-                    return;
-                }
-                const m = String(Math.floor(rem / 60000)).padStart(2, '0');
-                const s = String(Math.floor((rem % 60000) / 1000)).padStart(2, '0');
-                overlay.innerText = `${m}:${s}`;
-                requestAnimationFrame(updateOverlay);
-            };
-            updateOverlay();
-            skillFloatBtn.appendChild(overlay);
-        } else {
-            skillFloatBtn.style.cursor = 'pointer';
-        }
+        const overlay = document.createElement('div');
+        overlay.className = 'skill-cooldown-overlay';
+        overlay.style.cssText = 'display:none;position:absolute;inset:0;background:rgba(30,30,30,0.75);border-radius:50%;align-items:center;justify-content:center;font-size:0.72em;font-weight:bold;color:white;pointer-events:none;';
+        skillFloatBtn.style.position = 'relative';
+        skillFloatBtn.appendChild(overlay);
+
+        const tickSkill = () => {
+            const rem = oneHour - (Date.now() - lastSkill);
+            if (rem > 0) {
+                overlay.style.display = 'flex';
+                skillFloatBtn.style.cursor = 'not-allowed';
+                overlay.innerText = String(Math.floor(rem/60000)).padStart(2,'0')+':'+String(Math.floor((rem%60000)/1000)).padStart(2,'0');
+                requestAnimationFrame(tickSkill);
+            } else {
+                overlay.style.display = 'none';
+                skillFloatBtn.style.cursor = 'pointer';
+            }
+        };
+        tickSkill();
     }
 }
 
