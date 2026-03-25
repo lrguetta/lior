@@ -755,9 +755,9 @@ button {
 <div id="deck-modal-overlay" onclick="closeDeck()"></div>
 <div id="deck-modal">
     <div style="font-size:2.5em; margin-bottom:10px; text-align:center;">🎴</div>
-    <h3 style="margin:0 0 15px 0; color:#1976d2; text-align:center;">מחסן הדמויות של <span id="deck-student-name"></span></h3>
+    <h3 style="margin:0 0 15px 0; color:#1976d2; text-align:center;">הקבוצה של <span id="deck-student-name"></span></h3>
     <div id="deck-list" style="display:flex; gap:15px; overflow-x:auto; padding-bottom:15px; justify-content:center;"></div>
-    <button onclick="closeDeck()" style="margin-top:15px; background:#999; width:100%; padding:10px; border-radius:10px;">סגור מחסן</button>
+    <button onclick="closeDeck()" style="margin-top:15px; background:#999; width:100%; padding:10px; border-radius:10px;">סגור חפיסה</button>
 </div>
 
 <div id="submit-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:25px; border-radius:15px; box-shadow:0 0 30px rgba(0,0,0,0.5); z-index:1000; width:90%; max-width:500px; max-height:85vh; overflow-y:auto; text-align:right; border:3px solid #1976d2;">
@@ -1183,7 +1183,7 @@ function openDeck(name) {
     const myCards = allStudents.filter(s => s.name === name);
     
     if(myCards.length <= 1 && currentUser !== 'admin') {
-        alert("אין לך דמויות נוספות במחסן.");
+        alert("אין לך דמויות נוספות בחפיסה.");
         return;
     }
     
@@ -1331,7 +1331,7 @@ onclick="event.stopPropagation();addXP('${s.id}')">
                     <div style="font-size:0.75em;color:#2e7d32;font-weight:bold;margin-top:5px;text-align:center;">
                         <span style="cursor:pointer;" onclick="event.stopPropagation(); event.currentTarget.closest('.student-card').classList.toggle('flipped')">🔄 לחץ להיפוך</span>
                         &nbsp;|&nbsp;
-                       <span style="cursor:pointer; color:#1976d2;" data-deckname="${s.name.replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); openDeck(this.dataset.deckname)">🎴 מחסן דמויות</span>
+                       <span style="cursor:pointer; color:#1976d2;" data-deckname="${s.name.replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); openDeck(this.dataset.deckname)">🎴 חפיסת דמויות</span>
                     </div>
                 </div>
             </div>
@@ -1973,7 +1973,7 @@ async function resolveDefense(chosen, battle) {
         
         alert(allBroken ? `💥 ${attackerName} פגע בך! ספגת -10XP ומגיניך חודשו.` : `💥 פספסת! ${attackerName} הפיל לך מגן!`);
     } else { // הצלחה של הנתקף
-        alert(`✅ אלופים! חסמת את המתקפה של ${att?.name || 'התוקף'} במדויק!`);
+        alert(`✅ אלוף! חסמת את המתקפה של ${att?.name || 'התוקף'} במדויק!`);
     }
     
     // סגירת הקרב בכל מקרה, כדי שלא ייתקע
