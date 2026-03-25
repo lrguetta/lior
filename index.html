@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>חוות הטמגוצ'י - גרסת ניהול ותלמידים</title>
 <script src="https://cdn.jsdelivr.net/npm/appwrite@16.0.2/dist/iife/sdk.js"></script>
+<script src="skills.js"></script>
 <style>
 body { 
     font-family: 'Segoe UI', Tahoma, sans-serif;
@@ -1788,6 +1789,13 @@ async function saveCreatureField(docId, field, value) {
 
 // --- קרבות ---
 function buildBattleSidebar(me) {
+    // יכולות מיוחדות
+    const skillBtn = document.createElement('button');
+    skillBtn.className = 'action-btn skill-btn';
+    skillBtn.innerText = '✨ יכולת מיוחדת';
+    skillBtn.onclick = () => activateSpecialSkill(student);
+    sidebar.appendChild(skillBtn);
+    // כפתור קרב
     const attacks = (ATTACKS_BY_TYPE[me.type]||[]).slice(0,attacksByLevel(me.level));
     const sidebar = document.getElementById('battle-sidebar');
     sidebar.innerHTML=`<div class="sidebar-title">⚔️ בחר מתקפה:</div>`;
@@ -1840,6 +1848,51 @@ function toggleBattleSidebar() {
     const sb=document.getElementById('battle-sidebar'), btn=document.getElementById('battle-float-btn');
     sb.classList.toggle('open'); btn.classList.toggle('active', sb.classList.contains('open'));
 }
+    
+async function activateSpecialSkill(student) {
+    const now = Date.now();
+    const oneHour = 60 * 60 * 1000;
+
+    // בדיקת Cooldown (נשמר בתוך שדה history של הסטודנט)
+    let history = JSON.parse(student.history || "{}");
+    if (history.last_skill_use && (now - history.last_skill_use < oneHour)) {
+        const remaining = Math.ceil((oneHour - (now - history.last_skill_use)) / 60000);
+        alert(`היכולת בטעינה... נותרו עוד ${remaining} דקות.`);
+        return;
+    }
+
+    const skillFn = CreatureSkills[student.creature_type];
+    if (!skillFn) {
+        alert("לדמות זו אין עדיין יכולת מיוחדת!");
+        return;
+    }
+
+    try {
+        // במידה והיכולת דורשת מטרה (כמו העורב)
+        let target = null;
+        if (student.creature_type === "עורב העסקים") {
+            const targetId = prompt("הכנס את שם התלמיד שממנו תרצה לקחת XP:");
+            target = allStudents.find(s => s.name === targetId);
+            if (!target) return alert("תלמיד לא נמצא.");
+        }
+
+        // הפעלת היכולת מהקובץ החיצוני
+        const result = await skillFn(student, target, dbSvc, DB_ID, TABLES);
+
+        // עדכון זמן השימוש האחרון ב-DB
+        history.last_skill_use = now;
+        await dbSvc.updateDocument(DB_ID, TABLES.students, student.id, { 
+            history: JSON.stringify(history) 
+        });
+
+        alert(result.message);
+        loadStudents(); // רענון הנתונים במסך
+    } catch (e) {
+        console.error(e);
+        alert("שגיאה בהפעלת היכולת.");
+    }
+}
+    
 function enterPickMode(skill) {
     const last=parseInt(localStorage.getItem('last_attack_'+currentUser+'_'+skill)||'0');
     if ((15*60*1000)-(Date.now()-last)>0) return;
