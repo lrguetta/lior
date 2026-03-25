@@ -429,6 +429,27 @@ button {
 #battle-float-btn:hover { transform: scale(1.12); box-shadow: 0 6px 20px rgba(229,57,53,0.6); }
 #battle-float-btn.active { background: linear-gradient(135deg, #ffd600, #ff6f00); }
 
+#skill-float-btn {
+    display: none;
+    position: fixed;
+    top: 88px;
+    left: 14px;
+    width: 64px;
+    height: 64px;
+    font-size: 1.5em;
+    z-index: 500;
+    background: linear-gradient(135deg, #ab47bc, #6a1b9a);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(106,27,154,0.5);
+    transition: transform 0.2s, box-shadow 0.2s;
+    align-items: center;
+    justify-content: center;
+}
+#skill-float-btn:hover { transform: scale(1.12); box-shadow: 0 6px 20px rgba(106,27,154,0.6); }
+
 #battle-sidebar {
     display: none;
     position: fixed;
@@ -796,6 +817,7 @@ button {
 </div>
 
 <button id="battle-float-btn" onclick="toggleBattleSidebar()" title="תקוף תלמיד!">⚔️</button>
+<button id="skill-float-btn" title="יכולת מיוחדת">✨</button>
 <div id="battle-sidebar"><div class="sidebar-title">⚔️ בחר מתקפה:</div></div>
 <div id="battle-pick-banner" onclick="cancelAttack()">🎯 בחר כרטיס תלמיד לתקוף — לחץ כאן לביטול</div>
 
@@ -1845,18 +1867,46 @@ function buildBattleSidebar(me) {
         sidebar.appendChild(btn);
     });
 
-    const skillBtn = document.createElement('button');
-    skillBtn.className = 'attack-btn';
-    skillBtn.style.background = 'linear-gradient(135deg, #ab47bc, #6a1b9a)'; 
-    skillBtn.style.color = 'white';
-    skillBtn.style.marginTop = '15px';
-    skillBtn.style.width = '85%';
-    skillBtn.style.alignSelf = 'center';
-    skillBtn.innerText = '✨ יכולת';
-    skillBtn.onclick = () => activateSpecialSkill(me);
-    sidebar.appendChild(skillBtn);
-    
     sidebar.style.display = 'flex';
+
+    // עדכון כפתור היכולת הנפרד
+    const skillFloatBtn = document.getElementById('skill-float-btn');
+    if (skillFloatBtn) {
+        skillFloatBtn.onclick = () => activateSpecialSkill(me);
+        skillFloatBtn.style.display = 'flex';
+
+        const oneHour = 3600000;
+        const lastSkill = parseInt(me.last_skill || '0');
+        const remSkill = oneHour - (Date.now() - lastSkill);
+
+        // הסרת שכבת קולדאון קודמת אם קיימת
+        const oldOverlay = skillFloatBtn.querySelector('.skill-cooldown-overlay');
+        if (oldOverlay) oldOverlay.remove();
+
+        if (remSkill > 0) {
+            skillFloatBtn.style.cursor = 'not-allowed';
+            const overlay = document.createElement('div');
+            overlay.className = 'skill-cooldown-overlay';
+            overlay.style.cssText = 'position:absolute;inset:0;background:rgba(30,30,30,0.75);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.72em;font-weight:bold;color:white;pointer-events:none;';
+            skillFloatBtn.style.position = 'relative';
+            const updateOverlay = () => {
+                const rem = oneHour - (Date.now() - lastSkill);
+                if (rem <= 0) {
+                    overlay.remove();
+                    skillFloatBtn.style.cursor = 'pointer';
+                    return;
+                }
+                const m = String(Math.floor(rem / 60000)).padStart(2, '0');
+                const s = String(Math.floor((rem % 60000) / 1000)).padStart(2, '0');
+                overlay.innerText = `${m}:${s}`;
+                requestAnimationFrame(updateOverlay);
+            };
+            updateOverlay();
+            skillFloatBtn.appendChild(overlay);
+        } else {
+            skillFloatBtn.style.cursor = 'pointer';
+        }
+    }
 }
 
 async function activateSpecialSkill(student) {
@@ -1864,9 +1914,7 @@ async function activateSpecialSkill(student) {
     const oneHour = 3600000;
 
     if (student.last_skill && (now - parseInt(student.last_skill) < oneHour)) {
-        const remainingMins = Math.ceil((oneHour - (now - parseInt(student.last_skill))) / 60000);
-        alert(`היכולת בטעינה... נותרו עוד ${remainingMins} דקות.`);
-        return;
+        return; // הקולדאון הויזואלי על הכפתור מטפל בזה
     }
 
     if (typeof CreatureSkills === 'undefined') {
@@ -1897,6 +1945,7 @@ async function activateSpecialSkill(student) {
         
         student.last_skill = now.toString(); 
         alert(result.message);
+        buildBattleSidebar(student); // מרענן את הקולדאון על הכפתור מיד
         loadStudents(); 
     } catch (e) {
         console.error("Skill Error:", e);
