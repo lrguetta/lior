@@ -1905,7 +1905,6 @@ function buildBattleSidebar(me) {
         const overlay = document.createElement('div');
         overlay.className = 'skill-cooldown-overlay';
         overlay.style.cssText = 'display:none;position:absolute;inset:0;background:rgba(30,30,30,0.75);border-radius:50%;align-items:center;justify-content:center;font-size:0.72em;font-weight:bold;color:white;pointer-events:none;';
-        skillFloatBtn.style.position = 'relative';
         skillFloatBtn.appendChild(overlay);
 
         const tickSkill = () => {
