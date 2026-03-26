@@ -1,14 +1,14 @@
-// skills.js - המנוע המלא של כל היכולות (גרסה סופית ומדויקת)
+// skills.js - המנוע המלא והסופי של כל היכולות
 var CreatureSkills = CreatureSkills || {
-    // 1. חתול - הפחתת XP
+    // 1. חתול - הפחתת XP (בחירה בלחיצה)
     "cat": {
         action: async (ctx) => {
-            const targetName = prompt("ממי תרצה להפחית 15 XP? (הכנס שם מדויק)");
-            if (!targetName) return null;
-            const target = ctx.allStudents.find(s => s.name === targetName);
-            if (!target) { alert("תלמיד לא נמצא"); return null; }
+            const target = await ctx.utils.pickStudent("בחר תלמיד להפחתת 15 XP ⚔️");
+            if (!target) return null;
             if (Math.random() > 0.5) {
-                await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, target.id, { xp: Math.max(0, target.xp - 15) });
+                await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, target.id, { 
+                    xp: Math.max(0, target.xp - 15) 
+                });
                 return { message: `⚔️ הצלחה! ${target.name} איבד 15 XP.` };
             }
             return { message: "💨 הפספוס! לא קרה כלום." };
@@ -51,7 +51,7 @@ var CreatureSkills = CreatureSkills || {
         }
     },
 
-    // 4. ארנב - קאונטר (תוקן שם המשתנה naxp)
+    // 4. ארנב - קאונטר
     "rbt": {
         action: async (ctx) => {
             let h = ctx.utils.getHistory(ctx.attacker);
@@ -72,18 +72,17 @@ var CreatureSkills = CreatureSkills || {
         }
     },
 
-    // 5. כבשה - התחזות
+    // 5. כבשה - התחזות (בחירה בלחיצה)
     "shp": {
         action: async (ctx) => {
-            const targetName = prompt("למי תרצה להתחפש?");
-            const target = ctx.allStudents.find(s => s.name === targetName);
+            const target = await ctx.utils.pickStudent("למי תרצה להתחפש? 🐑");
             if (!target) return null;
             sessionStorage.setItem('fake_identity', JSON.stringify({ name: target.name, type: target.type }));
             return { message: `🐺 התחפשת ל-${target.name}!` };
         }
     },
 
-    // 6. פרה - עזרה ראשונה (הוספת XP וחידוש מגינים)
+    // 6. פרה - עזרה ראשונה (ריפוי + XP)
     "cow": {
         action: async (ctx) => {
             let h = ctx.utils.getHistory(ctx.attacker);
@@ -97,17 +96,18 @@ var CreatureSkills = CreatureSkills || {
                 level: newLevel, 
                 history: JSON.stringify(h) 
             });
-            return { message: "🐄 מוווו! קיבלת 15 XP והמגינים שלך חודשו!" };
+            return { message: "🐄 מוווו! המגינים שלך חודשו וקיבלת 15 XP!" };
         }
     },
 
-    // 7. זברה - קללת השתיקה
+    // 7. זברה - קללת השתיקה (בחירה בלחיצה)
     "zbr": {
         action: async (ctx) => {
-            const targetName = prompt("את מי תרצה להשתיק?");
-            const target = ctx.allStudents.find(s => s.name === targetName);
+            const target = await ctx.utils.pickStudent("את מי תרצה להשתיק? 🔮");
             if (!target) return null;
-            await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, target.id, { last_skill: Date.now().toString() });
+            await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, target.id, { 
+                last_skill: Date.now().toString() 
+            });
             return { message: `🔮 ${target.name} הושתק!` };
         }
     },
@@ -132,18 +132,15 @@ var CreatureSkills = CreatureSkills || {
         }
     },
 
-    // 9. עורב - גניבת XP (נוסף עדכון רמה)
+    // 9. עורב - גניבת XP (בחירה בלחיצה)
     "crw": {
         action: async (ctx) => {
-            const targetName = prompt("ממי תרצה לגנוב?");
-            const target = ctx.allStudents.find(s => s.name === targetName);
-            if (!target) return null;
+            const target = await ctx.utils.pickStudent("ממי תרצה לגנוב? 🦅");
+            if (!target || target.id === ctx.attacker.id) return null;
             const amount = Math.min(Math.floor(Math.random() * 21) + 10, target.xp);
-            
             let myNewXP = ctx.attacker.xp + amount;
             let myNewLevel = ctx.attacker.level || 1;
             while (myNewXP >= 100) { myNewLevel++; myNewXP -= 100; }
-
             await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, ctx.attacker.id, { xp: myNewXP, level: myNewLevel });
             await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, target.id, { xp: target.xp - amount });
             return { message: `גנבת ${amount} XP מ-${target.name}!` };
