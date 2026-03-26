@@ -1,4 +1,4 @@
-// skills.js - המנוע המלא של כל היכולות
+// skills.js - המנוע המלא של כל היכולות (גרסה סופית ומדויקת)
 var CreatureSkills = CreatureSkills || {
     // 1. חתול - הפחתת XP
     "cat": {
@@ -51,7 +51,7 @@ var CreatureSkills = CreatureSkills || {
         }
     },
 
-    // 4. ארנב - קאונטר
+    // 4. ארנב - קאונטר (תוקן שם המשתנה naxp)
     "rbt": {
         action: async (ctx) => {
             let h = ctx.utils.getHistory(ctx.attacker);
@@ -87,21 +87,16 @@ var CreatureSkills = CreatureSkills || {
     "cow": {
         action: async (ctx) => {
             let h = ctx.utils.getHistory(ctx.attacker);
-            
-            // לוגיקה: מוסיפים 15 XP ומאפסים מגינים שבורים
             let newXP = ctx.attacker.xp + 15;
             let newLevel = ctx.attacker.level || 1;
             while (newXP >= 100) { newLevel++; newXP -= 100; }
-            
-            h.shields_broken = []; // ריפוי מגינים
+            h.shields_broken = []; 
             h['skill_'+Date.now()] = { msg: "🐄 השתמשת בעזרה ראשונה (+15XP)", xp: 15, time: Date.now() };
-
             await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, ctx.attacker.id, { 
                 xp: newXP, 
                 level: newLevel, 
                 history: JSON.stringify(h) 
             });
-            
             return { message: "🐄 מוווו! קיבלת 15 XP והמגינים שלך חודשו!" };
         }
     },
@@ -137,32 +132,33 @@ var CreatureSkills = CreatureSkills || {
         }
     },
 
-    // 9. עורב - גניבת XP
+    // 9. עורב - גניבת XP (נוסף עדכון רמה)
     "crw": {
         action: async (ctx) => {
             const targetName = prompt("ממי תרצה לגנוב?");
             const target = ctx.allStudents.find(s => s.name === targetName);
             if (!target) return null;
             const amount = Math.min(Math.floor(Math.random() * 21) + 10, target.xp);
-            await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, ctx.attacker.id, { xp: ctx.attacker.xp + amount });
+            
+            let myNewXP = ctx.attacker.xp + amount;
+            let myNewLevel = ctx.attacker.level || 1;
+            while (myNewXP >= 100) { myNewLevel++; myNewXP -= 100; }
+
+            await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, ctx.attacker.id, { xp: myNewXP, level: myNewLevel });
             await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, target.id, { xp: target.xp - amount });
             return { message: `גנבת ${amount} XP מ-${target.name}!` };
         }
     },
 
-  // 10. כלב ציד - הכנת הגנה כפולה
+    // 10. כלב ציד - הכנת הגנה כפולה
     "hnd": {
         action: async (ctx) => {
             let h = ctx.utils.getHistory(ctx.attacker);
-            
-            // לוגיקה: מדליקים סימון ב-history שיישמר בשרת
             h.double_shield_active = true;
-            
             await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, ctx.attacker.id, { 
                 history: JSON.stringify(h) 
             });
-            
             return { message: "🐕 הכלב יצא לסיור! בקרב הבא תוכל לבחור 2 מגינים." };
         }
-        // לכלב אין onDefense כי הבחירה הכפולה קורית ב-UI לפני שהקרב נפתר
-    },
+    }
+};
