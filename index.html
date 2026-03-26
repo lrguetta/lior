@@ -1930,77 +1930,95 @@ async function activateSpecialSkill(student) {
 
     // 1. בדיקת קולדאון
     if (student.last_skill && (now - parseInt(student.last_skill) < oneHour)) {
-        return; 
+        return;
     }
 
-    // 2. בדיקה שהקובץ נטען
     if (typeof CreatureSkills === 'undefined') {
         alert("שגיאה: קובץ skills.js לא נטען!");
         return;
     }
 
-    // 3. שליפת האובייקט של החיה
     const skillObj = CreatureSkills[student.type];
-    
-    // בדיקה האם האובייקט קיים והאם יש לו פעולה (action)
     if (!skillObj || typeof skillObj.action !== 'function') {
         alert("לדמות זו אין עדיין יכולת מיוחדת פעילה.");
         return;
     }
 
     try {
-        // 4. בניית ה-Context (ארגז הכלים) עבור הסקריפט
         const ctx = {
-    attacker: student,
-    allStudents: allStudents,
-    dbSvc: dbSvc,
-    DB_ID: DB_ID,
-    TABLES: TABLES,
-    utils: {
-        // פונקציית עזר להיסטוריה - תמיד תהיה זמינה לכל חיה
-        getHistory: (s) => {
-            try { return typeof s.history === 'string' ? JSON.parse(s.history || "{}") : (s.history || {}); }
-            catch (e) { return {}; }
-        },
-        // פונקציית בחירת תלמיד - תשתית שתשמש כל חיה שתצטרך מטרה
-        pickStudent: (instruction) => {
-            return new Promise((resolve) => {
-                alert(instruction);
-                const cards = document.querySelectorAll('.student-card');
-                document.body.style.cursor = "crosshair";
-                
-                cards.forEach(card => {
-                    card.style.outline = "3px dashed gold"; // סימון ויזואלי
-                    card.onclick = () => {
-                        document.body.style.cursor = "default";
-                        cards.forEach(c => { c.style.outline = ""; c.onclick = null; });
-                        const targetId = card.getAttribute('data-id');
-                        resolve(allStudents.find(s => s.id === targetId));
-                    };
-                });
-            });
-        }
-    }
-};
+            attacker: student,
+            allStudents: allStudents,
+            dbSvc: dbSvc,
+            DB_ID: DB_ID,
+            TABLES: TABLES,
+            utils: {
+                getHistory: (s) => {
+                    try { return typeof s.history === 'string' ? JSON.parse(s.history || "{}") : (s.history || {}); }
+                    catch (e) { return {}; }
+                },
+                pickStudent: (instruction) => {
+                    return new Promise((resolve) => {
+                        // יצירת הודעה צפה שלא עוצרת את הדפדפן כמו Alert
+                        const toast = document.createElement('div');
+                        toast.innerHTML = `<strong>${instruction}</strong><br><small>לחץ על כרטיס תלמיד, או לחץ Esc לביטול</small>`;
+                        toast.style = "position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#333; color:white; padding:15px; border-radius:10px; z-index:9999; border:2px solid gold; text-align:center;";
+                        document.body.appendChild(toast);
 
-        // 5. הפעלת היכולת (שימוש ב-.action!)
+                        const cards = document.querySelectorAll('.student-card');
+                        document.body.style.cursor = "crosshair";
+                        
+                        // פונקציית ניקוי בסיום
+                        const cleanup = () => {
+                            document.body.style.cursor = "default";
+                            if (toast.parentNode) toast.remove();
+                            cards.forEach(c => {
+                                c.style.outline = "";
+                                c.removeEventListener('click', c._skillHandler, true); // מסיר את מאזין הלחיצות
+                            });
+                            window.removeEventListener('keydown', handleEsc);
+                        };
+
+                        // ביטול עם Esc
+                        const handleEsc = (e) => { if (e.key === "Escape") { cleanup(); resolve(null); } };
+                        window.addEventListener('keydown', handleEsc);
+                        
+                        cards.forEach(card => {
+                            card.style.outline = "4px dashed gold"; // סימון עבה יותר שרואים היטב
+                            
+                            // מאזין אירועים שתופס את הלחיצה *לפני* שהכרטיס מתהפך
+                            card._skillHandler = (e) => {
+                                e.preventDefault();
+                                e.stopPropagation(); 
+                                
+                                // התיקון הגדול - קריאה מ-data-sid!
+                                const targetId = card.getAttribute('data-sid'); 
+                                const target = allStudents.find(s => s.id === targetId);
+                                
+                                cleanup();
+                                resolve(target);
+                            };
+                            
+                            // true = ללכוד את הלחיצה בשלב ה-Capture (חוסם אלמנטים פנימיים)
+                            card.addEventListener('click', card._skillHandler, true);
+                        });
+                    });
+                }
+            }
+        };
+
         const result = await skillObj.action(ctx);
+        if (!result) return; // עצירה אם בוטל או נכשל
 
-        if (!result) return; 
-
-        // 6. עדכון זמן שימוש אחרון בשרת
         await dbSvc.updateDocument(DB_ID, TABLES.students, student.id, { 
             last_skill: now.toString() 
         });
-        
         student.last_skill = now.toString(); 
         
-        // 7. הודעה למשתמש וריענון ויזואלי
         if (result.message) {
             alert(result.message);
         }
         
-        if (typeof buildBattleSidebar === 'function') buildBattleSidebar(student); 
+        if (typeof buildBattleSidebar === 'function') buildBattleSidebar(student);
         if (typeof loadStudents === 'function') loadStudents(); 
 
     } catch (e) {
