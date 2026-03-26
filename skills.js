@@ -1,4 +1,4 @@
-// skills.js - המנוע הדינמי של החווה
+// skills.js - המנוע המלא של כל היכולות
 var CreatureSkills = CreatureSkills || {
     // 1. חתול - הפחתת XP
     "cat": {
@@ -43,8 +43,9 @@ var CreatureSkills = CreatureSkills || {
         },
         onDefense: async (ctx) => {
             if (ctx.me.history.steel_armor_until && Date.now() < ctx.me.history.steel_armor_until) {
-                alert("🐢 השריון הדף את המתקפה אוטומטית!");
-                return { stop: true }; // חסימה אוטומטית
+                const mins = Math.ceil((ctx.me.history.steel_armor_until - Date.now()) / 60000);
+                alert(`🐢 שריון הפלדה הדף את המתקפה! (נותרו ${mins} דקות)`);
+                return { stop: true };
             }
             return { stop: false };
         }
@@ -59,14 +60,13 @@ var CreatureSkills = CreatureSkills || {
             return { message: "🐇 קאונטר הופעל!" };
         },
         onDefense: async (ctx) => {
-            if (ctx.me.history.counter_active && !ctx.isBlocked) {
+            if (ctx.me.history.counter_active && !ctx.isBlocked && ctx.att) {
                 ctx.me.history.counter_active = false;
-                if (ctx.att) {
-                    let ah = ctx.utils.getHistory(ctx.att);
-                    ah['counter_'+Date.now()] = { msg: `🐇 ננשכת ע"י קאונטר!`, xp: -15, time: Date.now() };
-                    await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, ctx.att.id, { xp: Math.max(0, ctx.att.xp - 15), history: JSON.stringify(ah) });
-                }
-                alert("🐇 קאונטר! התוקף ספג נזק חזרה.");
+                let ah = ctx.utils.getHistory(ctx.att);
+                const naxp = Math.max(0, ctx.att.xp - 15);
+                ah['counter_'+Date.now()] = {msg:`🐇 קאונטר מ-${ctx.me.name}!`, xp:-15, time:Date.now()};
+                await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, ctx.att.id, {xp: naxp, history: JSON.stringify(ah)});
+                alert("🐇 קאונטר הופעל! התוקף ספג נזק.");
             }
             return { stop: false };
         }
@@ -83,24 +83,37 @@ var CreatureSkills = CreatureSkills || {
         }
     },
 
-    // 6. פרה - עזרה ראשונה
+    // 6. פרה - עזרה ראשונה (הוספת XP וחידוש מגינים)
     "cow": {
         action: async (ctx) => {
             let h = ctx.utils.getHistory(ctx.attacker);
-            h.shields_broken = []; 
-            await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, ctx.attacker.id, { history: JSON.stringify(h) });
-            return { message: "🩺 המגינים שלך חודשו." };
+            
+            // לוגיקה: מוסיפים 15 XP ומאפסים מגינים שבורים
+            let newXP = ctx.attacker.xp + 15;
+            let newLevel = ctx.attacker.level || 1;
+            while (newXP >= 100) { newLevel++; newXP -= 100; }
+            
+            h.shields_broken = []; // ריפוי מגינים
+            h['skill_'+Date.now()] = { msg: "🐄 השתמשת בעזרה ראשונה (+15XP)", xp: 15, time: Date.now() };
+
+            await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, ctx.attacker.id, { 
+                xp: newXP, 
+                level: newLevel, 
+                history: JSON.stringify(h) 
+            });
+            
+            return { message: "🐄 מוווו! קיבלת 15 XP והמגינים שלך חודשו!" };
         }
     },
 
-    // 7. זברה - השתקה
+    // 7. זברה - קללת השתיקה
     "zbr": {
         action: async (ctx) => {
             const targetName = prompt("את מי תרצה להשתיק?");
             const target = ctx.allStudents.find(s => s.name === targetName);
             if (!target) return null;
             await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, target.id, { last_skill: Date.now().toString() });
-            return { message: `🔮 הכישוף הצליח! ${target.name} הושתק.` };
+            return { message: `🔮 ${target.name} הושתק!` };
         }
     },
 
@@ -110,24 +123,24 @@ var CreatureSkills = CreatureSkills || {
             let h = ctx.utils.getHistory(ctx.attacker);
             h.spider_trap = true;
             await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, ctx.attacker.id, { history: JSON.stringify(h) });
-            return { message: "🕸️ רשת נטוויה!" };
+            return { message: "🕸️ טווית רשת!" };
         },
         onDefense: async (ctx) => {
             if (ctx.me.history.spider_trap && !ctx.isBlocked && ctx.att) {
                 ctx.me.history.spider_trap = false;
                 let ah = ctx.utils.getHistory(ctx.att);
-                ah['spider_blocked_'+Date.now()] = { msg: `🕸️ נלכדת ברשת!`, xp: 0, time: Date.now() };
+                ah['spider_blocked_'+Date.now()] = {msg:`🕸️ נלכדת ברשת!`, xp:0, time:Date.now()};
                 await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, ctx.att.id, { history: JSON.stringify(ah) });
-                alert(`🕸️ ${ctx.att.name} נלכד ברשת וקורקע!`);
+                alert(`🕸️ ${ctx.att.name} נלכד ברשת!`);
             }
             return { stop: false };
         }
     },
 
-    // 9. עורב - גניבה
+    // 9. עורב - גניבת XP
     "crw": {
         action: async (ctx) => {
-            const targetName = prompt("ממי לגנוב?");
+            const targetName = prompt("ממי תרצה לגנוב?");
             const target = ctx.allStudents.find(s => s.name === targetName);
             if (!target) return null;
             const amount = Math.min(Math.floor(Math.random() * 21) + 10, target.xp);
@@ -137,11 +150,19 @@ var CreatureSkills = CreatureSkills || {
         }
     },
 
-    // 10. כלב ציד
+  // 10. כלב ציד - הכנת הגנה כפולה
     "hnd": {
         action: async (ctx) => {
-            sessionStorage.setItem('next_attack_double_shield', 'true');
-            return { message: "הכלב מוכן לקרב הבא!" };
+            let h = ctx.utils.getHistory(ctx.attacker);
+            
+            // לוגיקה: מדליקים סימון ב-history שיישמר בשרת
+            h.double_shield_active = true;
+            
+            await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, ctx.attacker.id, { 
+                history: JSON.stringify(h) 
+            });
+            
+            return { message: "🐕 הכלב יצא לסיור! בקרב הבא תוכל לבחור 2 מגינים." };
         }
-    }
-};
+        // לכלב אין onDefense כי הבחירה הכפולה קורית ב-UI לפני שהקרב נפתר
+    },
