@@ -1951,20 +1951,37 @@ async function activateSpecialSkill(student) {
     try {
         // 4. בניית ה-Context (ארגז הכלים) עבור הסקריפט
         const ctx = {
-            attacker: student,
-            allStudents: allStudents, // המשתנה הגלובלי שלך מה-HTML
-            dbSvc: dbSvc,
-            DB_ID: DB_ID,
-            TABLES: TABLES,
-            utils: {
-                // פונקציית עזר קריטית ש-skills.js מצפה לה
-                getHistory: (s) => {
-                    try {
-                        return typeof s.history === 'string' ? JSON.parse(s.history || "{}") : (s.history || {});
-                    } catch (e) { return {}; }
-                }
-            }
-        };
+    attacker: student,
+    allStudents: allStudents,
+    dbSvc: dbSvc,
+    DB_ID: DB_ID,
+    TABLES: TABLES,
+    utils: {
+        // פונקציית עזר להיסטוריה - תמיד תהיה זמינה לכל חיה
+        getHistory: (s) => {
+            try { return typeof s.history === 'string' ? JSON.parse(s.history || "{}") : (s.history || {}); }
+            catch (e) { return {}; }
+        },
+        // פונקציית בחירת תלמיד - תשתית שתשמש כל חיה שתצטרך מטרה
+        pickStudent: (instruction) => {
+            return new Promise((resolve) => {
+                alert(instruction);
+                const cards = document.querySelectorAll('.student-card');
+                document.body.style.cursor = "crosshair";
+                
+                cards.forEach(card => {
+                    card.style.outline = "3px dashed gold"; // סימון ויזואלי
+                    card.onclick = () => {
+                        document.body.style.cursor = "default";
+                        cards.forEach(c => { c.style.outline = ""; c.onclick = null; });
+                        const targetId = card.getAttribute('data-id');
+                        resolve(allStudents.find(s => s.id === targetId));
+                    };
+                });
+            });
+        }
+    }
+};
 
         // 5. הפעלת היכולת (שימוש ב-.action!)
         const result = await skillObj.action(ctx);
