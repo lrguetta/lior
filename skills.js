@@ -60,7 +60,8 @@ var CreatureSkills = CreatureSkills || {
 
         return { message: "🐇 מצב קאונטר הופעל! הנזק יחזור לתוקף הבא." };
     }
-};
+},
+    
 // 3. כבשה - התחזות
     "shp": async (ctx) => {
         const targetName = prompt("למי תרצה להתחפש? (הכנס שם של תלמיד אחר)");
