@@ -2090,6 +2090,19 @@ async function resolveDefense(chosen, battle) {
     const att=allStudents.find(s=>s.id===battle.attackerId);
     if (!me) return;
     
+    // שימוש ב- att?.name מונע קריסה אם התוקף נמחק
+    const attackerName = att?.name || 'תוקף לא ידוע';
+
+    // --- 🐢 שריון פלדה של הצב ---
+    // בודק אם השריון פעיל לפי הזמן שנשמר (10 דקות)
+    if (me.history && me.history.steel_armor_until && Date.now() < me.history.steel_armor_until) {
+        const minutesLeft = Math.ceil((me.history.steel_armor_until - Date.now()) / 60000);
+        alert(`🐢 שריון הפלדה הדף את המתקפה של ${attackerName} אוטומטית! נותרו עוד ${minutesLeft} דקות חסינות.`);
+        try { await dbSvc.updateDocument(DB_ID,TABLES.battles,battle.$id,{status:'resolved'}); } catch(e){}
+        await loadStudents();
+        return; // עוצרים כאן, התוקף לא פגע
+    }
+
     // התיקון: ההגנה תצליח (isBlocked) אך ורק אם המגן שנבחר שווה למגן שהתוקף סימן
     const isBlocked = parseInt(chosen) === parseInt(battle.mineIndex);
     
@@ -2103,9 +2116,6 @@ async function resolveDefense(chosen, battle) {
         const history={...me.history}, allBroken=broken.length>=shieldsByLevel(me.level);
         let nxp=me.xp;
         
-        // שימוש ב- att?.name מונע קריסה אם התוקף נמחק
-        const attackerName = att?.name || 'תוקף לא ידוע';
-        
         if (allBroken) { 
             nxp=Math.max(0,me.xp-10); 
             history.shields_broken=[]; 
@@ -2118,22 +2128,20 @@ async function resolveDefense(chosen, battle) {
         await dbSvc.updateDocument(DB_ID,TABLES.students,currentUser,{xp:nxp,history:JSON.stringify(history)});
         
         // בדיקת קאונטר ארנב
-        if (me.history.counter_active && att) {
-            me.history.counter_active = false;
+        if (history.counter_active && att) {
+            history.counter_active = false;
             const newAttackerXp = Math.max(0, att.xp - 15);
             const ah = {...att.history};
             ah['counter_'+Date.now()] = {msg:`🐇 קאונטר של ${me.name}! ספגת -15XP`, xp:-15, time:Date.now()};
             await dbSvc.updateDocument(DB_ID,TABLES.students,att.id,{xp:newAttackerXp,history:JSON.stringify(ah)});
-            await dbSvc.updateDocument(DB_ID,TABLES.students,currentUser,{history:JSON.stringify(me.history)});
+            await dbSvc.updateDocument(DB_ID,TABLES.students,currentUser,{history:JSON.stringify(history)}); // מתקן ל-history המעודכן
             alert(allBroken ? `💥 ${attackerName} פגע בך! אבל הקאונטר הופעל — הוא ספג 15XP נזק חזרה!` : `💥 פספסת! ${attackerName} הפיל מגן, אבל הקאונטר הופעל — הוא ספג 15XP נזק!`);
         }
         // בדיקת מלכודת עכביש
         else if (sessionStorage.getItem('spider_trap') === 'true' && att) {
             sessionStorage.removeItem('spider_trap');
             await dbSvc.updateDocument(DB_ID,TABLES.battles,battle.$id,{status:'resolved'});
-            // מבטלים את הקרב הבא של התוקף ע"י סימון last_skill שלו (שימוש חוזר בשדה קיים)
-            const blockedUntil = (Date.now() + 15*60*1000).toString();
-            // שומרים "חסימת תור" על התוקף דרך שדה ייעודי בhistory
+            // שומרים "חסימת תור" על התוקף דרך שדה ייעודי ב-history
             const ah = {...att.history};
             ah['spider_blocked_'+Date.now()] = {msg:`🕸️ נלכדת במלכודת של ${me.name}! תור מבוטל`, xp:0, time:Date.now()};
             await dbSvc.updateDocument(DB_ID,TABLES.students,att.id,{history:JSON.stringify(ah)});
@@ -2150,7 +2158,27 @@ async function resolveDefense(chosen, battle) {
             alert(allBroken ? `💥 ${attackerName} פגע בך! ספגת -10XP ומגיניך חודשו.` : `💥 פספסת! ${attackerName} הפיל לך מגן!`);
         }
     } else { // הצלחה של הנתקף
-        alert(`✅ אלופים! חסמת את המתקפה של ${att?.name || 'התוקף'} במדויק!`);
+        
+        // --- 👨‍🍳 מנת שף של האפרוח (XP כפול על הגנה מוצלחת) ---
+        const history = {...me.history};
+        let xpGain = 10; // XP רגיל שניתן על חסימה מוצלחת
+        let msg = `✅ אלופים! חסמת את המתקפה של ${attackerName} במדויק! (+${xpGain}XP)`;
+
+        if (history.chef_buff) {
+            xpGain *= 2; // מכפילים את ה-XP פי 2
+            history.chef_buff = false; // "אוכלים" את המנה כדי שלא תשפיע לפעם הבאה
+            msg = `👨‍🍳 מנת השף עבדה! חסמת וקיבלת XP כפול! (+${xpGain}XP)`;
+        }
+
+        // מוסיפים לנתקף את ה-XP ואת התיעוד להיסטוריה
+        let nxp = me.xp + xpGain;
+        let nlvl = me.level || 0;
+        while (nxp >= 100) { nlvl++; nxp -= 100; }
+        history['block_'+Date.now()] = {msg: msg, xp: xpGain, time: Date.now()};
+        
+        await dbSvc.updateDocument(DB_ID,TABLES.students,currentUser,{xp:nxp, level:nlvl, history:JSON.stringify(history)});
+        
+        alert(msg);
     }
     
     // סגירת הקרב בכל מקרה, כדי שלא ייתקע
