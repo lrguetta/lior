@@ -1928,40 +1928,64 @@ async function activateSpecialSkill(student) {
     const now = Date.now();
     const oneHour = 3600000;
 
+    // 1. בדיקת קולדאון
     if (student.last_skill && (now - parseInt(student.last_skill) < oneHour)) {
-        return; // הקולדאון הויזואלי על הכפתור מטפל בזה
+        return; 
     }
 
+    // 2. בדיקה שהקובץ נטען
     if (typeof CreatureSkills === 'undefined') {
         alert("שגיאה: קובץ skills.js לא נטען!");
         return;
     }
 
-    const skillFn = CreatureSkills[student.type];
-    if (!skillFn) {
+    // 3. שליפת האובייקט של החיה
+    const skillObj = CreatureSkills[student.type];
+    
+    // בדיקה האם האובייקט קיים והאם יש לו פעולה (action)
+    if (!skillObj || typeof skillObj.action !== 'function') {
         alert("לדמות זו אין עדיין יכולת מיוחדת פעילה.");
         return;
     }
 
     try {
-        const result = await skillFn({
+        // 4. בניית ה-Context (ארגז הכלים) עבור הסקריפט
+        const ctx = {
             attacker: student,
-            allStudents: allStudents,
+            allStudents: allStudents, // המשתנה הגלובלי שלך מה-HTML
             dbSvc: dbSvc,
             DB_ID: DB_ID,
-            TABLES: TABLES
-        });
+            TABLES: TABLES,
+            utils: {
+                // פונקציית עזר קריטית ש-skills.js מצפה לה
+                getHistory: (s) => {
+                    try {
+                        return typeof s.history === 'string' ? JSON.parse(s.history || "{}") : (s.history || {});
+                    } catch (e) { return {}; }
+                }
+            }
+        };
+
+        // 5. הפעלת היכולת (שימוש ב-.action!)
+        const result = await skillObj.action(ctx);
 
         if (!result) return; 
 
+        // 6. עדכון זמן שימוש אחרון בשרת
         await dbSvc.updateDocument(DB_ID, TABLES.students, student.id, { 
             last_skill: now.toString() 
         });
         
         student.last_skill = now.toString(); 
-        alert(result.message);
-        buildBattleSidebar(student); // מרענן את הקולדאון על הכפתור מיד
-        loadStudents(); 
+        
+        // 7. הודעה למשתמש וריענון ויזואלי
+        if (result.message) {
+            alert(result.message);
+        }
+        
+        if (typeof buildBattleSidebar === 'function') buildBattleSidebar(student); 
+        if (typeof loadStudents === 'function') loadStudents(); 
+
     } catch (e) {
         console.error("Skill Error:", e);
         alert("חלה שגיאה בהפעלת היכולת.");
