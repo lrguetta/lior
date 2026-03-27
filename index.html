@@ -1928,98 +1928,207 @@ async function activateSpecialSkill(student) {
     const now = Date.now();
     const oneHour = 3600000;
 
-    // 1. בדיקת קולדאון
-    if (student.last_skill && (now - parseInt(student.last_skill) < oneHour)) {
-        return;
-    }
+    // בדיקת קולדאון
+    if (student.last_skill && (now - parseInt(student.last_skill) < oneHour)) return;
 
-    if (typeof CreatureSkills === 'undefined') {
-        alert("שגיאה: קובץ skills.js לא נטען!");
-        return;
-    }
+    if (typeof CreatureSkills === 'undefined') { alert("שגיאה: קובץ skills.js לא נטען!"); return; }
 
     const skillObj = CreatureSkills[student.type];
-    if (!skillObj || typeof skillObj.action !== 'function') {
-        alert("לדמות זו אין עדיין יכולת מיוחדת פעילה.");
-        return;
-    }
+    if (!skillObj || typeof skillObj.action !== 'function') { alert("לדמות זו אין עדיין יכולת מיוחדת פעילה."); return; }
 
     try {
+        // ===== ארגז הכלים - כל כלי שיכולת ב-skills.js עשויה להזדקק לו =====
+        const utils = {
+
+            // --- קריאת היסטוריה ---
+            // מחזיר את אובייקט ה-history של שחקן, תמיד כ-object בטוח
+            getHistory: (s) => {
+                try { return typeof s.history === 'string' ? JSON.parse(s.history || '{}') : (s.history || {}); }
+                catch(e) { return {}; }
+            },
+
+            // --- בחירת שחקן ---
+            // מציג באנר, מאפשר לחיצה על כרטיס, מחזיר Promise עם אובייקט השחקן (או null אם בוטל)
+            // canPickSelf: אם true, מאפשר לבחור את עצמך
+            pickStudent: (instruction, canPickSelf = false) => {
+                return new Promise((resolve) => {
+                    const toast = document.createElement('div');
+                    toast.innerHTML = `<strong>${instruction}</strong><br><small>לחץ על כרטיס תלמיד, או Esc לביטול</small>`;
+                    toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#333;color:white;padding:15px;border-radius:10px;z-index:9999;border:2px solid gold;text-align:center;';
+                    document.body.appendChild(toast);
+                    document.body.style.cursor = 'crosshair';
+
+                    const cards = document.querySelectorAll('.student-card');
+                    const cleanup = () => {
+                        document.body.style.cursor = 'default';
+                        if (toast.parentNode) toast.remove();
+                        cards.forEach(c => { c.style.outline = ''; c.removeEventListener('click', c._skillHandler, true); });
+                        window.removeEventListener('keydown', handleEsc);
+                    };
+                    const handleEsc = (e) => { if (e.key === 'Escape') { cleanup(); resolve(null); } };
+                    window.addEventListener('keydown', handleEsc);
+
+                    cards.forEach(card => {
+                        card.style.outline = '4px dashed gold';
+                        card._skillHandler = (e) => {
+                            e.preventDefault(); e.stopPropagation();
+                            const targetId = card.getAttribute('data-sid');
+                            if (!canPickSelf && targetId === currentUser) return;
+                            const target = allStudents.find(s => s.id === targetId);
+                            cleanup();
+                            resolve(target || null);
+                        };
+                        card.addEventListener('click', card._skillHandler, true);
+                    });
+                });
+            },
+
+            // --- עדכון XP ---
+            // מוסיף (או מחסיר אם שלילי) XP לשחקן, מטפל בעלייה ברמה, שומר ב-DB
+            // מחזיר את הערכים החדשים { xp, level }
+            addXP: async (targetId, amount) => {
+                const target = allStudents.find(s => s.id === targetId);
+                if (!target) return null;
+                let xp = Math.max(0, target.xp + amount);
+                let level = target.level || 0;
+                while (xp >= 100) { level++; xp -= 100; }
+                await dbSvc.updateDocument(DB_ID, TABLES.students, targetId, { xp, level });
+                return { xp, level };
+            },
+
+            // --- שבירת מגן ---
+            // שובר מגן אחד לשחקן (הקטן ביותר הפנוי). אם כל המגינים שבורים — מאפס ומחסיר 10XP
+            breakShield: async (targetId) => {
+                const target = allStudents.find(s => s.id === targetId);
+                if (!target) return;
+                const h = utils.getHistory(target);
+                const broken = h.shields_broken || [];
+                const total = shieldsByLevel(target.level || 0);
+                let next = -1;
+                for (let i = 0; i < total; i++) { if (!broken.includes(i)) { next = i; break; } }
+                if (next === -1) {
+                    // כל המגינים כבר שבורים — מאפס ומחסיר XP
+                    h.shields_broken = [];
+                    const newXp = Math.max(0, target.xp - 10);
+                    h['shield_'+Date.now()] = { msg: '💥 כל המגינים נשברו! -10XP', xp: -10, time: Date.now() };
+                    await dbSvc.updateDocument(DB_ID, TABLES.students, targetId, { xp: newXp, history: JSON.stringify(h) });
+                } else {
+                    broken.push(next);
+                    h.shields_broken = broken;
+                    h['shield_'+Date.now()] = { msg: `🛡️ מגן ${next+1} נשבר!`, xp: 0, time: Date.now() };
+                    await dbSvc.updateDocument(DB_ID, TABLES.students, targetId, { history: JSON.stringify(h) });
+                }
+            },
+
+            // --- איפוס מגינים ---
+            // מחזיר את כל המגינים לשחקן (מנקה shields_broken)
+            resetShields: async (targetId) => {
+                const target = allStudents.find(s => s.id === targetId);
+                if (!target) return;
+                const h = utils.getHistory(target);
+                h.shields_broken = [];
+                h['heal_'+Date.now()] = { msg: '🛡️ מגינים חודשו!', xp: 0, time: Date.now() };
+                await dbSvc.updateDocument(DB_ID, TABLES.students, targetId, { history: JSON.stringify(h) });
+            },
+
+            // --- איפוס קולדאון מתקפה ---
+            // מאפס קולדאון של מתקפה ספציפית של שחקן (localStorage)
+            resetAttackCooldown: (targetId, attackName) => {
+                localStorage.removeItem('last_attack_' + targetId + '_' + attackName);
+            },
+
+            // --- איפוס קולדאון מתקפה אקראי ---
+            // בוחר מתקפה אקראית מתוך המתקפות הקיימות של שחקן ומאפס את הקולדאון שלה
+            // מחזיר את שם המתקפה שאופסה, או null אם אין
+            resetRandomAttackCooldown: (targetId) => {
+                const target = allStudents.find(s => s.id === targetId);
+                if (!target) return null;
+                const attacks = (ATTACKS_BY_TYPE[target.type] || []).slice(0, attacksByLevel(target.level || 0));
+                if (!attacks.length) return null;
+                const atk = attacks[Math.floor(Math.random() * attacks.length)];
+                const name = typeof atk === 'object' ? atk.name : atk;
+                localStorage.removeItem('last_attack_' + targetId + '_' + name);
+                return name;
+            },
+
+            // --- שמירת דגל ---
+            // שומר ערך חופשי ב-history של שחקן (לדגלים כמו counter_active, spider_trap, וכו')
+            setFlag: async (targetId, key, value) => {
+                const target = allStudents.find(s => s.id === targetId);
+                if (!target) return;
+                const h = utils.getHistory(target);
+                h[key] = value;
+                await dbSvc.updateDocument(DB_ID, TABLES.students, targetId, { history: JSON.stringify(h) });
+            },
+
+            // --- השתקת יכולת ---
+            // מאפס את הקולדאון של היכולת המיוחדת של שחקן (מונע שימוש לשעה)
+            silenceSkill: async (targetId) => {
+                await dbSvc.updateDocument(DB_ID, TABLES.students, targetId, { last_skill: Date.now().toString() });
+            },
+
+            // --- כתיבת לוג להיסטוריה ---
+            // מוסיף רשומת היסטוריה לשחקן (גלויה בגב הכרטיס)
+            addLog: async (targetId, msg, xp = 0) => {
+                const target = allStudents.find(s => s.id === targetId);
+                if (!target) return;
+                const h = utils.getHistory(target);
+                h['log_'+Date.now()] = { msg, xp, time: Date.now() };
+                await dbSvc.updateDocument(DB_ID, TABLES.students, targetId, { history: JSON.stringify(h) });
+            },
+
+            // --- טיימר מתמשך (שורד ריענון דף) ---
+            // מפעיל אפקט שמתבצע כל intervalMs מילישניות למשך durationMs מילישניות
+            // onTick(target, elapsed) נקרא בכל סבב, onEnd(target) בסוף
+            // הטיימר מבוסס על זמן שמור ב-history ולכן שורד ריענון
+            startTick: async (targetId, key, intervalMs, durationMs, onTick, onEnd) => {
+                const target = allStudents.find(s => s.id === targetId);
+                if (!target) return;
+                const h = utils.getHistory(target);
+                const startTime = Date.now();
+                h[key + '_start'] = startTime;
+                h[key + '_duration'] = durationMs;
+                await dbSvc.updateDocument(DB_ID, TABLES.students, targetId, { history: JSON.stringify(h) });
+
+                const tick = async () => {
+                    const fresh = allStudents.find(s => s.id === targetId);
+                    if (!fresh) return;
+                    const fh = utils.getHistory(fresh);
+                    const elapsed = Date.now() - (fh[key + '_start'] || startTime);
+                    if (elapsed >= durationMs) {
+                        delete fh[key + '_start'];
+                        delete fh[key + '_duration'];
+                        await dbSvc.updateDocument(DB_ID, TABLES.students, targetId, { history: JSON.stringify(fh) });
+                        if (onEnd) await onEnd(fresh);
+                        return;
+                    }
+                    if (onTick) await onTick(fresh, elapsed);
+                    setTimeout(tick, intervalMs);
+                };
+                setTimeout(tick, intervalMs);
+            }
+        };
+        // ===== סוף ארגז הכלים =====
+
         const ctx = {
             attacker: student,
             allStudents: allStudents,
             dbSvc: dbSvc,
             DB_ID: DB_ID,
             TABLES: TABLES,
-            utils: {
-                getHistory: (s) => {
-                    try { return typeof s.history === 'string' ? JSON.parse(s.history || "{}") : (s.history || {}); }
-                    catch (e) { return {}; }
-                },
-                pickStudent: (instruction) => {
-                    return new Promise((resolve) => {
-                        // יצירת הודעה צפה שלא עוצרת את הדפדפן כמו Alert
-                        const toast = document.createElement('div');
-                        toast.innerHTML = `<strong>${instruction}</strong><br><small>לחץ על כרטיס תלמיד, או לחץ Esc לביטול</small>`;
-                        toast.style = "position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#333; color:white; padding:15px; border-radius:10px; z-index:9999; border:2px solid gold; text-align:center;";
-                        document.body.appendChild(toast);
-
-                        const cards = document.querySelectorAll('.student-card');
-                        document.body.style.cursor = "crosshair";
-                        
-                        // פונקציית ניקוי בסיום
-                        const cleanup = () => {
-                            document.body.style.cursor = "default";
-                            if (toast.parentNode) toast.remove();
-                            cards.forEach(c => {
-                                c.style.outline = "";
-                                c.removeEventListener('click', c._skillHandler, true); // מסיר את מאזין הלחיצות
-                            });
-                            window.removeEventListener('keydown', handleEsc);
-                        };
-
-                        // ביטול עם Esc
-                        const handleEsc = (e) => { if (e.key === "Escape") { cleanup(); resolve(null); } };
-                        window.addEventListener('keydown', handleEsc);
-                        
-                        cards.forEach(card => {
-                            card.style.outline = "4px dashed gold"; // סימון עבה יותר שרואים היטב
-                            
-                            // מאזין אירועים שתופס את הלחיצה *לפני* שהכרטיס מתהפך
-                            card._skillHandler = (e) => {
-                                e.preventDefault();
-                                e.stopPropagation(); 
-                                
-                                // התיקון הגדול - קריאה מ-data-sid!
-                                const targetId = card.getAttribute('data-sid'); 
-                                const target = allStudents.find(s => s.id === targetId);
-                                
-                                cleanup();
-                                resolve(target);
-                            };
-                            
-                            // true = ללכוד את הלחיצה בשלב ה-Capture (חוסם אלמנטים פנימיים)
-                            card.addEventListener('click', card._skillHandler, true);
-                        });
-                    });
-                }
-            }
+            utils: utils
         };
 
         const result = await skillObj.action(ctx);
-        if (!result) return; // עצירה אם בוטל או נכשל
+        if (!result) return;
 
-        await dbSvc.updateDocument(DB_ID, TABLES.students, student.id, { 
-            last_skill: now.toString() 
-        });
-        student.last_skill = now.toString(); 
-        
-        if (result.message) {
-            alert(result.message);
-        }
-        
+        await dbSvc.updateDocument(DB_ID, TABLES.students, student.id, { last_skill: now.toString() });
+        student.last_skill = now.toString();
+
+        if (result.message) alert(result.message);
+
         if (typeof buildBattleSidebar === 'function') buildBattleSidebar(student);
-        if (typeof loadStudents === 'function') loadStudents(); 
+        if (typeof loadStudents === 'function') loadStudents();
 
     } catch (e) {
         console.error("Skill Error:", e);
