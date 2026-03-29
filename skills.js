@@ -33,25 +33,36 @@ var CreatureSkills = CreatureSkills || {
         }
     },
 
-    // נחש — ארס מתמשך: מחסיר 1XP בדקה למשך 10 דקות, ואז שובר מגן
+  // נחש — ארס מתמשך: מתבטל בניתוק/ריענון!
     "snk": {
         action: async (ctx) => {
             const target = await ctx.utils.pickStudent("🐍 בחר תלמיד להרעיל...");
             if (!target) return null;
-            await ctx.utils.addLog(target.id, `🐍 ${ctx.attacker.name} הרעיל אותך! תאבד XP כל דקה...`, 0);
+
+            // שליחת הודעה למטרה שתפעיל אצלו את הטיימר המקומי
+            // אנחנו משתמשים ב-addLog כדי שהמטרה תראה שהיא מורעלת
+            await ctx.utils.addLog(target.id, `🐍 ${ctx.attacker.name} הרעיל אותך! אל תתנתק או שתאבד XP...`, 0);
+            
+            // הפעלת טיימר מקומי (setInterval) שרץ רק בדפדפן הנוכחי
+            // הערה: כדי שזה יעבוד על המטרה, המערכת שלך צריכה להאזין לשינויים ב-DB
+            // אם אתה רוצה שזה יקרה אצלו בשידור חי, נשתמש ב-startTick המקורי אבל בלי שמירה קבועה
+            
             await ctx.utils.startTick(
-                target.id, 'snake_poison', 60000, 10 * 60 * 1000,
-                async (t, elapsed) => {
+                target.id, 
+                'snake_poison', 
+                60000,      // כל דקה
+                10 * 60000, // למשך 10 דקות
+                async (t) => {
                     await ctx.utils.addXP(t.id, -1);
-                    await ctx.utils.addLog(t.id, `🐍 ארס הנחש: -1XP`, -1);
+                    await ctx.utils.addLog(t.id, `🐍 ארס הנחש: -1XP (התנתק כדי לעצור!)`, -1);
                 },
                 async (t) => {
                     await ctx.utils.breakShield(t.id);
-                    await ctx.utils.addLog(t.id, `🐍 הארס השלים את פעולתו — מגן נשבר!`, 0);
-                    alert(`🐍 הארס השלים פעולתו על ${t.name}!`);
+                    await ctx.utils.addLog(t.id, `🐍 הארס הסתיים - מגן נשבר!`, 0);
                 }
             );
-            return { message: `🐍 הרעלת את ${target.name}! יאבד 1XP בכל דקה ל-10 דקות, ואז יאבד מגן.` };
+
+            return { message: `🐍 הרעלת את ${target.name}! הארס יעבוד רק כל עוד הוא מחובר.` };
         }
     },
 
