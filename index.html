@@ -698,6 +698,9 @@ button {
         <button onclick="togglePanel('panel-newtask')"       style="background:#1976d2; padding:10px 14px; font-size:0.88em;">➕ פרסום מטלה</button>
         <button onclick="togglePanel('panel-submissions')"   style="background:#2e7d32; padding:10px 14px; font-size:0.88em;">📥 ניהול הגשות</button>
         <button onclick="togglePanel('panel-creatures')"     style="background:#7b1fa2; padding:10px 14px; font-size:0.88em;">🐾 ניהול דמויות</button>
+        <button onclick="smartCleanupAllStudents()" style="background: #f44336; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; margin: 10px;">
+    🗑️ ניקוי היסטוריה
+</button>
     </div>
 
     <div id="panel-announcements" style="display:none; width:100%; background:#fff3e0; padding:15px; border-radius:10px; border:1px solid #ffcc80; text-align:right; box-sizing:border-box; margin-top:12px;">
@@ -912,6 +915,54 @@ async function loadStudents() {
             else btn.style.display = 'none';
         }
     } catch(e) { console.error(e); }
+}
+    async function smartCleanupAllStudents() {
+    if (!confirm("האם אתה בטוח שברצונך לנקות לוגים ישנים לכל התלמידים? (היכולות והמגינים לא ייפגעו)")) return;
+    
+    let count = 0;
+    for (let student of allStudents) {
+        try {
+            let h = JSON.parse(student.history || "{}");
+            
+            // הגדרת רשימת מפתחות שחשוב לשמור (היכולות המיוחדות שלך)
+            const keysToKeep = [
+                'shields_broken',       // מגינים
+                'steel_armor_until',    // צב
+                'snake_poison',         // נחש
+                'fox_trap_until',       // שועל
+                'double_shield_active', // כלב
+                'double_attack_ready',  // חתול
+                'rooster_active',       // תרנגול
+                'spider_trap',          // עכביש
+                'counter_active'        // ארנב
+            ];
+
+            let newH = {};
+            
+            // 1. שומרים את כל המפתחות החיוניים
+            keysToKeep.forEach(key => {
+                if (h[key] !== undefined) newH[key] = h[key];
+            });
+
+            // 2. שומרים רק את 10 הלוגים האחרונים ביותר מכל סוג
+            let logKeys = Object.keys(h)
+                .filter(k => k.startsWith('log_') || k.startsWith('win_') || k.startsWith('lose_'))
+                .sort()
+                .slice(-10);
+            
+            logKeys.forEach(k => newH[k] = h[k]);
+
+            // 3. עדכון ב-DB
+            await dbSvc.updateDocument(DB_ID, TABLES.students, student.$id, {
+                history: JSON.stringify(newH)
+            });
+            count++;
+        } catch (e) {
+            console.error(`Error cleaning student ${student.name}:`, e);
+        }
+    }
+    alert(`הניקוי הושלם! עודכנו ${count} תלמידים. השטח ב-Appwrite התפנה.`);
+    await loadStudents(); // רענון נתונים במסך
 }
 async function loadTasks() {
     try {
@@ -2090,14 +2141,28 @@ async function activateSpecialSkill(student) {
 
             // --- כתיבת לוג להיסטוריה ---
             // מוסיף רשומת היסטוריה לשחקן (גלויה בגב הכרטיס)
-            addLog: async (targetId, msg, xp = 0) => {
+           addLog: async (targetId, msg, xp = 0) => {
                 const target = allStudents.find(s => s.id === targetId);
                 if (!target) return;
-                const h = utils.getHistory(target);
-                h['log_'+Date.now()] = { msg, xp, time: Date.now() };
-                await dbSvc.updateDocument(DB_ID, TABLES.students, targetId, { history: JSON.stringify(h) });
-            },
+                let h = utils.getHistory(target);
+                
+                // הוספת הלוג החדש
+                h['log_' + Date.now()] = { msg, xp, time: Date.now() };
 
+                // ניקוי סלקטיבי - הגבלה ל-20 לוגים בלבד (לא נוגע ב-Flags של חיות)
+                let logKeys = Object.keys(h)
+                    .filter(k => k.startsWith('log_'))
+                    .sort();
+
+                if (logKeys.length > 20) {
+                    const keysToDelete = logKeys.slice(0, logKeys.length - 20);
+                    keysToDelete.forEach(k => delete h[k]);
+                }
+
+                await dbSvc.updateDocument(DB_ID, TABLES.students, targetId, { 
+                    history: JSON.stringify(h) 
+                });
+            },
             // --- טיימר מתמשך (שורד ריענון דף) ---
             // מפעיל אפקט שמתבצע כל intervalMs מילישניות למשך durationMs מילישניות
             // onTick(target, elapsed) נקרא בכל סבב, onEnd(target) בסוף
