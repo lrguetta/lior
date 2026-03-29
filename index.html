@@ -1982,6 +1982,27 @@ async function activateSpecialSkill(student) {
                     });
                 });
             },
+            // --- בדיקת מגינים שבורים ---
+            // מחזיר מערך של המגינים השבורים של השחקן
+            getBrokenShields: (targetId) => {
+                const target = allStudents.find(s => s.id === targetId);
+                if (!target) return [];
+                const h = utils.getHistory(target);
+                return h.shields_broken || [];
+            },
+
+            // --- תיקון מגן בודד ---
+            // מוציא מהרשימה את המגן השבור האחרון, ושומר במסד הנתונים
+            fixOneShield: async (targetId) => {
+                const target = allStudents.find(s => s.id === targetId);
+                if (!target) return false;
+                const h = utils.getHistory(target);
+                if (!h.shields_broken || h.shields_broken.length === 0) return false;
+                
+                h.shields_broken.pop(); // מסיר מגן אחד שבור
+                await dbSvc.updateDocument(DB_ID, TABLES.students, targetId, { history: JSON.stringify(h) });
+                return true;
+            },
 
             // --- עדכון XP ---
             // מוסיף (או מחסיר אם שלילי) XP לשחקן, מטפל בעלייה ברמה, שומר ב-DB
