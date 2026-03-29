@@ -206,19 +206,36 @@ var CreatureSkills = CreatureSkills || {
         }
     },
 
-    // פרה — עזרה ראשונה: בוחר תלמיד לרפא (+15XP + חידוש מגינים)
+  // פרה — עזרה ראשונה: מגן אחד בלבד. על עצמי: 0XP. על אחר: +15XP לפרה.
     "cow": {
         action: async (ctx) => {
-            const target = await ctx.utils.pickStudent("💚 בחר תלמיד לרפא", true);
+            const target = await ctx.utils.pickStudent("💚 בחר תלמיד לתיקון מגן אחד", true);
             if (!target) return null;
-            await ctx.utils.addXP(target.id, 15);
-            await ctx.utils.resetShields(target.id);
-            await ctx.utils.addLog(target.id, `🐄 ${ctx.attacker.name} ריפא אותך! +15XP ומגינים חודשו`, 15);
-            if (target.id === ctx.attacker.id) {
-                return { message: "🐄 מוווו! ריפאת את עצמך — +15XP והמגינים שלך חודשו!" };
+
+            // בדיקה אם יש בכלל מגינים שבורים למי שנבחר
+            const broken = ctx.utils.getBrokenShields(target.id);
+            if (broken.length === 0) {
+                return { message: "🐄 למטרה זו אין מגינים שבורים לתיקון!" };
             }
-            return { message: `🐄 ריפאת את ${target.name} — קיבל 15XP ומגיניו חודשו!` };
-        }
+
+            const isSelf = (target.id === ctx.attacker.id);
+
+            // הפעלת הכלי החדש שמתקן רק מגן אחד
+            await ctx.utils.fixOneShield(target.id);
+
+            if (isSelf) {
+                // ריפוי עצמי - ללא קבלת XP
+                await ctx.utils.addLog(ctx.attacker.id, "🐄 השתמשת בעזרה ראשונה על עצמך (ללא XP)", 0);
+                return { message: "🐄 מוווו! תיקנת לעצמך מגן אחד (לא התקבל XP)." };
+            } else {
+                // ריפוי חבר - המטרה מקבלת הודעה ביומן, הפרה (התוקף) מקבלת 15XP
+                await ctx.utils.addLog(target.id, `🐄 ${ctx.attacker.name} תיקן לך מגן!`, 0);
+                
+                await ctx.utils.addXP(ctx.attacker.id, 15);
+                await ctx.utils.addLog(ctx.attacker.id, `🐄 עזרת ל-${target.name}! (+15XP)`, 15);
+                
+                return { message: `🐄 מוווו! תיקנת מגן ל-${target.name} וקיבלת 15 XP!` };
+            }
     }
 
 };
