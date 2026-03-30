@@ -2340,78 +2340,91 @@ function closeDefenseModal() {
 }
 async function resolveDefense(chosen, battle) {
     closeDefenseModal();
-    const me = allStudents.find(s => s.id === currentUser);
-    const att = allStudents.find(s => s.id === battle.attackerId);
-    if (!me) return;
-
-    let history = (typeof me.history === 'string') ? JSON.parse(me.history || "{}") : (me.history || {});
-    const isBlocked = parseInt(chosen) === parseInt(battle.mineIndex);
-    const attackerName = att?.name || 'תוקף לא ידוע';
     
-    let ctx = {
-        me: { ...me, history: history },
-        att: att,
-        isBlocked: isBlocked,
-        xpGain: 10,
-        dbSvc: dbSvc, DB_ID: DB_ID, TABLES: TABLES,
-        utils: { getHistory: (s) => (typeof s.history === 'string' ? JSON.parse(s.history || "{}") : (s.history || {})) }
-    };
+    try {
+        const me = allStudents.find(s => s.id === currentUser);
+        const att = allStudents.find(s => s.id === battle.attackerId);
+        if (!me) return;
 
-    // 1. הפעלת יכולות מ-skills.js
-    for (let key in CreatureSkills) {
-        if (CreatureSkills[key].onDefense) {
-            const res = await CreatureSkills[key].onDefense(ctx);
-            if (res?.stop) { // חסימה אוטומטית (צב)
-                await dbSvc.updateDocument(DB_ID, TABLES.battles, battle.$id, { status: 'resolved' });
-                await loadStudents();
-                return;
+        let history = (typeof me.history === 'string') ? JSON.parse(me.history || "{}") : (me.history || {});
+        const isBlocked = parseInt(chosen) === parseInt(battle.mineIndex);
+        const attackerName = att?.name || 'תוקף לא ידוע';
+        
+        let ctx = {
+            me: { ...me, history: history },
+            att: att,
+            isBlocked: isBlocked,
+            xpGain: 10,
+            dbSvc: dbSvc, DB_ID: DB_ID, TABLES: TABLES,
+            utils: { getHistory: (s) => (typeof s.history === 'string' ? JSON.parse(s.history || "{}") : (s.history || {})) }
+        };
+
+        // הפעלת יכולות מ-skills.js (רק אם קיים)
+        if (typeof CreatureSkills !== 'undefined') {
+            for (let key in CreatureSkills) {
+                try {
+                    if (CreatureSkills[key].onDefense) {
+                        const res = await CreatureSkills[key].onDefense(ctx);
+                        if (res?.stop) {
+                            await dbSvc.updateDocument(DB_ID, TABLES.battles, battle.$id, { status: 'resolved' });
+                            await loadStudents();
+                            return;
+                        }
+                        if (res?.xpGain) ctx.xpGain = res.xpGain;
+                    }
+                } catch(skillErr) {
+                    console.warn('שגיאה ביכולת', key, skillErr);
+                }
             }
-            if (res?.xpGain) ctx.xpGain = res.xpGain;
         }
-    }
 
-    // 2. תוצאת הקרב
-    if (isBlocked) { 
-        // --- חסימה מוצלחת ---
-        let nxp = me.xp + ctx.xpGain;
-        let nlvl = me.level || 0;
-        while (nxp >= 100) { nlvl++; nxp -= 100; }
-        ctx.me.history['block_'+Date.now()] = { msg: `🛡️ חסמת את ${attackerName}! (+${ctx.xpGain}XP)`, xp: ctx.xpGain, time: Date.now() };
-        await dbSvc.updateDocument(DB_ID, TABLES.students, me.id, { xp: nxp, level: nlvl, history: JSON.stringify(ctx.me.history) });
-        alert(`✅ הצלחה! חסמת במדויק. (+${ctx.xpGain}XP)`);
-    } else {
-        // --- פספוס (התוקף פגע) ---
-        const broken = [...(ctx.me.history.shields_broken || [])];
-        if (!broken.includes(battle.mineIndex)) broken.push(battle.mineIndex);
-        
-        const allBroken = broken.length >= shieldsByLevel(me.level);
-        let myNewXP = me.xp;
-        
-        if (allBroken) {
-            myNewXP = Math.max(0, me.xp - 10);
-            ctx.me.history.shields_broken = [];
-            ctx.me.history['battle_'+Date.now()] = { msg: `💥 ${attackerName} פגע בך. -10XP`, xp: -10, time: Date.now() };
+        // תוצאת הקרב
+        if (isBlocked) { 
+            let nxp = me.xp + ctx.xpGain;
+            let nlvl = me.level || 0;
+            while (nxp >= 100) { nlvl++; nxp -= 100; }
+            ctx.me.history['block_'+Date.now()] = { msg: `🛡️ חסמת את ${attackerName}! (+${ctx.xpGain}XP)`, xp: ctx.xpGain, time: Date.now() };
+            await dbSvc.updateDocument(DB_ID, TABLES.students, me.id, { xp: nxp, level: nlvl, history: JSON.stringify(ctx.me.history) });
+            alert(`✅ הצלחה! חסמת במדויק. (+${ctx.xpGain}XP)`);
         } else {
-            ctx.me.history.shields_broken = broken;
-            ctx.me.history['battle_'+Date.now()] = { msg: `🛡️ ${attackerName} הפיל לך מגן!`, xp: 0, time: Date.now() };
+            const broken = [...(ctx.me.history.shields_broken || [])];
+            if (!broken.includes(battle.mineIndex)) broken.push(battle.mineIndex);
+            
+            const allBroken = broken.length >= shieldsByLevel(me.level);
+            let myNewXP = me.xp;
+            
+            if (allBroken) {
+                myNewXP = Math.max(0, me.xp - 10);
+                ctx.me.history.shields_broken = [];
+                ctx.me.history['battle_'+Date.now()] = { msg: `💥 ${attackerName} פגע בך. -10XP`, xp: -10, time: Date.now() };
+            } else {
+                ctx.me.history.shields_broken = broken;
+                ctx.me.history['battle_'+Date.now()] = { msg: `🛡️ ${attackerName} הפיל לך מגן!`, xp: 0, time: Date.now() };
+            }
+
+            if (att) {
+                const xpReward = Math.max(5, 10 * ((me.level || 1) - (att.level || 1)));
+                let ah = ctx.utils.getHistory(att);
+                let ax = att.xp + xpReward, al = att.level || 0;
+                while(ax >= 100){ al++; ax -= 100; }
+                ah['win_'+Date.now()] = { msg: `⚔️ פגעת ב-${me.name}! (+${xpReward}XP)`, xp: xpReward, time: Date.now() };
+                await dbSvc.updateDocument(DB_ID, TABLES.students, att.id, { xp: ax, level: al, history: JSON.stringify(ah) });
+            }
+
+            await dbSvc.updateDocument(DB_ID, TABLES.students, me.id, { xp: myNewXP, history: JSON.stringify(ctx.me.history) });
+            alert(allBroken ? `💥 ${attackerName} פגע בך! ספגת -10XP ומגיניך חודשו.` : `💥 פספסת! ${attackerName} הפיל מגן.`);
         }
 
-        // עדכון תוקף (רק אם לא הופעלה יכולת מיוחדת שחסמה XP)
-        if (att) {
-            const xpReward = Math.max(5, 10 * ((me.level || 1) - (att.level || 1)));
-            let ah = ctx.utils.getHistory(att);
-            let ax = att.xp + xpReward, al = att.level || 0;
-            while(ax >= 100){ al++; ax -= 100; }
-            ah['win_'+Date.now()] = { msg: `⚔️ פגעת ב-${me.name}! (+${xpReward}XP)`, xp: xpReward, time: Date.now() };
-            await dbSvc.updateDocument(DB_ID, TABLES.students, att.id, { xp: ax, level: al, history: JSON.stringify(ah) });
-        }
-
-        await dbSvc.updateDocument(DB_ID, TABLES.students, me.id, { xp: myNewXP, history: JSON.stringify(ctx.me.history) });
-        alert(allBroken ? `💥 ${attackerName} פגע בך! ספגת -10XP ומגיניך חודשו.` : `💥 פספסת! ${attackerName} הפיל מגן.`);
+        try { 
+            await dbSvc.updateDocument(DB_ID, TABLES.battles, battle.$id, { status: 'resolved' }); 
+        } catch(e) { console.warn('לא הצלחתי לסמן קרב כ-resolved:', e); }
+        
+        await loadStudents();
+        
+    } catch(e) {
+        console.error('שגיאה ב-resolveDefense:', e);
+        alert('שגיאה: ' + e.message);
     }
-
-    try { await dbSvc.updateDocument(DB_ID, TABLES.battles, battle.$id, { status: 'resolved' }); } catch(e) {}
-    await loadStudents();
 }
     
 function updateCooldownDisplay() {
