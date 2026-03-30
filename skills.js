@@ -247,6 +247,6 @@ var CreatureSkills = CreatureSkills || {
                 
                 return { message: `🐄 מוווו! תיקנת מגן ל-${target.name} וקיבלת 15 XP!` };
             }
-    }
-
+        }
+    },
 };
