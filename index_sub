@@ -2,82 +2,69 @@
 <html lang="he">
 <head>
   <meta charset="UTF-8">
-  <title>חווה לימודית - Supabase</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-<h1>החווה הלימודית</h1>
+<h2>בדיקת חווה</h2>
 <div id="output"></div>
 
 <script>
-// 🔥 הגדרות Supabase (תעדכן כאן!)
+// 🔥 שים פה את הפרטים שלך
 const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
 const SUPABASE_KEY = 'YOUR_ANON_KEY';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// 🌱 טעינת תלמידים
+// טען תלמידים
 async function loadStudents() {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('students')
     .select('*');
 
   if (error) {
     console.error(error);
+    alert('שגיאה בטעינה');
     return;
   }
 
-  renderStudents(data);
+  render(data);
 }
 
-// 🎨 הצגה
-function renderStudents(students) {
+// הצגה
+function render(students) {
   const div = document.getElementById('output');
   div.innerHTML = '';
 
   students.forEach(s => {
     const el = document.createElement('div');
     el.innerHTML = `
-      <b>${s.name}</b><br>
-      XP: ${s.xp || 0}<br>
-      Level: ${s.level || 1}<br>
-      <button onclick="addXP('${s.id}')">+10 XP</button>
-      <hr>
+      ${s.name} | XP: ${s.xp}
+      <button onclick="addXP('${s.id}')">+10</button>
     `;
     div.appendChild(el);
   });
 }
 
-// ⚡ הוספת XP
-async function addXP(studentId) {
-  const { data: student } = await supabase
+// עדכון XP
+async function addXP(id) {
+  const { data } = await supabaseClient
     .from('students')
     .select('*')
-    .eq('id', studentId)
+    .eq('id', id)
     .single();
 
-  const newXP = (student.xp || 0) + 10;
-  const newLevel = Math.floor(newXP / 100) + 1;
+  const newXP = (data.xp || 0) + 10;
 
-  await supabase
+  await supabaseClient
     .from('students')
-    .update({ xp: newXP, level: newLevel })
-    .eq('id', studentId);
+    .update({ xp: newXP })
+    .eq('id', id);
 
   loadStudents();
 }
 
-// ➕ יצירת תלמיד חדש
-async function createStudent(name) {
-  await supabase
-    .from('students')
-    .insert([{ name: name, xp: 0, level: 1 }]);
-
-  loadStudents();
-}
-
-// 🚀 התחלה
+// התחלה
 loadStudents();
 </script>
 
