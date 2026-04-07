@@ -889,14 +889,27 @@ let currentUser = localStorage.getItem('farm_user_id') || null;
 const safe = t => typeof t!=='string' ? t : t.replace(/'/g,"&#39;").replace(/"/g,"&quot;");
 
 function docToStudent(d) {
-    const history = d.history ? JSON.parse(d.history) : {};
-    return { id:d.$id, name:d.name||'', className:d.className||'', xp:d.xp??0, level:d.level??0,
-             type:d.type||'cat', egg:d.egg??0, password:d.password||null,
-             personalNote:d.personalNote||'', lastNote:d.lastNote||'',
-             likes:d.likes?JSON.parse(d.likes):{}, history, 
-             isActive: d.isActive ?? false,
-             last_skill: d.last_skill || null // תוספת ליכולות
-           }; 
+    // בסופרבייס השדות האלו כבר מגיעים כאובייקט, אז אין צורך ב-JSON.parse
+    // אבל ליתר ביטחון, אם במקרה הם יגיעו כטקסט, הנה בדיקה:
+    const history = (typeof d.history === 'string') ? JSON.parse(d.history) : (d.history || {});
+    const likes = (typeof d.likes === 'string') ? JSON.parse(d.likes) : (d.likes || {});
+
+    return { 
+        id: d.id, // הורדנו את ה-$
+        name: d.full_name || '', // שינינו ל-full_name כפי שמופיע ב-SQL
+        className: d.className || '', 
+        xp: d.xp ?? 0, 
+        level: d.level ?? 0,
+        type: d.animal_type || 'cat', // שינינו ל-animal_type כפי שמופיע ב-SQL
+        egg: d.egg ?? 0, 
+        password: d.password || null,
+        personalNote: d.personalNote || '', 
+        lastNote: d.lastNote || '',
+        likes: likes, 
+        history: history, 
+        isActive: d.isActive ?? false,
+        last_skill: d.last_skill || null 
+    }; 
 }
 function docToTask(d) {
     return { id:d.$id, title:d.title||'', deadline:d.deadline||'', xp:d.xp??20,
@@ -904,23 +917,45 @@ function docToTask(d) {
              questions:d.questions?JSON.parse(d.questions):[] };
 }
 
-// --- טעינה ---
+// --- טעינת תלמידים מעודכנת לסופרבייס ---
 async function loadStudents() {
     try {
-        const res = await dbSvc.listDocuments(DB_ID, TABLES.students, [Query.limit(500), Query.orderAsc('name')]);
-        allStudents = res.documents.map(docToStudent);
+        // 1. משיכת הנתונים מסופרבייס (מחליף את dbSvc.listDocuments)
+        const { data, error } = await supabase
+            .from(TABLES.students)
+            .select('*')
+            .order('full_name', { ascending: true })
+            .limit(500);
+
+        if (error) throw error;
+
+        // 2. המרה של הנתונים למבנה שהקוד שלך מכיר (docToStudent)
+        // שים לב: בסופרבייס הנתונים מגיעים כבר כאובייקט נקי, אז אנחנו מעבירים אותם ב-map
+        allStudents = data.map(docToStudent);
+
+        // 3. עדכון התצוגה (פונקציות קיימות אצלך בקוד)
         renderStudentSelect();
+        
         if (!currentUser) return;
         updateView();
         
+        // 4. לוגיקה של קרבות ותצוגת כפתור צף
         if (currentUser !== 'admin') {
             const me = allStudents.find(s => s.id === currentUser);
             if (!me) return;
+            
             const btn = document.getElementById('battle-float-btn');
-            if (attacksByLevel(me.level) > 0) { btn.style.display='flex'; buildBattleSidebar(me); }
-            else btn.style.display = 'none';
+            // בדיקה האם יש התקפות זמינות לפי הרמה
+            if (typeof attacksByLevel === 'function' && attacksByLevel(me.level) > 0) { 
+                btn.style.display = 'flex'; 
+                buildBattleSidebar(me); 
+            } else {
+                btn.style.display = 'none';
+            }
         }
-    } catch(e) { console.error(e); }
+    } catch(e) { 
+        console.error("שגיאה בטעינת תלמידים מסופרבייס:", e); 
+    }
 }
     async function smartCleanupAllStudents() {
     if (!confirm("האם אתה בטוח שברצונך לנקות לוגים ישנים לכל התלמידים? (היכולות והמגינים לא ייפגעו)")) return;
@@ -1052,25 +1087,46 @@ function checkAdmin() {
     else alert('סיסמה שגויה');
 }
 async function studentLogin() {
-    const id    = document.getElementById('studentSelect').value;
-    const pass  = document.getElementById('studentPass').value.trim();
+    const id = document.getElementById('studentSelect').value;
+    const pass = document.getElementById('studentPass').value.trim();
+
     if (!id)   { alert('בחר שם!'); return; }
     if (!pass) { alert('חובה סיסמה!'); return; }
+
+    // מוצא את התלמיד ברשימה המקומית (שטענו קודם מהטבלה)
     const s = allStudents.find(s => s.id === id);
     if (!s) { alert('תלמיד לא נמצא'); return; }
-    
+
+    // בדיקה: האם זו פעם ראשונה (אין סיסמה שמורה)?
     if (!s.password) {
-        if (!confirm("שמור '"+pass+"' כסיסמה קבועה?")) return;
-        
-        // מעדכן את הסיסמה לכל הדמויות תחת אותו שם
-        const sameNameDocs = allStudents.filter(x => x.name === s.name);
-        await Promise.all(sameNameDocs.map(doc => 
-            dbSvc.updateDocument(DB_ID, TABLES.students, doc.id, { password:pass })
-        ));
-        
+        if (!confirm("שמור '" + pass + "' כסיסמה קבועה?")) return;
+
+        // עדכון הסיסמה בסופרבייס לכל הרשומות עם אותו שם
+        const { error } = await supabase
+            .from(TABLES.students)
+            .update({ password: pass })
+            .eq('full_name', s.full_name); // מעדכן את כל מי שיש לו את השם הזה
+
+        if (error) {
+            console.error('שגיאה בשמירת סיסמה:', error);
+            alert('שגיאה בשמירת הסיסמה');
+            return;
+        }
+
+        // עדכון מקומי בזיכרון של האפליקציה כדי שלא נצטרך לטעון מחדש
+        allStudents.forEach(x => {
+            if (x.full_name === s.full_name) x.password = pass;
+        });
+
         alert('הסיסמה נשמרה!');
-    } else if (s.password !== pass) { alert('סיסמה שגויה!'); return; }
-    
+    } 
+    // אם יש סיסמה - בודק שהיא נכונה
+    else if (s.password !== pass) { 
+        alert('סיסמה שגויה!'); 
+        return; 
+    }
+
+    // התחברות מוצלחת
     currentUser = id;
     localStorage.setItem('farm_user_id', id);
     document.getElementById('studentPass').value = '';
