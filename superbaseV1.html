@@ -845,7 +845,7 @@ const TABLES = {
     tasks: 'tasks', 
     submissions: 'submissions',
     announcements: 'announcements',
-    welcomeImage: 'banners',
+    welcomeImage: 'welcomeImage',
     battles: 'battles',
     creatureTypes: 'creature_types'
 };
@@ -1328,51 +1328,71 @@ async function addXP(id) {
     if (currentUser !== 'admin') return;
     if (isUpdatingXP) return; 
     
-    const s = allStudents.find(x=>x.id===id);
+    const s = allStudents.find(x => x.id === id);
     if (!s) return;
 
     isUpdatingXP = true;
     
-    const img  = document.getElementById('img-'+id);
+    const img  = document.getElementById('img-' + id);
     const card = img?.closest('.student-card');
     
     // אנימציית קלף ו-XP צף במיידי
     if (img) {
         img.classList.remove('glow-effect');
         requestAnimationFrame(() => img.classList.add('glow-effect'));
-        const f = document.createElement('div'); f.className='xp-float'; f.innerText='+10 XP';
-        card.appendChild(f); setTimeout(()=>f.remove(), 800);
+        const f = document.createElement('div'); f.className = 'xp-float'; f.innerText = '+10 XP';
+        if (card) {
+            card.appendChild(f); 
+            setTimeout(() => f.remove(), 800);
+        }
     }
     
-    let nxp = s.xp + 10;
-    let nlv = s.level;
+    let nxp = (s.xp || 0) + 10;
+    let nlv = s.level || 1;
+    
     if (nxp >= 100) { 
-        nlv++; nxp -= 100; 
-        if(card){
-            const t=document.createElement('div');
-            t.className='levelup'; t.innerText='LEVEL UP! ✨';
-            card.appendChild(t); setTimeout(()=>t.remove(),2000);
+        nlv++; 
+        nxp -= 100; 
+        if (card) {
+            const t = document.createElement('div');
+            t.className = 'levelup'; t.innerText = 'LEVEL UP! ✨';
+            card.appendChild(t); 
+            setTimeout(() => t.remove(), 2000);
         } 
     }
     
-    // עדכון DOM אופטימי (כדי שלא נצטרך לחכות לשרת בשביל לראות שינוי מד)
-    s.xp = nxp; s.level = nlv;
+    // עדכון DOM אופטימי (תצוגה מקומית מהירה)
+    s.xp = nxp; 
+    s.level = nlv;
+    
     const bar = card?.querySelector('.xp-bar');
-    if(bar) bar.style.width = nxp + '%';
+    if (bar) bar.style.width = nxp + '%';
     const badge = card?.querySelector('.level-text-badge');
-    if(badge) badge.innerText = 'Lv.' + nlv;
+    if (badge) badge.innerText = 'Lv.' + nlv;
 
-    const history = {...s.history};
-    history['tap_'+Date.now()] = { msg:'לחיצת מורה', xp:10, time:Date.now() };
+    // עדכון היסטוריה
+    const history = { ...s.history };
+    history['tap_' + Date.now()] = { msg: 'לחיצת מורה', xp: 10, time: Date.now() };
+    s.history = history; // עדכון המודל המקומי
     
     try {
-        await dbSvc.updateDocument(DB_ID, TABLES.students, id, {
-            xp: nxp, level: nlv, history: JSON.stringify(history)
-        });
-    } catch(e) {
-        console.error("שגיאה בהעלאת ה-XP:", e);
+        // העדכון לסופרבייס
+        const { error } = await supabase
+            .from(TABLES.students)
+            .update({ 
+                xp: nxp, 
+                level: nlv, 
+                history: history // שולחים אובייקט ישירות, לא String
+            })
+            .eq('id', id);
+
+        if (error) throw error;
+        
+    } catch (e) {
+        console.error("שגיאה בעדכון XP בסופרבייס:", e);
+        // כאן אולי כדאי להחזיר את המצב לקדמותו ב-DOM אם העדכון נכשל
     } finally {
-        setTimeout(() => { isUpdatingXP = false; }, 300); // 300ms חסימת לחיצות כפולה
+        setTimeout(() => { isUpdatingXP = false; }, 300);
     }
 }
 
