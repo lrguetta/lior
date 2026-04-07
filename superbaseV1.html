@@ -1125,15 +1125,34 @@ function toggleBoard() {
     btn.innerText = board.classList.contains('minimized') ? '📢' : '−';
     btn.title     = board.classList.contains('minimized') ? 'פתח לוח מודעות' : 'מזער לוח';
 }
-async function saveAnnouncements() {
-    const text = document.getElementById('adminAnnouncementsText').value;
+async function saveAnnouncement() {
     try {
-        const res = await dbSvc.listDocuments(DB_ID, TABLES.announcements, [Query.limit(1)]);
-        if (res.documents.length) await dbSvc.updateDocument(DB_ID, TABLES.announcements, res.documents[0].$id, { text });
-        else await dbSvc.createDocument(DB_ID, TABLES.announcements, ID.unique(), { text });
-        alert('לוח המודעות עודכן! 📢');
-        await loadAnnouncements();
-    } catch(e) { alert('שגיאה: ' + e.message); }
+        const ta = document.getElementById('adminAnnouncementsText');
+        if (!ta) return;
+        
+        const newText = ta.value.trim() || 'אין הודעות חדשות כרגע.';
+
+        // במקום dbSvc.createDocument או updateDocument, משתמשים ב-Supabase
+        // אנחנו משתמשים ב-upsert כדי שזה גם יעדכן וגם יצור אם לא קיים
+        const { error } = await supabase
+            .from(TABLES.announcements)
+            .upsert({ 
+                id: 'static-announcement-id', // מזהה קבוע כדי שתהיה רק הודעה אחת שמתעדכנת
+                text: newText,
+                created_at: new Date().toISOString()
+            });
+
+        if (error) throw error;
+
+        alert('ההודעה פורסמה בהצלחה!');
+        
+        // טעינה מחדש של ההודעה כדי שכולם יראו
+        if (typeof loadAnnouncements === 'function') loadAnnouncements();
+
+    } catch (e) {
+        console.error("שגיאה בפרסום הודעה:", e);
+        alert('שגיאה בפרסום: ' + (e.message || e));
+    }
 }
 
 function checkAdmin() {
