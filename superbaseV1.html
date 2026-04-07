@@ -835,10 +835,10 @@ button {
 
 <script>
 // --- הגדרות סופרבייס החדשות ---
-const supabaseUrl = 'https://muwpexflpjoqnaeiyfhk.supabase.co';
-const supabaseKey = 'sb_publishable_poSgynlEXNYtk6kLRQpmhw_kytUEVF_';
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
+var sbUrl = 'https://muwpexflpjoqnaeiyfhk.supabase.co';
+var sbKey = 'sb_publishable_poSgynlEXNYtk6kLRQpmhw_kytUEVF_';
+var supabase = window.supabase.createClient(sbUrl, sbKey);
+    
 // שמות הטבלאות כפי שיצרנו אותן ב-SQL
 const TABLES = {
     students: 'students',
