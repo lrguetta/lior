@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8">
+  <title>חווה לימודית - Supabase</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body>
+
+<h1>החווה הלימודית</h1>
+<div id="output"></div>
+
+<script>
+// 🔥 הגדרות Supabase (תעדכן כאן!)
+const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
+const SUPABASE_KEY = 'YOUR_ANON_KEY';
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// 🌱 טעינת תלמידים
+async function loadStudents() {
+  const { data, error } = await supabase
+    .from('students')
+    .select('*');
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  renderStudents(data);
+}
+
+// 🎨 הצגה
+function renderStudents(students) {
+  const div = document.getElementById('output');
+  div.innerHTML = '';
+
+  students.forEach(s => {
+    const el = document.createElement('div');
+    el.innerHTML = `
+      <b>${s.name}</b><br>
+      XP: ${s.xp || 0}<br>
+      Level: ${s.level || 1}<br>
+      <button onclick="addXP('${s.id}')">+10 XP</button>
+      <hr>
+    `;
+    div.appendChild(el);
+  });
+}
+
+// ⚡ הוספת XP
+async function addXP(studentId) {
+  const { data: student } = await supabase
+    .from('students')
+    .select('*')
+    .eq('id', studentId)
+    .single();
+
+  const newXP = (student.xp || 0) + 10;
+  const newLevel = Math.floor(newXP / 100) + 1;
+
+  await supabase
+    .from('students')
+    .update({ xp: newXP, level: newLevel })
+    .eq('id', studentId);
+
+  loadStudents();
+}
+
+// ➕ יצירת תלמיד חדש
+async function createStudent(name) {
+  await supabase
+    .from('students')
+    .insert([{ name: name, xp: 0, level: 1 }]);
+
+  loadStudents();
+}
+
+// 🚀 התחלה
+loadStudents();
+</script>
+
+</body>
+</html>
