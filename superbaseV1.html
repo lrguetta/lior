@@ -1130,23 +1130,21 @@ async function saveAnnouncements() {
         const ta = document.getElementById('adminAnnouncementsText');
         if (!ta) return;
         
-        const newText = ta.value.trim() || 'אין הודעות חדשות כרגע.';
+        const newText = ta.value.trim();
+        if (!newText) return alert("נא להזין טקסט להודעה");
 
-        // במקום dbSvc.createDocument או updateDocument, משתמשים ב-Supabase
-        // אנחנו משתמשים ב-upsert כדי שזה גם יעדכן וגם יצור אם לא קיים
         const { error } = await supabase
             .from(TABLES.announcements)
             .upsert({ 
-                id: 'static-announcement-id', // מזהה קבוע כדי שתהיה רק הודעה אחת שמתעדכנת
+                // השתמש בקוד הזה בדיוק - זה UUID תקין שמייצג את "הודעת המערכת"
+                id: '00000000-0000-0000-0000-000000000001', 
                 text: newText,
                 created_at: new Date().toISOString()
             });
 
         if (error) throw error;
 
-        alert('ההודעה פורסמה בהצלחה!');
-        
-        // טעינה מחדש של ההודעה כדי שכולם יראו
+        alert('הלוח עודכן בהצלחה!');
         if (typeof loadAnnouncements === 'function') loadAnnouncements();
 
     } catch (e) {
@@ -1154,7 +1152,7 @@ async function saveAnnouncements() {
         alert('שגיאה בפרסום: ' + (e.message || e));
     }
 }
-
+    
 function checkAdmin() {
     if (document.getElementById('adminPass').value === 'rabenu247') { currentUser='admin'; startApp(); }
     else alert('סיסמה שגויה');
