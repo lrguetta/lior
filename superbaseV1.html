@@ -920,41 +920,38 @@ function docToTask(d) {
 // --- טעינת תלמידים מעודכנת לסופרבייס ---
 async function loadStudents() {
     try {
-        // 1. משיכת הנתונים מסופרבייס (מחליף את dbSvc.listDocuments)
+        console.log("מנסה למשוך נתונים מסופרבייס..."); // בדיקה שהפונקציה בכלל רצה
+        
         const { data, error } = await supabase
             .from(TABLES.students)
             .select('*')
-            .order('full_name', { ascending: true })
-            .limit(500);
+            .order('full_name', { ascending: true });
 
-        if (error) throw error;
+        if (error) {
+            console.error("שגיאה ישירה מסופרבייס:", error);
+            throw error;
+        }
 
-        // 2. המרה של הנתונים למבנה שהקוד שלך מכיר (docToStudent)
-        // שים לב: בסופרבייס הנתונים מגיעים כבר כאובייקט נקי, אז אנחנו מעבירים אותם ב-map
+        // כאן אנחנו מדפיסים את מה שחזר מהשרת
+        console.log("הנתונים הגולמיים שהגיעו:", data);
+
+        if (!data || data.length === 0) {
+            console.warn("שימו לב: חזרו 0 תלמידים מהטבלה. האם הכנסת נתונים ב-Table Editor?");
+        }
+
+        // המרה באמצעות הפונקציה ששלחת לי
         allStudents = data.map(docToStudent);
+        
+        console.log("רשימת התלמידים לאחר המרה:", allStudents);
 
-        // 3. עדכון התצוגה (פונקציות קיימות אצלך בקוד)
+        // עדכון תיבת הבחירה
         renderStudentSelect();
         
-        if (!currentUser) return;
-        updateView();
-        
-        // 4. לוגיקה של קרבות ותצוגת כפתור צף
-        if (currentUser !== 'admin') {
-            const me = allStudents.find(s => s.id === currentUser);
-            if (!me) return;
-            
-            const btn = document.getElementById('battle-float-btn');
-            // בדיקה האם יש התקפות זמינות לפי הרמה
-            if (typeof attacksByLevel === 'function' && attacksByLevel(me.level) > 0) { 
-                btn.style.display = 'flex'; 
-                buildBattleSidebar(me); 
-            } else {
-                btn.style.display = 'none';
-            }
-        }
-    } catch(e) { 
-        console.error("שגיאה בטעינת תלמידים מסופרבייס:", e); 
+        // אם יש משתמש מחובר, עדכן את התצוגה שלו
+        if (currentUser) updateView();
+
+    } catch (err) {
+        console.error("שגיאה קריטית ב-loadStudents:", err.message);
     }
 }
     async function smartCleanupAllStudents() {
