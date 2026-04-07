@@ -1007,38 +1007,71 @@ async function loadStudents() {
 }
 async function loadTasks() {
     try {
-        const res = await dbSvc.listDocuments(DB_ID, TABLES.tasks, [Query.limit(200)]);
-        allTasks = res.documents.map(docToTask);
+        const { data, error } = await supabase
+            .from(TABLES.tasks)
+            .select('*')
+            .limit(200);
+
+        if (error) throw error;
+
+        // בסופרבייס הנתונים מגיעים במבנה נקי, אם יש לך פונקציית docToTask תשתמש בה כאן
+        allTasks = data.map(d => ({
+            id: d.id,
+            title: d.title || '',
+            content: d.content || '',
+            xp: d.xp || 0,
+            ...d // שאר השדות
+        }));
+
         if (currentUser) renderTasks();
-    } catch(e) { console.error(e); }
+    } catch(e) { console.error("שגיאה בטעינת מטלות:", e); }
 }
+    
 async function loadAnnouncements() {
     try {
-        const res  = await dbSvc.listDocuments(DB_ID, TABLES.announcements, [Query.limit(1)]);
-        const text = res.documents[0]?.text || 'אין הודעות חדשות כרגע.';
-        const el   = document.getElementById('announcements-content');
+        const { data, error } = await supabase
+            .from(TABLES.announcements)
+            .select('*')
+            .order('created_at', { ascending: false }) // מביא את ההודעה הכי חדשה
+            .limit(1);
+
+        if (error) throw error;
+
+        const text = data[0]?.text || 'אין הודעות חדשות כרגע.';
+        const el = document.getElementById('announcements-content');
         if (el) el.innerText = text;
+
         if (currentUser === 'admin') {
             const ta = document.getElementById('adminAnnouncementsText');
             if (ta && !ta.value) ta.value = text !== 'אין הודעות חדשות כרגע.' ? text : '';
         }
-    } catch(e) { console.error(e); }
+    } catch(e) { console.error("שגיאה בטעינת הודעות:", e); }
 }
+    
 async function loadWelcomeImageForAdmin() {
     try {
-        const data    = (await dbSvc.listDocuments(DB_ID, TABLES.welcomeImage, [Query.limit(1)])).documents[0];
+        const { data, error } = await supabase
+            .from(TABLES.welcomeImage)
+            .select('*')
+            .limit(1);
+
+        if (error) throw error;
+
+        const doc = data[0];
         const preview = document.getElementById('current-welcome-img-preview');
-        const thumb   = document.getElementById('preview-thumb');
-        if (data?.url) {
-            if (thumb)   thumb.src = data.url;
+        const thumb = document.getElementById('preview-thumb');
+
+        if (doc?.url) {
+            if (thumb) thumb.src = doc.url;
             if (preview) preview.style.display = 'block';
             const u = document.getElementById('welcomeImgUrl');
             const c = document.getElementById('welcomeImgCaption');
-            if (u) u.value = data.url;
-            if (c) c.value = data.caption || '';
+            if (u) u.value = doc.url;
+            if (c) c.value = doc.caption || '';
         } else if (preview) preview.style.display = 'none';
-    } catch(e) { console.error(e); }
+    } catch(e) { console.error("שגיאה בטעינת תמונת פתיחה:", e); }
 }
+    
 async function loadCreatureTypes() {
     try {
         const res = await dbSvc.listDocuments(DB_ID, TABLES.creatureTypes, [Query.limit(100)]);
