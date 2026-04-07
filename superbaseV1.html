@@ -1125,7 +1125,7 @@ function toggleBoard() {
     btn.innerText = board.classList.contains('minimized') ? '📢' : '−';
     btn.title     = board.classList.contains('minimized') ? 'פתח לוח מודעות' : 'מזער לוח';
 }
-async function saveAnnouncement() {
+async function saveAnnouncements() {
     try {
         const ta = document.getElementById('adminAnnouncementsText');
         if (!ta) return;
