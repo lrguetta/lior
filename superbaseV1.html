@@ -1088,13 +1088,37 @@ async function loadCreatureTypes() {
     }
 }
 
-function subscribeAll() {
-    const sub = (col, fn) => client.subscribe(`databases.${DB_ID}.collections.${col}.documents`, fn);
-    sub(TABLES.students,      () => loadStudents());
-    sub(TABLES.tasks,         () => loadTasks());
+// פונקציה כללית להאזנה לשינויים בטבלה מסוימת
+function sub(tableName, callback) {
+    return supabase
+        .channel(`public:${tableName}`) // יוצר ערוץ האזנה
+        .on('postgres_changes', { event: '*', schema: 'public', table: tableName }, (payload) => {
+            console.log(`שינוי זוהה בטבלה ${tableName}:`, payload);
+            callback(payload);
+        })
+        .subscribe();
+}
+
+async function subscribeAll() {
+    console.log("מתחיל האזנה לשינויים בזמן אמת...");
+    
+    // האזנה לשינויים בטבלת התלמידים (XP, רמות וכו')
+    sub(TABLES.students, () => loadStudents());
+    
+    // האזנה למטלות חדשות
+    sub(TABLES.tasks, () => loadTasks());
+    
+    // האזנה להודעות חדשות בלוח
     sub(TABLES.announcements, () => loadAnnouncements());
-    sub(TABLES.battles,       () => checkPendingBattle());
-    if (currentUser === 'admin') sub(TABLES.submissions, () => initAdminSubmissions());
+
+    // אם יש לך טבלת הגשות (submissions) - כדאי להוסיף גם אותה
+    if (TABLES.submissions) {
+        sub(TABLES.submissions, () => {
+            if (currentUser === 'admin' && typeof initAdminSubmissions === 'function') {
+                initAdminSubmissions();
+            }
+        });
+    }
 }
 
 function toggleBoard() {
