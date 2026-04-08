@@ -1024,7 +1024,7 @@ async function loadStudents() {
             });
             count++;
         } catch (e) {
-            console.error(`Error cleaning student ${student.name}:`, e);
+            console.error(`Error cleaning student ${student.full_name}:`, e);
         }
     }
     alert(`הניקוי הושלם! עודכנו ${count} תלמידים. השטח ב-Appwrite התפנה.`);
@@ -1375,7 +1375,7 @@ async function deleteStudent(id) {
         
         // אם מוחקים דמות שהיא פעילה ויש לו עוד, מעבירים פעילות לדמות אחרת אוטומטית
         if (s && s.isActive) {
-            const remaining = allStudents.filter(x => (x.full_name === s.full_name || x.name === s.full_name) && x.id !== id);
+            const remaining = allStudents.filter(x => (x.full_name === s.full_name || x.full_name === s.full_name) && x.id !== id);
             if (remaining.length > 0) {
                 const { error: upError } = await supabase
                     .from(TABLES.students)
@@ -1600,7 +1600,7 @@ function updateView() {
 
     // סינון להצגת *רק הדמויות הפעילות*
     let filtered = allStudents.filter(s => s.isActive).filter(s => s.full_name.toLowerCase().includes(searchTerm));
-    if (sortBy==='name')  filtered.sort((a,b) => a.name.localeCompare(b.name,'he'));
+    if (sortBy==='name')  filtered.sort((a,b) => a.full_name.localeCompare(b.full_name,'he'));
     if (sortBy==='level') filtered.sort((a,b) => b.level-a.level);
     if (sortBy==='class') {
         const parse = cls => { const m=cls?.match(/([א-ת])'?(\d+)/);
@@ -1621,7 +1621,7 @@ function updateView() {
         const likes     = s.likes||{};
         const likeCount = Object.keys(likes).length;
         const iLiked    = likes[currentUser]===true;
-        const likerNames = Object.keys(likes).map(uid => allStudents.find(x=>x.id===uid)?.name).filter(Boolean);
+        const likerNames = Object.keys(likes).map(uid => allStudents.find(x=>x.id===uid)?.full_name).filter(Boolean);
 
         const noteHtml = s.lastNote
             ? `<div style="background:#fff3e0;border-radius:6px;padding:8px;border-right:3px solid #ff9800;font-size:0.85em;color:#e65100;">📝 ${s.lastNote}</div>` : '';
@@ -2712,7 +2712,7 @@ async function pickTargetShield(targetId, shieldIndex) {
     localStorage.setItem('last_attack_'+currentUser+'_'+skill, Date.now().toString());
     try {
         await dbSvc.createDocument(DB_ID,TABLES.battles,ID.unique(),{attackerId:currentUser,targetId,skill,mineIndex:mine,status:'pending'});
-        alert(`המתקפה נשלחה לעבר המגן שבחרת! 🚀\n${target.name} יראה זאת בכניסה הבאה וייאלץ לנחש אותו.`);
+        alert(`המתקפה נשלחה לעבר המגן שבחרת! 🚀\n${target.full_name} יראה זאת בכניסה הבאה וייאלץ לנחש אותו.`);
     } catch(e) { alert(e.message); }
 }
 
@@ -2731,7 +2731,7 @@ function openDefenseModal(battle) {
     const me=allStudents.find(s=>s.id===currentUser); if (!me) return;
     const attacker=allStudents.find(s=>s.id===battle.attackerId);
     const broken=me.history?.shields_broken||[];
-    document.getElementById('defense-modal-title').innerText=`⚔️ ${attacker?.name||'מישהו'} תקף אותך!`;
+    document.getElementById('defense-modal-title').innerText=`⚔️ ${attacker?.full_name||'מישהו'} תקף אותך!`;
     document.getElementById('defense-modal-desc').innerHTML=`מתקפה: <b>${battle.skill}</b><br>בחר מגן — נכון = חסמת!`;
     const row=document.getElementById('defense-shields-row'); row.innerHTML='';
     for (let i=0;i<shieldsByLevel(me.level);i++) {
@@ -2757,7 +2757,7 @@ async function resolveDefense(chosen, battle) {
 
         let history = (typeof me.history === 'string') ? JSON.parse(me.history || "{}") : (me.history || {});
         const isBlocked = parseInt(chosen) === parseInt(battle.mineIndex);
-        const attackerName = att?.name || 'תוקף לא ידוע';
+        const attackerName = att?.full_name || 'תוקף לא ידוע';
         
         let ctx = {
             me: { ...me, history: history },
@@ -2816,7 +2816,7 @@ async function resolveDefense(chosen, battle) {
                 let ah = ctx.utils.getHistory(att);
                 let ax = att.xp + xpReward, al = att.level || 0;
                 while(ax >= 100){ al++; ax -= 100; }
-                ah['win_'+Date.now()] = { msg: `⚔️ פגעת ב-${me.name}! (+${xpReward}XP)`, xp: xpReward, time: Date.now() };
+                ah['win_'+Date.now()] = { msg: `⚔️ פגעת ב-${me.full_name}! (+${xpReward}XP)`, xp: xpReward, time: Date.now() };
                 await dbSvc.updateDocument(DB_ID, TABLES.students, att.id, { xp: ax, level: al, history: JSON.stringify(ah) });
             }
 
