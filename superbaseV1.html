@@ -1238,7 +1238,7 @@ function renderStudentSelect() {
     sel.innerHTML = '<option value="">בחר את שמך...</option>';
     // בתיבת ההתחברות מציגים רק שמות ייחודיים שכרגע מוגדרים כ-active
     allStudents.filter(s => s.isActive).forEach(s => { 
-        const o=document.createElement('option'); o.value=s.id; o.textContent=s.name; sel.appendChild(o); 
+        const o=document.createElement('option'); o.value=s.id; o.textContent=s.full_name; sel.appendChild(o); 
     });
 }
 
@@ -1273,8 +1273,8 @@ async function fixDatabase() {
 
     const nameGroups = {};
     allStudents.forEach(s => {
-        if(!nameGroups[s.name]) nameGroups[s.name] = [];
-        nameGroups[s.name].push(s);
+        if(!nameGroups[s.full_name]) nameGroups[s.full_name] = [];
+        nameGroups[s.full_name].push(s);
     });
 
     const updates = [];
@@ -1325,7 +1325,7 @@ async function addStudent() {
     
     try {
         // מציאת קבוצת דמויות קיימת לשם זה (שימוש במערך הגלובלי allStudents)
-        const existingGroup = allStudents.filter(s => s.full_name === nameInput || s.name === nameInput);
+        const existingGroup = allStudents.filter(s => s.full_name === nameInput || s.full_name === nameInput);
         const isFirst = existingGroup.length === 0;
         
         // מציאת הסיסמה המשותפת אם קיימת
@@ -1375,7 +1375,7 @@ async function deleteStudent(id) {
         
         // אם מוחקים דמות שהיא פעילה ויש לו עוד, מעבירים פעילות לדמות אחרת אוטומטית
         if (s && s.isActive) {
-            const remaining = allStudents.filter(x => (x.full_name === s.full_name || x.name === s.name) && x.id !== id);
+            const remaining = allStudents.filter(x => (x.full_name === s.full_name || x.name === s.full_name) && x.id !== id);
             if (remaining.length > 0) {
                 const { error: upError } = await supabase
                     .from(TABLES.students)
@@ -1599,7 +1599,7 @@ function updateView() {
     const pending    = window._pendingBattleTargets || [];
 
     // סינון להצגת *רק הדמויות הפעילות*
-    let filtered = allStudents.filter(s => s.isActive).filter(s => s.name.toLowerCase().includes(searchTerm));
+    let filtered = allStudents.filter(s => s.isActive).filter(s => s.full_name.toLowerCase().includes(searchTerm));
     if (sortBy==='name')  filtered.sort((a,b) => a.name.localeCompare(b.name,'he'));
     if (sortBy==='level') filtered.sort((a,b) => b.level-a.level);
     if (sortBy==='class') {
@@ -1670,7 +1670,7 @@ function updateView() {
                          style="max-height:135px;object-fit:contain;margin-bottom:8px;cursor:${currentUser === 'admin' ? 'copy' : 'zoom-in'};"
                          onclick="event.stopPropagation(); ${currentUser === 'admin' ? `addXP('${s.id}')` : `toggleCharacterZoom('${imgPath}')`}">
                     <div style="font-weight:bold;font-size:1.3em;line-height:1.2;display:flex;align-items:center;gap:6px;">
-                        ${s.name} ${likeBtn} ${likeDisplay}
+                        ${s.full_name} ${likeBtn} ${likeDisplay}
                     </div>
                     <div style="color:#666;font-size:0.95em;">כיתה ${s.className}</div>
                     ${myShields}
@@ -1680,7 +1680,7 @@ function updateView() {
                     <div style="font-size:0.75em;color:#2e7d32;font-weight:bold;margin-top:5px;text-align:center;">
                         <span style="cursor:pointer;" onclick="event.stopPropagation(); event.currentTarget.closest('.student-card').classList.toggle('flipped')">🔄 לחץ להיפוך</span>
                         &nbsp;|&nbsp;
-                       <span style="cursor:pointer; color:#1976d2;" data-deckname="${s.name.replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); openDeck(this.dataset.deckname)">🎴 מחסן דמויות</span>
+                       <span style="cursor:pointer; color:#1976d2;" data-deckname="${s.full_name.replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); openDeck(this.dataset.deckname)">🎴 מחסן דמויות</span>
                     </div>
                 </div>
             </div>
