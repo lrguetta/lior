@@ -1529,30 +1529,53 @@ async function switchActiveCharacter(newId, name) {
     if(!confirm("להחליף לדמות זו?")) return;
     closeDeck();
     
-    const group = allStudents.filter(s => s.name === name);
-    const updates = group.map(s => {
-        const shouldBeActive = s.id === newId;
-        if(s.isActive !== shouldBeActive) {
-            return dbSvc.updateDocument(DB_ID, TABLES.students, s.id, { isActive: shouldBeActive });
-        }
-    }).filter(Boolean);
-    
     try {
-        await Promise.all(updates);
-        // אם התלמיד מחובר עכשיו והחליף את שלו, חייבים לעדכן את ה-ID שהוא עובד איתו כדי שיקבל שליטה על הקלף החדש
-        if (currentUser && currentUser !== 'admin' && allStudents.find(s=>s.id === currentUser)?.name === name) {
-            currentUser = newId;
-            localStorage.setItem('farm_user_id', newId);
-            const newMe = allStudents.find(s=>s.id === newId);
-            if(newMe) buildBattleSidebar(newMe);
+        // 1. כיבוי כל הדמויות של אותו תלמיד (Set all to isActive = false)
+        const { error: err1 } = await supabase
+            .from(TABLES.students)
+            .update({ isActive: false })
+            .eq('name', name);
+
+        if (err1) throw err1;
+
+        // 2. הפעלת הדמות שנבחרה (Set specific ID to isActive = true)
+        const { error: err2 } = await supabase
+            .from(TABLES.students)
+            .update({ isActive: true })
+            .eq('id', newId);
+
+        if (err2) throw err2;
+
+        // 3. עדכון ה-State המקומי כדי שהשינוי יורגש מייד
+        allStudents.forEach(s => {
+            if (s.name === name) {
+                s.isActive = (s.id === newId);
+            }
+        });
+
+        // 4. עדכון currentUser אם התלמיד עצמו מבצע את ההחלפה
+        if (currentUser && currentUser !== 'admin') {
+            const currentStudent = allStudents.find(s => s.id === currentUser);
+            if (currentStudent && currentStudent.name === name) {
+                currentUser = newId;
+                localStorage.setItem('farm_user_id', newId);
+                const newMe = allStudents.find(s => s.id === newId);
+                if (newMe && typeof buildBattleSidebar === 'function') {
+                    buildBattleSidebar(newMe);
+                }
+            }
         }
-        await loadStudents();
+
+        // 5. טעינה מחדש ורינדור המסך
+        await loadStudents(); 
+        // ודא שפונקציית loadStudents קוראת בסופה ל-renderStudents()
+        
         alert("הדמות הוחלפה בהצלחה!");
     } catch(e) {
+        console.error("Error switching character:", e);
         alert("שגיאה בהחלפת הדמות: " + e.message);
     }
 }
-
 // --- תצוגת כרטיסים ---
 function updateView() {
     const grid = document.getElementById('farm-grid');
