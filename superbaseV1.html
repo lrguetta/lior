@@ -1493,10 +1493,13 @@ async function addXP(id) {
 }
 
 // --- מנגנון DECK (החלפת דמויות) ---
-function openDeck(name) {
-    document.getElementById('deck-student-name').innerText = name;
+function openDeck(fullName) {
+    // עדכון הכותרת במודל
+    document.getElementById('deck-student-name').innerText = fullName;
     const deckList = document.getElementById('deck-list');
-    const myCards = allStudents.filter(s => s.name === name);
+    
+    // תיקון: סינון לפי השדה הנכון שקיים ב-Supabase
+    const myCards = allStudents.filter(s => s.full_name === fullName);
     
     if(myCards.length <= 1 && currentUser !== 'admin') {
         alert("אין לך דמויות נוספות במחסן.");
@@ -1504,22 +1507,28 @@ function openDeck(name) {
     }
     
     deckList.innerHTML = myCards.map(s => {
-        const eggNum = (s.egg??0)+1;
-        const imgPath = s.level===0 ? `images/egg${eggNum}.png` : `images/${s.type}${s.level>=20?3:s.level>=10?2:1}.png`;
+        const eggNum = (s.egg ?? 0) + 1;
+        const imgPath = s.level === 0 
+            ? `images/egg${eggNum}.png` 
+            : `images/${s.type}${s.level >= 20 ? 3 : s.level >= 10 ? 2 : 1}.png`;
+            
         return `
-        <div style="border:3px solid ${s.isActive ? '#4caf50' : '#ddd'}; border-radius:12px; padding:10px; min-width:110px; text-align:center; background:${s.isActive?'#e8f5e9':'#fff'}; position:relative;">
+        <div style="border:3px solid ${s.isActive ? '#4caf50' : '#ddd'}; border-radius:12px; padding:10px; min-width:110px; text-align:center; background:${s.isActive ? '#e8f5e9' : '#fff'}; position:relative;">
             ${s.isActive ? '<div style="position:absolute; top:-10px; left:50%; transform:translateX(-50%); background:#4caf50; color:white; font-size:0.7em; padding:2px 6px; border-radius:10px; font-weight:bold;">פעיל</div>' : ''}
             <img src="${imgPath}" style="height:70px; object-fit:contain; margin-bottom:8px;">
             <div style="font-weight:bold; color:#333;">Lv.${s.level}</div>
             <div style="font-size:0.85em; color:#666; margin-bottom:8px;">XP: ${s.xp}</div>
-            ${!s.isActive ? `<button onclick="switchActiveCharacter('${s.id}', '${name}')" style="font-size:0.8em; padding:5px 10px; width:100%;">בחר</button>` : `<button disabled style="font-size:0.8em; padding:5px 10px; width:100%; background:#ccc;">מוצג</button>`}
+            ${!s.isActive 
+                ? `<button onclick="switchActiveCharacter('${s.id}', '${fullName}')" style="font-size:0.8em; padding:5px 10px; width:100%;">בחר</button>` 
+                : `<button disabled style="font-size:0.8em; padding:5px 10px; width:100%; background:#ccc;">מוצג</button>`
+            }
         </div>`;
     }).join('');
     
     document.getElementById('deck-modal-overlay').style.display = 'block';
     document.getElementById('deck-modal').style.display = 'block';
 }
-
+    
 function closeDeck() {
     document.getElementById('deck-modal-overlay').style.display = 'none';
     document.getElementById('deck-modal').style.display = 'none';
