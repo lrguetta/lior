@@ -1525,7 +1525,7 @@ function closeDeck() {
     document.getElementById('deck-modal').style.display = 'none';
 }
 
-async function switchActiveCharacter(newId, name) {
+async function switchActiveCharacter(newId, full_name) {
     if(!confirm("להחליף לדמות זו?")) return;
     closeDeck();
     
@@ -1534,7 +1534,7 @@ async function switchActiveCharacter(newId, name) {
         const { error: err1 } = await supabase
             .from(TABLES.students)
             .update({ isActive: false })
-            .eq('name', name);
+            .eq('full_name', full_name);
 
         if (err1) throw err1;
 
@@ -1548,7 +1548,7 @@ async function switchActiveCharacter(newId, name) {
 
         // 3. עדכון ה-State המקומי כדי שהשינוי יורגש מייד
         allStudents.forEach(s => {
-            if (s.name === name) {
+            if (s.full_name === full_name) {
                 s.isActive = (s.id === newId);
             }
         });
@@ -1556,7 +1556,7 @@ async function switchActiveCharacter(newId, name) {
         // 4. עדכון currentUser אם התלמיד עצמו מבצע את ההחלפה
         if (currentUser && currentUser !== 'admin') {
             const currentStudent = allStudents.find(s => s.id === currentUser);
-            if (currentStudent && currentStudent.name === name) {
+            if (currentStudent && currentStudent.full_name === full_name) {
                 currentUser = newId;
                 localStorage.setItem('farm_user_id', newId);
                 const newMe = allStudents.find(s => s.id === newId);
