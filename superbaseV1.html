@@ -1776,8 +1776,8 @@ async function renderTasks() {
 
 function openSubmitModal(id, title) {
     currentTaskToSubmit = id;
-    const modalTitle = document.getElementById('modal-task-title');
-    if (modalTitle) modalTitle.innerText = title;
+    const titleEl = document.getElementById('modal-task-title');
+    if (titleEl) titleEl.innerText = title;
     
     const task = allTasks.find(t => t.id === id);
     const container = document.getElementById('questions-display');
@@ -1788,7 +1788,7 @@ function openSubmitModal(id, title) {
     if (task?.questions) {
         task.questions.forEach((q, i) => {
             const d = document.createElement('div');
-            d.style = 'margin-bottom:15px;padding:15px;background:#f0f7ff;border-radius:8px;border:1px solid #bbdefb;';
+            d.style = 'margin-bottom:15px;padding:15px;background:#f0f7ff;border-radius:8px;border:1px solid #bbdefb;position:relative;';
             d.innerHTML = `<strong>${i + 1}. ${q.text}</strong><br>`;
             
             if (q.type === 'open') {
@@ -1796,8 +1796,8 @@ function openSubmitModal(id, title) {
             } else if (q.type === 'boolean') {
                 d.innerHTML += `<div style="margin-top:10px;"><label style="margin-left:20px;cursor:pointer;"><input type="radio" name="q${i}" value="נכון"> נכון</label><label style="cursor:pointer;"><input type="radio" name="q${i}" value="לא נכון"> לא נכון</label></div>`;
             } else if (q.type === 'multiple') {
-                const opts = [q.correct, ...(q.others || [])].sort(() => Math.random() - .5);
-                opts.forEach(opt => {
+                const options = [q.correct, ...(q.others || [])].sort(() => Math.random() - .5);
+                options.forEach(opt => {
                     d.innerHTML += `<label style="display:block;margin-top:8px;cursor:pointer;background:white;padding:8px;border-radius:5px;border:1px solid #ddd;"><input type="radio" name="q${i}" value="${opt}"> ${opt}</label>`;
                 });
             } else if (q.type === 'survey') {
@@ -1817,74 +1817,78 @@ function openSubmitModal(id, title) {
     document.getElementById('submit-modal').style.display = 'block';
 }
 
+function closeModal() { 
+    const modal = document.getElementById('submit-modal');
+    if (modal) modal.style.display = 'none'; 
+}
+
 async function sendSubmission() {
     const task = allTasks.find(t => t.id === currentTaskToSubmit);
     if (!task) return;
 
-    // --- בדיקת כפילויות בסופרבייס ---
+    // 1. בדיקת כפילויות בסופרבייס
     try {
-        const { data: existing, error: checkError } = await supabase
+        const { data: existing, error: checkErr } = await supabase
             .from(TABLES.submissions)
             .select('id')
             .eq('studentId', currentUser)
             .eq('taskId', currentTaskToSubmit);
 
         if (existing && existing.length > 0) {
-            alert("כבר הגשת את המטלה הזו בעבר! ניתן להגיש כל מטלה פעם אחת בלבד.");
+            alert("כבר הגשת את המטלה הזו בעבר!");
             closeModal();
             return;
         }
-    } catch (e) {
-        console.error("בדיקת הגשות קודמות נכשלה:", e);
-    }
+    } catch (e) { console.error("Check failed", e); }
 
-    const answers = [];
+    const answers = []; 
     let allAnswered = true;
-
+    
+    // 2. איסוף התשובות (שמרנו על הלוגיקה המקורית שלך)
     if (task?.questions) {
         task.questions.forEach((q, i) => {
             let val = '';
             if (q.type === 'open') {
-                const el = document.querySelector(`textarea[data-index="${i}"]`);
-                val = el ? el.value.trim() : '';
+                val = document.querySelector(`textarea[data-index="${i}"]`)?.value.trim() || '';
             } else if (q.type === 'survey') {
                 val = Array.from(document.querySelectorAll(`input[name="q${i}"]:checked`)).map(c => c.value).join(' | ');
             } else if (q.type === 'study_unit') {
-                const ch = document.getElementById(`study_chapter_${i}`)?.value.trim();
-                const st = document.getElementById(`study_start_${i}`)?.value.trim();
-                const en = document.getElementById(`study_end_${i}`)?.value.trim();
+                const ch = document.getElementById(`study_chapter_${i}`)?.value.trim() || '';
+                const st = document.getElementById(`study_start_${i}`)?.value.trim() || '';
+                const en = document.getElementById(`study_end_${i}`)?.value.trim() || '';
                 val = (ch || st || en) ? `פרק ${ch}, פסוקים ${st}-${en}` : '';
             } else {
                 const c = document.querySelector(`input[name="q${i}"]:checked`);
                 val = c ? c.value : '';
             }
+            
             if (!val) allAnswered = false;
-            // בסופרבייס אנחנו שומרים אובייקט נקי בתוך ה-JSONB
             answers.push({ q: q.text, a: val });
         });
     }
 
-    if (!allAnswered && !confirm('לא ענית על הכל. לשלוח?')) return;
+    // 3. בדיקה אם הכל נענה
+    if (!allAnswered && !confirm('לא ענית על הכל. לשלוח בכל זאת?')) return;
 
+    // 4. שליחה לסופרבייס
     try {
-        // שליחה לסופרבייס
         const { error } = await supabase
             .from(TABLES.submissions)
             .insert([{
                 studentId: currentUser,
                 taskId: currentTaskToSubmit,
-                answers: answers, // נשלח כמערך (JSONB)
+                answers: answers, // נשלח כמערך אובייקטים (JSONB)
                 status: 'pending',
                 created_at: new Date().toISOString()
             }]);
 
         if (error) throw error;
 
-        alert('נשלח בהצלחה! 🎉');
-        closeModal();
+        alert('נשלח בהצלחה! 🎉'); 
+        closeModal(); 
         if (typeof renderTasks === 'function') await renderTasks();
-    } catch (e) {
-        alert("שגיאה בשליחה: " + e.message);
+    } catch (e) { 
+        alert("שגיאה בשליחה: " + e.message); 
     }
 }
 
