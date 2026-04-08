@@ -1438,7 +1438,8 @@ async function addXP(id) {
     }
     
     let nxp = (s.xp || 0) + 10;
-    let nlv = s.level || 1;
+    // תוקן: שימוש ב- ?? כדי למנוע קפיצה אוטומטית לרמה 1 על הלחיצה הראשונה
+    let nlv = s.level ?? 0; 
     
     if (nxp >= 100) { 
         nlv++; 
@@ -1460,6 +1461,12 @@ async function addXP(id) {
     const badge = card?.querySelector('.level-text-badge');
     if (badge) badge.innerText = 'Lv.' + nlv;
 
+    // ✨ הפתרון: עדכון התמונה במסך בזמן אמת כשעולים רמה או בוקעים! ✨
+    if (img) {
+        const eggNum = (s.egg ?? 0) + 1;
+        img.src = nlv === 0 ? `images/egg${eggNum}.png` : `images/${s.type}${nlv >= 20 ? 3 : nlv >= 10 ? 2 : 1}.png`;
+    }
+
     // עדכון היסטוריה
     const history = { ...s.history };
     history['tap_' + Date.now()] = { msg: 'לחיצת מורה', xp: 10, time: Date.now() };
@@ -1472,7 +1479,7 @@ async function addXP(id) {
             .update({ 
                 xp: nxp, 
                 level: nlv, 
-                history: history // שולחים אובייקט ישירות, לא String
+                history: history 
             })
             .eq('id', id);
 
@@ -1480,7 +1487,6 @@ async function addXP(id) {
         
     } catch (e) {
         console.error("שגיאה בעדכון XP בסופרבייס:", e);
-        // כאן אולי כדאי להחזיר את המצב לקדמותו ב-DOM אם העדכון נכשל
     } finally {
         setTimeout(() => { isUpdatingXP = false; }, 300);
     }
