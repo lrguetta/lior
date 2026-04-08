@@ -225,6 +225,34 @@ button {
     transform: translateZ(0);
     display: block;
 }
+    #character-zoom-overlay {
+    display: none; /* מוסתר כברירת מחדל */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8); /* רקע שחור שקוף */
+    z-index: 10000; /* מעל הכל */
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    animation: fadeIn 0.3s ease;
+}
+
+#zoomed-character-img {
+    max-width: 90%;
+    max-height: 80%;
+    border-radius: 20px;
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+    transform: scale(1);
+    transition: transform 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
 .student-card.flipped .card-inner { transform: rotateY(180deg); }
 
 .card-front, .card-back {
@@ -1601,8 +1629,9 @@ function updateView() {
                     ${currentUser==='admin'?`<button class="remove-btn" onclick="event.stopPropagation();deleteStudent('${s.id}')">✖</button>`:`<div></div>`}
                 </div>
                 <div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;">
-                    <img id="img-${s.id}" src="${imgPath}" class="creature-img" style="max-height:135px;object-fit:contain;margin-bottom:8px;"
-onclick="event.stopPropagation();addXP('${s.id}')">
+                   <img id="img-${s.id}" src="${imgPath}" class="creature-img" 
+                         style="max-height:135px;object-fit:contain;margin-bottom:8px;cursor:${currentUser === 'admin' ? 'copy' : 'zoom-in'};"
+                         onclick="event.stopPropagation(); ${currentUser === 'admin' ? `addXP('${s.id}')` : `toggleCharacterZoom('${imgPath}')`}">
                     <div style="font-weight:bold;font-size:1.3em;line-height:1.2;display:flex;align-items:center;gap:6px;">
                         ${s.name} ${likeBtn} ${likeDisplay}
                     </div>
@@ -1641,7 +1670,31 @@ placeholder="כתוב הערה קצרה...">${s.personalNote||''}</textarea>
         if (card) card.classList.add('flipped');
     });
 }
-
+// זום תמונות
+    
+    function toggleCharacterZoom(imgSrc) {
+    // בדיקה אם המודל כבר קיים בדף
+    let overlay = document.getElementById('character-zoom-overlay');
+    
+    if (!overlay) {
+        // יצירת האלמנטים אם הם לא קיימים
+        overlay = document.createElement('div');
+        overlay.id = 'character-zoom-overlay';
+        overlay.onclick = () => overlay.style.display = 'none'; // סגירה בלחיצה
+        
+        const img = document.createElement('img');
+        img.id = 'zoomed-character-img';
+        
+        overlay.appendChild(img);
+        document.body.appendChild(overlay);
+    }
+    
+    // עדכון התמונה והצגה
+    const zoomedImg = document.getElementById('zoomed-character-img');
+    zoomedImg.src = imgSrc;
+    overlay.style.display = 'flex';
+}
+    
 // --- לייקים ---
 async function toggleLike(studentId) {
     if (currentUser==='admin' || currentUser===studentId) return;
