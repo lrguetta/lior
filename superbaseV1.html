@@ -1599,7 +1599,9 @@ function updateView() {
     const pending    = window._pendingBattleTargets || [];
 
     // סינון להצגת *רק הדמויות הפעילות*
-    let filtered = allStudents.filter(s => s.isActive).filter(s => s.full_name.toLowerCase().includes(searchTerm));
+    let filtered = allStudents
+    .filter(s => s.isActive) 
+    .filter(s => s && s.full_name && s.full_name.toLowerCase().includes(searchTerm));
     if (sortBy==='name')  filtered.sort((a,b) => a.full_name.localeCompare(b.full_name,'he'));
     if (sortBy==='level') filtered.sort((a,b) => b.level-a.level);
     if (sortBy==='class') {
