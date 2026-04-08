@@ -1331,13 +1331,12 @@ async function addStudent() {
         // מציאת הסיסמה המשותפת אם קיימת
         const sharedPass = isFirst ? null : existingGroup.find(s => s.password)?.password || null;
 
-     const payload = {
+const payload = {
     full_name: nameInput,
     className: document.getElementById('studentClass').value,
     xp: 0, 
     level: 0, 
-    // שינינו מ-type ל-animal_type כדי להתאים לטבלה בסופרבייס
-    animal_type: CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)],
+    type: CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)], // חזר ל-type
     egg: Math.floor(Math.random() * 5), 
     likes: {}, 
     history: {}, 
@@ -1345,7 +1344,6 @@ async function addStudent() {
     password: sharedPass,
     created_at: new Date().toISOString()
 };
-
         const { error } = await supabase
             .from(TABLES.students)
             .insert([payload]);
@@ -1575,8 +1573,7 @@ function updateView() {
     grid.innerHTML = filtered.map(s => {
         const isMine  = currentUser===s.id;
         const eggNum  = (s.egg??0)+1;
-        // שינוי s.type ל-s.animal_type
-        const imgPath = s.level === 0 ? `images/egg${eggNum}.png` : `images/${s.animal_type}${s.level >= 20 ? 3 : s.level >= 10 ? 2 : 1}.png`;
+        const imgPath = s.level === 0 ? `images/egg${eggNum}.png` : `images/${s.type}${s.level >= 20 ? 3 : s.level >= 10 ? 2 : 1}.png`;
         const brokenShields = s.history?.shields_broken || [];
         const sc = shieldsByLevel(s.level);
 
