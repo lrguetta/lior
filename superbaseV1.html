@@ -1294,51 +1294,97 @@ async function fixDatabase() {
 async function addStudent() {
     const nameInput = document.getElementById('studentName').value.trim();
     if (!nameInput) return;
+    
     try {
-        // מציאת קבוצת דמויות קיימת לשם זה
-        const existingGroup = allStudents.filter(s => s.name === nameInput);
+        // מציאת קבוצת דמויות קיימת לשם זה (שימוש במערך הגלובלי allStudents)
+        const existingGroup = allStudents.filter(s => s.full_name === nameInput || s.name === nameInput);
         const isFirst = existingGroup.length === 0;
+        
+        // מציאת הסיסמה המשותפת אם קיימת
         const sharedPass = isFirst ? null : existingGroup.find(s => s.password)?.password || null;
 
-        await dbSvc.createDocument(DB_ID, TABLES.students, ID.unique(), {
-            name: nameInput, 
+        const payload = {
+            full_name: nameInput, // או name, תלוי איך קראת לעמודה ב-SQL
             className: document.getElementById('studentClass').value,
-            xp: 0, level: 0, 
-            type: CREATURE_TYPES[Math.floor(Math.random()*CREATURE_TYPES.length)],
-            egg: Math.floor(Math.random()*5), 
-            likes: '{}', history: '{}',
+            xp: 0, 
+            level: 0, 
+            type: CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)],
+            egg: Math.floor(Math.random() * 5), 
+            likes: {}, // בסופרבייס שולחים אובייקט ריק, לא סטרינג
+            history: {}, 
             isActive: isFirst, 
-            password: sharedPass
-        });
+            password: sharedPass,
+            created_at: new Date().toISOString()
+        };
+
+        const { error } = await supabase
+            .from(TABLES.students)
+            .insert([payload]);
+
+        if (error) throw error;
+
         document.getElementById('studentName').value = '';
-        await loadStudents();
-        alert('הדמות צורפה בהצלחה!');
-    } catch(e) { alert('שגיאה: '+e.message); }
+        if (typeof loadStudents === 'function') await loadStudents();
+        alert('הדמות צורפה בהצלחה! ✨');
+        
+    } catch(e) { 
+        console.error("שגיאה בהוספת תלמיד:", e);
+        alert('שגיאה: ' + e.message); 
+    }
 }
 
 async function deleteStudent(id) {
-    if (!confirm('למחוק?')) return;
+    if (!confirm('למחוק את הדמות הזו?')) return;
     try { 
         const s = allStudents.find(x => x.id === id);
-        await dbSvc.deleteDocument(DB_ID, TABLES.students, id); 
+        
+        // מחיקה מסופרבייס
+        const { error: delError } = await supabase
+            .from(TABLES.students)
+            .delete()
+            .eq('id', id);
+
+        if (delError) throw delError;
         
         // אם מוחקים דמות שהיא פעילה ויש לו עוד, מעבירים פעילות לדמות אחרת אוטומטית
         if (s && s.isActive) {
-            const remaining = allStudents.filter(x => x.name === s.name && x.id !== id);
+            const remaining = allStudents.filter(x => (x.full_name === s.full_name || x.name === s.name) && x.id !== id);
             if (remaining.length > 0) {
-                await dbSvc.updateDocument(DB_ID, TABLES.students, remaining[0].id, { isActive: true });
+                const { error: upError } = await supabase
+                    .from(TABLES.students)
+                    .update({ isActive: true })
+                    .eq('id', remaining[0].id);
+                
+                if (upError) throw upError;
             }
         }
-        await loadStudents(); 
+        
+        if (typeof loadStudents === 'function') await loadStudents(); 
     }
-    catch(e) { alert(e.message); }
+    catch(e) { 
+        console.error("שגיאה במחיקה:", e);
+        alert(e.message); 
+    }
 }
 
 async function savePersonalNote(id) {
-    try { await dbSvc.updateDocument(DB_ID, TABLES.students, id, { personalNote:document.getElementById('note-'+id).value.trim() }); await loadStudents(); }
-    catch(e) { alert(e.message); }
-}
+    const noteValue = document.getElementById('note-' + id).value.trim();
+    try { 
+        const { error } = await supabase
+            .from(TABLES.students)
+            .update({ personalNote: noteValue })
+            .eq('id', id);
 
+        if (error) throw error;
+        
+        if (typeof loadStudents === 'function') await loadStudents();
+        alert('הערה נשמרה!');
+    }
+    catch(e) { 
+        console.error("שגיאה בשמירת הערה:", e);
+        alert(e.message); 
+    }
+}
 // --- XP (מנהל) + פתרון לבאג הלחיצות המהירות ---
 let isUpdatingXP = false;
 async function addXP(id) {
