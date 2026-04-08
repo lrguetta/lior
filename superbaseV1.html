@@ -1775,166 +1775,234 @@ async function renderTasks() {
 }
 
 function openSubmitModal(id, title) {
-    currentTaskToSubmit=id;
-    document.getElementById('modal-task-title').innerText=title;
-    const task=allTasks.find(t=>t.id===id);
-    const container=document.getElementById('questions-display');
-    container.innerHTML='';
-    if (task?.questions) task.questions.forEach((q,i) => {
-        const d=document.createElement('div');
-        d.style='margin-bottom:15px;padding:15px;background:#f0f7ff;border-radius:8px;border:1px solid #bbdefb;';
-        d.innerHTML=`<strong>${i+1}. ${q.text}</strong><br>`;
-        if (q.type==='open') d.innerHTML+=`<textarea class="ans-input" data-index="${i}" style="width:100%;margin-top:10px;height:60px;" placeholder="תשובתך כאן..."></textarea>`;
-        else if (q.type==='boolean') d.innerHTML+=`<div style="margin-top:10px;"><label style="margin-left:20px;cursor:pointer;"><input type="radio" name="q${i}" value="נכון"> נכון</label><label style="cursor:pointer;"><input type="radio" name="q${i}" value="לא נכון"> לא נכון</label></div>`;
-        else if (q.type==='multiple') [q.correct,...(q.others||[])].sort(()=>Math.random()-.5).forEach(opt=>{ d.innerHTML+=`<label style="display:block;margin-top:8px;cursor:pointer;background:white;padding:8px;border-radius:5px;border:1px solid #ddd;"><input type="radio" name="q${i}" value="${opt}"> ${opt}</label>`; });
-        else if (q.type==='survey') (q.options||[]).forEach(opt=>{ d.innerHTML+=`<label style="display:block;margin-top:8px;cursor:pointer;background:white;padding:8px;border-radius:5px;border:1px solid #ddd;"><input type="checkbox" name="q${i}" value="${opt}"> ${opt}</label>`; });
-        else if (q.type==='study_unit') d.innerHTML+=`<div style="display:flex;gap:5px;margin-top:10px;"><input type="text" id="study_chapter_${i}" placeholder="פרק" style="width:30%;padding:8px;border:1px solid #ccc;border-radius:4px;"><input type="text" id="study_start_${i}" placeholder="מפסוק" style="width:35%;padding:8px;border:1px solid #ccc;border-radius:4px;"><input type="text" id="study_end_${i}" placeholder="עד פסוק" style="width:35%;padding:8px;border:1px solid #ccc;border-radius:4px;"></div>`;
-        container.appendChild(d);
-    });
-    document.getElementById('submit-modal').style.display='block';
+    currentTaskToSubmit = id;
+    const modalTitle = document.getElementById('modal-task-title');
+    if (modalTitle) modalTitle.innerText = title;
+    
+    const task = allTasks.find(t => t.id === id);
+    const container = document.getElementById('questions-display');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (task?.questions) {
+        task.questions.forEach((q, i) => {
+            const d = document.createElement('div');
+            d.style = 'margin-bottom:15px;padding:15px;background:#f0f7ff;border-radius:8px;border:1px solid #bbdefb;';
+            d.innerHTML = `<strong>${i + 1}. ${q.text}</strong><br>`;
+            
+            if (q.type === 'open') {
+                d.innerHTML += `<textarea class="ans-input" data-index="${i}" style="width:100%;margin-top:10px;height:60px;" placeholder="תשובתך כאן..."></textarea>`;
+            } else if (q.type === 'boolean') {
+                d.innerHTML += `<div style="margin-top:10px;"><label style="margin-left:20px;cursor:pointer;"><input type="radio" name="q${i}" value="נכון"> נכון</label><label style="cursor:pointer;"><input type="radio" name="q${i}" value="לא נכון"> לא נכון</label></div>`;
+            } else if (q.type === 'multiple') {
+                const opts = [q.correct, ...(q.others || [])].sort(() => Math.random() - .5);
+                opts.forEach(opt => {
+                    d.innerHTML += `<label style="display:block;margin-top:8px;cursor:pointer;background:white;padding:8px;border-radius:5px;border:1px solid #ddd;"><input type="radio" name="q${i}" value="${opt}"> ${opt}</label>`;
+                });
+            } else if (q.type === 'survey') {
+                (q.options || []).forEach(opt => {
+                    d.innerHTML += `<label style="display:block;margin-top:8px;cursor:pointer;background:white;padding:8px;border-radius:5px;border:1px solid #ddd;"><input type="checkbox" name="q${i}" value="${opt}"> ${opt}</label>`;
+                });
+            } else if (q.type === 'study_unit') {
+                d.innerHTML += `<div style="display:flex;gap:5px;margin-top:10px;">
+                    <input type="text" id="study_chapter_${i}" placeholder="פרק" style="width:30%;padding:8px;border:1px solid #ccc;border-radius:4px;">
+                    <input type="text" id="study_start_${i}" placeholder="מפסוק" style="width:35%;padding:8px;border:1px solid #ccc;border-radius:4px;">
+                    <input type="text" id="study_end_${i}" placeholder="עד פסוק" style="width:35%;padding:8px;border:1px solid #ccc;border-radius:4px;">
+                </div>`;
+            }
+            container.appendChild(d);
+        });
+    }
+    document.getElementById('submit-modal').style.display = 'block';
 }
-function closeModal() { document.getElementById('submit-modal').style.display='none'; }
 
 async function sendSubmission() {
     const task = allTasks.find(t => t.id === currentTaskToSubmit);
-    
-    // --- בדיקת כפילויות לפני הכל ---
-    try {
-        const existing = await dbSvc.listDocuments(DB_ID, TABLES.submissions, [
-            Appwrite.Query.equal('studentId', currentUser),
-            Appwrite.Query.equal('taskId', currentTaskToSubmit)
-        ]);
+    if (!task) return;
 
-        if (existing.total > 0) {
+    // --- בדיקת כפילויות בסופרבייס ---
+    try {
+        const { data: existing, error: checkError } = await supabase
+            .from(TABLES.submissions)
+            .select('id')
+            .eq('studentId', currentUser)
+            .eq('taskId', currentTaskToSubmit);
+
+        if (existing && existing.length > 0) {
             alert("כבר הגשת את המטלה הזו בעבר! ניתן להגיש כל מטלה פעם אחת בלבד.");
             closeModal();
-            return; // עוצר את הפונקציה ולא ממשיך לשליחה
+            return;
         }
     } catch (e) {
         console.error("בדיקת הגשות קודמות נכשלה:", e);
     }
-    // ------------------------------
 
-    const answers = []; 
+    const answers = [];
     let allAnswered = true;
-    
+
     if (task?.questions) {
         task.questions.forEach((q, i) => {
             let val = '';
             if (q.type === 'open') {
-                val = document.querySelector(`textarea[data-index="${i}"]`).value.trim();
+                const el = document.querySelector(`textarea[data-index="${i}"]`);
+                val = el ? el.value.trim() : '';
             } else if (q.type === 'survey') {
                 val = Array.from(document.querySelectorAll(`input[name="q${i}"]:checked`)).map(c => c.value).join(' | ');
             } else if (q.type === 'study_unit') {
-                const ch = document.getElementById(`study_chapter_${i}`).value.trim();
-                const st = document.getElementById(`study_start_${i}`).value.trim();
-                const en = document.getElementById(`study_end_${i}`).value.trim();
+                const ch = document.getElementById(`study_chapter_${i}`)?.value.trim();
+                const st = document.getElementById(`study_start_${i}`)?.value.trim();
+                const en = document.getElementById(`study_end_${i}`)?.value.trim();
                 val = (ch || st || en) ? `פרק ${ch}, פסוקים ${st}-${en}` : '';
             } else {
                 const c = document.querySelector(`input[name="q${i}"]:checked`);
                 val = c ? c.value : '';
             }
             if (!val) allAnswered = false;
-            answers.push({ q: q.text, a: safe(val) });
+            // בסופרבייס אנחנו שומרים אובייקט נקי בתוך ה-JSONB
+            answers.push({ q: q.text, a: val });
         });
     }
 
     if (!allAnswered && !confirm('לא ענית על הכל. לשלוח?')) return;
 
-    const s = allStudents.find(s => s.id === currentUser);
     try {
-        await dbSvc.createDocument(DB_ID, TABLES.submissions, ID.unique(), { 
-            studentName: s.name, 
-            studentId: s.id, 
-            taskId: currentTaskToSubmit, 
-            answers: JSON.stringify(answers), 
-            time: Date.now() 
-        });
-        alert('נשלח בהצלחה! 🎉'); 
-        closeModal(); 
-        await renderTasks();
-    } catch (e) { 
-        alert(e.message); 
+        // שליחה לסופרבייס
+        const { error } = await supabase
+            .from(TABLES.submissions)
+            .insert([{
+                studentId: currentUser,
+                taskId: currentTaskToSubmit,
+                answers: answers, // נשלח כמערך (JSONB)
+                status: 'pending',
+                created_at: new Date().toISOString()
+            }]);
+
+        if (error) throw error;
+
+        alert('נשלח בהצלחה! 🎉');
+        closeModal();
+        if (typeof renderTasks === 'function') await renderTasks();
+    } catch (e) {
+        alert("שגיאה בשליחה: " + e.message);
     }
 }
 
-// --- הגשות מנהל ---
+// --- הגשות מנהל (סופרבייס) ---
 async function initAdminSubmissions() {
     const container = document.getElementById('submissions-list');
     if (!container) return;
-    container.innerHTML='<div style="color:#888;text-align:center;">טוען...</div>';
+    container.innerHTML = '<div style="color:#888;text-align:center;">טוען...</div>';
+    
     try {
-        const subs = (await dbSvc.listDocuments(DB_ID, TABLES.submissions, [Query.limit(200), Query.orderDesc('time')])).documents;
-        if (!subs.length) { container.innerHTML='<div style="color:#666;text-align:center;">אין הגשות</div>'; return; }
-        container.innerHTML='';
+        // משיכת ההגשות יחד עם שם התלמיד בבת אחת
+        const { data: subs, error } = await supabase
+            .from(TABLES.submissions)
+            .select(`
+                *,
+                students (full_name)
+            `)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        if (!subs || !subs.length) { 
+            container.innerHTML = '<div style="color:#666;text-align:center;">אין הגשות</div>'; 
+            return; 
+        }
+
+        container.innerHTML = '';
         subs.forEach(sub => {
-            const answers=sub.answers?JSON.parse(sub.answers):[];
-            const task=allTasks.find(t=>t.id===sub.taskId);
-            const d=document.createElement('div');
-            d.style='background:white;padding:15px;margin:10px 0;border-radius:8px;border-right:5px solid gold;text-align:right;box-shadow:0 2px 4px rgba(0,0,0,0.1);';
-            d.innerHTML=`<div style="margin-bottom:10px;"><strong style="color:#2e7d32;">${sub.studentName}</strong>
-                <div style="font-size:0.85em;color:#666;">מטלה: ${task?.title||'?'}  |  פרס: ${task?.xp||20} XP</div></div>
+            // בסופרבייס answers הוא כבר אובייקט, אין צורך ב-JSON.parse
+            const answers = Array.isArray(sub.answers) ? sub.answers : [];
+            const task = allTasks.find(t => t.id === sub.taskId);
+            const studentName = sub.students?.full_name || 'תלמיד לא ידוע';
+            
+            const d = document.createElement('div');
+            d.style = 'background:white;padding:15px;margin:10px 0;border-radius:8px;border-right:5px solid gold;text-align:right;box-shadow:0 2px 4px rgba(0,0,0,0.1);';
+            d.innerHTML = `
+                <div style="margin-bottom:10px;">
+                    <strong style="color:#2e7d32;">${studentName}</strong>
+                    <div style="font-size:0.85em;color:#666;">מטלה: ${task?.title || '?'} | פרס: ${task?.xp || 20} XP</div>
+                </div>
                 <details style="background:#f1f8e9;padding:10px;border-radius:5px;cursor:pointer;">
                     <summary style="font-weight:bold;color:#1976d2;">🔍 בדיקת תשובות</summary>
-                    <div style="margin-top:10px;">${answers.map(a=>`<div style="background:#f9f9f9;padding:8px;border-radius:5px;margin-bottom:5px;border:1px solid #eee;"><b>${a.q}</b><br><span style="color:${a.a?'#1976d2':'#f44336'};">${a.a||'לא ענה'}</span></div>`).join('')}</div>
+                    <div style="margin-top:10px;">
+                        ${answers.map(a => `<div style="background:#f9f9f9;padding:8px;border-radius:5px;margin-bottom:5px;border:1px solid #eee;"><b>${a.q}</b><br><span style="color:${a.a ? '#1976d2' : '#f44336'};">${a.a || 'לא ענה'}</span></div>`).join('')}
+                    </div>
                 </details>
                 <div style="display:flex;gap:5px;margin-top:10px;">
-                    <button onclick="approveSub('${sub.$id}','${sub.studentId}',1)"   style="background:#4caf50;flex:1;">אשר מלא</button>
-                    <button onclick="approveSub('${sub.$id}','${sub.studentId}',0.5)" style="background:#ffc107;flex:1;">אשר חלקי</button>
-                    <button onclick="rejectSub('${sub.$id}','${sub.studentId}')"       style="background:#f44336;flex:1;">דחה</button>
+                    <button onclick="approveSub('${sub.id}','${sub.studentId}',1)"   style="background:#4caf50;flex:1;">אשר מלא</button>
+                    <button onclick="approveSub('${sub.id}','${sub.studentId}',0.5)" style="background:#ffc107;flex:1;">אשר חלקי</button>
+                    <button onclick="rejectSub('${sub.id}','${sub.studentId}')"       style="background:#f44336;flex:1;">דחה</button>
                 </div>`;
             container.appendChild(d);
         });
-    } catch(e) { container.innerHTML=`<div style="color:red;">שגיאה: ${e.message}</div>`; }
+    } catch (e) { 
+        container.innerHTML = `<div style="color:red;">שגיאה: ${e.message}</div>`; 
+    }
 }
 
-async function approveSub(subId, studentId, mult=1) {
+async function approveSub(subId, studentId, mult = 1) {
     try {
-        const sub  = await dbSvc.getDocument(DB_ID, TABLES.submissions, subId);
-        const task = allTasks.find(t=>t.id===sub.taskId);
-        const xp   = Math.round((task?.xp||20)*mult);
-        const s    = allStudents.find(s=>s.id===studentId); if (!s) return;
-        const history = {...s.history};
-        history['sub_'+Date.now()] = { msg:task?.title||'מטלה', xp, time:Date.now() };
-        let nxp=s.xp+xp, nlv=s.level;
-        while(nxp>=100){nlv++;nxp-=100;}
-        await dbSvc.updateDocument(DB_ID, TABLES.students, studentId, { xp:nxp, level:nlv, history:JSON.stringify(history), lastNote:null });
-        await dbSvc.deleteDocument(DB_ID, TABLES.submissions, subId);
-        await loadStudents(); await initAdminSubmissions();
-    } catch(e) { alert(e.message); }
+        // 1. קבלת פרטי ההגשה
+        const { data: sub, error: subErr } = await supabase.from(TABLES.submissions).select('*').eq('id', subId).single();
+        if (subErr) throw subErr;
+
+        const task = allTasks.find(t => t.id === sub.taskId);
+        const xpToAdd = Math.round((task?.xp || 20) * mult);
+        
+        // 2. קבלת פרטי הסטודנט העדכניים
+        const { data: s, error: stErr } = await supabase.from(TABLES.students).select('*').eq('id', studentId).single();
+        if (stErr) throw stErr;
+
+        // 3. חישוב XP ורמה (מערכת 100 XP לרמה)
+        const history = s.history || {};
+        history['sub_' + Date.now()] = { msg: task?.title || 'מטלה', xp: xpToAdd, time: Date.now() };
+        
+        let newXp = (s.xp || 0) + xpToAdd;
+        let newLevel = (s.level || 1);
+        while (newXp >= 100) {
+            newLevel++;
+            newXp -= 100;
+        }
+
+        // 4. עדכון התלמיד ומחיקת ההגשה
+        const { error: upErr } = await supabase.from(TABLES.students).update({ 
+            xp: newXp, 
+            level: newLevel, 
+            history: history, // בסופרבייס שומרים אובייקט ישירות
+            lastNote: null 
+        }).eq('id', studentId);
+        
+        if (upErr) throw upErr;
+
+        await supabase.from(TABLES.submissions).delete().eq('id', subId);
+        
+        alert(`אושר! התלמיד קיבל ${xpToAdd} XP`);
+        await loadStudents(); 
+        await initAdminSubmissions();
+    } catch (e) { 
+        alert("שגיאה באישור: " + e.message); 
+    }
 }
 
 async function rejectSub(subId, studentId) {
     const note = prompt('מדוע? (התלמיד יראה זאת):');
-    if (note===null) return;
+    if (note === null) return;
     try {
-        await dbSvc.updateDocument(DB_ID, TABLES.students, studentId, { lastNote:note||'המטלה נדחתה.' });
-        await dbSvc.deleteDocument(DB_ID, TABLES.submissions, subId);
+        const { error: upErr } = await supabase.from(TABLES.students).update({ 
+            lastNote: note || 'המטלה נדחתה.' 
+        }).eq('id', studentId);
+        
+        if (upErr) throw upErr;
+
+        await supabase.from(TABLES.submissions).delete().eq('id', subId);
+        
         await initAdminSubmissions();
-    } catch(e) { alert(e.message); }
+    } catch (e) { 
+        alert("שגיאה בדחייה: " + e.message); 
+    }
 }
-
-// --- טיימרים ---
-function updateAllTimers() {
-    if (currentUser==='admin') return;
-    const now=new Date();
-    allTasks.forEach(task => {
-        if (!task.startTime||!task.endTime) return;
-        const span = document.getElementById(`timer-${task.id}`);
-        const btn  = document.getElementById(`student-btn-${task.id}`);
-        if (!span||!btn) return;
-        const [sH,sM]=task.startTime.split(':').map(Number);
-        const [eH,eM]=task.endTime.split(':').map(Number);
-        const start=new Date(now.getFullYear(),now.getMonth(),now.getDate(),sH,sM,0);
-        const end  =new Date(now.getFullYear(),now.getMonth(),now.getDate(),eH,eM,0);
-        const pad  =n=>String(Math.floor(n)).padStart(2,'0');
-    
-        if (now<start) { const d=start-now; span.innerText=`תיפתח בעוד ${pad(d/60000)}:${pad((d%60000)/1000)}`; span.style.color='#ff9800'; btn.disabled=true; Text='טרם נפתח 🔒'; btn.style.background='#999'; }
-        else if (now<end) { const d=end-now; span.innerText=`נותרו: ${pad(d/60000)}:${pad((d%60000)/1000)}`; span.style.color='#d32f2f'; btn.disabled=false; Text='פתח משימה ✍️'; btn.style.background='#1976d2'; }
-        else { span.innerText='הזמן נגמר!'; span.style.color='#555'; btn.disabled=true; Text='הזמן נגמר! ⏳'; btn.style.background='#555'; }
-    });
-}
-
 // --- כרזה ---
 async function showWelcomeImageIfExists() {
     try {
