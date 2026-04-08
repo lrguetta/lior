@@ -1646,84 +1646,132 @@ function addQuestionField(existingType=null, qData=null) {
 
 function toggleTaskBuilder() { togglePanel('panel-newtask'); }
 
+// --- פונקציות מטלות (סופרבייס) ---
+
 async function saveNewTask() {
-    const title    = document.getElementById('taskTitle').value;
-    const deadline = document.getElementById('taskDeadline').value;
-    const xp       = parseInt(document.getElementById('taskXP').value)||20;
-    const startTime= document.getElementById('taskStartTime').value;
-    const endTime  = document.getElementById('taskEndTime').value;
-    const qNodes   = document.querySelectorAll('.question-item');
-    if (!title)         { alert('חובה כותרת!'); return; }
-    if (!qNodes.length) { alert('חובה שאלה אחת לפחות!'); return; }
+    const title     = document.getElementById('taskTitle').value;
+    const deadline  = document.getElementById('taskDeadline').value;
+    const xp        = parseInt(document.getElementById('taskXP').value) || 20;
+    const startTime = document.getElementById('taskStartTime').value;
+    const endTime   = document.getElementById('taskEndTime').value;
+    const qNodes    = document.querySelectorAll('.question-item');
+
+    if (!title)          { alert('חובה כותרת!'); return; }
+    if (!qNodes.length)  { alert('חובה שאלה אחת לפחות!'); return; }
+
     const questions = Array.from(qNodes).map(n => {
-        const type=n.dataset.type, obj={type, text:n.querySelector('.q-text').value};
-        if (type==='multiple') { obj.correct=n.querySelector('.opt-correct').value; obj.others=Array.from(n.querySelectorAll('.opt')).map(i=>i.value).filter(v=>v); }
-        else if (type==='boolean') obj.correct=n.querySelector('.q-ans-bool').value;
-        else if (type==='survey')  obj.options=Array.from(n.querySelectorAll('.opt-survey')).map(i=>i.value).filter(v=>v);
-        else if (type==='study_unit') { obj.chapter=n.querySelector('.study-ans-chapter').value; obj.start=n.querySelector('.study-ans-start').value; obj.end=n.querySelector('.study-ans-end').value; }
+        const type = n.dataset.type, obj = { type, text: n.querySelector('.q-text').value };
+        if (type === 'multiple') { 
+            obj.correct = n.querySelector('.opt-correct').value; 
+            obj.others = Array.from(n.querySelectorAll('.opt')).map(i => i.value).filter(v => v); 
+        }
+        else if (type === 'boolean') obj.correct = n.querySelector('.q-ans-bool').value;
+        else if (type === 'survey')  obj.options = Array.from(n.querySelectorAll('.opt-survey')).map(i => i.value).filter(v => v);
+        else if (type === 'study_unit') { 
+            obj.chapter = n.querySelector('.study-ans-chapter').value; 
+            obj.start = n.querySelector('.study-ans-start').value; 
+            obj.end = n.querySelector('.study-ans-end').value; 
+        }
         return obj;
     });
-    const payload = { title, deadline, xp, startTime, endTime, questions:JSON.stringify(questions) };
-    try {
-        if (editingTaskId) { await dbSvc.updateDocument(DB_ID, TABLES.tasks, editingTaskId, payload); alert('עודכן! 💾'); }
-        else               { await dbSvc.createDocument(DB_ID, TABLES.tasks, ID.unique(), payload); alert('פורסם! 🚀'); }
-    } catch(e) { alert(e.message); return; }
-    editingTaskId=null;
-    ['taskTitle','taskDeadline','taskStartTime','taskEndTime'].forEach(id => document.getElementById(id).value='');
-    document.getElementById('taskXP').value='20';
-    document.getElementById('time-limit-container').style.display='none';
-    document.getElementById('questions-constructor').innerHTML='';
-    togglePanel('panel-newtask');
-    await loadTasks();
-}
 
-function editTask(id) {
-    const t = allTasks.find(t=>t.id===id);
-    if (!t) return;
-    editingTaskId=id;
+    // שינוי חשוב: ב-Supabase שולחים אובייקט, לא JSON.stringify
+    const payload = { 
+        title, 
+        deadline: deadline || null, 
+        xp, 
+        startTime: startTime || null, 
+        endTime: endTime || null, 
+        questions // שולחים את המערך ישירות
+    };
+
+    try {
+        if (editingTaskId) { 
+            const { error } = await supabase.from(TABLES.tasks).update(payload).eq('id', editingTaskId);
+            if (error) throw error;
+            alert('עודכן! 💾'); 
+        }
+        else { 
+            const { error } = await supabase.from(TABLES.tasks).insert([payload]);
+            if (error) throw error;
+            alert('פורסם! 🚀'); 
+        }
+    } catch(e) { 
+        alert("שגיאה בשמירה: " + e.message); 
+        return; 
+    }
+
+    editingTaskId = null;
+    ['taskTitle','taskDeadline','taskStartTime','taskEndTime'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    document.getElementById('taskXP').value = '20';
+    document.getElementById('time-limit-container').style.display = 'none';
+    document.getElementById('questions-constructor').innerHTML = '';
     togglePanel('panel-newtask');
-    document.getElementById('taskTitle').value    = t.title||'';
-    document.getElementById('taskDeadline').value = t.deadline||'';
-    document.getElementById('taskXP').value       = t.xp||20;
-    if (t.startTime||t.endTime) { document.getElementById('time-limit-container').style.display='flex'; document.getElementById('taskStartTime').value=t.startTime||''; document.getElementById('taskEndTime').value=t.endTime||''; }
-    else document.getElementById('time-limit-container').style.display='none';
-    document.getElementById('questions-constructor').innerHTML='';
-    if (t.questions) t.questions.forEach(q=>addQuestionField(q.type,q));
-    document.getElementById('task-builder').scrollIntoView({behavior:'smooth'});
+    if (typeof loadTasks === 'function') await loadTasks();
 }
 
 async function deleteTask(id) {
     if (!confirm('למחוק?')) return;
-    try { await dbSvc.deleteDocument(DB_ID, TABLES.tasks, id); await loadTasks(); }
-    catch(e) { alert(e.message); }
+    try { 
+        const { error } = await supabase.from(TABLES.tasks).delete().eq('id', id);
+        if (error) throw error;
+        if (typeof loadTasks === 'function') await loadTasks(); 
+    }
+    catch(e) { alert("שגיאה במחיקה: " + e.message); }
 }
 
 async function renderTasks() {
     const list = document.getElementById('tasks-list');
     if (!list) return;
-    list.innerHTML='';
-    if (!allTasks.length) { list.innerHTML='אין מטלות כרגע.'; return; }
+    list.innerHTML = '';
+    
+    // allTasks מגיע מתוך loadTasks() שטוען מסופרבייס
+    if (!allTasks || !allTasks.length) { list.innerHTML = 'אין מטלות כרגע.'; return; }
+    
     let submittedIds = [];
     try {
-        if (currentUser!=='admin') {
-            const res = await dbSvc.listDocuments(DB_ID, TABLES.submissions, [Query.equal('studentId',currentUser), Query.limit(200)]);
-            submittedIds = res.documents.map(d=>d.taskId);
+        if (currentUser !== 'admin') {
+            // בדיקת הגשות מסופרבייס
+            const { data: subs, error } = await supabase
+                .from(TABLES.submissions)
+                .select('taskId')
+                .eq('studentId', currentUser);
+            
+            if (!error && subs) submittedIds = subs.map(d => d.taskId);
         }
-    } catch(e){}
+    } catch(e) { console.error("שגיאה בטעינת הגשות:", e); }
+
     allTasks.slice().reverse().forEach(task => {
-        const div = document.createElement('div'); div.className='task-card';
+        const div = document.createElement('div'); div.className = 'task-card';
         let btn;
-        if (currentUser==='admin') btn=`<button onclick="editTask('${task.id}')" style="background:#ff9800;margin-left:5px;">ערוך ✏️</button><button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק 🗑️</button>`;
-        else if (submittedIds.includes(task.id)) btn=`<button disabled style="background:#999;cursor:not-allowed;">כבר הגשת ✔️</button>`;
-        else { const st=task.title.replace(/'/g,'׳').replace(/"/g,'״'); btn=`<button id="student-btn-${task.id}" onclick="openSubmitModal('${task.id}','${st}')" style="background:#1976d2;">פתח ✍️</button>`; }
-        div.innerHTML=`<div class="task-info"><h4>${task.title}</h4>
-            <div style="font-size:0.85em;color:#555;margin-top:4px;">🎁 ${task.xp||20} XP
-            ${task.deadline?`<br>⏰ ${task.deadline}`:''}
-            ${(task.startTime&&task.endTime)?`<br>⏳ <span id="timer-${task.id}" style="color:#d32f2f;font-weight:bold;">מחשב...</span>`:''}
-            </div></div><div>${btn}</div>`;
+        
+        if (currentUser === 'admin') {
+            btn = `<button onclick="editTask('${task.id}')" style="background:#ff9800;margin-left:5px;">ערוך ✏️</button>
+                   <button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק 🗑️</button>`;
+        } else if (submittedIds.includes(task.id)) {
+            btn = `<button disabled style="background:#999;cursor:not-allowed;">כבר הגשת ✔️</button>`;
+        } else {
+            const st = task.title.replace(/'/g, '׳').replace(/"/g, '״'); 
+            btn = `<button id="student-btn-${task.id}" onclick="openSubmitModal('${task.id}','${st}')" style="background:#1976d2;">פתח ✍️</button>`; 
+        }
+        
+        div.innerHTML = `
+            <div class="task-info">
+                <h4>${task.title}</h4>
+                <div style="font-size:0.85em;color:#555;margin-top:4px;">
+                    🎁 ${task.xp || 20} XP
+                    ${task.deadline ? `<br>⏰ ${task.deadline}` : ''}
+                    ${(task.startTime && task.endTime) ? `<br>⏳ <span id="timer-${task.id}" style="color:#d32f2f;font-weight:bold;">מחשב...</span>` : ''}
+                </div>
+            </div>
+            <div>${btn}</div>`;
         list.appendChild(div);
     });
-    updateAllTimers();
+    
+    if (typeof updateAllTimers === 'function') updateAllTimers();
 }
 
 function openSubmitModal(id, title) {
