@@ -2792,21 +2792,51 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 async function pickTargetShield(targetId, shieldIndex) {
     if (!battleState.selectedSkill) return;
-    const skill=battleState.selectedSkill;
-    const target=allStudents.find(s=>s.id===targetId); if (!target) return;
-    const broken=(target.history?.shields_broken||[]);
-    if (broken.includes(shieldIndex)) { alert('מגן שבור!'); return; }
+    const skill = battleState.selectedSkill;
+    const target = allStudents.find(s => s.id === targetId); 
+    if (!target) return;
+
+    const broken = (target.history?.shields_broken || []);
+    if (broken.includes(shieldIndex)) { 
+        alert('מגן שבור!'); 
+        return; 
+    }
     
-    // התיקון: אנחנו לא מגרילים יותר! 
-    // mineIndex מקבל בדיוק את הערך של המגן שעליו התוקף בחר ללחוץ
+    // שליפת האינדקס של המגן שנבחר
     const mine = parseInt(shieldIndex); 
     
     cancelAttack();
-    localStorage.setItem('last_attack_'+currentUser+'_'+skill, Date.now().toString());
+    
+    // שמירת זמן התקיפה האחרון (למניעת ספאם ב-UI המקומי)
+    localStorage.setItem('last_attack_' + currentUser + '_' + skill, Date.now().toString());
+
     try {
-        await dbSvc.createDocument(DB_ID,TABLES.battles,ID.unique(),{attackerId:currentUser,targetId,skill,mineIndex:mine,status:'pending'});
+        // המרה לפורמט של Supabase
+        const { data, error } = await supabase
+            .from(TABLES.battles)
+            .insert([{
+                attackerId: currentUser,
+                targetId: targetId,
+                skill: skill,
+                mineIndex: mine,
+                status: 'pending'
+                // ה-ID נוצר אוטומטית ב-Supabase, אין צורך ב-ID.unique()
+            }]);
+
+        if (error) throw error;
+
         alert(`המתקפה נשלחה לעבר המגן שבחרת! 🚀\n${target.full_name} יראה זאת בכניסה הבאה וייאלץ לנחש אותו.`);
-    } catch(e) { alert(e.message); }
+        
+        // עדכון הרשימה הגלובלית כדי שהכפתור יושבת מיד
+        if (!window._pendingBattleTargets) window._pendingBattleTargets = [];
+        window._pendingBattleTargets.push(targetId);
+        
+        if (typeof updateView === 'function') updateView();
+
+    } catch(e) { 
+        console.error("שגיאה ביצירת קרב:", e.message);
+        alert("שגיאה בשליחת התקיפה: " + e.message); 
+    }
 }
 
 async function checkPendingBattle() {
