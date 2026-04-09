@@ -953,40 +953,35 @@ async function loadStudents() {
         const { data, error } = await supabase
             .from(TABLES.students)
             .select('*')
-            // אם העמודה ב-DB היא name, שנה כאן ל-'name'
-            .order('name', { ascending: true }); 
+            .order('full_name', { ascending: true }); // תיקון: מיון לפי full_name ולא לפי name
 
-        if (error) throw error;
+        if (error) {
+            console.error("שגיאה ישירה מסופרבייס:", error);
+            throw error;
+        }
 
         console.log("הנתונים הגולמיים שהגיעו:", data);
 
-        // המרה ישירה במקום docToStudent כדי למנוע טעויות שם שדה
+        // המרה בטוחה של הנתונים
         allStudents = data.map(doc => ({
             ...doc,
-            // הבטחת ה-ID (בסופרבייס זה id)
-            id: doc.id, 
-            // גישור על הפער: אם ב-DB זה name ובקוד זה full_name
-            full_name: doc.name || doc.full_name || "ללא שם", 
-            // הבטחת בוליאני לסינון ב-updateView
+            id: doc.id,
+            // אם ב-DB יש full_name, אנחנו משתמשים בו
+            full_name: doc.full_name || "ללא שם",
             isActive: doc.isActive === true || doc.isActive === "true",
-            // מניעת קריסה אם השדות האלו ריקים ב-DB
             history: doc.history || {},
             likes: doc.likes || {},
             xp: doc.xp || 0,
-            level: doc.level || 0
+            level: doc.level || 0,
+            className: doc.className || ""
         }));
         
         console.log("רשימת התלמידים לאחר המרה:", allStudents);
 
-        renderStudentSelect();
+        if (typeof renderStudentSelect === 'function') renderStudentSelect();
         
-        // חשוב: אם currentUser הוא null, ה-updateView לא ירוץ. 
-        // וודא שאתה מחובר (Admin או תלמיד)
-        if (currentUser) {
-            updateView();
-        } else {
-            console.warn("אין currentUser מוגדר, לכן updateView לא רץ.");
-        }
+        // כאן אני מוריד את ה-if (currentUser) כדי שתראה את הכרטיסים בכל מקרה
+        updateView();
 
     } catch (err) {
         console.error("שגיאה קריטית ב-loadStudents:", err.message);
