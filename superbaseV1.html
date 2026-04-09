@@ -1819,12 +1819,20 @@ async function saveNewTask() {
     const title     = document.getElementById('taskTitle').value;
     const deadline  = document.getElementById('taskDeadline').value;
     const xp        = parseInt(document.getElementById('taskXP').value) || 20;
-    const startTime = document.getElementById('taskStartTime').value;
-    const endTime   = document.getElementById('taskEndTime').value;
+    const startTimeRaw = document.getElementById('taskStartTime').value;
+    const endTimeRaw   = document.getElementById('taskEndTime').value;
     const qNodes    = document.querySelectorAll('.question-item');
 
     if (!title)          { alert('חובה כותרת!'); return; }
     if (!qNodes.length)  { alert('חובה שאלה אחת לפחות!'); return; }
+
+    // פונקציית עזר להמרת שעה לפורמט Timestamp של סופרבייס
+    const formatToTimestamp = (timeStr) => {
+        if (!timeStr) return null;
+        if (timeStr.includes('T')) return timeStr; // אם זה כבר פורמט מלא
+        const today = new Date().toISOString().split('T')[0];
+        return `${today}T${timeStr}:00Z`; // הופך "21:08" ל-"2026-04-09T21:08:00Z"
+    };
 
     const questions = Array.from(qNodes).map(n => {
         const type = n.dataset.type, obj = { type, text: n.querySelector('.q-text').value };
@@ -1842,14 +1850,14 @@ async function saveNewTask() {
         return obj;
     });
 
-    // שינוי חשוב: ב-Supabase שולחים אובייקט, לא JSON.stringify
     const payload = { 
         title, 
         deadline: deadline || null, 
         xp, 
-        startTime: startTime || null, 
-        endTime: endTime || null, 
-        questions // שולחים את המערך ישירות
+        // כאן אנחנו משתמשים בפונקציית ההמרה
+        startTime: formatToTimestamp(startTimeRaw), 
+        endTime: formatToTimestamp(endTimeRaw), 
+        questions 
     };
 
     try {
@@ -1868,6 +1876,7 @@ async function saveNewTask() {
         return; 
     }
 
+    // ניקוי הטופס
     editingTaskId = null;
     ['taskTitle','taskDeadline','taskStartTime','taskEndTime'].forEach(id => {
         const el = document.getElementById(id);
