@@ -2856,6 +2856,56 @@ async function init() {
 function logout() { localStorage.removeItem('farm_user_id'); location.reload(); }
 setInterval(()=>{ updateAllTimers(); updateCooldownDisplay(); }, 1000);
 init();
+
+function updateAllTimers() {
+    // אם המשתמש הוא אדמין, אין צורך בטיימרים או נעילות
+    if (typeof currentUser !== 'undefined' && currentUser === 'admin') return;
+    
+    const now = new Date();
+
+    // הנחה: allTasks הוא המערך הגלובלי שמכיל את המשימות שמשכת מ-Supabase
+    allTasks.forEach(task => {
+        if (!task.startTime || !task.endTime) return;
+
+        const span = document.getElementById(`timer-${task.id}`);
+        const btn = document.getElementById(`student-btn-${task.id}`);
+
+        if (!span || !btn) return;
+
+        // הפיכת שעות הטקסט (למשל "08:30") לאובייקט זמן של היום
+        const [sH, sM] = task.startTime.split(':').map(Number);
+        const [eH, eM] = task.endTime.split(':').map(Number);
+        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), sH, sM, 0);
+        const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), eH, eM, 0);
+
+        const pad = n => String(Math.floor(n)).padStart(2, '0');
+
+        if (now < start) {
+            // לפני תחילת המשימה
+            const d = start - now;
+            span.innerText = `תיפתח בעוד ${pad(d / 60000)}:${pad((d % 60000) / 1000)}`;
+            span.style.color = "#ff9800";
+            btn.disabled = true;
+            btn.innerText = "טרם נפתח 🔒";
+            btn.style.backgroundColor = "#999";
+        } else if (now < end) {
+            // בזמן המשימה
+            const d = end - now;
+            span.innerText = `נותרו: ${pad(d / 60000)}:${pad((d % 60000) / 1000)}`;
+            span.style.color = "#d32f2f";
+            btn.disabled = false;
+            btn.innerText = "פתח משימה ✍️";
+            btn.style.backgroundColor = "#1976d2";
+        } else {
+            // אחרי סיום הזמן
+            span.innerText = "הזמן נגמר!";
+            span.style.color = "#555";
+            btn.disabled = true;
+            btn.innerText = "הזמן נגמר! ⏳";
+            btn.style.backgroundColor = "#555";
+        }
+    });
+}
 </script>
 </body>
 </html>
