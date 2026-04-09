@@ -3118,19 +3118,20 @@ function updateAllTimers() {
 
         if (!span || !btn) return;
 
-       // טיפול בשני פורמטים: ISO timestamps או טקסט פשוט ("08:30")
-let start, end;
-if (task.startTime.includes('T') && task.startTime.includes('Z')) {
-    // ISO timestamp
-    start = new Date(task.startTime);
-    end = new Date(task.endTime);
-} else {
-    // טקסט פשוט ("08:30")
-    const [sH, sM] = task.startTime.split(':').map(Number);
-    const [eH, eM] = task.endTime.split(':').map(Number);
-    start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), sH, sM, 0);
-    end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), eH, eM, 0);
-}
+        // טיפול בשני פורמטים: ISO timestamps או טקסט פשוט ("08:30")
+        let start, end;
+        if (task.startTime.includes('T') && task.startTime.includes('Z')) {
+            // ISO timestamp
+            start = new Date(task.startTime);
+            end = new Date(task.endTime);
+        } else {
+            // טקסט פשוט ("08:30")
+            const [sH, sM] = task.startTime.split(':').map(Number);
+            const [eH, eM] = task.endTime.split(':').map(Number);
+            start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), sH, sM, 0);
+            end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), eH, eM, 0);
+        }
+
         const pad = n => String(Math.floor(n)).padStart(2, '0');
 
         if (now < start) {
