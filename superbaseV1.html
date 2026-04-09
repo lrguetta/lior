@@ -2205,24 +2205,58 @@ async function rejectSub(subId, studentId) {
 // --- כרזה ---
 async function showWelcomeImageIfExists() {
     try {
-        const data=(await dbSvc.listDocuments(DB_ID,TABLES.welcomeImage,[Query.limit(1)])).documents[0];
-        if (!data?.url) return;
-        const overlay=document.getElementById('welcome-image-overlay');
-        const imgEl=document.getElementById('welcome-img-el');
-        const caption=document.getElementById('welcome-img-caption');
-        const old=document.getElementById('welcome-video-frame'); if(old) old.remove();
+        // שליפת המסמך האחרון מטבלת welcomeImage ב-Supabase
+        const { data: documents, error } = await supabase
+            .from(TABLES.welcomeImage)
+            .select('*')
+            .limit(1);
+
+        if (error) throw error;
+        
+        // אם אין מסמכים, פשוט יוצאים
+        const data = documents && documents[0];
+        if (!data || !data.url) return;
+
+        const overlay = document.getElementById('welcome-image-overlay');
+        const imgEl = document.getElementById('welcome-img-el');
+        const caption = document.getElementById('welcome-img-caption');
+        
+        // ניקוי וידאו ישן אם קיים
+        const old = document.getElementById('welcome-video-frame'); 
+        if (old) old.remove();
+
+        // בדיקה אם מדובר בלינק של Streamable
         if (data.url.includes('streamable.com')) {
-            imgEl.style.display='none';
-            const iframe=document.createElement('iframe');
-            iframe.id='welcome-video-frame'; iframe.src='https://streamable.com/e/'+data.url.split('streamable.com/').pop().split('?')[0];
-            iframe.setAttribute('allowfullscreen','');
-            iframe.setAttribute('frameborder','0');
-            iframe.style='width:80vw;max-width:800px;height:45vw;max-height:450px;border-radius:12px;display:block;';
-            imgEl.parentNode.insertBefore(iframe,imgEl);
-        } else { imgEl.style.display='block'; imgEl.src=data.url; }
-        caption.innerText=data.caption||''; caption.style.display=data.caption?'block':'none';
-        overlay.classList.add('active');
-    } catch(e) { console.error(e); }
+            imgEl.style.display = 'none';
+            const iframe = document.createElement('iframe');
+            iframe.id = 'welcome-video-frame';
+            
+            // חילוץ ה-ID של הסרטון מהלינק
+            const videoId = data.url.split('streamable.com/').pop().split('?')[0];
+            iframe.src = `https://streamable.com/e/${videoId}`;
+            
+            iframe.setAttribute('allowfullscreen', '');
+            iframe.setAttribute('frameborder', '0');
+            iframe.style = 'width:80vw;max-width:800px;height:45vw;max-height:450px;border-radius:12px;display:block;';
+            imgEl.parentNode.insertBefore(iframe, imgEl);
+        } else {
+            // הצגת תמונה רגילה
+            imgEl.style.display = 'block'; 
+            imgEl.src = data.url; 
+        }
+
+        // כיתוב התמונה
+        if (caption) {
+            caption.innerText = data.caption || ''; 
+            caption.style.display = data.caption ? 'block' : 'none';
+        }
+
+        // הצגת ה-Overlay
+        if (overlay) overlay.classList.add('active');
+
+    } catch(e) { 
+        console.error("שגיאה בהצגת הודעת ברוכים הבאים:", e.message); 
+    }
 }
 async function publishWelcomeImageUrl() {
     const url=document.getElementById('welcomeImgUrl').value.trim();
@@ -2776,15 +2810,48 @@ async function pickTargetShield(targetId, shieldIndex) {
 }
 
 async function checkPendingBattle() {
-    if (!currentUser||currentUser==='admin') return;
+    // אם אין משתמש או שמדובר באדמין - אין מה לבדוק קרבות
+    if (!currentUser || currentUser === 'admin') return;
+
     try {
-        const res=await dbSvc.listDocuments(DB_ID,TABLES.battles,[Query.equal('targetId',currentUser),Query.equal('status','pending'),Query.limit(50)]);
-        if (res.documents.length) { battleState.pendingBattle=res.documents[0]; openDefenseModal(res.documents[0]); }
-        else battleState.pendingBattle=null;
-        const atk=await dbSvc.listDocuments(DB_ID,TABLES.battles,[Query.equal('attackerId',currentUser),Query.equal('status','pending'),Query.limit(50)]);
-        window._pendingBattleTargets=atk.documents.map(d=>d.targetId);
-        updateView();
-    } catch(e) { console.error(e); }
+        // 1. בדיקה אם יש קרב שממתין להגנה שלך (מישהו תקף אותך)
+        const { data: defenseData, error: defenseError } = await supabase
+            .from(TABLES.battles)
+            .select('*')
+            .eq('targetId', currentUser)
+            .eq('status', 'pending')
+            .limit(1);
+
+        if (defenseError) throw defenseError;
+
+        if (defenseData && defenseData.length > 0) {
+            battleState.pendingBattle = defenseData[0];
+            // פתיחת מודאל ההגנה
+            if (typeof openDefenseModal === 'function') {
+                openDefenseModal(defenseData[0]);
+            }
+        } else {
+            battleState.pendingBattle = null;
+        }
+
+        // 2. בדיקה אילו קרבות שאתה יזמת (תוקף) עדיין ממתינים
+        const { data: attackData, error: attackError } = await supabase
+            .from(TABLES.battles)
+            .select('targetId')
+            .eq('attackerId', currentUser)
+            .eq('status', 'pending');
+
+        if (attackError) throw attackError;
+
+        // שמירת רשימת המטרות שכרגע בקרב מולך כדי למנוע תקיפה כפולה
+        window._pendingBattleTargets = attackData ? attackData.map(d => d.targetId) : [];
+
+        // עדכון התצוגה (UI)
+        if (typeof updateView === 'function') updateView();
+
+    } catch (e) {
+        console.error("שגיאה בבדיקת קרבות ממתינים:", e.message);
+    }
 }
 function openDefenseModal(battle) {
     const me=allStudents.find(s=>s.id===currentUser); if (!me) return;
