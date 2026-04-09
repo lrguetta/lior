@@ -2993,7 +2993,7 @@ async function resolveDefense(chosen, battle) {
             let nxp = me.xp + ctx.xpGain;
             let nlvl = me.level || 0;
             while (nxp >= 100) { nlvl++; nxp -= 100; }
-            ctx.me.history['block_'+Date.now()] = { msg: `?? ?????? ${attackerName}! (+${ctx.xpGain}XP)`, xp: ctx.xpGain, time: Date.now() };
+            ctx.me.history['block_'+Date.now()] = { msg: `חסמת את ${attackerName}! (+${ctx.xpGain}XP)`, xp: ctx.xpGain, time: Date.now() };
             const { error } = await supabase
                 .from(TABLES.students)
                 .update({ xp: nxp, level: nlvl, history: ctx.me.history })
