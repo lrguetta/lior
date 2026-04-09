@@ -1846,10 +1846,13 @@ async function saveNewTask() {
     const startTime = document.getElementById('taskStartTime').value;
     const endTime   = document.getElementById('taskEndTime').value;
 
-if (!title)          { alert('חובה כותרת!'); return; }
-if (!qNodes.length)  { alert('חובה שאלה אחת לפחות!'); return; }
+    // Get all question elements from the questions constructor
+    const qNodes = document.querySelectorAll('#questions-constructor .question-item');
 
-const questions = Array.from(qNodes).map(n => {
+    if (!title)          { alert('חובה כותרת!'); return; }
+    if (!qNodes.length)  { alert('חובה שאלה אחת לפחות!'); return; }
+
+    const questions = Array.from(qNodes).map(n => {
         const type = n.dataset.type, obj = { type, text: n.querySelector('.q-text').value };
         if (type === 'multiple') { 
             obj.correct = n.querySelector('.opt-correct').value; 
@@ -1908,7 +1911,7 @@ const questions = Array.from(qNodes).map(n => {
     togglePanel('panel-newtask');
     if (typeof loadTasks === 'function') await loadTasks();
 }
-
+    
 async function deleteTask(id) {
     if (!confirm('למחוק את המטלה ואת כל ההגשות הקשורות אליה?')) return;
     try { 
