@@ -1826,13 +1826,20 @@ async function saveNewTask() {
     if (!title)          { alert('חובה כותרת!'); return; }
     if (!qNodes.length)  { alert('חובה שאלה אחת לפחות!'); return; }
 
-    // פונקציית עזר להמרת שעה לפורמט Timestamp של סופרבייס
-    const formatToTimestamp = (timeStr) => {
-        if (!timeStr) return null;
-        if (timeStr.includes('T')) return timeStr; // אם זה כבר פורמט מלא
-        const today = new Date().toISOString().split('T')[0];
-        return `${today}T${timeStr}:00Z`; // הופך "21:08" ל-"2026-04-09T21:08:00Z"
-    };
+  const formatToTimestamp = (timeStr) => {
+    if (!timeStr) return null;
+    
+    // יוצר אובייקט תאריך של היום
+    const now = new Date();
+    const [hours, minutes] = timeStr.split(':');
+    
+    // מעדכן את השעה והדקות לפי מה שנבחר בטופס
+    now.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+    
+    // toISOString() יוצר פורמט תקני, אבל הוא תמיד ממיר ל-UTC.
+    // סופרבייס יקבל את זה ויידע בדיוק מתי המטלה אמורה להסתיים.
+    return now.toISOString(); 
+};
 
     const questions = Array.from(qNodes).map(n => {
         const type = n.dataset.type, obj = { type, text: n.querySelector('.q-text').value };
