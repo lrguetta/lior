@@ -2814,7 +2814,7 @@ async function checkPendingBattle() {
     if (!currentUser || currentUser === 'admin') return;
 
     try {
-        // 1. בדיקה אם יש קרב שממתין להגנה שלך (מישהו תקף אותך)
+     // 1. בדיקה אם יש קרב שממתין להגנה שלך (מישהו תקף אותך)
         const { data: defenseData, error: defenseError } = await supabase
             .from(TABLES.battles)
             .select('*')
@@ -2825,12 +2825,21 @@ async function checkPendingBattle() {
         if (defenseError) throw defenseError;
 
         if (defenseData && defenseData.length > 0) {
-            battleState.pendingBattle = defenseData[0];
-            // פתיחת מודאל ההגנה
-            if (typeof openDefenseModal === 'function') {
-                openDefenseModal(defenseData[0]);
+            const currentBattle = defenseData[0];
+
+            // הבדיקה החדשה: האם המודאל כבר פתוח על הקרב הזה?
+            // אנחנו בודקים אם ה-ID של הקרב שונה ממה שיש לנו בזיכרון
+            if (!battleState.pendingBattle || battleState.pendingBattle.id !== currentBattle.id) {
+                
+                battleState.pendingBattle = currentBattle; // עדכון הזיכרון בקרב החדש
+                
+                // פתיחת מודאל ההגנה רק אם הוא לא היה פתוח קודם
+                if (typeof openDefenseModal === 'function') {
+                    openDefenseModal(currentBattle);
+                }
             }
         } else {
+            // אם אין קרבות ממתינים בבסיס הנתונים, נאפס את הזיכרון
             battleState.pendingBattle = null;
         }
 
