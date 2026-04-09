@@ -1881,13 +1881,25 @@ async function saveNewTask() {
 }
 
 async function deleteTask(id) {
-    if (!confirm('למחוק?')) return;
+    if (!confirm('למחוק את המטלה ואת כל ההגשות הקשורות אליה?')) return;
     try { 
         const { error } = await supabase.from(TABLES.tasks).delete().eq('id', id);
         if (error) throw error;
-        if (typeof loadTasks === 'function') await loadTasks(); 
+        
+        // עדכון מקומי מהיר כדי שהמשתמש יראה מיד שהמטלה נעלמה
+        if (typeof allTasks !== 'undefined') {
+            allTasks = allTasks.filter(t => t.id !== id);
+        }
+        
+        // רינדור מחדש
+        renderTasks(); 
+        console.log("מטלה נמחקה בהצלחה");
     }
-    catch(e) { alert("שגיאה במחיקה: " + e.message); }
+    catch(e) { 
+        alert("שגיאה במחיקה: " + e.message); 
+        // אם נכשל, כדאי לטעון מחדש כדי לסנכרן
+        if (typeof loadTasks === 'function') await loadTasks();
+    }
 }
 
 async function renderTasks() {
