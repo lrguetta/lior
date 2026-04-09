@@ -1868,7 +1868,6 @@ async function saveNewTask() {
         return obj;
     });
 
-   // Convert time strings to proper timestamps for Supabase
 const formatTimeForDB = (timeStr) => {
     if (!timeStr) return null;
     const today = new Date();
@@ -1878,13 +1877,9 @@ const formatTimeForDB = (timeStr) => {
     const localDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 
                              parseInt(hours), parseInt(minutes), 0);
     
-    // ממיר ל-ISO אבל מתקן את אזור הזמן לזמן מקומי
-    const offset = localDate.getTimezoneOffset();
-    const utcDate = new Date(localDate.getTime() - (offset * 60000));
-    
-    return utcDate.toISOString();
+    // שומר אותו כזמן מקומי בלי המרה ל-UTC
+    return localDate.toISOString();
 };
-
     const payload = {
         title,
         deadline,
