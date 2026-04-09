@@ -3021,7 +3021,7 @@ async function resolveDefense(chosen, battle) {
                 let ah = ctx.utils.getHistory(att);
                 let ax = att.xp + xpReward, al = att.level || 0;
                 while(ax >= 100){ al++; ax -= 100; }
-                ah['win_'+Date.now()] = { msg: `??? ?????? ??-${me.full_name}! (+${xpReward}XP)`, xp: xpReward, time: Date.now() };
+                ah['win_'+Date.now()] = { msg: `הצלחת לפגוע ב-${me.full_name}! (+${xpReward}XP)`, xp: xpReward, time: Date.now() };
                 const { error } = await supabase
                     .from(TABLES.students)
                     .update({ xp: ax, level: al, history: ah })
@@ -3058,7 +3058,7 @@ function updateCooldownDisplay() {
     if (me) buildBattleSidebar(me);
 }
 
-// --- ??? ---
+// --- בדיקת קרב ---
 async function checkBattlesSchema() {
     try {
         const { data, error } = await supabase
