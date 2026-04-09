@@ -2337,21 +2337,21 @@ async function renderCreatureTypesList() {
         if (!data.length) { container.innerHTML='<div style="color:#e53935;text-align:center;padding:10px;">אין נתונים</div>'; }
         else {
             container.innerHTML='';
-            data.forEach(doc => {
-                const row=document.createElement('div');
-                row.style.cssText='display:grid;grid-template-columns:55px 75px 1fr 1fr 1fr;gap:5px;align-items:start;background:#f9f0ff;padding:7px 8px;border-radius:8px;border:1px solid #ce93d8;';
-                row.innerHTML=`<span style="font-weight:bold;color:#6a1b9a;font-size:0.82em;padding-top:8px;">${doc.typeId}</span>
-                    <span style="font-size:0.82em;color:#333;padding-top:8px;">${doc.label||''}</span>
-                    ${[1,2,3].map(n=>`<div style="display:flex;flex-direction:column;gap:3px;">
-                        <input value="${(doc['attack'+n]||''). replace(/"/g,'&quot;')}" placeholder="מתקפה ${n}"
-                            style="font-size:0.8em;padding:5px 6px;border:1px solid #ce93d8;border-radius:6px;width:100%;box-sizing:border-box;"
-                            onchange="saveCreatureField('${doc.id}','attack${n}',this.value)">
-                        <input value="${(doc['icon'+n]||'').replace(/"/g,'&quot;')}" placeholder="אייקון"
-                            style="font-size:0.72em;padding:4px 6px;border:1px solid #e1bee7;border-radius:6px;color:#888;width:100%;box-sizing:border-box;"
-                            onchange="saveCreatureField('${doc.id}','icon${n}',this.value)">
-                    </div>`).join('')}`;
-                container.appendChild(row);
-            });
+data.forEach(doc => {
+    const row=document.createElement('div');
+    row.style.cssText='display:grid;grid-template-columns:55px 75px 1fr 1fr 1fr;gap:5px;align-items:start;background:#f9f0ff;padding:7px 8px;border-radius:8px;border:1px solid #ce93d8;';
+    row.innerHTML=`<span style="font-weight:bold;color:#6a1b9a;font-size:0.82em;padding-top:8px;">${doc.typeId}</span>
+        <span style="font-size:0.82em;color:#333;padding-top:8px;">${doc.label||''}</span>
+        ${[1,2,3].map(n=>`<div style="display:flex;flex-direction:column;gap:3px;">
+            <input value="${(doc['attack'+n]||'').replace(/"/g,'&​quot;')}" placeholder="מתקפה ${n}"
+                style="font-size:0.8em;padding:5px 6px;border:1px solid #ce93d8;border-radius:6px;width:100%;box-sizing:border-box;"
+                onchange="saveCreatureField('${doc.id}','attack${n}',this.value)">
+            <input value="${(doc['icon'+n]||'').replace(/"/g,'&​quot;')}" placeholder="אייקון"
+                style="font-size:0.72em;padding:4px 6px;border:1px solid #e1bee7;border-radius:6px;color:#888;width:100%;box-sizing:border-box;"
+                onchange="saveCreatureField('${doc.id}','icon${n}',this.value)">
+        </div>`).join('')}`;
+    container.appendChild(row);
+});
         }
     } catch(e) { container.innerHTML=`<div style="color:red;">שגיאה: ${e.message}</div>`; }
     const addRow=document.createElement('div');
