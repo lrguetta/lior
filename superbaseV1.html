@@ -948,35 +948,45 @@ function docToTask(d) {
 // --- טעינת תלמידים מעודכנת לסופרבייס ---
 async function loadStudents() {
     try {
-        console.log("מנסה למשוך נתונים מסופרבייס..."); // בדיקה שהפונקציה בכלל רצה
+        console.log("מנסה למשוך נתונים מסופרבייס...");
         
         const { data, error } = await supabase
             .from(TABLES.students)
             .select('*')
-            .order('full_name', { ascending: true });
+            // אם העמודה ב-DB היא name, שנה כאן ל-'name'
+            .order('name', { ascending: true }); 
 
-        if (error) {
-            console.error("שגיאה ישירה מסופרבייס:", error);
-            throw error;
-        }
+        if (error) throw error;
 
-        // כאן אנחנו מדפיסים את מה שחזר מהשרת
         console.log("הנתונים הגולמיים שהגיעו:", data);
 
-        if (!data || data.length === 0) {
-            console.warn("שימו לב: חזרו 0 תלמידים מהטבלה. האם הכנסת נתונים ב-Table Editor?");
-        }
-
-        // המרה באמצעות הפונקציה ששלחת לי
-        allStudents = data.map(docToStudent);
+        // המרה ישירה במקום docToStudent כדי למנוע טעויות שם שדה
+        allStudents = data.map(doc => ({
+            ...doc,
+            // הבטחת ה-ID (בסופרבייס זה id)
+            id: doc.id, 
+            // גישור על הפער: אם ב-DB זה name ובקוד זה full_name
+            full_name: doc.name || doc.full_name || "ללא שם", 
+            // הבטחת בוליאני לסינון ב-updateView
+            isActive: doc.isActive === true || doc.isActive === "true",
+            // מניעת קריסה אם השדות האלו ריקים ב-DB
+            history: doc.history || {},
+            likes: doc.likes || {},
+            xp: doc.xp || 0,
+            level: doc.level || 0
+        }));
         
         console.log("רשימת התלמידים לאחר המרה:", allStudents);
 
-        // עדכון תיבת הבחירה
         renderStudentSelect();
         
-        // אם יש משתמש מחובר, עדכן את התצוגה שלו
-        if (currentUser) updateView();
+        // חשוב: אם currentUser הוא null, ה-updateView לא ירוץ. 
+        // וודא שאתה מחובר (Admin או תלמיד)
+        if (currentUser) {
+            updateView();
+        } else {
+            console.warn("אין currentUser מוגדר, לכן updateView לא רץ.");
+        }
 
     } catch (err) {
         console.error("שגיאה קריטית ב-loadStudents:", err.message);
