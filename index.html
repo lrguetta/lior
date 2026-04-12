@@ -2394,6 +2394,14 @@ async function approveSub(subId, studentId, mult = 1) {
         
         if (upErr) throw upErr;
 
+        const { error: updateSubErr } = await supabase.from(TABLES.submissions)
+    .update({ status: 'approved' }) 
+    .eq('ID', subId); 
+
+if (updateSubErr) throw updateSubErr;
+
+alert(`אושר! התלמיד קיבל ${xpToAdd} XP וההגשה תועדה במערכת.`);
+
         // תיקון: משנים ל-update במקום delete
         const { error: subErr } = await supabase.from(TABLES.submissions)
             .update({ status: 'approved' }) 
