@@ -2271,7 +2271,7 @@ async function approveSub(subId, studentId, mult = 1) {
             newXp -= 100;
         }
 
-        // 4. עדכון התלמיד ומחיקת ההגשה (מעדכנים את targetId)
+    // 4. עדכון התלמיד ועדכון סטטוס ההגשה (במקום מחיקה)
         const { error: upErr } = await supabase.from(TABLES.students).update({ 
             xp: newXp, 
             level: newLevel, 
@@ -2281,16 +2281,20 @@ async function approveSub(subId, studentId, mult = 1) {
         
         if (upErr) throw upErr;
 
-        await supabase.from(TABLES.submissions).delete().eq('id', subId);
+        // תיקון: משנים ל-update במקום delete
+        const { error: subErr } = await supabase.from(TABLES.submissions)
+            .update({ status: 'approved' }) 
+            .eq('ID', subId); // שים לב אם אצלך בטבלה זה ID או id
+
+        if (subErr) throw subErr;
         
-        alert(`אושר! התלמיד קיבל ${xpToAdd} XP`);
+        alert(`אושר! התלמיד קיבל ${xpToAdd} XP וההגשה תועדה במערכת.`);
         await loadStudents(); 
         await initAdminSubmissions();
     } catch (e) { 
         alert("שגיאה באישור: " + e.message); 
     }
 }
-
     async function downloadSubmissionsReport() {
     try {
         // שליפת הנתונים מהטבלה שלך
