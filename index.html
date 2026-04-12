@@ -1934,7 +1934,7 @@ const formatTimeForDB = (timeStr) => {
         const { data: subs, error } = await query.order('CREATED_AT', { ascending: false });
 
         if (error || !subs || subs.length === 0) {
-            alert("לא נמצאו הגשות להצגה בדו"ח.");
+            alert("לא נמצאו הגשות להצגה בדוח.");
             return;
         }
 
