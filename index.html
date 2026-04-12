@@ -2058,8 +2058,8 @@ async function sendSubmission() {
         const { data: existing, error: checkErr } = await supabase
             .from(TABLES.submissions)
             .select('ID') // שימוש ב-ID כפי שמופיע בטבלה שלך
-            .eq('STUDENID', currentUser)
-            .eq('TASKID', currentTaskToSubmit);
+            .eq('studentId', currentUser)
+            .eq('taskId', currentTaskToSubmit);
 
         if (existing && existing.length > 0) {
             alert("הגשה נדחתה: הגשה כפולה");
@@ -2114,12 +2114,12 @@ async function sendSubmission() {
         const { error } = await supabase
             .from(TABLES.submissions)
             .insert([{
-                STUDENID: currentUser,
-                TASKID: currentTaskToSubmit,
-                ANSWERS: answers, 
-                STATUS: 'submitted',
-                GRADE: suggestedGrade, // הציון האוטומטי נשמר כאן
-                CREATED_AT: new Date().toISOString()
+                studentId: currentUser,
+                taskId: currentTaskToSubmit,
+                answers: answers, 
+                status: 'submitted',
+                grade: suggestedGrade, // הציון האוטומטי נשמר כאן
+                created_at: new Date().toISOString()
             }]);
 
         if (error) throw error;
@@ -2155,7 +2155,7 @@ async function initAdminSubmissions() {
                 *,
                 students (full_name)
             `)
-            .order('CREATED_AT', { ascending: false }); // שימוש בעמודה שלך
+            .order('created_at', { ascending: false }); // שימוש בעמודה שלך
 
         if (error) throw error;
         if (!subs || !subs.length) { 
@@ -2165,10 +2165,10 @@ async function initAdminSubmissions() {
 
         itemsContainer.innerHTML = '';
         subs.forEach(sub => {
-            const answers = Array.isArray(sub.ANSWERS) ? sub.ANSWERS : (Array.isArray(sub.answers) ? sub.answers : []);
-            const task = allTasks.find(t => t.id === sub.TASKID || t.id === sub.taskId);
+            const answers = Array.isArray(sub.answers) ? sub.answers : (Array.isArray(sub.answers) ? sub.answers : []);
+            const task = allTasks.find(t => t.id === sub.taskId || t.id === sub.taskId);
             const studentName = sub.students?.full_name || 'תלמיד לא ידוע';
-            const grade = sub.GRADE !== undefined ? sub.GRADE : (sub.grade !== undefined ? sub.grade : null);
+            const grade = sub.grade !== undefined ? sub.grade : (sub.grade !== undefined ? sub.grade : null);
             
             // עיצוב הציון המוצע (שלב 3)
             const gradeDisplay = grade !== null ? 
@@ -2200,9 +2200,9 @@ async function initAdminSubmissions() {
                 </details>
 
                 <div style="display:flex;gap:5px;margin-top:10px;">
-                    <button onclick="approveSub('${sub.ID || sub.id}','${sub.STUDENID || sub.studentId}',1)"   style="background:#4caf50;flex:1;color:white;border:none;padding:8px;border-radius:4px;cursor:pointer;">אשר מלא</button>
-                    <button onclick="approveSub('${sub.ID || sub.id}','${sub.STUDENID || sub.studentId}',0.5)" style="background:#ffc107;flex:1;color:white;border:none;padding:8px;border-radius:4px;cursor:pointer;">אשר חלקי</button>
-                    <button onclick="rejectSub('${sub.ID || sub.id}','${sub.STUDENID || sub.studentId}')"       style="background:#f44336;flex:1;color:white;border:none;padding:8px;border-radius:4px;cursor:pointer;">דחה</button>
+                    <button onclick="approveSub('${sub.ID || sub.id}','${sub.studentId || sub.studentId}',1)"   style="background:#4caf50;flex:1;color:white;border:none;padding:8px;border-radius:4px;cursor:pointer;">אשר מלא</button>
+                    <button onclick="approveSub('${sub.ID || sub.id}','${sub.studentId || sub.studentId}',0.5)" style="background:#ffc107;flex:1;color:white;border:none;padding:8px;border-radius:4px;cursor:pointer;">אשר חלקי</button>
+                    <button onclick="rejectSub('${sub.ID || sub.id}','${sub.studentId || sub.studentId}')"       style="background:#f44336;flex:1;color:white;border:none;padding:8px;border-radius:4px;cursor:pointer;">דחה</button>
                 </div>
             `;
             itemsContainer.appendChild(d);
@@ -2217,7 +2217,7 @@ async function downloadSubmissionsReport() {
     try {
         const { data: subs, error } = await supabase
             .from(TABLES.submissions)
-            .select('TASKID, STUDENID, CREATED_AT, GRADE');
+            .select('taskId, studentId, created_at, grade');
 
         if (error || !subs) throw new Error("לא ניתן לשלוף נתונים");
 
@@ -2225,9 +2225,9 @@ async function downloadSubmissionsReport() {
         csvContent += "שם מטלה,מזהה מטלה,מזהה תלמיד,תאריך הגשה,ציון\n";
 
         subs.forEach(s => {
-            const task = allTasks.find(t => t.id === s.TASKID);
-            const date = new Date(s.CREATED_AT).toLocaleDateString('he-IL');
-            csvContent += `"${task?.title || 'מטלה'}", "${s.TASKID}", "${s.STUDENID}", "${date}", "${s.GRADE || 0}"\n`;
+            const task = allTasks.find(t => t.id === s.taskId);
+            const date = new Date(s.created_at).toLocaleDateString('he-IL');
+            csvContent += `"${task?.title || 'מטלה'}", "${s.taskId}", "${s.studentId}", "${date}", "${s.grade || 0}"\n`;
         });
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -2301,7 +2301,7 @@ async function approveSub(subId, studentId, mult = 1) {
         // שליפת הנתונים מהטבלה שלך
         const { data: subs, error } = await supabase
             .from(TABLES.submissions)
-            .select('TASKID, STUDENID, CREATED_AT, GRADE');
+            .select('taskId,studentId, created_at, grade');
 
         if (error || !subs) throw new Error("לא הצלחתי למשוך נתונים מהדאטאבייס");
 
@@ -2311,14 +2311,14 @@ async function approveSub(subId, studentId, mult = 1) {
 
         subs.forEach(s => {
             // ניסיון למצוא את שם המטלה מתוך המערך המקומי allTasks אם הוא קיים
-            const taskObj = (typeof allTasks !== 'undefined') ? allTasks.find(t => t.id === s.TASKID) : null;
+            const taskObj = (typeof allTasks !== 'undefined') ? allTasks.find(t => t.id === s.taskId) : null;
             const taskName = taskObj ? taskObj.title : "מטלה כללית";
             
-            const date = new Date(s.CREATED_AT).toLocaleDateString('he-IL');
-            const grade = s.GRADE !== null ? s.GRADE : "טרם נבדק";
+            const date = new Date(s.created_at).toLocaleDateString('he-IL');
+            const grade = s.grade !== null ? s.grade : "טרם נבדק";
 
             // יצירת שורה בדו"ח
-            csvContent += `"${taskName}","${s.TASKID}","${s.STUDENID}","${date}","${grade}"\n`;
+            csvContent += `"${taskName}","${s.taskId}","${s.studentId}","${date}","${grade}"\n`;
         });
 
         // יצירת קישור והורדה אוטומטית של הקובץ
