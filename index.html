@@ -1253,9 +1253,18 @@ function renderStudentSelect() {
     const sel = document.getElementById('studentSelect');
     if (!sel) return;
     sel.innerHTML = '<option value="">בחר את שמך...</option>';
-    // בתיבת ההתחברות מציגים רק שמות ייחודיים שכרגע מוגדרים כ-active
+    
+    // שימוש ב-Set כדי לזכור אילו שמות כבר הוספנו למסך ההתחברות
+    const addedNames = new Set();
+    
     allStudents.filter(s => s.isActive).forEach(s => { 
-        const o=document.createElement('option'); o.value=s.id; o.textContent=s.full_name; sel.appendChild(o); 
+        if (!addedNames.has(s.full_name)) {
+            addedNames.add(s.full_name);
+            const o = document.createElement('option'); 
+            o.value = s.id; 
+            o.textContent = s.full_name; 
+            sel.appendChild(o); 
+        }
     });
 }
 
@@ -2168,28 +2177,40 @@ async function approveSub(subId, studentId, mult = 1) {
         const task = allTasks.find(t => t.id === sub.taskId);
         const xpToAdd = Math.round((task?.xp || 20) * mult);
         
-        // 2. קבלת פרטי הסטודנט העדכניים
+        // 2. קבלת פרטי הסטודנט שהגיש
         const { data: s, error: stErr } = await supabase.from(TABLES.students).select('*').eq('id', studentId).single();
         if (stErr) throw stErr;
 
-        // 3. חישוב XP ורמה (מערכת 100 XP לרמה)
-        const history = s.history || {};
+        // --- התוספת החדשה: חיפוש הדמות הפעילה הנוכחית של התלמיד ---
+        const { data: activeCards } = await supabase.from(TABLES.students)
+            .select('*')
+            .eq('full_name', s.full_name)
+            .eq('isActive', true)
+            .limit(1);
+            
+        // אם מצאנו דמות פעילה אחרת, נעביר את ה-XP אליה. אם לא, נשאר עם מי שהגיש.
+        const targetStudent = (activeCards && activeCards.length > 0) ? activeCards[0] : s;
+        const targetId = targetStudent.id;
+        // ---------------------------------------------------------
+
+        // 3. חישוב XP ורמה
+        const history = targetStudent.history || {};
         history['sub_' + Date.now()] = { msg: task?.title || 'מטלה', xp: xpToAdd, time: Date.now() };
         
-        let newXp = (s.xp || 0) + xpToAdd;
-        let newLevel = (s.level || 1);
+        let newXp = (targetStudent.xp || 0) + xpToAdd;
+        let newLevel = (targetStudent.level || 1);
         while (newXp >= 100) {
             newLevel++;
             newXp -= 100;
         }
 
-        // 4. עדכון התלמיד ומחיקת ההגשה
+        // 4. עדכון התלמיד ומחיקת ההגשה (מעדכנים את targetId)
         const { error: upErr } = await supabase.from(TABLES.students).update({ 
             xp: newXp, 
             level: newLevel, 
-            history: history, // בסופרבייס שומרים אובייקט ישירות
+            history: history,
             lastNote: null 
-        }).eq('id', studentId);
+        }).eq('id', targetId);
         
         if (upErr) throw upErr;
 
