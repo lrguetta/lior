@@ -1924,23 +1924,52 @@ const formatTimeForDB = (timeStr) => {
 }
     
 async function deleteTask(id) {
-    if (!confirm('למחוק את המטלה ואת כל ההגשות הקשורות אליה?')) return;
-    try { 
-        const { error } = await supabase.from(TABLES.tasks).delete().eq('id', id);
-        if (error) throw error;
-        
-        // עדכון מקומי מהיר כדי שהמשתמש יראה מיד שהמטלה נעלמה
+    // 1. אישור ראשוני מהמשתמש
+    if (!confirm('האם אתה בטוח שברצונך למחוק את המטלה? פעולה זו תמחוק גם את כל ההגשות הקשורות אליה.')) return;
+
+    try {
+        // 2. הצעה להורדת דו"ח לפני המחיקה הסופית
+        if (confirm('האם תרצה להפיק דו"ח (PDF) של ההגשות למטלה זו לפני שהמידע יימחק לצמיתות?')) {
+            // קריאה לפונקציה שבנינו קודם (מוודא שהיא מקבלת את ה-ID לסינון)
+            await printSubmissionsReport(id);
+        }
+
+        // 3. מחיקה מבסיס הנתונים - טבלת המטלות (Tasks)
+        const { error: taskError } = await supabase
+            .from(TABLES.tasks)
+            .delete()
+            .eq('id', id);
+
+        if (taskError) throw taskError;
+
+        // 4. מחיקה מבסיס הנתונים - טבלת ההגשות (Submissions)
+        // שים לב: וודא ששם העמודה הוא TASKID (או taskId) כפי שמופיע אצלך
+        const { error: subError } = await supabase
+            .from(TABLES.submissions)
+            .delete()
+            .eq('taskId', id);
+
+        if (subError) throw subError;
+
+        // 5. עדכון מקומי של המערך (כדי שהשינוי יורגש מיד ללא רענון דף)
         if (typeof allTasks !== 'undefined') {
             allTasks = allTasks.filter(t => t.id !== id);
         }
+
+        // 6. רינדור מחדש של הממשק
+        if (typeof renderTasks === 'function') renderTasks();
         
-        // רינדור מחדש
-        renderTasks(); 
-        console.log("מטלה נמחקה בהצלחה");
-    }
-    catch(e) { 
-        alert("שגיאה במחיקה: " + e.message); 
-        // אם נכשל, כדאי לטעון מחדש כדי לסנכרן
+        // רענון רשימת ההגשות של המורה (כדי שהגשות של המטלה שנמחקה ייעלמו)
+        if (typeof initAdminSubmissions === 'function') await initAdminSubmissions();
+
+        alert("המטלה וההגשות הקשורות אליה נמחקו בהצלחה.");
+        console.log(`Task ${id} and its submissions were deleted.`);
+
+    } catch (e) {
+        console.error("Delete failed:", e);
+        alert("שגיאה בתהליך המחיקה: " + e.message);
+        
+        // סנכרון מחדש למקרה של תקלה
         if (typeof loadTasks === 'function') await loadTasks();
     }
 }
