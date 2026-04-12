@@ -1922,6 +1922,90 @@ const formatTimeForDB = (timeStr) => {
     togglePanel('panel-newtask');
     if (typeof loadTasks === 'function') await loadTasks();
 }
+    async function printSubmissionsReport(specificTaskId = null) {
+    try {
+        // 1. בניית השאילתה - שליפת ההגשות
+        let query = supabase.from(TABLES.submissions).select('TASKID, STUDENID, CREATED_AT, GRADE');
+        
+        if (specificTaskId) {
+            query = query.eq('TASKID', specificTaskId);
+        }
+
+        const { data: subs, error } = await query.order('CREATED_AT', { ascending: false });
+
+        if (error || !subs || subs.length === 0) {
+            alert("לא נמצאו הגשות להצגה בדו"ח.");
+            return;
+        }
+
+        // 2. פתיחת חלון חדש ובניית ה-HTML של הדו"ח
+        const printWindow = window.open('', '', 'height=800,width=1000');
+        
+        let html = `
+        <html dir="rtl" lang="he">
+        <head>
+            <title>דו"ח הגשות - מערכת החווה</title>
+            <style>
+                body { font-family: Segoe UI, Arial, sans-serif; padding: 20px; direction: rtl; }
+                h2 { color: #2e7d32; text-align: center; border-bottom: 2px solid #2e7d32; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th, td { border: 1px solid #ddd; padding: 10px; text-align: right; }
+                th { background-color: #f5f5f5; }
+                .footer { margin-top: 30px; font-size: 0.8em; color: #888; text-align: center; }
+                @media print { .no-print { display: none; } }
+            </style>
+        </head>
+        <body>
+            <h2>📋 דו"ח הגשות מטלות</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>שם המטלה</th>
+                        <th>מזהה תלמיד</th>
+                        <th>תאריך הגשה</th>
+                        <th>ציון</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        subs.forEach(s => {
+            const task = (typeof allTasks !== 'undefined') ? allTasks.find(t => t.id === s.TASKID) : null;
+            const taskName = task ? task.title : "מטלה";
+            const date = new Date(s.CREATED_AT).toLocaleDateString('he-IL');
+            const grade = s.GRADE !== null ? s.GRADE : "---";
+
+            html += `
+                <tr>
+                    <td>${taskName}</td>
+                    <td>${s.STUDENID}</td>
+                    <td>${date}</td>
+                    <td><b>${grade}</b></td>
+                </tr>
+            `;
+        });
+
+        html += `
+                </tbody>
+            </table>
+            <div class="footer">הופק בתאריך: ${new Date().toLocaleString('he-IL')}</div>
+        </body>
+        </html>
+        `;
+
+        printWindow.document.write(html);
+        printWindow.document.close();
+
+        // 3. הפעלת ההדפסה
+        setTimeout(() => {
+            printWindow.print();
+        }, 500);
+
+    } catch (err) {
+        console.error("Print Error:", err);
+        alert("שגיאה בהפקת הדו\"ח");
+    }
+}
     
 async function deleteTask(id) {
     // 1. אישור ראשוני מהמשתמש
