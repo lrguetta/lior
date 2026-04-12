@@ -667,6 +667,7 @@ button {
     position: relative; 
     text-align: right;
 }
+    
 </style>
 </head>
 <body>
@@ -791,7 +792,11 @@ button {
         <h4 style="margin:0 0 10px 0; color:#2e7d32;">📥 הגשות שממתינות לבדיקה</h4>
         <div id="submissions-list">אין הגשות חדשות</div>
     </div>
-
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+        <button onclick="downloadSubmissionsReport()" style="background:#1976d2; color:white; border:none; padding:8px 15px; border-radius:5px; cursor:pointer; font-weight:bold;">
+            📊 הורדת דו"ח הגשות (CSV)
+        </button>
+    </div>
     <div id="panel-creatures" style="display:none; width:100%; margin-top:12px;">
         <div style="background:rgba(255,255,255,0.97); border-radius:14px; padding:20px; border:2px solid #7b1fa2;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
@@ -2048,16 +2053,16 @@ async function sendSubmission() {
     const task = allTasks.find(t => t.id === currentTaskToSubmit);
     if (!task) return;
 
-    // 1. בדיקת כפילויות בסופרבייס
+    // 1. בדיקת כפילויות (הגשה כפולה)
     try {
         const { data: existing, error: checkErr } = await supabase
             .from(TABLES.submissions)
-            .select('id')
-            .eq('studentId', currentUser)
-            .eq('taskId', currentTaskToSubmit);
+            .select('ID') // שימוש ב-ID כפי שמופיע בטבלה שלך
+            .eq('STUDENID', currentUser)
+            .eq('TASKID', currentTaskToSubmit);
 
         if (existing && existing.length > 0) {
-            alert("כבר הגשת את המטלה הזו בעבר!");
+            alert("הגשה נדחתה: הגשה כפולה");
             closeModal();
             return;
         }
@@ -2065,11 +2070,13 @@ async function sendSubmission() {
 
     const answers = []; 
     let allAnswered = true;
-    
-    // 2. איסוף התשובות (שמרנו על הלוגיקה המקורית שלך)
+    let correctCount = 0; // מונה לתשובות נכונות (לציון אוטו')
+
+    // 2. איסוף תשובות וחישוב ציון
     if (task?.questions) {
         task.questions.forEach((q, i) => {
             let val = '';
+            // שמירה על הלוגיקה המקורית שלך לאיסוף הנתונים
             if (q.type === 'open') {
                 val = document.querySelector(`textarea[data-index="${i}"]`)?.value.trim() || '';
             } else if (q.type === 'survey') {
@@ -2085,28 +2092,39 @@ async function sendSubmission() {
             }
             
             if (!val) allAnswered = false;
+
+            // בדיקת תשובה נכונה (עבור שאלות סגורות/אמריקאיות)
+            if (q.correctAnswer && val.trim() === String(q.correctAnswer).trim()) {
+                correctCount++;
+            }
+
             answers.push({ q: q.text, a: val });
         });
     }
 
+    // חישוב הציון המוצע
+    const totalQuestions = task.questions.length;
+    const suggestedGrade = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+
     // 3. בדיקה אם הכל נענה
     if (!allAnswered && !confirm('לא ענית על הכל. לשלוח בכל זאת?')) return;
 
-    // 4. שליחה לסופרבייס
+    // 4. שליחה לסופרבייס (התאמה לעמודות שלך)
     try {
         const { error } = await supabase
             .from(TABLES.submissions)
             .insert([{
-                studentId: currentUser,
-                taskId: currentTaskToSubmit,
-                answers: answers, // נשלח כמערך אובייקטים (JSONB)
-                status: 'pending',
-                created_at: new Date().toISOString()
+                STUDENID: currentUser,
+                TASKID: currentTaskToSubmit,
+                ANSWERS: answers, 
+                STATUS: 'submitted',
+                GRADE: suggestedGrade, // הציון האוטומטי נשמר כאן
+                CREATED_AT: new Date().toISOString()
             }]);
 
         if (error) throw error;
 
-        alert('נשלח בהצלחה! 🎉'); 
+        alert(`נשלח בהצלחה! 🎉\nציון מוצע: ${suggestedGrade}`); 
         closeModal(); 
         if (typeof renderTasks === 'function') await renderTasks();
     } catch (e) { 
@@ -2149,12 +2167,35 @@ async function initAdminSubmissions() {
                 <div style="margin-bottom:10px;">
                     <strong style="color:#2e7d32;">${studentName}</strong>
                     <div style="font-size:0.85em;color:#666;">מטלה: ${task?.title || '?'} | פרס: ${task?.xp || 20} XP</div>
+              // בתוך פונקציית הרינדור שבונה את רשימת ההגשות (למשל renderAdminSubmissions)
+// נניח ש-sub הוא האובייקט של ההגשה הבודדת מהדאטאבייס
+
+const gradeDisplay = sub.GRADE !== null ? 
+    `<span style="margin-right:10px; background:#e3f2fd; color:#1565c0; padding:2px 8px; border-radius:10px; font-size:0.9em;">ציון מוצע: ${sub.GRADE}</span>` 
+    : "";
+
+// כאן מגיע הקוד שביקשת לעדכן:
+return `
+    <details style="background:#f1f8e9; padding:10px; border-radius:5px; cursor:pointer; margin-bottom:10px; border:1px solid #c5e1a5;">
+        <summary style="font-weight:bold; color:#1976d2; display:flex; align-items:center; justify-content:space-between;">
+            <span>🔍 בדיקת תשובות</span>
+            ${gradeDisplay}
+        </summary>
+        <div style="margin-top:10px;">
+            ${sub.ANSWERS.map(a => `
+                <div style="background:#f9f9f9; padding:8px; border-radius:5px; margin-bottom:5px; border:1px solid #eee;">
+                    <b>${a.q}</b><br>
+                    <span style="color:${a.a ? '#1976d2' : '#f44336'};">${a.a || 'לא ענה'}</span>
                 </div>
-                <details style="background:#f1f8e9;padding:10px;border-radius:5px;cursor:pointer;">
-                    <summary style="font-weight:bold;color:#1976d2;">🔍 בדיקת תשובות</summary>
-                    <div style="margin-top:10px;">
-                        ${answers.map(a => `<div style="background:#f9f9f9;padding:8px;border-radius:5px;margin-bottom:5px;border:1px solid #eee;"><b>${a.q}</b><br><span style="color:${a.a ? '#1976d2' : '#f44336'};">${a.a || 'לא ענה'}</span></div>`).join('')}
-                    </div>
+            `).join('')}
+        </div>
+        
+        <div style="margin-top:10px; border-top:1px dashed #ccc; padding-top:10px;">
+             <input type="number" placeholder="ציון סופי" id="final-grade-${sub.ID}" defaultValue="${sub.GRADE || ''}" style="width:80px; padding:5px;">
+             <button onclick="saveFinalGrade('${sub.ID}')" style="background:#4caf50; color:white; border:none; padding:5px 10px; border-radius:3px; cursor:pointer;">שמור ציון ופידבק</button>
+        </div>
+    </details>
+`;
                 </details>
                 <div style="display:flex;gap:5px;margin-top:10px;">
                     <button onclick="approveSub('${sub.id}','${sub.studentId}',1)"   style="background:#4caf50;flex:1;">אשר מלא</button>
@@ -2221,6 +2262,47 @@ async function approveSub(subId, studentId, mult = 1) {
         await initAdminSubmissions();
     } catch (e) { 
         alert("שגיאה באישור: " + e.message); 
+    }
+}
+
+    async function downloadSubmissionsReport() {
+    try {
+        // שליפת הנתונים מהטבלה שלך
+        const { data: subs, error } = await supabase
+            .from(TABLES.submissions)
+            .select('TASKID, STUDENID, CREATED_AT, GRADE');
+
+        if (error || !subs) throw new Error("לא הצלחתי למשוך נתונים מהדאטאבייס");
+
+        // הכנת תוכן הקובץ - תמיכה בעברית (BOM)
+        let csvContent = "\uFEFF"; 
+        csvContent += "שם מטלה,מזהה מטלה,מזהה תלמיד,תאריך הגשה,ציון מוצע\n";
+
+        subs.forEach(s => {
+            // ניסיון למצוא את שם המטלה מתוך המערך המקומי allTasks אם הוא קיים
+            const taskObj = (typeof allTasks !== 'undefined') ? allTasks.find(t => t.id === s.TASKID) : null;
+            const taskName = taskObj ? taskObj.title : "מטלה כללית";
+            
+            const date = new Date(s.CREATED_AT).toLocaleDateString('he-IL');
+            const grade = s.GRADE !== null ? s.GRADE : "טרם נבדק";
+
+            // יצירת שורה בדו"ח
+            csvContent += `"${taskName}","${s.TASKID}","${s.STUDENID}","${date}","${grade}"\n`;
+        });
+
+        // יצירת קישור והורדה אוטומטית של הקובץ
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `דוח_הגשות_${new Date().toLocaleDateString('he-IL')}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+    } catch (err) {
+        console.error("Report generation failed:", err);
+        alert("שגיאה בהפקת הדו"ח: " + err.message);
     }
 }
 
