@@ -2089,7 +2089,7 @@ async function sendSubmission() {
             if (!val) allAnswered = false;
 
             // בדיקת תשובה נכונה (עבור שאלות סגורות/אמריקאיות)
-            if (q.correctAnswer && val.trim() === String(q.correctAnswer).trim()) {
+            if (q.correct && val.trim() === String(q.correct).trim()) {
                 correctCount++;
             }
 
