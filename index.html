@@ -2350,7 +2350,7 @@ async function downloadSubmissionsReport() {
 
 async function approveSub(subId, studentId, mult = 1) {
     try {
-        // 1. קבלת פרטי ההגשה
+        // 1. קבלת פרטי ההגשה (כאן הוגדר subErr בפעם הראשונה)
         const { data: sub, error: subErr } = await supabase.from(TABLES.submissions).select('*').eq('id', subId).single();
         if (subErr) throw subErr;
 
@@ -2361,7 +2361,7 @@ async function approveSub(subId, studentId, mult = 1) {
         const { data: s, error: stErr } = await supabase.from(TABLES.students).select('*').eq('id', studentId).single();
         if (stErr) throw stErr;
 
-        // --- התוספת החדשה: חיפוש הדמות הפעילה הנוכחית של התלמיד ---
+        // --- חיפוש הדמות הפעילה הנוכחית של התלמיד ---
         const { data: activeCards } = await supabase.from(TABLES.students)
             .select('*')
             .eq('full_name', s.full_name)
@@ -2384,7 +2384,7 @@ async function approveSub(subId, studentId, mult = 1) {
             newXp -= 100;
         }
 
-    // 4. עדכון התלמיד ועדכון סטטוס ההגשה (במקום מחיקה)
+        // 4. עדכון התלמיד 
         const { error: upErr } = await supabase.from(TABLES.students).update({ 
             xp: newXp, 
             level: newLevel, 
@@ -2394,25 +2394,21 @@ async function approveSub(subId, studentId, mult = 1) {
         
         if (upErr) throw upErr;
 
+        // 5. עדכון סטטוס ההגשה (שימוש בשם משתנה ייחודי updateSubErr)
+        // ודא ששמות העמודות (status ו-ID/id) תואמים במדויק לטבלה שלך בסופרבייס
         const { error: updateSubErr } = await supabase.from(TABLES.submissions)
-    .update({ status: 'approved' }) 
-    .eq('ID', subId); 
-
-if (updateSubErr) throw updateSubErr;
-
-alert(`אושר! התלמיד קיבל ${xpToAdd} XP וההגשה תועדה במערכת.`);
-
-        // תיקון: משנים ל-update במקום delete
-        const { error: subErr } = await supabase.from(TABLES.submissions)
             .update({ status: 'approved' }) 
-            .eq('ID', subId); // שים לב אם אצלך בטבלה זה ID או id
+            .eq('ID', subId); 
 
-        if (subErr) throw subErr;
-        
+        if (updateSubErr) throw updateSubErr;
+
+        // סיום ורענון
         alert(`אושר! התלמיד קיבל ${xpToAdd} XP וההגשה תועדה במערכת.`);
         await loadStudents(); 
         await initAdminSubmissions();
+
     } catch (e) { 
+        console.error("Approve Error:", e);
         alert("שגיאה באישור: " + e.message); 
     }
 }
