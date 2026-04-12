@@ -2133,79 +2133,110 @@ async function sendSubmission() {
 }
 
 // --- הגשות מנהל (סופרבייס) ---
-async function initAdminSubmissions() {
+asasync function initAdminSubmissions() {
     const container = document.getElementById('submissions-list');
     if (!container) return;
-    container.innerHTML = '<div style="color:#888;text-align:center;">טוען...</div>';
     
+    // הוספת כותרת עם כפתור דוח (שלב 5)
+    container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px; padding:0 10px;">
+            <h4 style="margin:0; color:#2e7d32;">📥 הגשות שממתינות לבדיקה</h4>
+            <button onclick="downloadSubmissionsReport()" style="background:#1976d2; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; font-size:0.85em;">📊 דוח הגשות</button>
+        </div>
+        <div id="subs-items-container" style="color:#888;text-align:center;">טוען...</div>
+    `;
+    
+    const itemsContainer = document.getElementById('subs-items-container');
+
     try {
-        // משיכת ההגשות יחד עם שם התלמיד בבת אחת
         const { data: subs, error } = await supabase
             .from(TABLES.submissions)
             .select(`
                 *,
                 students (full_name)
             `)
-            .order('created_at', { ascending: false });
+            .order('CREATED_AT', { ascending: false }); // שימוש בעמודה שלך
 
         if (error) throw error;
         if (!subs || !subs.length) { 
-            container.innerHTML = '<div style="color:#666;text-align:center;">אין הגשות</div>'; 
+            itemsContainer.innerHTML = '<div style="color:#666;text-align:center;">אין הגשות</div>'; 
             return; 
         }
 
-        container.innerHTML = '';
+        itemsContainer.innerHTML = '';
         subs.forEach(sub => {
-            // בסופרבייס answers הוא כבר אובייקט, אין צורך ב-JSON.parse
-            const answers = Array.isArray(sub.answers) ? sub.answers : [];
-            const task = allTasks.find(t => t.id === sub.taskId);
+            const answers = Array.isArray(sub.ANSWERS) ? sub.ANSWERS : (Array.isArray(sub.answers) ? sub.answers : []);
+            const task = allTasks.find(t => t.id === sub.TASKID || t.id === sub.taskId);
             const studentName = sub.students?.full_name || 'תלמיד לא ידוע';
+            const grade = sub.GRADE !== undefined ? sub.GRADE : (sub.grade !== undefined ? sub.grade : null);
             
+            // עיצוב הציון המוצע (שלב 3)
+            const gradeDisplay = grade !== null ? 
+                `<span style="background:#e3f2fd; color:#1565c0; padding:2px 8px; border-radius:10px; font-size:0.85em; font-weight:bold;">ציון מוצע: ${grade}</span>` 
+                : "";
+
             const d = document.createElement('div');
             d.style = 'background:white;padding:15px;margin:10px 0;border-radius:8px;border-right:5px solid gold;text-align:right;box-shadow:0 2px 4px rgba(0,0,0,0.1);';
+            
             d.innerHTML = `
-                <div style="margin-bottom:10px;">
-                    <strong style="color:#2e7d32;">${studentName}</strong>
-                    <div style="font-size:0.85em;color:#666;">מטלה: ${task?.title || '?'} | פרס: ${task?.xp || 20} XP</div>
-              // בתוך פונקציית הרינדור שבונה את רשימת ההגשות (למשל renderAdminSubmissions)
-// נניח ש-sub הוא האובייקט של ההגשה הבודדת מהדאטאבייס
-
-const gradeDisplay = sub.GRADE !== null ? 
-    `<span style="margin-right:10px; background:#e3f2fd; color:#1565c0; padding:2px 8px; border-radius:10px; font-size:0.9em;">ציון מוצע: ${sub.GRADE}</span>` 
-    : "";
-
-// כאן מגיע הקוד שביקשת לעדכן:
-return `
-    <details style="background:#f1f8e9; padding:10px; border-radius:5px; cursor:pointer; margin-bottom:10px; border:1px solid #c5e1a5;">
-        <summary style="font-weight:bold; color:#1976d2; display:flex; align-items:center; justify-content:space-between;">
-            <span>🔍 בדיקת תשובות</span>
-            ${gradeDisplay}
-        </summary>
-        <div style="margin-top:10px;">
-            ${sub.ANSWERS.map(a => `
-                <div style="background:#f9f9f9; padding:8px; border-radius:5px; margin-bottom:5px; border:1px solid #eee;">
-                    <b>${a.q}</b><br>
-                    <span style="color:${a.a ? '#1976d2' : '#f44336'};">${a.a || 'לא ענה'}</span>
+                <div style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:start;">
+                    <div>
+                        <strong style="color:#2e7d32; font-size:1.1em;">${studentName}</strong>
+                        <div style="font-size:0.85em;color:#666;">מטלה: ${task?.title || '?'} | פרס: ${task?.xp || 20} XP</div>
+                    </div>
+                    ${gradeDisplay}
                 </div>
-            `).join('')}
-        </div>
-        
-        <div style="margin-top:10px; border-top:1px dashed #ccc; padding-top:10px;">
-             <input type="number" placeholder="ציון סופי" id="final-grade-${sub.ID}" defaultValue="${sub.GRADE || ''}" style="width:80px; padding:5px;">
-             <button onclick="saveFinalGrade('${sub.ID}')" style="background:#4caf50; color:white; border:none; padding:5px 10px; border-radius:3px; cursor:pointer;">שמור ציון ופידבק</button>
-        </div>
-    </details>
-`;
+
+                <details style="background:#f1f8e9; padding:10px; border-radius:5px; cursor:pointer; border:1px solid #c5e1a5;">
+                    <summary style="font-weight:bold; color:#1976d2;">🔍 בדיקת תשובות</summary>
+                    <div style="margin-top:10px;">
+                        ${answers.map(a => `
+                            <div style="background:#f9f9f9; padding:8px; border-radius:5px; margin-bottom:5px; border:1px solid #eee;">
+                                <b>${a.q || a.question}</b><br>
+                                <span style="color:${a.a || a.answer ? '#1976d2' : '#f44336'};">${a.a || a.answer || 'לא ענה'}</span>
+                            </div>
+                        `).join('')}
+                    </div>
                 </details>
+
                 <div style="display:flex;gap:5px;margin-top:10px;">
-                    <button onclick="approveSub('${sub.id}','${sub.studentId}',1)"   style="background:#4caf50;flex:1;">אשר מלא</button>
-                    <button onclick="approveSub('${sub.id}','${sub.studentId}',0.5)" style="background:#ffc107;flex:1;">אשר חלקי</button>
-                    <button onclick="rejectSub('${sub.id}','${sub.studentId}')"       style="background:#f44336;flex:1;">דחה</button>
-                </div>`;
-            container.appendChild(d);
+                    <button onclick="approveSub('${sub.ID || sub.id}','${sub.STUDENID || sub.studentId}',1)"   style="background:#4caf50;flex:1;color:white;border:none;padding:8px;border-radius:4px;cursor:pointer;">אשר מלא</button>
+                    <button onclick="approveSub('${sub.ID || sub.id}','${sub.STUDENID || sub.studentId}',0.5)" style="background:#ffc107;flex:1;color:white;border:none;padding:8px;border-radius:4px;cursor:pointer;">אשר חלקי</button>
+                    <button onclick="rejectSub('${sub.ID || sub.id}','${sub.STUDENID || sub.studentId}')"       style="background:#f44336;flex:1;color:white;border:none;padding:8px;border-radius:4px;cursor:pointer;">דחה</button>
+                </div>
+            `;
+            itemsContainer.appendChild(d);
         });
     } catch (e) { 
-        container.innerHTML = `<div style="color:red;">שגיאה: ${e.message}</div>`; 
+        itemsContainer.innerHTML = `<div style="color:red;">שגיאה: ${e.message}</div>`; 
+    }
+}
+
+// פונקציית הורדת הדו"ח (שלב 5)
+async function downloadSubmissionsReport() {
+    try {
+        const { data: subs, error } = await supabase
+            .from(TABLES.submissions)
+            .select('TASKID, STUDENID, CREATED_AT, GRADE');
+
+        if (error || !subs) throw new Error("לא ניתן לשלוף נתונים");
+
+        let csvContent = "\uFEFF"; 
+        csvContent += "שם מטלה,מזהה מטלה,מזהה תלמיד,תאריך הגשה,ציון\n";
+
+        subs.forEach(s => {
+            const task = allTasks.find(t => t.id === s.TASKID);
+            const date = new Date(s.CREATED_AT).toLocaleDateString('he-IL');
+            csvContent += `"${task?.title || 'מטלה'}", "${s.TASKID}", "${s.STUDENID}", "${date}", "${s.GRADE || 0}"\n`;
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `report_${new Date().toLocaleDateString('he-IL')}.csv`;
+        link.click();
+    } catch (e) {
+        alert("שגיאה בהפקת דוח: " + e.message);
     }
 }
 
