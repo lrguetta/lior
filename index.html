@@ -2538,12 +2538,12 @@ async function downloadSubmissionsReport() {
         htmlContent += `
                     </tbody>
                 </table>
-         <script>
-    window.onload = function() {
-        window.print();
-        // window.close();
-    };
-<\/script>
+                <script>
+                    window.onload = function() {
+                        window.print();
+                        // window.close(); // אופציונלי: סוגר את הטאב אחרי ההדפסה
+                    };
+                </script>
             </body>
             </html>
         `;
@@ -2958,7 +2958,7 @@ async function activateSpecialSkill(student) {
                 h.shields_broken.pop(); // מסיר מגן אחד שבור
                 const { error } = await supabase
                     .from(TABLES.students)
-                    .update({ history: h })
+                    .update({ history: JSON.stringify(h) })
                     .eq('id', targetId);
                 if (error) throw error;
                 return true;
@@ -2998,7 +2998,7 @@ async function activateSpecialSkill(student) {
                     h['shield_'+Date.now()] = { msg: '💥 כל המגינים נשברו! -10XP', xp: -10, time: Date.now() };
                     const { error } = await supabase
                         .from(TABLES.students)
-                        .update({ xp: newXp, history: h })
+                        .update({ xp: newXp, history: JSON.stringify(h) })
                         .eq('id', targetId);
                     if (error) throw error;
                 } else {
@@ -3007,7 +3007,7 @@ async function activateSpecialSkill(student) {
                     h['shield_'+Date.now()] = { msg: `🛡️ מגן ${next+1} נשבר!`, xp: 0, time: Date.now() };
                     const { error } = await supabase
                         .from(TABLES.students)
-                        .update({ history: h })
+                        .update({ history: JSON.stringify(h) })
                         .eq('id', targetId);
                     if (error) throw error;
                 }
@@ -3023,7 +3023,7 @@ async function activateSpecialSkill(student) {
                 h['heal_'+Date.now()] = { msg: '🛡️ מגינים חודשו!', xp: 0, time: Date.now() };
                 const { error } = await supabase
                     .from(TABLES.students)
-                    .update({ history: h })
+                    .update({ history: JSON.stringify(h) })
                     .eq('id', targetId);
                 if (error) throw error;
             },
@@ -3057,7 +3057,7 @@ async function activateSpecialSkill(student) {
                 h[key] = value;
                 const { error } = await supabase
                     .from(TABLES.students)
-                    .update({ history: h })
+                    .update({ history: JSON.stringify(h) })
                     .eq('id', targetId);
                 if (error) throw error;
             },
@@ -3094,7 +3094,7 @@ async function activateSpecialSkill(student) {
 
                 const { error } = await supabase
                     .from(TABLES.students)
-                    .update({ history: h })
+                    .update({ history: JSON.stringify(h) })
                     .eq('id', targetId);
                 if (error) throw error;
             },
@@ -3111,7 +3111,7 @@ async function activateSpecialSkill(student) {
                 h[key + '_duration'] = durationMs;
                 const { error } = await supabase
                     .from(TABLES.students)
-                    .update({ history: h })
+                    .update({ history: JSON.stringify(h) })
                     .eq('id', targetId);
                 if (error) throw error;
 
