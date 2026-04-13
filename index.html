@@ -2846,6 +2846,10 @@ function buildBattleSidebar(me) {
     // עדכון כפתור היכולת הנפרד
     const skillFloatBtn = document.getElementById('skill-float-btn');
     if (skillFloatBtn) {
+        if ((me.level || 0) === 0) {
+            skillFloatBtn.style.display = 'none';
+            return;
+        }
         skillFloatBtn.onclick = () => activateSpecialSkill(me);
         skillFloatBtn.style.display = 'flex';
 
