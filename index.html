@@ -1985,13 +1985,13 @@ const formatTimeForDB = (timeStr) => {
     async function printSubmissionsReport(specificTaskId = null) {
     try {
         // 1. בניית השאילתה - שליפת ההגשות
-        let query = supabase.from(TABLES.submissions).select('TASKID, STUDENID, CREATED_AT, GRADE');
+        let query = supabase.from(TABLES.submissions).select('taskId, studentId, created_at, grade, taskTitle');
         
         if (specificTaskId) {
-            query = query.eq('TASKID', specificTaskId);
+            query = query.eq('taskId', specificTaskId);
         }
 
-        const { data: subs, error } = await query.order('CREATED_AT', { ascending: false });
+        const { data: subs, error } = await query.order('created_at', { ascending: false });
 
         if (error || !subs || subs.length === 0) {
             alert("לא נמצאו הגשות להצגה בדוח.");
@@ -2029,16 +2029,20 @@ const formatTimeForDB = (timeStr) => {
                 <tbody>
         `;
 
-        subs.forEach(s => {
+       subs.forEach(s => {
             const task = (typeof allTasks !== 'undefined') ? allTasks.find(t => t.id === s.TASKID) : null;
-            const taskName = task ? task.title : "מטלה";
+            // שינינו פה: קודם בודק אם יש שם שמור בהגשה, ורק אז מחפש במטלות
+            const taskName = s.taskTitle || (task ? task.title : "מטלה"); 
             const date = new Date(s.CREATED_AT).toLocaleDateString('he-IL');
-            const grade = s.GRADE !== null ? s.GRADE : "---";
+            const task = (typeof allTasks !== 'undefined') ? allTasks.find(t => t.id === s.taskId) : null;
+            const taskName = task ? task.title : "מטלה";
+            const date = new Date(s.created_at).toLocaleDateString('he-IL');
+            const grade = s.grade !== null ? s.grade : "---";
 
             html += `
                 <tr>
                     <td>${taskName}</td>
-                    <td>${s.STUDENID}</td>
+                    <td>${s.taskId}</td>
                     <td>${date}</td>
                     <td><b>${grade}</b></td>
                 </tr>
@@ -2289,12 +2293,12 @@ const answers = [];
             .insert([{
                 studentId: currentUser,
                 taskId: currentTaskToSubmit,
+                taskTitle: task.title, 
                 answers: answers, 
                 status: 'submitted',
-                grade: suggestedGrade, // הציון האוטומטי נשמר כאן
+                grade: suggestedGrade, 
                 created_at: new Date().toISOString()
             }]);
-
         if (error) throw error;
 
         alert(`נשלח בהצלחה! 🎉\nציון מוצע: ${suggestedGrade}`); 
@@ -2514,7 +2518,7 @@ async function downloadSubmissionsReport() {
         // 4. הוספת השורות
         subs.forEach(s => {
             const taskObj = (typeof allTasks !== 'undefined') ? allTasks.find(t => t.id === s.taskId) : null;
-            const taskName = taskObj ? taskObj.title : "מטלה כללית";
+            const taskName = s.taskTitle || (taskObj ? taskObj.title : "מטלה כללית");
             const studentName = s.students?.full_name || "תלמיד לא ידוע";
             const date = new Date(s.created_at).toLocaleDateString('he-IL');
             const grade = s.grade !== null ? s.grade : "-";
