@@ -41,7 +41,7 @@ var CreatureSkills = CreatureSkills || {
 
             // שליחת הודעה למטרה שתפעיל אצלו את הטיימר המקומי
             // אנחנו משתמשים ב-addLog כדי שהמטרה תראה שהיא מורעלת
-            await ctx.utils.addLog(target.id, `🐍 ${ctx.attacker.name} הרעיל אותך! אל תתנתק או שתאבד XP...`, 0);
+            await ctx.utils.addLog(target.id, `🐍 ${ctx.attacker.full_name} הרעיל אותך! אל תתנתק או שתאבד XP...`, 0);
             
             // הפעלת טיימר מקומי (setInterval) שרץ רק בדפדפן הנוכחי
             // הערה: כדי שזה יעבוד על המטרה, המערכת שלך צריכה להאזין לשינויים ב-DB
@@ -62,7 +62,7 @@ var CreatureSkills = CreatureSkills || {
                 }
             );
 
-            return { message: `🐍 הרעלת את ${target.name}! הארס יעבוד רק כל עוד הוא מחובר.` };
+            return { message: `🐍 הרעלת את ${target.full_name}! הארס יעבוד רק כל עוד הוא מחובר.` };
         }
     },
 
@@ -90,9 +90,9 @@ var CreatureSkills = CreatureSkills || {
             const amount = Math.min(Math.floor(Math.random() * 21) + 10, target.xp);
             await ctx.utils.addXP(target.id, -amount);
             await ctx.utils.addXP(ctx.attacker.id, amount);
-            await ctx.utils.addLog(target.id, `🖤 ${ctx.attacker.name} גנב ממך ${amount}XP!`, -amount);
-            await ctx.utils.addLog(ctx.attacker.id, `🖤 גנבת ${amount}XP מ-${target.name}!`, amount);
-            return { message: `🖤 גנבת ${amount} XP מ-${target.name}!` };
+            await ctx.utils.addLog(target.id, `🖤 ${ctx.attacker.full_name} גנב ממך ${amount}XP!`, -amount);
+            await ctx.utils.addLog(ctx.attacker.id, `🖤 גנבת ${amount}XP מ-${target.full_name}!`, amount);
+            return { message: `🖤 גנבת ${amount} XP מ-${target.full_name}!` };
         }
     },
 
@@ -102,12 +102,12 @@ var CreatureSkills = CreatureSkills || {
             const target = await ctx.utils.pickStudent("🔨 בחר תלמיד לאפס לו קולדאון מתקפה", true);
             if (!target) return null;
             const attackName = ctx.utils.resetRandomAttackCooldown(target.id);
-            if (!attackName) return { message: `😕 ל-${target.name} אין מתקפות עם קולדאון.` };
-            await ctx.utils.addLog(target.id, `🔨 ${ctx.attacker.name} איפס לך את הקולדאון של "${attackName}"`, 0);
+            if (!attackName) return { message: `😕 ל-${target.full_name} אין מתקפות עם קולדאון.` };
+            await ctx.utils.addLog(target.id, `🔨 ${ctx.attacker.full_name} איפס לך את הקולדאון של "${attackName}"`, 0);
             if (target.id !== ctx.attacker.id) {
                 await ctx.utils.addXP(ctx.attacker.id, 10);
-                await ctx.utils.addLog(ctx.attacker.id, `🔨 איפסת קולדאון ל-${target.name} (+10XP)`, 10);
-                return { message: `🔨 איפסת את הקולדאון של "${attackName}" ל-${target.name} וקיבלת 10XP!` };
+                await ctx.utils.addLog(ctx.attacker.id, `🔨 איפסת קולדאון ל-${target.full_name} (+10XP)`, 10);
+                return { message: `🔨 איפסת את הקולדאון של "${attackName}" ל-${target.full_name} וקיבלת 10XP!` };
             }
             return { message: `🔨 איפסת את הקולדאון של "${attackName}" לעצמך.` };
         }
@@ -150,7 +150,7 @@ var CreatureSkills = CreatureSkills || {
                         fox_penalty_time: Date.now()
                     })
                 });
-                alert(`🦊 ${ctx.att.name} נלכד במלכודת השועל! יאבד ${penalty}XP בתקיפה הבאה שלו.`);
+                alert(`🦊 ${ctx.att.full_name} נלכד במלכודת השועל! יאבד ${penalty}XP בתקיפה הבאה שלו.`);
             }
             return { stop: false };
         }
@@ -162,8 +162,8 @@ var CreatureSkills = CreatureSkills || {
             const target = await ctx.utils.pickStudent("🔮 את מי תרצה להשתיק?");
             if (!target) return null;
             await ctx.utils.silenceSkill(target.id);
-            await ctx.utils.addLog(target.id, `🔮 ${ctx.attacker.name} השתיק אותך! היכולת המיוחדת שלך אופסה.`, 0);
-            return { message: `🔮 ${target.name} הושתק! לא יוכל להשתמש ביכולת המיוחדת שלו לשעה.` };
+            await ctx.utils.addLog(target.id, `🔮 ${ctx.attacker.full_name} השתיק אותך! היכולת המיוחדת שלך אופסה.`, 0);
+            return { message: `🔮 ${target.full_name} הושתק! לא יוכל להשתמש ביכולת המיוחדת שלו לשעה.` };
         }
     },
 
@@ -177,10 +177,10 @@ var CreatureSkills = CreatureSkills || {
             if (ctx.me.history.spider_trap && !ctx.isBlocked && ctx.att) {
                 ctx.me.history.spider_trap = false;
                 let ah = ctx.utils.getHistory(ctx.att);
-                ah['spider_blocked_'+Date.now()] = { msg: `🕸️ נלכדת ברשת של ${ctx.me.name}!`, xp: 0, time: Date.now() };
+                ah['spider_blocked_'+Date.now()] = { msg: `🕸️ נלכדת ברשת של ${ctx.me.full_name}!`, xp: 0, time: Date.now() };
                 await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, ctx.att.id, { history: JSON.stringify(ah) });
                 await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, ctx.me.id, { history: JSON.stringify(ctx.me.history) });
-                alert(`🕸️ ${ctx.att.name} נלכד ברשת! המתקפה בוטלה.`);
+                alert(`🕸️ ${ctx.att.full_name} נלכד ברשת! המתקפה בוטלה.`);
                 return { stop: true };
             }
             return { stop: false };
@@ -198,10 +198,10 @@ var CreatureSkills = CreatureSkills || {
                 ctx.me.history.counter_active = false;
                 const naxp = Math.max(0, ctx.att.xp - 15);
                 let ah = ctx.utils.getHistory(ctx.att);
-                ah['counter_'+Date.now()] = { msg: `🐇 קאונטר מ-${ctx.me.name}! ספגת -15XP`, xp: -15, time: Date.now() };
+                ah['counter_'+Date.now()] = { msg: `🐇 קאונטר מ-${ctx.me.full_name}! ספגת -15XP`, xp: -15, time: Date.now() };
                 await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, ctx.att.id, { xp: naxp, history: JSON.stringify(ah) });
                 await ctx.dbSvc.updateDocument(ctx.DB_ID, ctx.TABLES.students, ctx.me.id, { history: JSON.stringify(ctx.me.history) });
-                alert(`🐇 קאונטר הופעל! ${ctx.att.name} ספג -15XP.`);
+                alert(`🐇 קאונטר הופעל! ${ctx.att.full_name} ספג -15XP.`);
             }
             return { stop: false };
         }
@@ -212,8 +212,8 @@ var CreatureSkills = CreatureSkills || {
         action: async (ctx) => {
             const target = await ctx.utils.pickStudent("🐑 למי תרצה להתחפש?");
             if (!target) return null;
-            sessionStorage.setItem('fake_identity', JSON.stringify({ name: target.name, type: target.type }));
-            return { message: `🐺 התחפשת ל-${target.name}!` };
+            sessionStorage.setItem('fake_identity', JSON.stringify({ name: target.full_name, type: target.type }));
+            return { message: `🐺 התחפשת ל-${target.full_name}!` };
         }
     },
 
@@ -240,12 +240,12 @@ var CreatureSkills = CreatureSkills || {
                 return { message: "🐄 מוווו! תיקנת לעצמך מגן אחד (לא התקבל XP)." };
             } else {
                 // ריפוי חבר - המטרה מקבלת הודעה ביומן, הפרה (התוקף) מקבלת 15XP
-                await ctx.utils.addLog(target.id, `🐄 ${ctx.attacker.name} תיקן לך מגן!`, 0);
+                await ctx.utils.addLog(target.id, `🐄 ${ctx.attacker.full_name} תיקן לך מגן!`, 0);
                 
                 await ctx.utils.addXP(ctx.attacker.id, 15);
-                await ctx.utils.addLog(ctx.attacker.id, `🐄 עזרת ל-${target.name}! (+15XP)`, 15);
+                await ctx.utils.addLog(ctx.attacker.id, `🐄 עזרת ל-${target.full_name}! (+15XP)`, 15);
                 
-                return { message: `🐄 מוווו! תיקנת מגן ל-${target.name} וקיבלת 15 XP!` };
+                return { message: `🐄 מוווו! תיקנת מגן ל-${target.full_name} וקיבלת 15 XP!` };
             }
         }
     },
