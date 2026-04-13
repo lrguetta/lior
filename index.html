@@ -2219,6 +2219,23 @@ function closeModal() {
 }
 
 async function sendSubmission() {
+    const submitBtn = document.getElementById('submit-btn'); // וודא שזה ה-ID של הכפתור
+    if (submitBtn) {
+        if (submitBtn.disabled) return; // הגנה נוספת אם הפונקציה נקראה איכשהו שוב
+        submitBtn.disabled = true;
+        submitBtn.innerText = "שולח... המתן ⏳";
+    }
+    // בדיקה אם כבר קיימת הגשה
+const { data: existing } = await supabase
+    .from(TABLES.submissions)
+    .select('id')
+    .eq('studentId', currentUser)
+    .eq('taskId', currentTaskToSubmit)
+    .maybeSingle();
+
+if (existing) {
+    return; // עוצר את הפונקציה ולא שולח שוב
+}
     const task = allTasks.find(t => t.id === currentTaskToSubmit);
     if (!task) return;
 
@@ -2226,7 +2243,7 @@ async function sendSubmission() {
     try {
         const { data: existing, error: checkErr } = await supabase
             .from(TABLES.submissions)
-            .select('ID') // שימוש ב-ID כפי שמופיע בטבלה שלך
+            .select('id') // שימוש ב-ID כפי שמופיע בטבלה שלך
             .eq('studentId', currentUser)
             .eq('taskId', currentTaskToSubmit);
 
