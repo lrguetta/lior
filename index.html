@@ -2456,47 +2456,107 @@ async function approveSub(subId, studentId, mult = 1) {
         alert("שגיאה באישור: " + e.message); 
     }
 }
-    async function downloadSubmissionsReport() {
+async function downloadSubmissionsReport() {
     try {
-        // שליפת הנתונים מהטבלה שלך
+        // 1. שליפת כל הנתונים (כולל שמות התלמידים דרך ה-Relation)
         const { data: subs, error } = await supabase
             .from(TABLES.submissions)
-            .select('taskId,studentId, created_at, grade');
+            .select(`
+                *,
+                students (full_name)
+            `)
+            .order('created_at', { ascending: false });
 
         if (error || !subs) throw new Error("לא הצלחתי למשוך נתונים מהדאטאבייס");
 
-        // הכנת תוכן הקובץ - תמיכה בעברית (BOM)
-        let csvContent = "\uFEFF"; 
-        csvContent += "שם מטלה,מזהה מטלה,מזהה תלמיד,תאריך הגשה,ציון מוצע\n";
+        // 2. יצירת חלון חדש להדפסה
+        const printWindow = window.open('', '_blank');
+        
+        // 3. בניית ה-HTML של הדו"ח
+        let htmlContent = `
+            <html dir="rtl">
+            <head>
+                <title>דוח הגשות - חוות הטמגוצ'י</title>
+                <style>
+                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; direction: rtl; }
+                    .header { text-align: center; border-bottom: 3px solid #2e7d32; padding-bottom: 10px; margin-bottom: 30px; }
+                    h1 { color: #2e7d32; margin: 0; font-size: 28px; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    th { background-color: #f1f8e9; color: #2e7d32; border: 1px solid #c5e1a5; padding: 12px; text-align: right; }
+                    td { border: 1px solid #e0e0e0; padding: 10px; text-align: right; font-size: 14px; }
+                    tr:nth-child(even) { background-color: #fafafa; }
+                    .status-tag { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+                    .approved { background: #e8f5e9; color: #2e7d32; }
+                    .pending { background: #fff3e0; color: #e65100; }
+                    @media print {
+                        @page { margin: 1.5cm; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>דוח הגשות ותוצרים 📝</h1>
+                    <p>תאריך הפקה: ${new Date().toLocaleDateString('he-IL')} | שעה: ${new Date().toLocaleTimeString('he-IL')}</p>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>שם תלמיד</th>
+                            <th>שם מטלה</th>
+                            <th>תאריך הגשה</th>
+                            <th>ציון מוצע</th>
+                            <th>סטטוס</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
 
+        // 4. הוספת השורות
         subs.forEach(s => {
-            // ניסיון למצוא את שם המטלה מתוך המערך המקומי allTasks אם הוא קיים
             const taskObj = (typeof allTasks !== 'undefined') ? allTasks.find(t => t.id === s.taskId) : null;
             const taskName = taskObj ? taskObj.title : "מטלה כללית";
-            
+            const studentName = s.students?.full_name || "תלמיד לא ידוע";
             const date = new Date(s.created_at).toLocaleDateString('he-IL');
-            const grade = s.grade !== null ? s.grade : "טרם נבדק";
+            const grade = s.grade !== null ? s.grade : "-";
+            const isApproved = s.status === 'approved';
 
-            // יצירת שורה בדו"ח
-            csvContent += `"${taskName}","${s.taskId}","${s.studentId}","${date}","${grade}"\n`;
+            htmlContent += `
+                <tr>
+                    <td><b>${studentName}</b></td>
+                    <td>${taskName}</td>
+                    <td>${date}</td>
+                    <td>${grade}</td>
+                    <td>
+                        <span class="status-tag ${isApproved ? 'approved' : 'pending'}">
+                            ${isApproved ? 'מאושר ✅' : 'ממתין ⏳'}
+                        </span>
+                    </td>
+                </tr>
+            `;
         });
 
-        // יצירת קישור והורדה אוטומטית של הקובץ
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", `דוח_הגשות_${new Date().toLocaleDateString('he-IL')}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        htmlContent += `
+                    </tbody>
+                </table>
+                <script>
+                    window.onload = function() {
+                        window.print();
+                        // window.close(); // אופציונלי: סוגר את הטאב אחרי ההדפסה
+                    };
+                </script>
+            </body>
+            </html>
+        `;
+
+        // 5. הזרקת התוכן לחלון והפעלה
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
         
     } catch (err) {
-        console.error("Report generation failed:", err);
+        console.error("PDF generation failed:", err);
         alert("שגיאה בהפקת הדוח: " + err.message);
     }
 }
-
 async function rejectSub(subId, studentId) {
     const note = prompt('מדוע? (התלמיד יראה זאת):');
     if (note === null) return;
