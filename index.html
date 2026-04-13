@@ -2538,12 +2538,12 @@ async function downloadSubmissionsReport() {
         htmlContent += `
                     </tbody>
                 </table>
-                <script>
-                    window.onload = function() {
-                        window.print();
-                        // window.close(); // אופציונלי: סוגר את הטאב אחרי ההדפסה
-                    };
-                </script>
+         <script>
+    window.onload = function() {
+        window.print();
+        // window.close();
+    };
+<\/script>
             </body>
             </html>
         `;
