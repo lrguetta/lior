@@ -2555,7 +2555,7 @@ async function approveSub(subId, studentId, mult = 1) {
         
         // חישוב XP ו-CASH (כאן נכנס המשתנה החדש מהמטלה)
         const xpToAdd = Math.round((task?.xp || 20) * mult);
-        const cashToAdd = Math.round((task?.reward_cash || 0) * mult);
+        const cashToAdd = Math.round((task?.cash || 0) * mult);
         
         // 2. קבלת פרטי הסטודנט
         const { data: s, error: stErr } = await supabase.from(TABLES.students).select('*').eq('id', studentId).single();
