@@ -2030,12 +2030,9 @@ const formatTimeForDB = (timeStr) => {
         `;
 
        subs.forEach(s => {
-            const task = (typeof allTasks !== 'undefined') ? allTasks.find(t => t.id === s.TASKID) : null;
             // שינינו פה: קודם בודק אם יש שם שמור בהגשה, ורק אז מחפש במטלות
             const taskName = s.taskTitle || (task ? task.title : "מטלה"); 
-            const date = new Date(s.CREATED_AT).toLocaleDateString('he-IL');
             const task = (typeof allTasks !== 'undefined') ? allTasks.find(t => t.id === s.taskId) : null;
-            const taskName = task ? task.title : "מטלה";
             const date = new Date(s.created_at).toLocaleDateString('he-IL');
             const grade = s.grade !== null ? s.grade : "---";
 
