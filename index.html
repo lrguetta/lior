@@ -217,23 +217,40 @@ button {
     border-bottom: 5px solid #e65100 !important;
 }
 
-/* בועית השמות במעבר עכבר */
+/* העיצוב החדש של בועית השמות במעבר עכבר */
 .student-card.group-card:hover::after {
-    content: "חברי הקבוצה:\n" attr(data-tooltip); /* שיניתי ל-data-tooltip שיתאים לקוד ה-JS */
+    content: "🌟 חברי הקבוצה:\n\n" attr(data-tooltip);
     position: absolute;
-    top: -10px;
+    top: -15px; /* מרחק מהכרטיס */
     left: 50%;
     transform: translateX(-50%) translateY(-100%);
-    background: rgba(0, 0, 0, 0.9);
-    color: #fff;
-    padding: 10px;
-    border-radius: 8px;
-    white-space: pre-wrap;
+    background-color: #fffaf0; /* רקע שמנת בהיר */
+    color: #bf360c; /* טקסט כתום-חום קריא ונעים */
+    padding: 12px 18px;
+    border-radius: 14px; /* פינות מעוגלות יותר */
+    border: 2px solid #ffb74d; /* מסגרת כתומה שתואמת לכרטיס */
+    white-space: pre-wrap; /* שומר על ירידות שורה */
     z-index: 1000;
-    font-size: 0.85em;
+    font-size: 0.95em;
     text-align: center;
-    width: 160px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    min-width: 140px;
+    box-shadow: 0 8px 25px rgba(230, 81, 0, 0.25); /* צל רך עם גוון כתום עדין */
+    pointer-events: none; /* מונע הבהובים כשהעכבר זז */
+    line-height: 1.4;
+}
+
+/* המשולש הקטן (החץ שמצביע כלפי מטה אל הכרטיס) */
+.student-card.group-card:hover::before {
+    content: '';
+    position: absolute;
+    top: -15px; /* חייב להיות זהה ל-top של הבועית */
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid #ffb74d; /* צבע החץ (תואם למסגרת הבועית) */
+    z-index: 1001;
+    pointer-events: none;
 }
     
 .my-creature { transform: scale(1.05); z-index: 5; }
