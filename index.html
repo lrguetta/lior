@@ -818,6 +818,7 @@ button {
                 <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="flex:2;">
                 <input type="date" id="taskDeadline" style="flex:1;" title="תאריך (אופציונלי)">
                 <input type="number" id="taskXP" placeholder="XP" value="20" style="width:70px;">
+                <input type="number" id="taskCash" placeholder="$$$" value="20" style="width:70px;">
                 <button type="button" onclick="document.getElementById('time-limit-container').style.display='flex'" style="background:#8e24aa; padding:12px;">⏲️ הגבלת זמן</button>
             </div>
             <div id="time-limit-container" style="display:none; gap:10px; margin-bottom:15px; background:#e1bee7; padding:10px; border-radius:8px; align-items:center;">
@@ -1938,6 +1939,8 @@ async function saveNewTask() {
     const title     = document.getElementById('taskTitle').value;
     const deadline  = document.getElementById('taskDeadline').value;
     const xp        = parseInt(document.getElementById('taskXP').value) || 20;
+    const cash      = parseInt(document.getElementById('taskCash').value) || 20;
+    
     const startTime = document.getElementById('taskStartTime').value;
     const endTime   = document.getElementById('taskEndTime').value;
 
@@ -1979,6 +1982,7 @@ const formatTimeForDB = (timeStr) => {
         title,
         deadline,
         xp,
+        cash,
         startTime: formatTimeForDB(startTime),
         endTime: formatTimeForDB(endTime),
         questions,
@@ -2442,13 +2446,16 @@ async function approveSub(subId, studentId, mult = 1) {
         if (subErr) throw subErr;
 
         const task = allTasks.find(t => t.id === sub.taskId);
-        const xpToAdd = Math.round((task?.xp || 20) * mult);
         
-        // 2. קבלת פרטי הסטודנט שהגיש
+        // חישוב XP ו-CASH (כאן נכנס המשתנה החדש מהמטלה)
+        const xpToAdd = Math.round((task?.xp || 20) * mult);
+        const cashToAdd = Math.round((task?.reward_cash || 0) * mult);
+        
+        // 2. קבלת פרטי הסטודנט
         const { data: s, error: stErr } = await supabase.from(TABLES.students).select('*').eq('id', studentId).single();
         if (stErr) throw stErr;
 
-        // חיפוש הדמות הפעילה
+        // חיפוש הדמות הפעילה (למקרה שיש לו כמה כרטיסים)
         const { data: activeCards } = await supabase.from(TABLES.students)
             .select('*')
             .eq('full_name', s.full_name)
@@ -2458,9 +2465,14 @@ async function approveSub(subId, studentId, mult = 1) {
         const targetStudent = (activeCards && activeCards.length > 0) ? activeCards[0] : s;
         const targetId = targetStudent.id;
 
-        // 3. חישוב XP ורמה
+        // 3. חישוב XP, רמה וכסף
         const history = targetStudent.history || {};
-        history['sub_' + Date.now()] = { msg: task?.title || 'מטלה', xp: xpToAdd, time: Date.now() };
+        history['sub_' + Date.now()] = { 
+            msg: task?.title || 'מטלה', 
+            xp: xpToAdd, 
+            cash: cashToAdd, // הוספנו להיסטוריה
+            time: Date.now() 
+        };
         
         let newXp = (targetStudent.xp || 0) + xpToAdd;
         let newLevel = (targetStudent.level || 1);
@@ -2469,17 +2481,21 @@ async function approveSub(subId, studentId, mult = 1) {
             newXp -= 100;
         }
 
-        // 4. עדכון התלמיד 
+        // חישוב היתרה החדשה בארנק
+        const newCash = (targetStudent.cash || 0) + cashToAdd;
+
+        // 4. עדכון התלמיד בסופרבייס
         const { error: upErr } = await supabase.from(TABLES.students).update({ 
             xp: newXp, 
             level: newLevel, 
+            cash: newCash, // העדכון הקריטי!
             history: history,
             lastNote: null 
         }).eq('id', targetId);
         
         if (upErr) throw upErr;
 
-        // 5. עדכון סטטוס ההגשה - זה מה שמונע ממנה להופיע שוב
+        // 5. עדכון סטטוס ההגשה
         const { error: updateSubErr } = await supabase.from(TABLES.submissions)
             .update({ status: 'approved' }) 
             .eq('id', subId); 
@@ -2487,13 +2503,12 @@ async function approveSub(subId, studentId, mult = 1) {
         if (updateSubErr) throw updateSubErr;
 
         // 6. סיום ורענון הממשק
-        // אנחנו קוראים ל-initAdminSubmissions כדי לטעון מחדש רק את מה שטרם אושר
         await loadStudents(); 
         if (typeof initAdminSubmissions === 'function') {
             await initAdminSubmissions();
         }
         
-        alert(`אושר! התלמיד קיבל ${xpToAdd} XP וההגשה הוסרה מרשימת הממתינים.`);
+        alert(`אושר! התלמיד קיבל ${xpToAdd} XP ו-${cashToAdd} CASH.`);
 
     } catch (e) { 
         console.error("Approve Error:", e);
