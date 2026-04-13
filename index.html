@@ -2956,7 +2956,7 @@ function buildBattleSidebar(me) {
         btn.className='attack-btn'; btn.title=name;
         
         const getLast = () => parseInt(localStorage.getItem('last_attack_'+currentUser+'_'+name)||'0');
-        const getRem  = () => (15*60*1000)-(Date.now()-getLast());
+        const getRem  = () => (60*60*1000)-(Date.now()-getLast());
         const isOnCooldown = () => getRem() > 0;
 
         if (icon) {
@@ -3451,6 +3451,30 @@ async function checkPendingBattle() {
         window._pendingBattleTargets = attackBattles.map(d => d.targetId);
         updateView();
     } catch(e) { console.error(e); }
+}
+
+async function useItem(entryId, itemName) {
+    if (itemName === 'משקה אנרגיה') {
+        if (!confirm("להשתמש במשקה אנרגיה ולאפס את הקולדאון?")) return;
+
+        // 1. עדכון זמן התקיפה האחרון ל-null או לזמן ישן מאוד בטבלת הסטודנטים
+        const { error: updateErr } = await supabase
+            .from('students')
+            .update({ last_attack: null }) // או זמן מלפני שעה
+            .eq('id', currentUser);
+
+        if (updateErr) return alert("שגיאה בשימוש בחפץ");
+
+        // 2. מחיקת/הפחתת המשקה מהתיק (student_items)
+        // כאן צריכה להיות הלוגיקה הקיימת שלך למחיקת חפץ אחרי שימוש
+        await deleteItemAfterUse(entryId); 
+
+        alert("⚡ האנרגיה חזרה! אתה יכול לתקוף שוב!");
+        closeGenericModal();
+        if (typeof loadStudents === 'function') await loadStudents();
+    } else {
+        alert("חפץ זה אינו ניתן לשימוש כרגע.");
+    }
 }
 function openDefenseModal(battle) {
     const me=allStudents.find(s=>s.id===currentUser); if (!me) return;
