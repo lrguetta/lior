@@ -1366,81 +1366,104 @@ async function startApp() {
 }
 
 async function openShop() {
-    // 1. שליפת נתוני התלמיד המעודכנים (כדי לראות את ה-CASH)
-    const me = allStudents.find(s => s.id === currentUser);
-    const myCash = me ? (me.cash || 0) : 0;
+    try {
+        // 1. שליפת נתוני התלמיד המעודכנים (כדי לראות את ה-CASH)
+        const me = allStudents.find(s => s.id === currentUser);
+        const myCash = me ? (me.cash || 0) : 0;
 
-    // 2. שליפת הפריטים מהחנות
-    const { data: items, error } = await supabase.from(TABLES.items).select('*');
-    if (error) return alert("שגיאה בטעינת החנות");
+        // 2. שליפת הפריטים מהחנות - משתמשים ב-TABLES.items כפי שמוגדר אצלך
+        const { data: items, error } = await supabase.from(TABLES.items).select('*');
+        if (error) throw error;
 
-    let html = `
-        <div style="text-align:center; margin-bottom:20px; border-bottom:2px solid #4caf50; padding-bottom:10px;">
-            <h2 style="margin:0;">🛒 חנות החווה</h2>
-            <div style="font-size:1.4em; color:#2e7d32; font-weight:bold;">הארנק שלי: 💰 ${myCash} CASH</div>
-        </div>
-        <div class="shop-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:15px;">`;
+        let html = `
+            <div style="text-align:center; margin-bottom:20px; border-bottom:2px solid #4caf50; padding-bottom:10px;">
+                <h2 style="margin:0;">🛒 חנות החווה</h2>
+                <div style="font-size:1.4em; color:#2e7d32; font-weight:bold;">הארנק שלי: 💰 ${myCash} CASH</div>
+            </div>
+            <div class="shop-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap:15px; min-width:300px;">`;
 
-    items.forEach(item => {
-        const canAfford = myCash >= item.price;
-        html += `
-            <div class="shop-item" style="border:1px solid #ddd; padding:10px; border-radius:8px; text-align:center; background:${canAfford ? '#fff' : '#f9f9f9'}">
-                <div style="font-size:40px;">${item.icon}</div>
-                <div style="font-weight:bold;">${item.name}</div>
-                <div style="color:#2e7d32; font-weight:bold;">${item.price} CASH</div>
-                <button 
-                    onclick="buyItem('${item.id}', ${item.price}, '${item.name}')"
-                    style="margin-top:10px; cursor:${canAfford ? 'pointer' : 'not-allowed'}; opacity:${canAfford ? 1 : 0.6}"
-                    ${!canAfford ? 'disabled' : ''}>
-                    ${canAfford ? 'קנה עכשיו' : 'אין מספיק כסף'}
-                </button>
-            </div>`;
-    });
-
-    html += `</div>`;
-    openGenericModal(html);;
-}
-async function openBag() {
-    const me = allStudents.find(s => s.id === currentUser);
-    const myCash = me ? (me.cash || 0) : 0;
-
-    // שליפת החפצים של התלמיד
-    const { data: bag, error } = await supabase
-        .from('student_items')
-        .select(`id, quantity, items ( name, icon, description )`)
-        .eq('student_id', currentUser);
-
-    if (error) return alert("שגיאה בטעינת התיק");
-
-    let html = `
-        <div style="text-align:center; background:#fff3e0; padding:15px; border-radius:10px; border:2px solid #ff9800; margin-bottom:15px;">
-            <h2 style="margin:0;">🎒 התיק של ${me.name}</h2>
-            <div style="font-size:1.6em; margin-top:10px; color:#e65100;">💰 <b>${myCash}</b> <small>CASH</small></div>
-        </div>
-        <div class="bag-grid" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px;">`;
-
-    if (!bag || bag.length === 0) {
-        html += `<p style="grid-column: 1/-1; text-align:center; padding:20px;">התיק ריק מחפצים... רוץ לקנות בחנות!</p>`;
-    } else {
-        bag.forEach(entry => {
-            const item = entry.items;
+        items.forEach(item => {
+            const canAfford = myCash >= item.price;
             html += `
-                <div class="item-slot" title="${item.description}" style="border:1px solid #ccc; padding:5px; text-align:center; position:relative;">
-                    <div style="font-size:30px;">${item.icon}</div>
-                    <div style="font-size:11px; font-weight:bold;">${item.name}</div>
-                    <div style="position:absolute; top:0; right:5px; background:red; color:white; border-radius:50%; width:18px; height:18px; font-size:12px;">
-                        ${entry.quantity}
-                    </div>
+                <div class="shop-item" style="border:1px solid #ddd; padding:10px; border-radius:12px; text-align:center; background:${canAfford ? '#fff' : '#f5f5f5'}; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <div style="font-size:40px; margin-bottom:5px;">${item.icon || '📦'}</div>
+                    <div style="font-weight:bold; height:40px; display:flex; align-items:center; justify-content:center;">${item.name}</div>
+                    <div style="color:#2e7d32; font-weight:bold; margin:10px 0;">${item.price} CASH</div>
+                    <button 
+                        onclick="buyItem('${item.id}', ${item.price}, '${item.name}')"
+                        class="action-btn"
+                        style="width:100%; padding:8px; cursor:${canAfford ? 'pointer' : 'not-allowed'}; background:${canAfford ? '#4caf50' : '#ccc'}"
+                        ${!canAfford ? 'disabled' : ''}>
+                        ${canAfford ? 'קנה' : 'אין מספיק'}
+                    </button>
                 </div>`;
         });
-    }
 
-    html += `</div>
-            <div style="text-align:center; margin-top:20px;">
-                <button onclick="closeModal()" style="padding:10px 20px;">סגור תיק</button>
-            </div>`;
-    openGenericModal(html);
+        html += `</div>
+                <div style="text-align:center; margin-top:20px;">
+                    <button class="action-btn" onclick="closeGenericModal()" style="background:#666;">סגור חנות</button>
+                </div>`;
+
+        openGenericModal(html);
+    } catch (err) {
+        console.error("Shop Error:", err);
+        alert("שגיאה בטעינת החנות");
+    }
 }
+    
+async function openBag() {
+    try {
+        const me = allStudents.find(s => s.id === currentUser);
+        const myCash = me ? (me.cash || 0) : 0;
+
+        // 1. שליפת רשימת הפריטים הקיימים בחנות (כדי לדעת שמות ואייקונים)
+        const { data: allItems } = await supabase.from(TABLES.items).select('*');
+        
+        // 2. שליפת התיק של התלמיד מהטבלה student_items
+        const { data: bagData, error } = await supabase
+            .from('student_items')
+            .select('*')
+            .eq('student_id', currentUser);
+
+        if (error) throw error;
+
+        let html = `
+            <div style="text-align:center; background:#fff3e0; padding:15px; border-radius:15px; border:2px solid #ff9800; margin-bottom:15px;">
+                <h2 style="margin:0;">🎒 התיק של ${me.full_name}</h2>
+                <div style="font-size:1.6em; margin-top:10px; color:#e65100;">💰 <b>${myCash}</b> <small>CASH</small></div>
+            </div>
+            <div class="bag-grid" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; min-width:300px;">`;
+
+        if (!bagData || bagData.length === 0) {
+            html += `<p style="grid-column: 1/-1; text-align:center; padding:20px; color:#888;">התיק ריק מחפצים...</p>`;
+        } else {
+            bagData.forEach(entry => {
+                const itemDetails = allItems.find(i => i.id == entry.item_id);
+                if (itemDetails) {
+                    html += `
+                        <div class="item-slot" title="${itemDetails.description || ''}" style="border:2px solid #eee; border-radius:10px; padding:10px; text-align:center; position:relative; background:white;">
+                            <div style="font-size:35px;">${itemDetails.icon || '❓'}</div>
+                            <div style="font-size:12px; font-weight:bold; margin-top:5px;">${itemDetails.name}</div>
+                            <div style="position:absolute; top:-5px; right:-5px; background:#ff5252; color:white; border-radius:50%; width:22px; height:22px; font-size:12px; display:flex; align-items:center; justify-content:center; border:2px solid white; font-weight:bold;">
+                                ${entry.quantity}
+                            </div>
+                        </div>`;
+                }
+            });
+        }
+
+        html += `</div>
+                <div style="text-align:center; margin-top:20px;">
+                    <button class="action-btn" onclick="closeGenericModal()" style="background:#666;">סגור תיק</button>
+                </div>`;
+                
+        openGenericModal(html);
+    } catch (err) {
+        console.error("Bag Error:", err);
+        alert("שגיאה בטעינת התיק");
+    }
+}
+    
 // --- תיקון מסד הנתונים אוטומטית (Magic Button) ---
 async function fixDatabase() {
     if(!confirm("פעולה זו תסדר את מצב 'פעיל' וסיסמאות לכל הדמויות במסד הנתונים. להמשיך?")) return;
