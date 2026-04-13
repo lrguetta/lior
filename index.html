@@ -1365,6 +1365,70 @@ async function startApp() {
     renderTasks();
 }
 
+async function buyItem(itemId, price, itemName) {
+    try {
+        // 1. זיהוי התלמיד והבדיקה אם יש לו מספיק מזומן
+        const me = allStudents.find(s => s.id === currentUser);
+        if (!me) return alert("שגיאה בזיהוי המשתמש");
+        
+        const currentCash = me.cash || 0;
+
+        if (currentCash < price) {
+            return alert(`חסר לך כסף! הפריט עולה ${price} ויש לך רק ${currentCash}`);
+        }
+
+        // 2. אישור מהמשתמש
+        if (!confirm(`האם אתה בטוח שברצונך לקנות ${itemName} ב-${price} CASH?`)) return;
+
+        // 3. עדכון ה-CASH בטבלת הסטודנטים (הורדת התשלום)
+        const newCash = currentCash - price;
+        const { error: cashError } = await supabase
+            .from('students')
+            .update({ cash: newCash })
+            .eq('id', currentUser);
+
+        if (cashError) throw cashError;
+
+        // 4. הוספת הפריט לתיק (טבלת student_items)
+        // אנחנו בודקים קודם אם כבר יש לו את הפריט כדי להעלות כמות, או להוסיף שורה חדשה
+        const { data: existingItem } = await supabase
+            .from('student_items')
+            .select('*')
+            .eq('student_id', currentUser)
+            .eq('item_id', itemId)
+            .single();
+
+        if (existingItem) {
+            // אם הפריט קיים - מעלים כמות
+            await supabase
+                .from('student_items')
+                .update({ quantity: (existingItem.quantity || 1) + 1 })
+                .eq('id', existingItem.id);
+        } else {
+            // אם לא קיים - מוסיפים שורה חדשה
+            await supabase
+                .from('student_items')
+                .insert([{ 
+                    student_id: currentUser, 
+                    item_id: itemId, 
+                    quantity: 1 
+                }]);
+        }
+
+        // 5. עדכון מקומי ורענון הממשק
+        me.cash = newCash; // עדכון בזיכרון המקומי
+        alert(`תתחדש! קנית ${itemName}. הכסף ירד והפריט נוסף לתיק.`);
+        
+        // רענון התצוגה
+        if (typeof loadStudents === 'function') await loadStudents();
+        closeGenericModal(); // סגירת החנות
+        
+    } catch (err) {
+        console.error("Purchase Error:", err);
+        alert("שגיאה בביצוע הרכישה: " + err.message);
+    }
+}
+    
 async function openShop() {
     try {
         const me = allStudents.find(s => s.id === currentUser);
