@@ -729,11 +729,6 @@ button {
         <button onclick="togglePanel('panel-creatures')"     style="background:#7b1fa2; padding:10px 14px; font-size:0.88em;">🐾 ניהול דמויות</button>
         <button onclick="smartCleanupAllStudents()" style="background: #f44336; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; margin: 10px;">
     🗑️ ניקוי היסטוריה
-</button>
-        <button onclick="checkBattlesSchema()" style="background: #795548; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; margin: 10px;">
-    ✨ בדיקת schema battles
-</button>
-    </div>
 
     <div id="panel-announcements" style="display:none; width:100%; background:#fff3e0; padding:15px; border-radius:10px; border:1px solid #ffcc80; text-align:right; box-sizing:border-box; margin-top:12px;">
         <h4 style="margin:0 0 10px 0; color:#e65100;">📢 ניהול לוח מודעות</h4>
@@ -2176,15 +2171,16 @@ async function sendSubmission() {
         }
     } catch (e) { console.error("Check failed", e); }
 
-    const answers = []; 
+const answers = []; 
     let allAnswered = true;
-    let correctCount = 0; // מונה לתשובות נכונות (לציון אוטו')
+    let correctCount = 0; 
+    let gradableCount = 0; // משתנה חדש: סופר רק שאלות עם ציון אוטומטי
 
     // 2. איסוף תשובות וחישוב ציון
     if (task?.questions) {
         task.questions.forEach((q, i) => {
             let val = '';
-            // שמירה על הלוגיקה המקורית שלך לאיסוף הנתונים
+            
             if (q.type === 'open') {
                 val = document.querySelector(`textarea[data-index="${i}"]`)?.value.trim() || '';
             } else if (q.type === 'survey') {
@@ -2201,19 +2197,23 @@ async function sendSubmission() {
             
             if (!val) allAnswered = false;
 
-            // בדיקת תשובה נכונה (עבור שאלות סגורות/אמריקאיות)
-            if (q.correct && val.trim() === String(q.correct).trim()) {
-                correctCount++;
+            // בדיקה: האם זו שאלה שאפשר לבדוק אוטומטית?
+            const isGradable = (q.type === 'multiple' || q.type === 'boolean' || q.type === 'study_unit');
+
+            if (isGradable) {
+                gradableCount++; // סופרים רק את השאלות הסגורות
+                if (q.correct && val.trim() === String(q.correct).trim()) {
+                    correctCount++;
+                }
             }
 
             answers.push({ q: q.text, a: val });
         });
     }
 
-    // חישוב הציון המוצע
-    const totalQuestions = task.questions.length;
-    const suggestedGrade = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
-
+    // חישוב הציון המוצע - רק ביחס לשאלות שאפשר לבדוק
+    // אם המטלה מכילה *רק* שאלות פתוחות (gradableCount === 0), הציון המוצע יהיה 100 כברירת מחדל
+    const suggestedGrade = gradableCount > 0 ? Math.round((correctCount / gradableCount) * 100) : 100;
     // 3. בדיקה אם הכל נענה
     if (!allAnswered && !confirm('לא ענית על הכל. לשלוח בכל זאת?')) return;
 
