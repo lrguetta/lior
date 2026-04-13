@@ -211,6 +211,31 @@ button {
     vertical-align: top;
     overflow: visible;
 }
+/* צבע כתום לצד הקדמי של כרטיס קבוצה */
+.student-card.group-card .card-front {
+    background-color: #ffcc80 !important; 
+    border-bottom: 5px solid #e65100 !important;
+}
+
+/* בועית השמות במעבר עכבר */
+.student-card.group-card:hover::after {
+    content: "חברי הקבוצה:\n" attr(data-tooltip); /* שיניתי ל-data-tooltip שיתאים לקוד ה-JS */
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100%);
+    background: rgba(0, 0, 0, 0.9);
+    color: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    white-space: pre-wrap;
+    z-index: 1000;
+    font-size: 0.85em;
+    text-align: center;
+    width: 160px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+    
 .my-creature { transform: scale(1.05); z-index: 5; }
 
 .card-inner {
@@ -701,6 +726,12 @@ button {
 <div id="control-panel">
     <div style="display:flex; gap:10px; width:100%; flex-wrap:wrap; justify-content:center;">
         <input type="text" id="studentName" placeholder="שם התלמיד">
+        <div style="margin: 10px 0; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+        <input type="checkbox" id="isGroupCheckbox" style="width: 20px; height: 20px;">
+        <span style="font-weight: bold; color: #e65100;">זהו כרטיס קבוצה (כתום)</span>
+    </label>
+</div>
         <select id="studentClass">
             <option value="ה1">כיתה ה'1</option>
             <option value="ה2">כיתה ה'2</option>
@@ -1346,36 +1377,43 @@ async function fixDatabase() {
 // --- תלמיד ---
 async function addStudent() {
     const nameInput = document.getElementById('studentName').value.trim();
+    // שליפת הערך מהצ'קבוקס החדש
+    const isGroupInput = document.getElementById('isGroupCheckbox')?.checked || false;
+    
     if (!nameInput) return;
     
     try {
-        // מציאת קבוצת דמויות קיימת לשם זה (שימוש במערך הגלובלי allStudents)
-        const existingGroup = allStudents.filter(s => s.full_name === nameInput || s.full_name === nameInput);
+        const existingGroup = allStudents.filter(s => s.full_name === nameInput);
         const isFirst = existingGroup.length === 0;
-        
-        // מציאת הסיסמה המשותפת אם קיימת
         const sharedPass = isFirst ? null : existingGroup.find(s => s.password)?.password || null;
 
-const payload = {
-    full_name: nameInput,
-    className: document.getElementById('studentClass').value,
-    xp: 0, 
-    level: 0, 
-    type: CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)], // חזר ל-type
-    egg: Math.floor(Math.random() * 5), 
-    likes: {}, 
-    history: {}, 
-    isActive: isFirst, 
-    password: sharedPass,
-    created_at: new Date().toISOString()
-};
+        const payload = {
+            full_name: nameInput,
+            className: document.getElementById('studentClass').value,
+            is_group: isGroupInput, // <--- הוספת השדה ל-Database
+            xp: 0, 
+            level: 0, 
+            type: CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)], 
+            egg: Math.floor(Math.random() * 5), 
+            likes: {}, 
+            history: {}, 
+            isActive: isFirst, 
+            password: sharedPass,
+            created_at: new Date().toISOString()
+        };
+
         const { error } = await supabase
             .from(TABLES.students)
             .insert([payload]);
 
         if (error) throw error;
 
+        // איפוס השדות
         document.getElementById('studentName').value = '';
+        if (document.getElementById('isGroupCheckbox')) {
+            document.getElementById('isGroupCheckbox').checked = false;
+        }
+
         if (typeof loadStudents === 'function') await loadStudents();
         alert('הדמות צורפה בהצלחה! ✨');
         
@@ -1626,13 +1664,14 @@ function updateView() {
     const sortBy = document.getElementById('sortBy')?.value || 'name';
     const pending = window._pendingBattleTargets || [];
 
-    // סינון ומיון - הוספת הגנה מפני ערכי null
+    // סינון ומיון
     let filtered = allStudents.filter(s => {
         const active = (s.isActive === true || s.isActive === "true");
         const nameMatch = s.full_name && s.full_name.toLowerCase().includes(searchTerm);
         return active && nameMatch;
     });
 
+    // לוגיקת מיון (נשארת כפי שהייתה)
     if (sortBy === 'name') filtered.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'he'));
     if (sortBy === 'level') filtered.sort((a, b) => (b.level || 0) - (a.level || 0));
     if (sortBy === 'class') {
@@ -1647,14 +1686,22 @@ function updateView() {
         });
     }
 
+    // יצירת ה-HTML
     grid.innerHTML = filtered.map(s => {
         const isMine = currentUser === s.id;
+        
+        // --- לוגיקת כרטיס קבוצה החדשה ---
+        const isGroup = s.is_group === true || s.is_group === 1;
+        const groupClass = isGroup ? 'group-card' : '';
+        const tooltipAttr = isGroup ? `data-tooltip="${(s.notes || '').replace(/"/g, '&quot;')}"` : '';
+        const groupStyle = isGroup ? 'background-color: #ffcc80 !important;' : '';
+        // ------------------------------
+
         const eggNum = (s.egg ?? 0) + 1;
         const level = s.level || 0;
         const type = s.type || 'dragon';
         const imgPath = level === 0 ? `images/egg${eggNum}.png` : `images/${type}${level >= 20 ? 3 : level >= 10 ? 2 : 1}.png`;
         
-        // הגנה על אובייקטים מורכבים
         const historyObj = s.history || {};
         const brokenShields = historyObj.shields_broken || [];
         const sc = typeof shieldsByLevel === 'function' ? shieldsByLevel(level) : 0;
@@ -1707,10 +1754,12 @@ function updateView() {
             </div>` : isMine ? '<span style="font-size:0.8em;color:#ccc;">🤍</span>' : '';
 
         return `
-        <div class="student-card ${isMine ? 'my-creature' : ''} ${pending.includes(s.id) ? 'under-attack' : ''}" data-sid="${s.id}" onclick="if(typeof handleCardClick==='function') handleCardClick(event, this, '${s.id}')">
+        <div class="student-card ${groupClass} ${isMine ? 'my-creature' : ''} ${pending.includes(s.id) ? 'under-attack' : ''}" 
+             data-sid="${s.id}" ${tooltipAttr} 
+             onclick="if(typeof handleCardClick==='function') handleCardClick(event, this, '${s.id}')">
             <div class="card-inner">
             ${shieldsOverlay}
-            <div class="card-front" style="display:flex;flex-direction:column;justify-content:space-between;align-items:center;height:100%;padding:15px;box-sizing:border-box;">
+            <div class="card-front" style="display:flex;flex-direction:column;justify-content:space-between;align-items:center;height:100%;padding:15px;box-sizing:border-box; ${groupStyle}">
                 <div style="width:100%;display:flex;justify-content:space-between;align-items:flex-start;">
                     <div class="level-text-badge">Lv.${level}</div>
                     ${currentUser === 'admin' ? `<button class="remove-btn" onclick="event.stopPropagation(); deleteStudent('${s.id}')">✖</button>` : `<div></div>`}
@@ -1735,7 +1784,7 @@ function updateView() {
                 </div>
             </div>
             <div class="card-back" style="padding:12px;display:flex;flex-direction:column;gap:8px;">
-                <h4 style="margin:0 0 6px 0;color:#2e7d32;border-bottom:1px solid #ccc;padding-bottom:5px;">יומן פעילות</h4>
+                <h4 style="margin:0 0 6px 0;color:#2e7d32;border-bottom:1px solid #ccc;padding-bottom:5px;">יומן פעילות / קבוצה</h4>
                 <div style="font-size:0.8em;color:#777;border-top:1px solid #eee;padding-top:6px;">
                     ${histHtml || 'אין פעילות לאחרונה'} ${noteHtml}
                 </div>
@@ -1752,7 +1801,7 @@ placeholder="כתוב הערה קצרה...">${s.personalNote || ''}</textarea>
         </div>`;
     }).join('');
 
-    // החזרת מצב הפוך לכרטיסים שהיו הפוכים לפני הרינדור
+    // החזרת מצב הפוך
     flippedIds.forEach(id => {
         const card = document.querySelector(`.student-card[data-sid="${id}"]`);
         if (card) card.classList.add('flipped');
