@@ -2398,7 +2398,7 @@ async function approveSub(subId, studentId, mult = 1) {
         // ודא ששמות העמודות (status ו-ID/id) תואמים במדויק לטבלה שלך בסופרבייס
         const { error: updateSubErr } = await supabase.from(TABLES.submissions)
             .update({ status: 'approved' }) 
-            .eq('ID', subId); 
+            .eq('id', subId); 
 
         if (updateSubErr) throw updateSubErr;
 
