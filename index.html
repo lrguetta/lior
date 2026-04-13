@@ -1710,7 +1710,7 @@ function updateView() {
         // --- לוגיקת כרטיס קבוצה החדשה ---
         const isGroup = s.is_group === true || s.is_group === 1;
         const groupClass = isGroup ? 'group-card' : '';
-        const tooltipAttr = isGroup ? `data-tooltip="${(s.personalNotes || '').replace(/"/g, '&quot;')}"` : '';
+        const tooltipAttr = isGroup ? `data-tooltip="${(s.personalNote || '').replace(/"/g, '&quot;')}"` : '';
         const groupStyle = isGroup ? 'background-color: #ffcc80 !important;' : '';
         // ------------------------------
 
