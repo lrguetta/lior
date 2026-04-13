@@ -477,50 +477,62 @@ button {
     100% { opacity: 0; transform: translate(-50%, -60px) scale(0.8); } 
 }
 
-/* ========== מערכת קרבות — אייקון צף בפינה ========== */
-#battle-float-btn {
+/* מחלקה משותפת לכל הכפתורים הצפים בצד שמאל */
+.float-action-btn {
     display: none;
     position: fixed;
-    top: 14px;
-    left: 14px;
+    left: 14px; /* כולם באותו מרחק מהדופן */
     width: 64px;
     height: 64px;
-    font-size: 1.9em;
+    font-size: 1.8em;
     z-index: 500;
-    background: linear-gradient(135deg, #ff6f00, #e53935);
     color: white;
     border: none;
     border-radius: 50%;
     cursor: pointer;
-    box-shadow: 0 4px 14px rgba(229,57,53,0.5);
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: all 0.2s ease;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.3);
 }
-#battle-float-btn:hover { transform: scale(1.12); box-shadow: 0 6px 20px rgba(229,57,53,0.6); }
+
+/* אפקט ריחוף משותף לכולם */
+.float-action-btn:hover { 
+    transform: scale(1.12) rotate(5deg); 
+}
+
+/* הגדרות ספציפיות לכל כפתור (צבע ומיקום גובה) */
+
+/* 1. קרב */
+#battle-float-btn {
+    top: 14px;
+    background: linear-gradient(135deg, #ff6f00, #e53935);
+}
+#battle-float-btn:hover { box-shadow: 0 6px 20px rgba(229,57,53,0.6); }
 #battle-float-btn.active { background: linear-gradient(135deg, #ffd600, #ff6f00); }
 
+/* 2. יכולת מיוחדת (היה קודם ליד, עכשיו מתחת) */
 #skill-float-btn {
-    display: none;
-    position: fixed;
-    top: 14px;
-    left: 88px;
-    width: 64px;
-    height: 64px;
-    font-size: 1.5em;
-    z-index: 500;
+    top: 90px;
     background: linear-gradient(135deg, #ab47bc, #6a1b9a);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    box-shadow: 0 4px 14px rgba(106,27,154,0.5);
-    transition: transform 0.2s, box-shadow 0.2s;
-    align-items: center;
-    justify-content: center;
+    font-size: 1.5em; /* הוא קצת יותר קטן במקור */
 }
-#skill-float-btn:hover { transform: scale(1.12); box-shadow: 0 6px 20px rgba(106,27,154,0.6); }
+#skill-float-btn:hover { box-shadow: 0 6px 20px rgba(106,27,154,0.6); }
 
+/* 3. חנות */
+#shop-btn {
+    top: 166px;
+    background: linear-gradient(135deg, #2e7d32, #1b5e20); /* ירוק של כסף/חנות */
+}
+#shop-btn:hover { box-shadow: 0 6px 20px rgba(46,125,50,0.6); }
+
+/* 4. תיק */
+#bag-btn {
+    top: 242px;
+    background: linear-gradient(135deg, #ff9800, #f57c00);
+}
+#bag-btn:hover { box-shadow: 0 6px 20px rgba(245,124,0,0.6); }
+    
 #battle-sidebar {
     display: none;
     position: fixed;
@@ -901,8 +913,10 @@ button {
     <button onclick="closeDefenseModal()" style="background:#999; padding:8px 20px; border-radius:8px; font-size:0.9em;">סגור (אפשר לנסות מאוחר יותר)</button>
 </div>
 
-<button id="battle-float-btn" onclick="toggleBattleSidebar()" title="תקוף תלמיד!">⚔️</button>
-<button id="skill-float-btn" title="יכולת מיוחדת">✨</button>
+<button id="battle-float-btn" class="float-action-btn" onclick="startBattle()">⚔️</button>
+<button id="skill-float-btn" class="float-action-btn" onclick="useSpecialSkill()">✨</button>
+<button id="shop-btn" class="float-action-btn" onclick="openShop()">🏪</button>
+<button id="bag-btn" class="float-action-btn" onclick="openBag()">🎒</button>
 <div id="battle-sidebar"><div class="sidebar-title">⚔️ בחר מתקפה:</div></div>
 <div id="battle-pick-banner" onclick="cancelAttack()">🎯 בחר כרטיס תלמיד לתקוף — לחץ כאן לביטול</div>
 
@@ -1309,29 +1323,41 @@ function renderStudentSelect() {
         }
     });
 }
-
+    
 async function startApp() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('farm-grid').style.display    = 'grid';
     document.getElementById('tasks-area').style.display   = 'block';
+    
     if (currentUser === 'admin') {
         document.getElementById('control-panel').style.display = 'flex';
         await Promise.all([loadAnnouncements(), loadWelcomeImageForAdmin(), initAdminSubmissions()]);
     } else {
+        // --- התחברות תלמיד ---
         document.getElementById('logout-btn-float').style.display = 'block';
+        
+        // כאן אנחנו מציגים את כפתורי החנות והתיק החדשים:
+        const newBtns = ['shop-btn', 'bag-btn'];
+        newBtns.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'flex';
+        });
+
         await showWelcomeImageIfExists();
+        
         const me = allStudents.find(s => s.id === currentUser);
+        // המנגנון הקיים שלך שמציג קרב ויכולת לפי רמה נשאר בדיוק אותו דבר!
         if (me && attacksByLevel(me.level) > 0) {
             document.getElementById('battle-float-btn').style.display = 'flex';
-            buildBattleSidebar(me);
+            buildBattleSidebar(me); // הפונקציה הזו אצלך גם מציגה את כפתור היכולת (skill)
         }
         setTimeout(() => checkPendingBattle(), 1500);
     }
+    
     subscribeAll();
     updateView();
     renderTasks();
 }
-
 // --- תיקון מסד הנתונים אוטומטית (Magic Button) ---
 async function fixDatabase() {
     if(!confirm("פעולה זו תסדר את מצב 'פעיל' וסיסמאות לכל הדמויות במסד הנתונים. להמשיך?")) return;
