@@ -888,6 +888,11 @@ button {
     </div>
 </div>
 
+<div id="generic-modal-overlay" onclick="closeGenericModal()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:5000; backdrop-filter: blur(3px);"></div>
+<div id="generic-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; border-radius:20px; padding:25px; z-index:5001; min-width:320px; max-width:90vw; max-height:85vh; overflow-y:auto; box-shadow: 0 10px 40px rgba(0,0,0,0.4); text-align:right; border:3px solid #ff9800;">
+    <div id="generic-modal-content"></div>
+</div>
+
 <div id="likes-popup-overlay" onclick="closeLikesPopup()"></div>
 <div id="likes-popup">
     <div style="font-size:2em; margin-bottom:10px;">❤️</div>
@@ -1393,7 +1398,7 @@ async function openShop() {
     });
 
     html += `</div>`;
-    showModal(html);
+    openGenericModal(html);;
 }
 async function openBag() {
     const me = allStudents.find(s => s.id === currentUser);
@@ -1434,7 +1439,7 @@ async function openBag() {
             <div style="text-align:center; margin-top:20px;">
                 <button onclick="closeModal()" style="padding:10px 20px;">סגור תיק</button>
             </div>`;
-    showModal(html);
+    openGenericModal(html);
 }
 // --- תיקון מסד הנתונים אוטומטית (Magic Button) ---
 async function fixDatabase() {
@@ -3594,6 +3599,17 @@ async function init() {
     
     // Debug: Check battles schema
     await checkBattlesSchema();
+}
+
+function openGenericModal(html) {
+    document.getElementById('generic-modal-content').innerHTML = html;
+    document.getElementById('generic-modal-overlay').style.display = 'block';
+    document.getElementById('generic-modal').style.display = 'block';
+}
+
+function closeGenericModal() {
+    document.getElementById('generic-modal-overlay').style.display = 'none';
+    document.getElementById('generic-modal').style.display = 'none';
 }
 function logout() { localStorage.removeItem('farm_user_id'); location.reload(); }
 setInterval(()=>{ updateAllTimers(); updateCooldownDisplay(); }, 1000);
