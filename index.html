@@ -1540,20 +1540,23 @@ async function handleItemUsage(entryId, itemName) {
     let updateData = {}; 
 
     // לוגיקה למשקה אנרגיה: ביטול קולדאון אחד בלבד לפי הסדר
-    if (itemName === "משקה אנרגיה") {
-        if (me.last_attack_time) {
+if (itemName === "משקה אנרגיה") {
+        const now = new Date();
+
+        // פונקציית עזר לבדיקה אם מתקפה באמת בקולדאון כרגע
+        const isCooling = (timeStr) => timeStr && new Date(timeStr) > now;
+
+        // בדיקה לפי הסדר - איזו מתקפה חסומה כרגע?
+        if (isCooling(me.last_attack_time)) {
             updateData.last_attack_time = null;
-        } else if (me.last_attack2_time) {
+        } else if (isCooling(me.last_attack2_time)) {
             updateData.last_attack2_time = null;
-        } else if (me.last_attack3_time) {
+        } else if (isCooling(me.last_attack3_time)) {
             updateData.last_attack3_time = null;
         } else {
-            alert("כל המתקפות שלך כבר מוכנות!");
+            alert("כל המתקפות שלך כבר מוכנות לשימוש!");
             return;
         }
-    } else {
-        alert("לפריט זה אין עדיין שימוש מוגדר.");
-        return;
     }
 
     try {
