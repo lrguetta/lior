@@ -1535,34 +1535,30 @@ async function openBag() {
 
 async function handleItemUsage(entryId, itemName) {
     try {
-        // 1. משיכת הנתונים הכי עדכניים של התלמיד מהשרת (כדי לדעת קולדאון אמיתי)
-        const { data: me, error: fetchError } = await supabase
-            .from('students')
-            .select('*')
-            .eq('id', currentUser)
-            .single();
+        const me = allStudents.find(s => s.id === currentUser);
+        if (!me) return;
 
-        if (fetchError || !me) throw new Error("לא מצליח למשוך נתוני שחקן");
-
-        let updateData = {}; 
-        const now = new Date();
-
-        // פונקציית עזר לבדיקה אם מתקפה באמת בקולדאון כרגע
-        const isCooling = (timeStr) => {
-            if (!timeStr) return false;
-            return new Date(timeStr) > now;
-        };
-
-        // --- בדיקת סוג הפריט ---
         if (itemName === "משקה אנרגיה") {
-            // בודק לפי הסדר מה חסום ומאפס רק אחד
-            if (isCooling(me.last_attack_time)) {
-                updateData.last_attack_time = null;
-            } else if (isCooling(me.last_attack2_time)) {
-                updateData.last_attack2_time = null;
-            } else if (isCooling(me.last_attack3_time)) {
-                updateData.last_attack3_time = null;
-            } else {
+            // 1. קבלת רשימת המתקפות של השחקן לפי סוג ורמה
+            const attacks = (ATTACKS_BY_TYPE[me.type] || []).slice(0, attacksByLevel(me.level));
+            let cleared = false;
+
+            // 2. מעבר על המתקפות ובדיקה איזו מהן בקולדאון ב-LocalStorage
+            for (let atk of attacks) {
+                const name = typeof atk === 'object' ? atk.name : atk;
+                const storageKey = 'last_attack_' + currentUser + '_' + name;
+                const lastAttack = parseInt(localStorage.getItem(storageKey) || '0');
+                const remaining = (60 * 60 * 1000) - (Date.now() - lastAttack);
+
+                if (remaining > 0) {
+                    // מצאנו מתקפה בקולדאון! נאפס אותה
+                    localStorage.removeItem(storageKey);
+                    cleared = true;
+                    break; // עוצרים אחרי איפוס מתקפה אחת בלבד כפי שביקשת
+                }
+            }
+
+            if (!cleared) {
                 alert("כל המתקפות שלך כבר מוכנות לשימוש!");
                 return;
             }
@@ -1571,9 +1567,7 @@ async function handleItemUsage(entryId, itemName) {
             return;
         }
 
-        // --- ביצוע העדכון ב-Database ---
-        
-        // א. הורדת פריט מהתיק
+        // --- עדכון המלאי ב-Database (הורדת המשקה) ---
         const { data: currentEntry } = await supabase.from('student_items').select('quantity').eq('id', entryId).single();
         if (currentEntry && currentEntry.quantity > 1) {
             await supabase.from('student_items').update({ quantity: currentEntry.quantity - 1 }).eq('id', entryId);
@@ -1581,19 +1575,16 @@ async function handleItemUsage(entryId, itemName) {
             await supabase.from('student_items').delete().eq('id', entryId);
         }
 
-        // ב. איפוס הקולדאון
-        const { error: updateError } = await supabase.from('students').update(updateData).eq('id', currentUser);
-        if (updateError) throw updateError;
-
-        alert(`השתמשת ב${itemName} בהצלחה!`);
+        alert(`השתמשת ב${itemName}! אחת המתקפות התאפסה.`);
         
-        // רענון התצוגה
         closeGenericModal();
-        if (typeof fetchData === 'function') await fetchData();
+        // רענון הסיידבר כדי לראות את השינוי מיד
+        if (typeof buildBattleSidebar === 'function') buildBattleSidebar(me);
+        if (typeof fetchData === 'function') fetchData();
 
     } catch (err) {
         console.error("Usage Error:", err);
-        alert("שגיאה בשימוש בפריט: " + err.message);
+        alert("שגיאה בשימוש בפריט");
     }
 }
     
