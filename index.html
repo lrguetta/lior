@@ -716,6 +716,67 @@ button {
     backdrop-filter: blur(3px);
 }
 
+/* אבן נייר ומספרים */
+
+/* רקע חצי שקוף שמכסה את כל המסך */
+.rps-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000; /* גבוה מאוד כדי שיהיה מעל הכל */
+}
+
+/* החלון הלבן המרכזי */
+.rps-modal {
+    display: none;
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    border: 5px solid #e53935; /* אדום כמו הסיידבאר */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    z-index: 1001;
+    text-align: center;
+    direction: rtl; /* עברית */
+}
+
+.rps-modal-title {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #b71c1c;
+    margin-bottom: 10px;
+}
+
+.rps-modal-desc {
+    font-size: 1em;
+    color: #333;
+    margin-bottom: 25px;
+}
+
+/* קונטיינר לאייקונים */
+.rps-options {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+/* עיצוב כל אייקון */
+.rps-option {
+    font-size: 4em; /* גדול וברור */
+    cursor: pointer;
+    transition: transform 0.2s, filter 0.2s;
+}
+
+.rps-option:hover {
+    transform: scale(1.2); /* גדל מעט במעבר עכבר */
+    filter: brightness(1.1);
+}
+
+/* משימות */
+
 .task-card { 
     background: white; 
     padding: 15px;
@@ -941,6 +1002,17 @@ button {
 <button id="bag-btn" class="float-action-btn" onclick="openBag()">🎒</button>
 <div id="battle-sidebar"><div class="sidebar-title">⚔️ בחר מתקפה:</div></div>
 <div id="battle-pick-banner" onclick="cancelAttack()">🎯 בחר כרטיס תלמיד לתקוף — לחץ כאן לביטול</div>
+
+<div id="rps-modal-overlay" class="rps-modal-overlay"></div>
+    <div id="rps-modal" class="rps-modal">
+        <div id="rps-modal-title" class="rps-modal-title">⚔️ דו-קרב על המגן האחרון!</div>
+        <div id="rps-modal-desc" class="rps-modal-desc">בחר את הנשק שלך:</div>
+        <div class="rps-options">
+            <span class="rps-option" onclick="chooseRPS('אבן')">✊</span>
+            <span class="rps-option" onclick="chooseRPS('נייר')">✋</span>
+            <span class="rps-option" onclick="chooseRPS('מספריים')">✌️</span>
+        </div>
+    </div>
 
 <script>
 // --- הגדרות סופרבייס החדשות ---
