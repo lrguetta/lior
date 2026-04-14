@@ -3569,26 +3569,46 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 async function pickTargetShield(targetId, shieldIndex) {
     if (!battleState.selectedSkill) return;
-    const skill=battleState.selectedSkill;
-    const target=allStudents.find(s=>s.id===targetId); if (!target) return;
-    const broken=(target.history?.shields_broken||[]);
+    const skill = battleState.selectedSkill;
+    const target = allStudents.find(s => s.id === targetId);
+    if (!target) return;
+
+    const broken = (target.history?.shields_broken || []);
     if (broken.includes(shieldIndex)) { alert('מגן שבור!'); return; }
-    
-    // התיקון: אנחנו לא מגרילים יותר! 
-    // mineIndex מקבל בדיוק את הערך של המגן שעליו התוקף בחר ללחוץ
-    const mine = parseInt(shieldIndex); 
-    
+
+    const maxShields = shieldsByLevel(target.level);
+    const remainingShields = maxShields - broken.length;
+    let rpsChoice = null;
+
+    // בדיקה אם זה המגן האחרון
+    if (remainingShields === 1) {
+        rpsChoice = prompt("מגן אחרון! בחר נשק לדו-קרב: (אבן / נייר / מספריים)");
+        const valid = ["אבן", "נייר", "מספריים"];
+        if (!valid.includes(rpsChoice)) {
+            alert("חובה לבחור אבן, נייר או מספריים כדי לתקוף מגן אחרון!");
+            return;
+        }
+    }
+
+    const mine = parseInt(shieldIndex);
     cancelAttack();
-    localStorage.setItem('last_attack_'+currentUser+'_'+skill, Date.now().toString());
+    localStorage.setItem('last_attack_' + currentUser + '_' + skill, Date.now().toString());
+
     try {
         const { error } = await supabase
             .from(TABLES.battles)
-            .insert([{ attackerId: currentUser, targetId: targetId, skill, mineIndex: mine, status: 'pending' }]);
+            .insert([{ 
+                attackerId: currentUser, 
+                targetId: targetId, 
+                skill, 
+                mineIndex: mine, 
+                status: 'pending',
+                extraData: rpsChoice // שומרים את הבחירה בשדה נוסף (וודא שיש לך עמודה כזו או השתמש ב-JSON)
+            }]);
         if (error) throw error;
-        alert(`המתקפה נשלחה בהצלחה! כעת  \n${target.full_name} יצטרך לנחש את המגן הנכון שבחרת כדי להצליח להגן.`);
-    } catch(e) { alert(e.message); }
+        alert(`המתקפה נשלחה! ${remainingShields === 1 ? "זהו דו-קרב על המגן האחרון!" : ""}`);
+    } catch (e) { alert(e.message); }
 }
-
 async function checkPendingBattle() {
     if (!currentUser||currentUser==='admin') return;
     try {
@@ -3674,19 +3694,18 @@ async function resolveDefense(chosen, battle) {
         if (!me) return;
 
         let history = (typeof me.history === 'string') ? JSON.parse(me.history || "{}") : (me.history || {});
-        const isBlocked = parseInt(chosen) === parseInt(battle.mineIndex);
         const attackerName = att?.full_name || 'תוקף לא ידוע';
         
         let ctx = {
             me: { ...me, history: history },
             att: att,
-            isBlocked: isBlocked,
+            isBlocked: parseInt(chosen) === parseInt(battle.mineIndex),
             xpGain: 10,
             TABLES: TABLES,
             utils: { getHistory: (s) => (typeof s.history === 'string' ? JSON.parse(s.history || "{}") : (s.history || {})) }
         };
 
-        // הפעלת יכולות מ-skills.js (רק אם קיים)
+        // --- שורות ה-CreatureSkills שחייבות להיות כאן ---
         if (typeof CreatureSkills !== 'undefined') {
             for (let key in CreatureSkills) {
                 try {
@@ -3699,7 +3718,7 @@ async function resolveDefense(chosen, battle) {
                                 .eq('id', battle.id);
                             if (error) throw error;
                             await loadStudents();
-                            return;
+                            return; // היכולת עצרה את הקרב
                         }
                         if (res?.xpGain) ctx.xpGain = res.xpGain;
                     }
@@ -3708,24 +3727,40 @@ async function resolveDefense(chosen, battle) {
                 }
             }
         }
+        // ----------------------------------------------
 
-        // תוצאת הקרב
-        if (isBlocked) { 
-            let nxp = me.xp + ctx.xpGain;
+        const broken = [...(ctx.me.history.shields_broken || [])];
+        const maxShields = shieldsByLevel(me.level);
+        const isLastShield = (maxShields - broken.length) === 1;
+        
+        let isFinalBlocked = ctx.isBlocked;
+        let finalXpGain = ctx.xpGain;
+
+        // לוגיקת דו-קרב (אבן/נייר/מספריים)
+        if (isLastShield && battle.extraData) {
+            const userGuess = prompt(`${attackerName} בחר נשק! נחש מה הוא בחר: (אבן / נייר / מספריים)`);
+            if (userGuess === null) return; 
+
+            if (userGuess === battle.extraData) {
+                isFinalBlocked = true;
+                finalXpGain = ctx.xpGain * 2; 
+                alert(`מדהים! ניחשת נכון (${battle.extraData}). המגן נשמר וקיבלת ${finalXpGain}XP!`);
+            } else {
+                isFinalBlocked = false; 
+                alert(`טעית! ${attackerName} בחר ${battle.extraData}. המגן נשבר!`);
+            }
+        }
+
+        if (isFinalBlocked) { 
+            let nxp = me.xp + finalXpGain;
             let nlvl = me.level || 0;
             while (nxp >= 100) { nlvl++; nxp -= 100; }
-            ctx.me.history['block_'+Date.now()] = { msg: `חסמת את ${attackerName}! (+${ctx.xpGain}XP)`, xp: ctx.xpGain, time: Date.now() };
-            const { error } = await supabase
-                .from(TABLES.students)
-                .update({ xp: nxp, level: nlvl, history: ctx.me.history })
-                .eq('id', me.id);
-            if (error) throw error;
-            alert(`✅ הצלחה! חסמת במדויק. (+${ctx.xpGain}XP)`);
+            ctx.me.history['block_'+Date.now()] = { msg: `חסמת את ${attackerName}! (+${finalXpGain}XP)`, xp: finalXpGain, time: Date.now() };
+            await supabase.from(TABLES.students).update({ xp: nxp, level: nlvl, history: ctx.me.history }).eq('id', me.id);
+            if (!isLastShield || !battle.extraData) alert(`✅ הצלחה! חסמת במדויק. (+${finalXpGain}XP)`);
         } else {
-            const broken = [...(ctx.me.history.shields_broken || [])];
             if (!broken.includes(battle.mineIndex)) broken.push(battle.mineIndex);
-            
-            const allBroken = broken.length >= shieldsByLevel(me.level);
+            const allBroken = broken.length >= maxShields;
             let myNewXP = me.xp;
             
             if (allBroken) {
@@ -3743,28 +3778,14 @@ async function resolveDefense(chosen, battle) {
                 let ax = att.xp + xpReward, al = att.level || 0;
                 while(ax >= 100){ al++; ax -= 100; }
                 ah['win_'+Date.now()] = { msg: `הצלחת לפגוע ב-${me.full_name}! (+${xpReward}XP)`, xp: xpReward, time: Date.now() };
-                const { error } = await supabase
-                    .from(TABLES.students)
-                    .update({ xp: ax, level: al, history: ah })
-                    .eq('id', att.id);
-                if (error) throw error;
+                await supabase.from(TABLES.students).update({ xp: ax, level: al, history: ah }).eq('id', att.id);
             }
 
-            await supabase
-                .from(TABLES.students)
-                .update({ xp: myNewXP, history: ctx.me.history })
-                .eq('id', me.id);
-            alert(allBroken ? `💥 ${attackerName} פגע בך! ספגת -10XP ומגיניך חודשו.` : `💥 פספסת! ${attackerName} הפיל מגן.`);
+            await supabase.from(TABLES.students).update({ xp: myNewXP, history: ctx.me.history }).eq('id', me.id);
+            if (!isLastShield || !battle.extraData) alert(allBroken ? `💥 ${attackerName} פגע בך! ספגת -10XP ומגיניך חודשו.` : `💥 פספסת! ${attackerName} הפיל מגן.`);
         }
 
-        try { 
-            const { error } = await supabase
-                .from(TABLES.battles)
-                .update({ status: 'resolved' })
-                .eq('id', battle.id);
-            if (error) throw error; 
-        } catch(e) { console.warn('לא הצלחתי לסמן קרב כ-resolved:', e); }
-        
+        await supabase.from(TABLES.battles).update({ status: 'resolved' }).eq('id', battle.id);
         await loadStudents();
         
     } catch(e) {
