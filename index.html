@@ -1534,50 +1534,66 @@ async function openBag() {
 }
 
 async function handleItemUsage(entryId, itemName) {
-    const me = allStudents.find(s => s.id === currentUser);
-    if (!me) return;
+    try {
+        // 1. משיכת הנתונים הכי עדכניים של התלמיד מהשרת (כדי לדעת קולדאון אמיתי)
+        const { data: me, error: fetchError } = await supabase
+            .from('students')
+            .select('*')
+            .eq('id', currentUser)
+            .single();
 
-    let updateData = {}; 
+        if (fetchError || !me) throw new Error("לא מצליח למשוך נתוני שחקן");
 
-    // לוגיקה למשקה אנרגיה: ביטול קולדאון אחד בלבד לפי הסדר
-if (itemName === "משקה אנרגיה") {
+        let updateData = {}; 
         const now = new Date();
 
         // פונקציית עזר לבדיקה אם מתקפה באמת בקולדאון כרגע
-        const isCooling = (timeStr) => timeStr && new Date(timeStr) > now;
+        const isCooling = (timeStr) => {
+            if (!timeStr) return false;
+            return new Date(timeStr) > now;
+        };
 
-        // בדיקה לפי הסדר - איזו מתקפה חסומה כרגע?
-        if (isCooling(me.last_attack_time)) {
-            updateData.last_attack_time = null;
-        } else if (isCooling(me.last_attack2_time)) {
-            updateData.last_attack2_time = null;
-        } else if (isCooling(me.last_attack3_time)) {
-            updateData.last_attack3_time = null;
+        // --- בדיקת סוג הפריט ---
+        if (itemName === "משקה אנרגיה") {
+            // בודק לפי הסדר מה חסום ומאפס רק אחד
+            if (isCooling(me.last_attack_time)) {
+                updateData.last_attack_time = null;
+            } else if (isCooling(me.last_attack2_time)) {
+                updateData.last_attack2_time = null;
+            } else if (isCooling(me.last_attack3_time)) {
+                updateData.last_attack3_time = null;
+            } else {
+                alert("כל המתקפות שלך כבר מוכנות לשימוש!");
+                return;
+            }
         } else {
-            alert("כל המתקפות שלך כבר מוכנות לשימוש!");
+            alert("לפריט זה אין עדיין שימוש מוגדר.");
             return;
         }
-    }
 
-    try {
-        // 1. הורדת פריט מהתיק ב-Database
+        // --- ביצוע העדכון ב-Database ---
+        
+        // א. הורדת פריט מהתיק
         const { data: currentEntry } = await supabase.from('student_items').select('quantity').eq('id', entryId).single();
-        if (currentEntry.quantity > 1) {
+        if (currentEntry && currentEntry.quantity > 1) {
             await supabase.from('student_items').update({ quantity: currentEntry.quantity - 1 }).eq('id', entryId);
         } else {
             await supabase.from('student_items').delete().eq('id', entryId);
         }
 
-        // 2. עדכון הסטודנט (ביטול הקולדאון)
-        const { error } = await supabase.from('students').update(updateData).eq('id', currentUser);
-        if (error) throw error;
+        // ב. איפוס הקולדאון
+        const { error: updateError } = await supabase.from('students').update(updateData).eq('id', currentUser);
+        if (updateError) throw updateError;
 
         alert(`השתמשת ב${itemName} בהצלחה!`);
+        
+        // רענון התצוגה
         closeGenericModal();
-        if (typeof fetchData === 'function') fetchData();
+        if (typeof fetchData === 'function') await fetchData();
+
     } catch (err) {
         console.error("Usage Error:", err);
-        alert("שגיאה בשימוש בפריט");
+        alert("שגיאה בשימוש בפריט: " + err.message);
     }
 }
     
