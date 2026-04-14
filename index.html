@@ -1862,6 +1862,36 @@ async function switchActiveCharacter(newId, full_name) {
         alert("שגיאה בהחלפת הדמות: " + e.message);
     }
 }
+
+//--- תצורת חפצים ---
+
+// פונקציה לשימוש במשקה אנרגיה - איפוס קולדאון של מתקפות
+async function useEnergyDrink(studentName) {
+    if (!confirm("האם להשתמש במשקה אנרגיה כדי לאפס את כל המתקפות שלך?")) return;
+
+    try {
+        // איפוס כל זמני השימוש האחרונים בבסיס הנתונים עבור התלמיד
+        const { error } = await supabase
+            .from('students')
+            .update({ 
+                last_attack_time: null,
+                last_attack2_time: null,
+                last_attack3_time: null 
+            })
+            .eq('name', studentName);
+
+        if (error) throw error;
+
+        alert("✨ הכוח חזר אליך! כל המתקפות מוכנות לשימוש חוזר.");
+        
+        // עדכון התצוגה כדי שהכפתורים בבאטל-סיידבר יהיו זמינים מיד
+        if (typeof updateView === 'function') updateView();
+        
+    } catch (err) {
+        console.error("Error using energy drink:", err);
+        alert("שגיאה בשימוש במשקה האנרגיה.");
+    }
+}
 // --- תצוגת כרטיסים ---
 function updateView() {
     const grid = document.getElementById('farm-grid');
