@@ -1481,7 +1481,7 @@ async function openBag() {
         const me = allStudents.find(s => s.id === currentUser);
         const myCash = me ? (me.cash || 0) : 0;
 
-        // 1. שליפת כל פריטי החנות - כאן כתבתי את שם הטבלה במפורש
+        // 1. שליפת כל פריטי החנות
         const { data: allItems } = await supabase.from('items').select('*');
         
         // 2. שליפת התיק של התלמיד
@@ -1506,12 +1506,16 @@ async function openBag() {
                 const itemDetails = allItems ? allItems.find(i => i.id == entry.item_id) : null;
                 if (itemDetails) {
                     html += `
-                        <div class="item-slot" title="${itemDetails.description || ''}" style="border:2px solid #eee; border-radius:10px; padding:10px; text-align:center; position:relative; background:white;">
+                        <div class="item-slot" style="border:2px solid #eee; border-radius:10px; padding:10px; text-align:center; position:relative; background:white; display:flex; flex-direction:column; align-items:center;">
                             <div style="font-size:35px;">${itemDetails.icon || '📦'}</div>
                             <div style="font-size:12px; font-weight:bold; margin-top:5px;">${itemDetails.name}</div>
                             <div style="position:absolute; top:-5px; right:-5px; background:#ff5252; color:white; border-radius:50%; width:22px; height:22px; font-size:12px; display:flex; align-items:center; justify-content:center; border:2px solid white; font-weight:bold;">
                                 ${entry.quantity}
                             </div>
+                            <button onclick="handleItemUsage('${entry.id}', '${itemDetails.name}')" 
+                                style="margin-top:auto; background:#4caf50; color:white; border:none; border-radius:5px; padding:3px 8px; cursor:pointer; font-size:11px; font-weight:bold;">
+                                השתמש ✨
+                            </button>
                         </div>`;
                 }
             });
@@ -1526,6 +1530,51 @@ async function openBag() {
     } catch (err) {
         console.error("Bag Error Detail:", err);
         alert("שגיאה בטעינת התיק");
+    }
+}
+
+async function handleItemUsage(entryId, itemName) {
+    const me = allStudents.find(s => s.id === currentUser);
+    if (!me) return;
+
+    let updateData = {}; 
+
+    // לוגיקה למשקה אנרגיה: ביטול קולדאון אחד בלבד לפי הסדר
+    if (itemName === "משקה אנרגיה") {
+        if (me.last_attack_time) {
+            updateData.last_attack_time = null;
+        } else if (me.last_attack2_time) {
+            updateData.last_attack2_time = null;
+        } else if (me.last_attack3_time) {
+            updateData.last_attack3_time = null;
+        } else {
+            alert("כל המתקפות שלך כבר מוכנות!");
+            return;
+        }
+    } else {
+        alert("לפריט זה אין עדיין שימוש מוגדר.");
+        return;
+    }
+
+    try {
+        // 1. הורדת פריט מהתיק ב-Database
+        const { data: currentEntry } = await supabase.from('student_items').select('quantity').eq('id', entryId).single();
+        if (currentEntry.quantity > 1) {
+            await supabase.from('student_items').update({ quantity: currentEntry.quantity - 1 }).eq('id', entryId);
+        } else {
+            await supabase.from('student_items').delete().eq('id', entryId);
+        }
+
+        // 2. עדכון הסטודנט (ביטול הקולדאון)
+        const { error } = await supabase.from('students').update(updateData).eq('id', currentUser);
+        if (error) throw error;
+
+        alert(`השתמשת ב${itemName} בהצלחה!`);
+        closeGenericModal();
+        if (typeof fetchData === 'function') fetchData();
+    } catch (err) {
+        console.error("Usage Error:", err);
+        alert("שגיאה בשימוש בפריט");
     }
 }
     
