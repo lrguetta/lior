@@ -1031,6 +1031,8 @@ const TABLES = {
     creatureTypes: 'creature_types'
 };
 
+let editingTaskId = null; // משתנה שיעזור לנו לדעת אם אנחנו במצב עריכה או יצירה חדשה
+    
 const shieldsByLevel = l => l===0?3 : l<10?4 : l<20?5 : 6;
 const attacksByLevel = l => l===0?0 : l<10?1 : l<20?2 : 3;
 
@@ -2313,18 +2315,19 @@ async function saveNewTask() {
         return obj;
     });
 
-const formatTimeForDB = (timeStr) => {
-    if (!timeStr) return null;
-    const today = new Date();
-    const [hours, minutes] = timeStr.split(':');
-    
-    // יוצר תאריך עם הזמן המקומי
-    const localDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 
-                             parseInt(hours), parseInt(minutes), 0);
-    
-    // שומר אותו כזמן מקומי בלי המרה ל-UTC
-    return localDate.toISOString();
-};
+    const formatTimeForDB = (timeStr) => {
+        if (!timeStr) return null;
+        const today = new Date();
+        const [hours, minutes] = timeStr.split(':');
+        
+        // יוצר תאריך עם הזמן המקומי
+        const localDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 
+                                 parseInt(hours), parseInt(minutes), 0);
+        
+        // שומר אותו כזמן מקומי בלי המרה ל-UTC
+        return localDate.toISOString();
+    };
+
     const payload = {
         title,
         deadline,
@@ -2333,32 +2336,139 @@ const formatTimeForDB = (timeStr) => {
         startTime: formatTimeForDB(startTime),
         endTime: formatTimeForDB(endTime),
         questions,
-        created_at: new Date().toISOString()
+        // created_at נשאר רק אם זו משימה חדשה, בדרך כלל לא מעדכנים אותו בעריכה
     };
 
     try { 
-        const { error } = await supabase
-            .from(TABLES.tasks)
-            .insert([payload]);
-        if (error) throw error;
-        alert('פורסם! 🚀'); 
+        let result;
+        
+        // בדיקה: האם אנחנו במצב עריכה או יצירה חדשה?
+        if (typeof editingTaskId !== 'undefined' && editingTaskId) {
+            // עדכון משימה קיימת
+            result = await supabase
+                .from(TABLES.tasks)
+                .update(payload)
+                .eq('id', editingTaskId);
+            
+            if (result.error) throw result.error;
+            alert('השינויים נשמרו בהצלחה! ✨');
+        } else {
+            // יצירת משימה חדשה (הקוד המקורי שלך)
+            payload.created_at = new Date().toISOString();
+            result = await supabase
+                .from(TABLES.tasks)
+                .insert([payload]);
+            
+            if (result.error) throw result.error;
+            alert('פורסם! 🚀'); 
+        }
     }
     catch(e) { 
         alert("שגיאה בשמירה: " + e.message); 
         return; 
     }
 
-    editingTaskId = null;
+    // --- איפוס המערכת לאחר שמירה/עדכון ---
+    editingTaskId = null; // איפוס ה-ID של העריכה
+    
+    // החזרת טקסט הכפתור למצב רגיל (אם שינינו אותו ל"עדכן")
+    const mainBtn = document.querySelector('#panel-newtask .main-btn');
+    if (mainBtn) mainBtn.innerText = 'פורסם! 🚀'; 
+
     ['taskTitle','taskDeadline','taskStartTime','taskEndTime'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
+    
     document.getElementById('taskXP').value = '20';
-    document.getElementById('time-limit-container').style.display = 'none';
+    document.getElementById('taskCash').value = '20'; // הוספתי איפוס גם לכסף
+    
+    const timeLimitContainer = document.getElementById('time-limit-container');
+    if (timeLimitContainer) timeLimitContainer.style.display = 'none';
+    
     document.getElementById('questions-constructor').innerHTML = '';
-    togglePanel('panel-newtask');
+    
+    // חזרה לפאנל הראשי
+    togglePanel('panel-tasks'); // וודא שזה שם הפאנל של רשימת המשימות אצלך
+    
     if (typeof loadTasks === 'function') await loadTasks();
 }
+
+window.editTask = async function(taskId) {
+    try {
+        // 1. שליפת הנתונים מסופרבייס
+        const { data: task, error } = await supabase
+            .from('tasks') // וודא שזה השם הנכון, או TABLES.tasks
+            .select('*')
+            .eq('id', taskId)
+            .single();
+
+        if (error) throw error;
+
+        // 2. מעבר לפאנל היצירה
+        editingTaskId = taskId;
+        togglePanel('panel-newtask');
+
+        // 3. מילוי שדות בסיסיים
+        document.getElementById('taskTitle').value = task.title;
+        document.getElementById('taskXP').value = task.xp;
+        document.getElementById('taskCash').value = task.cash || 20;
+        
+        // טיפול בתאריכים (חיתוך ה-ISO לפורמט של input)
+        if (task.deadline) document.getElementById('taskDeadline').value = task.deadline.slice(0, 16);
+        
+        // טיפול בזמנים (הוצאת ה-HH:mm מתוך ה-ISO)
+        if (task.startTime) document.getElementById('taskStartTime').value = new Date(task.startTime).toTimeString().slice(0, 5);
+        if (task.endTime) document.getElementById('taskEndTime').value = new Date(task.endTime).toTimeString().slice(0, 5);
+
+        // 4. בניית השאלות מחדש בתוך ה-constructor
+        const constructor = document.getElementById('questions-constructor');
+        constructor.innerHTML = ''; // ניקוי
+        
+        task.questions.forEach(q => {
+            // כאן צריך לקרוא לפונקציה שמוסיפה שאלה ריקה לפי סוג
+            // אני מניח שיש לך פונקציה כזו כמו addQuestion(type)
+            // נניח ששמה addQuestion:
+            addQuestion(q.type); 
+            
+            // אחרי שהשאלה נוצרה, נמלא אותה בנתונים (נצטרך פונקציה עזר קטנה)
+            fillLastQuestionData(q);
+        });
+
+        // 5. שינוי טקסט הכפתור מ"פרסם" ל"עדכן משימה"
+        const saveBtn = document.querySelector('#panel-newtask .main-btn'); // וודא שזה ה-Selector הנכון
+        if (saveBtn) saveBtn.innerText = 'עדכן משימה ✨';
+
+    } catch (err) {
+        console.error("Error loading task for edit:", err);
+        alert("שגיאה בטעינת המשימה לעריכה");
+    }
+};
+
+// פונקציית עזר למילוי נתוני שאלה שזה עתה נוצרה
+function fillLastQuestionData(q) {
+    const items = document.querySelectorAll('#questions-constructor .question-item');
+    const lastItem = items[items.length - 1];
+    
+    // מילוי הטקסט של השאלה
+    lastItem.querySelector('.q-text').value = q.text;
+    
+    if (q.type === 'multiple') {
+        lastItem.querySelector('.opt-correct').value = q.correct;
+        const otherInputs = lastItem.querySelectorAll('.opt');
+        q.others.forEach((val, i) => { if(otherInputs[i]) otherInputs[i].value = val; });
+    } else if (q.type === 'boolean') {
+        lastItem.querySelector('.q-ans-bool').value = q.correct;
+    } else if (q.type === 'survey') {
+        const surveyInputs = lastItem.querySelectorAll('.opt-survey');
+        q.options.forEach((val, i) => { if(surveyInputs[i]) surveyInputs[i].value = val; });
+    } else if (q.type === 'study_unit') {
+        lastItem.querySelector('.study-ans-chapter').value = q.chapter;
+        lastItem.querySelector('.study-ans-start').value = q.start;
+        lastItem.querySelector('.study-ans-end').value = q.end;
+    }
+}
+    
     async function printSubmissionsReport(specificTaskId = null) {
     try {
         // 1. בניית השאילתה - שליפת ההגשות
