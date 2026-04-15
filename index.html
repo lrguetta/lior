@@ -477,6 +477,39 @@ button {
     100% { opacity: 0; transform: translate(-50%, -60px) scale(0.8); } 
 }
 
+/* מחלקה משותפת לכל הכפתורים הצפים בצד שמאל */
+.float-action-btn {
+    display: none;
+    position: fixed;
+    left: 10px;
+    width: 50px;
+    height: 50px;
+    z-index: 500;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    padding: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.float-action-btn:hover { 
+    transform: scale(1.1); 
+}
+
+.float-action-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* הגדרות ספציפיות לכל כפתור (מיקום גובה) */
+#battle-float-btn { top: 10px; }
+#skill-float-btn { top: 65px; }
+#shop-btn { top: 120px; }
+#bag-btn { top: 175px; }
+    
 #battle-sidebar {
     display: none;
     position: fixed;
@@ -940,10 +973,10 @@ button {
     <button onclick="closeDefenseModal()" style="background:#999; padding:8px 20px; border-radius:8px; font-size:0.9em;">סגור (אפשר לנסות מאוחר יותר)</button>
 </div>
 
-<button id="battle-float-btn" onclick="toggleBattleSidebar()"><img src="images/icons/battle1.png" style="width:100%;height:100%;object-fit:contain;"></button>
-<button id="skill-float-btn" onclick="activateSpecialSkill()"><img src="images/icons/special1.png" style="width:100%;height:100%;object-fit:contain;"></button>
-<button id="shop-btn" onclick="openShop()"><img src="images/icons/shop.png" style="width:100%;height:100%;object-fit:contain;"></button>
-<button id="bag-btn" onclick="openBag()"><img src="images/icons/bag.png" style="width:100%;height:100%;object-fit:contain;"></button>
+<button id="battle-float-btn" class="float-action-btn" onclick="toggleBattleSidebar()"><img src="images/icons/battle1.png" style="width:100%;height:100%;object-fit:contain;"></button>
+<button id="skill-float-btn" class="float-action-btn" onclick="activateSpecialSkill()"><img src="images/icons/special1.png" style="width:100%;height:100%;object-fit:contain;"></button>
+<button id="shop-btn" class="float-action-btn" onclick="openShop()"><img src="images/icons/shop.png" style="width:100%;height:100%;object-fit:contain;"></button>
+<button id="bag-btn" class="float-action-btn" onclick="openBag()"><img src="images/icons/bag.png" style="width:100%;height:100%;object-fit:contain;"></button>
 <div id="battle-sidebar"><div class="sidebar-title">⚔️ בחר מתקפה:</div></div>
 <div id="battle-pick-banner" onclick="cancelAttack()">🎯 בחר כרטיס תלמיד לתקוף — לחץ כאן לביטול</div>
 
