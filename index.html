@@ -2547,6 +2547,47 @@ async function renderTasks() {
     if (typeof updateAllTimers === 'function') updateAllTimers();
 }
 
+    // פונקציית עריכה שתהיה נגישה לכפתור ה-HTML שלך
+window.editTask = async function(taskId) {
+    console.log("מתחיל תהליך עריכה למשימה:", taskId);
+
+    try {
+        // 1. שליפת הנתונים העדכניים של המשימה מהטבלה בסופרבייס
+        const { data: task, error } = await supabase
+            .from('tasks') // וודא שזה שם הטבלה שלך
+            .select('*')
+            .eq('id', taskId)
+            .single();
+
+        if (error) throw error;
+
+        // 2. פתיחת חלון קלט (אפשר להחליף את זה במודל מעוצב בהמשך)
+        const newTitle = prompt("ערוך את כותרת המשימה:", task.title);
+        const newDescription = prompt("ערוך את תיאור המשימה:", task.description || "");
+
+        // 3. אם המשתמש אישר (לא לחץ ביטול)
+        if (newTitle !== null) {
+            const { error: updateError } = await supabase
+                .from('tasks')
+                .update({ 
+                    title: newTitle, 
+                    description: newDescription,
+                    updated_at: new Date() 
+                })
+                .eq('id', taskId);
+
+            if (updateError) throw updateError;
+
+            alert("המשימה עודכנה בהצלחה! ✨");
+            location.reload(); // רענון כדי לראות את השינויים
+        }
+
+    } catch (err) {
+        console.error("שגיאה בעדכון המשימה:", err.message);
+        alert("אופס, משהו השתבש בעדכון.");
+    }
+};
+    
 function openSubmitModal(id, title) {
     currentTaskToSubmit = id;
     const titleEl = document.getElementById('modal-task-title');
