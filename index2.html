@@ -915,7 +915,7 @@ button {
                     <option value="study_unit">יחידת לימוד (פרק ופסוקים)</option>
                 </select>
                 <button onclick="addQuestionField()" style="background:#0288d1;">הוסף שאלה</button>
-                <button onclick="saveNewTask()" style="background:#4caf50; margin-right:auto; padding:12px 25px;">פרסם מטלה 🚀</button>
+                <button id="publish-task-btn" onclick="saveNewTask()" style="background:#4caf50; margin-right:auto; padding:12px 25px;">פרסם מטלה 🚀</button>
             </div>
         </div>
     </div>
@@ -1031,6 +1031,7 @@ const TABLES = {
     creatureTypes: 'creature_types'
 };
 
+    
 const shieldsByLevel = l => l===0?3 : l<10?4 : l<20?5 : 6;
 const attacksByLevel = l => l===0?0 : l<10?1 : l<20?2 : 3;
 
@@ -1513,7 +1514,7 @@ async function buyItem(itemId, price, itemName) {
         
     } catch (err) {
         console.error("Purchase Error:", err);
-        alert("שגיאה בביצוע הרכישה: " + err.message);
+        alert("שגיאה בביצ��ע הרכישה: " + err.message);
     }
 }
     
@@ -2012,7 +2013,7 @@ async function switchActiveCharacter(newId, full_name) {
 
 //--- תצורת חפצים ---
 
-// פונקציה לשימוש במשקה אנרגיה - איפוס קולדאון של מתקפות
+// פונקציה לשימוש במשקה אנרגיה - א��פוס קולדאון של מתקפות
 async function useEnergyDrink(studentName) {
     if (!confirm("האם להשתמש במשקה אנרגיה כדי לאפס את כל המתקפות שלך?")) return;
 
@@ -2313,18 +2314,19 @@ async function saveNewTask() {
         return obj;
     });
 
-const formatTimeForDB = (timeStr) => {
-    if (!timeStr) return null;
-    const today = new Date();
-    const [hours, minutes] = timeStr.split(':');
-    
-    // יוצר תאריך עם הזמן המקומי
-    const localDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 
-                             parseInt(hours), parseInt(minutes), 0);
-    
-    // שומר אותו כזמן מקומי בלי המרה ל-UTC
-    return localDate.toISOString();
-};
+    const formatTimeForDB = (timeStr) => {
+        if (!timeStr) return null;
+        const today = new Date();
+        const [hours, minutes] = timeStr.split(':');
+        
+        // יוצר תאריך עם הזמן המקומי
+        const localDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 
+                                 parseInt(hours), parseInt(minutes), 0);
+        
+        // שומר אותו כזמן מקומי בלי המרה ל-UTC
+        return localDate.toISOString();
+    };
+
     const payload = {
         title,
         deadline,
@@ -2333,32 +2335,188 @@ const formatTimeForDB = (timeStr) => {
         startTime: formatTimeForDB(startTime),
         endTime: formatTimeForDB(endTime),
         questions,
-        created_at: new Date().toISOString()
+        // created_at נשאר רק אם זו משימה חדשה, בדרך כלל לא מעדכנים אותו בעריכה
     };
 
     try { 
-        const { error } = await supabase
-            .from(TABLES.tasks)
-            .insert([payload]);
-        if (error) throw error;
-        alert('פורסם! 🚀'); 
+        let result;
+        
+        // בדיקה: האם אנחנו במצב עריכה או יצירה חדשה?
+        if (typeof editingTaskId !== 'undefined' && editingTaskId) {
+            // עדכון משימה קיימת
+            result = await supabase
+                .from(TABLES.tasks)
+                .update(payload)
+                .eq('id', editingTaskId);
+            
+            if (result.error) throw result.error;
+            alert('השינויים נשמרו בהצלחה! ✨');
+        } else {
+            // יצירת משימה חדשה (הקוד המקורי שלך)
+            payload.created_at = new Date().toISOString();
+            result = await supabase
+                .from(TABLES.tasks)
+                .insert([payload]);
+            
+            if (result.error) throw result.error;
+            alert('פורסם! 🚀'); 
+        }
     }
     catch(e) { 
         alert("שגיאה בשמירה: " + e.message); 
         return; 
     }
 
-    editingTaskId = null;
+    // --- איפוס המערכת לאחר שמירה/עדכון ---
+    editingTaskId = null; // איפוס ה-ID של העריכה
+    
+    // החזרת טקסט הכפתור למצב רגיל (אם שינינו אותו ל"עדכן")
+    const mainBtn = document.getElementById('publish-task-btn');
+    if (mainBtn) mainBtn.innerText = 'פרסם מטלה 🚀'; 
+
     ['taskTitle','taskDeadline','taskStartTime','taskEndTime'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
+    
     document.getElementById('taskXP').value = '20';
-    document.getElementById('time-limit-container').style.display = 'none';
+    document.getElementById('taskCash').value = '20'; // הוספתי איפוס גם לכסף
+    
+    const timeLimitContainer = document.getElementById('time-limit-container');
+    if (timeLimitContainer) timeLimitContainer.style.display = 'none';
+    
     document.getElementById('questions-constructor').innerHTML = '';
-    togglePanel('panel-newtask');
+    
+    // חזרה לפאנל הראשי
+    togglePanel('panel-tasks'); // וודא שזה שם הפאנל של רשימת המשימות אצלך
+    
     if (typeof loadTasks === 'function') await loadTasks();
 }
+
+window.editTask = async function(taskId) {
+    try {
+        // 1. שליפת הנתונים מסופרבייס
+        const { data: task, error } = await supabase
+            .from(TABLES.tasks)
+            .select('*')
+            .eq('id', taskId)
+            .single();
+
+        if (error) throw error;
+
+        // 2. מעבר לפאנל היצירה
+        editingTaskId = taskId;
+        togglePanel('panel-newtask');
+
+        // 3. מילוי שדות בסיסיים
+        document.getElementById('taskTitle').value = task.title || '';
+        document.getElementById('taskXP').value = task.xp || 20;
+        document.getElementById('taskCash').value = task.cash || 20;
+        
+        // טיפול בתאריכים (חיתוך ה-ISO לפורמט של input date)
+        if (task.deadline) {
+            const dateStr = task.deadline.split('T')[0]; // לוקח רק את החלק של התאריך
+            document.getElementById('taskDeadline').value = dateStr;
+        }
+        
+        // טיפול בזמנים - אם יש זמנים, להציג את הקונטיינר ולמלא
+        if (task.startTime || task.endTime) {
+            const timeLimitContainer = document.getElementById('time-limit-container');
+            if (timeLimitContainer) timeLimitContainer.style.display = 'flex';
+            
+            if (task.startTime) {
+                const startDate = new Date(task.startTime);
+                const hours = String(startDate.getHours()).padStart(2, '0');
+                const minutes = String(startDate.getMinutes()).padStart(2, '0');
+                document.getElementById('taskStartTime').value = `${hours}:${minutes}`;
+            }
+            
+            if (task.endTime) {
+                const endDate = new Date(task.endTime);
+                const hours = String(endDate.getHours()).padStart(2, '0');
+                const minutes = String(endDate.getMinutes()).padStart(2, '0');
+                document.getElementById('taskEndTime').value = `${hours}:${minutes}`;
+            }
+        }
+
+        // 4. בניית השאלות מחדש בתוך ה-constructor
+        const constructor = document.getElementById('questions-constructor');
+        constructor.innerHTML = ''; // ניקוי
+        
+        // וידוא שהשאלות הן מערך (לפעמים הן עשויות להגיע כ-JSON string)
+        let questions = task.questions;
+        if (typeof questions === 'string') {
+            try {
+                questions = JSON.parse(questions);
+            } catch (e) {
+                console.error('שגיאה בפענוח השאלות:', e);
+                questions = [];
+            }
+        }
+        
+        if (questions && questions.length > 0) {
+            questions.forEach(q => {
+                // קריאה לפונקציה הנכונה שמוסיפה שאלה
+                addQuestionField(q.type);
+                
+                // אחרי שהשאלה נוצרה, נמלא אותה בנתונים
+                fillLastQuestionData(q);
+            });
+        }
+
+        // 5. שינוי טקסט הכפתור ל"עדכן משימה"
+        const publishBtn = document.getElementById('publish-task-btn');
+        if (publishBtn) publishBtn.innerText = 'עדכן משימה ✨';
+
+    } catch (err) {
+        console.error("Error loading task for edit:", err);
+        alert("שגיאה בטעינת המשימה לעריכה: " + err.message);
+    }
+};
+
+// פונקציית עזר למילוי נתוני שאלה שזה עתה נוצרה
+function fillLastQuestionData(q) {
+    const items = document.querySelectorAll('#questions-constructor .question-item');
+    const lastItem = items[items.length - 1];
+    
+    if (!lastItem) {
+        console.error('לא נמצא אלמנט שאלה למילוי');
+        return;
+    }
+    
+    try {
+        // מילוי הטקסט של השאלה
+        const qTextEl = lastItem.querySelector('.q-text');
+        if (qTextEl) qTextEl.value = q.text || '';
+        
+        if (q.type === 'multiple') {
+            const correctEl = lastItem.querySelector('.opt-correct');
+            if (correctEl) correctEl.value = q.correct || '';
+            const otherInputs = lastItem.querySelectorAll('.opt');
+            if (q.others) {
+                q.others.forEach((val, i) => { if(otherInputs[i]) otherInputs[i].value = val; });
+            }
+        } else if (q.type === 'boolean') {
+            const boolEl = lastItem.querySelector('.q-ans-bool');
+            if (boolEl) boolEl.value = q.correct || 'נכון';
+        } else if (q.type === 'survey') {
+            const surveyInputs = lastItem.querySelectorAll('.opt-survey');
+            if (q.options) {
+                q.options.forEach((val, i) => { if(surveyInputs[i]) surveyInputs[i].value = val; });
+            }
+        } else if (q.type === 'study_unit') {
+            const chapterEl = lastItem.querySelector('.study-ans-chapter');
+            const startEl = lastItem.querySelector('.study-ans-start');
+            const endEl = lastItem.querySelector('.study-ans-end');
+            if (chapterEl) chapterEl.value = q.chapter || '';
+            if (startEl) startEl.value = q.start || '';
+            if (endEl) endEl.value = q.end || '';
+        }
+    } catch (err) {
+        console.error('שגיאה במילוי נתוני שאלה:', err);
+    }
+}
+    
     async function printSubmissionsReport(specificTaskId = null) {
     try {
         // 1. בניית השאילתה - שליפת ההגשות
@@ -2547,6 +2705,7 @@ async function renderTasks() {
     if (typeof updateAllTimers === 'function') updateAllTimers();
 }
 
+    
 function openSubmitModal(id, title) {
     currentTaskToSubmit = id;
     const titleEl = document.getElementById('modal-task-title');
@@ -3639,6 +3798,31 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('shields-overlay-' + studentId)?.classList.add('visible');
     });
 });
+// --- פונקציות חלון אבן נייר מספריים ---
+let resolveRPS;
+
+function openRPSModal(title, desc) {
+    document.getElementById('rps-modal-title').innerText = title;
+    document.getElementById('rps-modal-desc').innerText = desc;
+    document.getElementById('rps-modal-overlay').style.display = 'block';
+    document.getElementById('rps-modal').style.display = 'block';
+    return new Promise(resolve => { resolveRPS = resolve; });
+}
+
+function closeRPSModal() {
+    document.getElementById('rps-modal-overlay').style.display = 'none';
+    document.getElementById('rps-modal').style.display = 'none';
+}
+
+function chooseRPS(choice) {
+    closeRPSModal();
+    if (typeof resolveRPS === 'function') {
+        resolveRPS(choice);
+        resolveRPS = null;
+    }
+}
+// ----------------------------------------
+
 async function pickTargetShield(targetId, shieldIndex) {
     if (!battleState.selectedSkill) return;
     const skill = battleState.selectedSkill;
@@ -3654,7 +3838,10 @@ async function pickTargetShield(targetId, shieldIndex) {
 
     // בדיקה אם זה המגן האחרון
     if (remainingShields === 1) {
-        rpsChoice = prompt("מגן אחרון! בחר נשק לדו-קרב: (אבן / נייר / מספריים)");
+        rpsChoice = await openRPSModal(
+            "⚔️ קרב על המגן האחרון!",
+            `בחר נשק כדי לתקוף את המגן האחרון של ${target.full_name}:`
+        );
         const valid = ["אבן", "נייר", "מספריים"];
         if (!valid.includes(rpsChoice)) {
             alert("חובה לבחור אבן, נייר או מספריים כדי לתקוף מגן אחרון!");
@@ -3675,7 +3862,7 @@ async function pickTargetShield(targetId, shieldIndex) {
                 skill, 
                 mineIndex: mine, 
                 status: 'pending',
-                extraData: rpsChoice // שומרים את הבחירה בשדה נוסף (וודא שיש לך עמודה כזו או השתמש ב-JSON)
+                extraData: rpsChoice // שומר��ם את הבחירה בשדה נוסף (וודא שיש לך עמודה כזו או השתמש ב-JSON)
             }]);
         if (error) throw error;
         alert(`המתקפה נשלחה! ${remainingShields === 1 ? "זהו דו-קרב על המגן האחרון!" : ""}`);
@@ -3810,8 +3997,10 @@ async function resolveDefense(chosen, battle) {
 
         // לוגיקת דו-קרב (אבן/נייר/מספריים)
         if (isLastShield && battle.extraData) {
-            const userGuess = prompt(`${attackerName} בחר נשק! נחש מה הוא בחר: (אבן / נייר / מספריים)`);
-            if (userGuess === null) return; 
+            const userGuess = await openRPSModal(
+                "⚔️ דו-קרב הגנה!",
+                `${attackerName} בחר נשק! נחש מה הוא בחר:`
+            );
 
             if (userGuess === battle.extraData) {
                 isFinalBlocked = true;
