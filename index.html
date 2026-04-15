@@ -996,10 +996,10 @@ button {
     <button onclick="closeDefenseModal()" style="background:#999; padding:8px 20px; border-radius:8px; font-size:0.9em;">סגור (אפשר לנסות מאוחר יותר)</button>
 </div>
 
-<button id="battle-float-btn" class="float-action-btn" onclick="toggleBattleSidebar()">⚔️</button>
-<button id="skill-float-btn" class="float-action-btn" onclick="activateSpecialSkill()">✨</button>
-<button id="shop-btn" class="float-action-btn" onclick="openShop()">🏪</button>
-<button id="bag-btn" class="float-action-btn" onclick="openBag()">🎒</button>
+<button id="battle-float-btn" class="float-action-btn" onclick="toggleBattleSidebar()"><img src="images/icons/battle1.png" style="width:100%;height:100%;object-fit:contain;"></button>
+<button id="skill-float-btn" class="float-action-btn" onclick="activateSpecialSkill()"><img src="images/icons/special1.png" style="width:100%;height:100%;object-fit:contain;"></button>
+<button id="shop-btn" class="float-action-btn" onclick="openShop()"><img src="images/icons/shop.png" style="width:100%;height:100%;object-fit:contain;"></button>
+<button id="bag-btn" class="float-action-btn" onclick="openBag()"><img src="images/icons/bag.png" style="width:100%;height:100%;object-fit:contain;"></button>
 <div id="battle-sidebar"><div class="sidebar-title">⚔️ בחר מתקפה:</div></div>
 <div id="battle-pick-banner" onclick="cancelAttack()">🎯 בחר כרטיס תלמיד לתקוף — לחץ כאן לביטול</div>
 
@@ -1064,7 +1064,7 @@ const CREATURE_SEED_DATA = [
 ];
 
 let battleState = { selectedSkill:null, pendingBattleId:null, pendingBattle:null, stealMode:false, stealCallback:null };
-const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd', 'lmb', 'egl', 'hlz', 'lio', 'wsl'];
+const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
 let allStudents=[], allTasks=[], editingTaskId=null, currentTaskToSubmit=null;
 let currentUser = localStorage.getItem('farm_user_id') || null;
 
@@ -1514,7 +1514,7 @@ async function buyItem(itemId, price, itemName) {
         
     } catch (err) {
         console.error("Purchase Error:", err);
-        alert("שגיאה בביצ��ע הרכישה: " + err.message);
+        alert("שגיאה בביצ  ע הרכישה: " + err.message);
     }
 }
     
@@ -2013,7 +2013,7 @@ async function switchActiveCharacter(newId, full_name) {
 
 //--- תצורת חפצים ---
 
-// פונקציה לשימוש במשקה אנרגיה - א��פוס קולדאון של מתקפות
+// פונקציה לשימוש במשקה אנרגיה - א  פוס קולדאון של מתקפות
 async function useEnergyDrink(studentName) {
     if (!confirm("האם להשתמש במשקה אנרגיה כדי לאפס את כל המתקפות שלך?")) return;
 
@@ -3862,7 +3862,7 @@ async function pickTargetShield(targetId, shieldIndex) {
                 skill, 
                 mineIndex: mine, 
                 status: 'pending',
-                extraData: rpsChoice // שומר��ם את הבחירה בשדה נוסף (וודא שיש לך עמודה כזו או השתמש ב-JSON)
+                extraData: rpsChoice // שומר  ם את הבחירה בשדה נוסף (וודא שיש לך עמודה כזו או השתמש ב-JSON)
             }]);
         if (error) throw error;
         alert(`המתקפה נשלחה! ${remainingShields === 1 ? "זהו דו-קרב על המגן האחרון!" : ""}`);
