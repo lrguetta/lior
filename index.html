@@ -4160,4 +4160,57 @@ function updateAllTimers() {
                 span.style.color = "#2e7d32";
                 btn.disabled = false;
                 btn.innerText = "פתח ✍️";
-          
+                btn.style.backgroundColor = "#1976d2";
+            }
+        }
+        // מקרה 3: רק סגירה (ללא פתיחה)
+        else if (!openTime && closeTime) {
+            if (now > closeTime) {
+                span.innerText = "הזמן נגמר!";
+                span.style.color = "#555";
+                btn.disabled = true;
+                btn.innerText = "❌ נסגמה";
+                btn.style.backgroundColor = "#555";
+            } else {
+                const d = closeTime - now;
+                span.innerText = `נסגמת בעוד ${pad(d / 60000)}:${pad((d % 60000) / 1000)}`;
+                span.style.color = "#d32f2f";
+                btn.disabled = false;
+                btn.innerText = "פתח ✍️";
+                btn.style.backgroundColor = "#1976d2";
+            }
+        }
+    });
+}
+
+        const pad = n => String(Math.floor(n)).padStart(2, '0');
+
+        if (now < start) {
+            // לפני תחילת המשימה
+            const d = start - now;
+            span.innerText = `תיפתח בעוד ${pad(d / 60000)}:${pad((d % 60000) / 1000)}`;
+            span.style.color = "#ff9800";
+            btn.disabled = true;
+            btn.innerText = "טרם נפתח 🔒";
+            btn.style.backgroundColor = "#999";
+        } else if (now < end) {
+            // בזמן המשימה
+            const d = end - now;
+            span.innerText = `נותרו: ${pad(d / 60000)}:${pad((d % 60000) / 1000)}`;
+            span.style.color = "#d32f2f";
+            btn.disabled = false;
+            btn.innerText = "פתח משימה ✍️";
+            btn.style.backgroundColor = "#1976d2";
+        } else {
+            // אחרי סיום הזמן
+            span.innerText = "הזמן נגמר!";
+            span.style.color = "#555";
+            btn.disabled = true;
+            btn.innerText = "הזמן נגמר! ⏳";
+            btn.style.backgroundColor = "#555";
+        }
+    });
+}
+</script>
+</body>
+</html>
