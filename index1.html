@@ -792,8 +792,11 @@ button {
 <div id="login-screen">
     <h2>החווה המופלאה 🐾</h2>
     <div id="admin-login-area">
-        <input type="password" id="adminPass" placeholder="סיסמת מנהל" style="width:80%; margin-bottom:10px;">
-        <button onclick="checkAdmin()" style="width:90%;">כניסת מנהל 🔑</button>
+        <input type="password" id="adminPass" placeholder="סיסמת מנהל/מורה" style="width:80%; margin-bottom:10px;">
+        <button onclick="checkAdmin()" style="width:90%;">כניסה 🔑</button>
+        <div style="font-size:0.7em;color:#666;margin-top:8px;">
+            סיסמאות: rabenu247 (מנהל), teacher1-6 (מורים לכיתות א-ו)
+        </div>
     </div>
     <hr style="margin:20px 0;">
     <div id="student-login-area">
@@ -816,6 +819,18 @@ button {
     </label>
 </div>
         <select id="studentClass">
+            <option value="א1">כיתה א'1</option>
+            <option value="א2">כיתה א'2</option>
+            <option value="ב1">כיתה ב'1</option>
+            <option value="ב2">כיתה ב'2</option>
+            <option value="ג1">כיתה ג'1</option>
+            <option value="ג2">כיתה ג'2</option>
+            <option value="ד1">כיתה ד'1</option>
+            <option value="ד2">כיתה ד'2</option>
+            <option value="ה1">כיתה ה'1</option>
+            <option value="ה2">כיתה ה'2</option>
+            <option value="ו1">כיתה ו'1</option>
+            <option value="ו2">כיתה ו'2</option>
         </select>
         <button onclick="addStudent()">צרף יצור לחווה 🐾</button>
         <button id="magic-btn" onclick="fixDatabase()" style="background:#8e24aa;">✨ סידור דמויות אוטומטי</button>
@@ -827,8 +842,6 @@ button {
             <option value="name">מיין לפי שם</option>
             <option value="level">מיין לפי רמה</option>
             <option value="class">מיין לפי כיתה</option>
-            <option value="class1">כיתה 1 בלבד</option>
-            <option value="class2">כיתה 2 בלבד</option>
         </select>
         <button onclick="logout()" style="background:#c62828;">התנתק 🚪</button>
     </div>
@@ -870,16 +883,16 @@ button {
         <div id="task-builder" style="width:100%; background:#f1f8e9; padding:15px; border-radius:10px; border:1px solid #c5e1a5; text-align:right; box-sizing:border-box;">
             <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap; align-items:center;">
                 <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="flex:2;">
-                <div style="display:flex; gap:5px; align-items:center;">
-                    <span style="font-size:0.85em; color:#2e7d32; white-space:nowrap;">📅 נפתחת:</span>
-                    <input type="datetime-local" id="taskStartDate" style="width:190px;" title="מתי המטלה תיפתח לתלמידים">
-                </div>
-                <div style="display:flex; gap:5px; align-items:center;">
-                    <span style="font-size:0.85em; color:#c62828; white-space:nowrap;">🔒 נסגמת:</span>
-                    <input type="datetime-local" id="taskEndDate" style="width:190px;" title="עד מתי ניתן להגיש">
-                </div>
+                <input type="date" id="taskDeadline" style="flex:1;" title="תאריך (אופציונלי)">
                 <input type="number" id="taskXP" placeholder="XP" style="width:70px;">
                 <input type="number" id="taskCash" placeholder="$$$" style="width:70px;">
+                <button type="button" onclick="document.getElementById('time-limit-container').style.display='flex'" style="background:#8e24aa; padding:12px;">⏲️ הגבלת זמן</button>
+            </div>
+            <div id="time-limit-container" style="display:none; gap:10px; margin-bottom:15px; background:#e1bee7; padding:10px; border-radius:8px; align-items:center;">
+                <strong>🕒 הגבלת שעות:</strong>
+                <span>משעה:</span> <input type="time" id="taskStartTime" style="flex:1;">
+                <span>עד שעה:</span> <input type="time" id="taskEndTime" style="flex:1;">
+                <button type="button" onclick="document.getElementById('time-limit-container').style.display='none'; document.getElementById('taskStartTime').value=''; document.getElementById('taskEndTime').value='';" style="background:#d32f2f; padding:8px;">ביטול שעון</button>
             </div>
             <div id="questions-constructor"></div>
             <div style="display:flex; gap:10px; margin-top:15px; align-items:center;">
@@ -973,10 +986,10 @@ button {
     <button onclick="closeDefenseModal()" style="background:#999; padding:8px 20px; border-radius:8px; font-size:0.9em;">סגור (אפשר לנסות מאוחר יותר)</button>
 </div>
 
-<button id="battle-float-btn" class="float-action-btn" onclick="toggleBattleSidebar()"><img src="images/icons/battle1.png"></button>
-<button id="skill-float-btn" class="float-action-btn" onclick="activateSpecialSkill()"><img src="images/icons/special1.png"></button>
-<button id="shop-btn" class="float-action-btn" onclick="openShop()"><img src="images/icons/shop.png"></button>
-<button id="bag-btn" class="float-action-btn" onclick="openBag()"><img src="images/icons/bag.png"></button>
+<button id="battle-float-btn" class="float-action-btn" onclick="toggleBattleSidebar()"><img src="images/icons/battle1.png" style="width:100%;height:100%;"></button>
+<button id="skill-float-btn" class="float-action-btn" onclick="activateSpecialSkill()"><img src="images/icons/special1.png" style="width:100%;height:100%;"></button>
+<button id="shop-btn" class="float-action-btn" onclick="openShop()"><img src="images/icons/shop.png" style="width:100%;height:100%;"></button>
+<button id="bag-btn" class="float-action-btn" onclick="openBag()"><img src="images/icons/bag.png" style="width:120%;height:150%;"></button>
 <div id="battle-sidebar"><div class="sidebar-title">⚔️ בחר מתקפה:</div></div>
 <div id="battle-pick-banner" onclick="cancelAttack()">🎯 בחר כרטיס תלמיד לתקוף — לחץ כאן לביטול</div>
 
@@ -1009,74 +1022,67 @@ const TABLES = {
 };
 
     
-// =====================
-// מערכת התחברות מורים
-// =====================
-const TEACHER_PREFIX = 'farm_teacher_';
-let currentTeacher = null;
-
-function renderTeacherSelect() {
-    const sel = document.getElementById('teacherNameSelect');
-    if (!sel) return;
-    sel.innerHTML = '<option value="">בחר את שמך...</option>';
-    const added = new Set();
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith(TEACHER_PREFIX) && key !== TEACHER_PREFIX + 'current') {
-            const name = key.replace(TEACHER_PREFIX, '');
-            if (!added.has(name)) {
-                added.add(name);
-                const o = document.createElement('option');
-                o.value = name;
-                o.textContent = name;
-                sel.appendChild(o);
-            }
-        }
-    }
-}
-
-async function teacherLogin() {
-    const name = document.getElementById('teacherNameSelect')?.value?.trim();
-    const pass = document.getElementById('teacherPass')?.value?.trim();
-    if (!name) { alert('בחר שם מורה!'); return; }
-    if (!pass) { alert('הזן סיסמה!'); return; }
-    
-    const key = TEACHER_PREFIX + name;
-    const existing = localStorage.getItem(key);
-    
-    if (!existing) {
-        const cls = prompt('איזו כיתה אתה מלמד?\nה1 = כיתה ה׳1\nה2 = כיתה ה׳2');
-        if (!['ה1', 'ה2'].includes(cls)) { alert('כיתה לא חוקית!'); return; }
-        localStorage.setItem(key, JSON.stringify({ password: pass, className: cls }));
-        localStorage.setItem(TEACHER_PREFIX + 'current', JSON.stringify({ name, className: cls }));
-        currentTeacher = { name, className: cls };
-        alert('🎉 ברוך הבא! חשבון המורה נוצר!');
-    } else {
-        const data = JSON.parse(existing);
-        if (data.password !== pass) { alert('סיסמה שגויה!'); return; }
-        localStorage.setItem(TEACHER_PREFIX + 'current', JSON.stringify({ name, className: data.className }));
-        currentTeacher = { name, className: data.className };
-        alert('👋 ברוך שוב, ' + name + '!');
-    }
-    
-    currentUser = 'teacher_' + name;
-    startApp();
-}
-
-function isTeacher() {
-    return currentTeacher !== null;
-}
-
-function isAdmin() {
-    return currentUser === 'admin';
-}
-
-function getTeacherClass() {
-    return currentTeacher?.className || null;
-}
-
 const shieldsByLevel = l => l===0?3 : l<10?4 : l<20?5 : 6;
 const attacksByLevel = l => l===0?0 : l<10?1 : l<20?2 : 3;
+
+let ATTACKS_BY_TYPE = {};
+const CREATURE_SEED_DATA = [
+    { typeId:'trt', label:'צב',            attack1:'רובה 🔫',           attack2:'צלף 🎯',             attack3:'מיני-גאן 💥',          icon1:'', icon2:'', icon3:'' },
+    { typeId:'snk', label:'נחש',           attack1:'הכשה כפולה 🐍',     attack2:'יריקת ארס ☠️',       attack3:'נשיפת דרקון 🔥',       icon1:'', icon2:'', icon3:'' },
+    { typeId:'hnd', label:'כלב הציד',      attack1:'חץ וקשת 🏹',        attack2:'רובה 🔫',            attack3:'שוט-גאן 💢',           icon1:'', icon2:'', icon3:'' },
+    { typeId:'cat', label:'חתול',          attack1:'חרב עץ 🪵',         attack2:'קטאנה ⚔️',           attack3:'חרב כפולה ⚔️⚔️',      icon1:'', icon2:'', icon3:'' },
+    { typeId:'crw', label:'עורב',          attack1:'צווחה 🖤',           attack2:'מקור בזק ⚡',        attack3:'מקור זהב 🥇',          icon1:'', icon2:'', icon3:'' },
+    { typeId:'fsh', label:'דג',            attack1:'פטיש 🔨',           attack2:'מסור יד 🪚',         attack3:'מסור חשמלי ⚙️',        icon1:'', icon2:'', icon3:'' },
+    { typeId:'chk', label:'אפרוח',         attack1:'ניקור 🐥',          attack2:'סכין שף 🔪',         attack3:'סכין קצבים 🩸',        icon1:'', icon2:'', icon3:'' },
+    { typeId:'fox', label:'שועל',          attack1:'נשיכה 🦊',          attack2:'ריצת אש 🔥',         attack3:'דש חם 🌋',             icon1:'', icon2:'', icon3:'' },
+    { typeId:'zbr', label:'זברה',          attack1:'זברה קדברה 🦓',     attack2:'קללת הפסים 🌀',      attack3:'מבוך צללים 🌑',        icon1:'', icon2:'', icon3:'' },
+    { typeId:'mnk', label:'קוף',           attack1:'סטירת מצילתיים 🥁', attack2:'אגרוף תוף 💪',       attack3:'בום על-קולי 💣',       icon1:'', icon2:'', icon3:'' },
+    { typeId:'shp', label:'כבשה',          attack1:'מכת פרסה 🐑',       attack2:'מהה-טורפת 😈',       attack3:'טורף פראי 🐺',         icon1:'', icon2:'', icon3:'' },
+    { typeId:'cow', label:'פרה',           attack1:'נגיחה 🐄',          attack2:'מוו-זרק 🌪️',         attack3:'פרה משוגעת 🤯',        icon1:'', icon2:'', icon3:'' },
+    { typeId:'ost', label:'יען',           attack1:'בעיטה חופשית 🦵',   attack2:'פנדל ⚽',            attack3:'מספרת ✂️',             icon1:'', icon2:'', icon3:'' },
+    { typeId:'rbt', label:'ארנב',          attack1:'אגרוף מהיר 🐇',     attack2:'קומבו ממוקד 🎯',     attack3:'נוק-אאוט 🥊',          icon1:'', icon2:'', icon3:'' },
+    { typeId:'dnk', label:'חמור',          attack1:'חמור גרם 🫏',       attack2:'בעיטת חמור 💢',      attack3:'חמורו של משיח ✨',      icon1:'', icon2:'', icon3:'' },
+    { typeId:'duk', label:'ברווז',         attack1:'אל תיגע-גע 🦆',     attack2:'פגע-גע וברח 💨',     attack3:'קרב מגע-גע 🥋',        icon1:'', icon2:'', icon3:'' },
+    { typeId:'snl', label:'חילזון',        attack1:'באג בתוכנה 🐛',     attack2:"וירוס 'שבלול' 💻",   attack3:'קריסת מערכות 💀',      icon1:'', icon2:'', icon3:'' },
+    { typeId:'owl', label:'ינשוף',         attack1:'מבט אימה 👁️',       attack2:'פגיון לילה 🌙',      attack3:'חיסול אפל 🕶️',         icon1:'', icon2:'', icon3:'' },
+    { typeId:'spd', label:'עכביש',         attack1:'קורים 🕸️',          attack2:'משחק מסוכן 🕷️',      attack3:'המופע האחרון 🎭',       icon1:'', icon2:'', icon3:'' },
+    { typeId:'wsl', label:'לוטרה',         attack1:'חבטת זנב 🦦',       attack2:'גרזן מלחמה 🪓',      attack3:'פשיטת זעם ⚡',         icon1:'', icon2:'', icon3:'' },
+    { typeId:'lio', label:'אריה',          attack1:'שריטה בצבע 🦁',     attack2:'שאגת קשת 🌈',        attack3:'שיסוע רב-גוונים 💥',   icon1:'', icon2:'', icon3:'' },
+    { typeId:'lmb', label:'עגל',           attack1:'ניגוח זהב 🐂',      attack2:'חבטת 24 קראט 👑',    attack3:'חרב מיליון דולר 💰',   icon1:'', icon2:'', icon3:'' },
+    { typeId:'egl', label:'נשר',           attack1:'ניקור על-חלל 🦅',   attack2:'כנף גלקטי 🌌',       attack3:'חור שחור 🌀',           icon1:'', icon2:'', icon3:'' },
+    { typeId:'hlz', label:'חילזון התכלת', attack1:'מכחול טועה 🎨',     attack2:'מברשת קטלנית 🖌️',    attack3:'צביעת נשמה 🌈',        icon1:'', icon2:'', icon3:'' },
+];
+
+let battleState = { selectedSkill:null, pendingBattleId:null, pendingBattle:null, stealMode:false, stealCallback:null };
+const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
+let allStudents=[], allTasks=[], editingTaskId=null, currentTaskToSubmit=null;
+let currentUser = localStorage.getItem('farm_user_id') || null;
+
+const safe = t => typeof t!=='string' ? t : t.replace(/'/g,"&#39;").replace(/"/g,"&quot;");
+
+function docToStudent(d) {
+    // בסופרבייס השדות האלו כבר מגיעים כאובייקט, אז אין צורך ב-JSON.parse
+    // אבל ליתר ביטחון, אם במקרה הם יגיעו כטקסט, הנה בדיקה:
+    const history = (typeof d.history === 'string') ? JSON.parse(d.history) : (d.history || {});
+    const likes = (typeof d.likes === 'string') ? JSON.parse(d.likes) : (d.likes || {});
+
+    return { 
+        id: d.id, // הורדנו את ה-$
+        name: d.full_name || '', // שינינו ל-full_name כפי שמופיע ב-SQL
+        className: d.className || '', 
+        xp: d.xp ?? 0, 
+        level: d.level ?? 0,
+        type: d.type || 'cat', 
+        egg: d.egg ?? 0, 
+        password: d.password || null,
+        personalNote: d.personalNote || '', 
+        lastNote: d.lastNote || '',
+        likes: likes, 
+        history: history, 
+        isActive: d.isActive ?? false,
+        last_skill: d.last_skill || null 
+    }; 
+}
 function docToTask(d) {
     return { id:d.$id, title:d.title||'', deadline:d.deadline||'', xp:d.xp??20,
              startTime:d.startTime||'', endTime:d.endTime||'',
@@ -1333,38 +1339,34 @@ async function saveAnnouncements() {
     }
 }
     
-// =====================
-// הגדרות סינון לפי סיסמה
-// =====================
-let adminClassFilter = null; // 'ה' או 'ג' או null (כל הכיתות)
-
-const CLASS_FILTERS = {
-    'rabenu247': ['ה1', 'ה2'],
-    'teacher3a': ['ג1', 'ג2']
+// מיפוי סיסמאות מורים לכיתות
+const teacherPasswords = {
+    'rabenu247': { classPrefix: 'ה', label: 'מנהל' },
+    'teacher1': { classPrefix: 'א', label: 'כיתה א' },
+    'teacher2': { classPrefix: 'ב', label: 'כיתה ב' },
+    'teacher3': { classPrefix: 'ג', label: 'כיתה ג' },
+    'teacher4': { classPrefix: 'ד', label: 'כיתה ד' },
+    'teacher5': { classPrefix: 'ה', label: 'כיתה ה' },
+    'teacher6': { classPrefix: 'ו', label: 'כיתה ו' }
 };
+let currentTeacherClass = null;
 
 function checkAdmin() {
     const pass = document.getElementById('adminPass').value;
+    const teacherInfo = teacherPasswords[pass];
     
-    // בדיקה אם הסיסמה מוכרת
-    if (CLASS_FILTERS[pass]) {
-        currentUser = 'admin';
-        adminClassFilter = pass === 'rabenu247' ? 'ה' : 'ג';
+    if (teacherInfo) {
+        if (pass === 'rabenu247') {
+            currentUser = 'admin';
+            currentTeacherClass = null;
+        } else {
+            currentUser = 'teacher_' + pass;
+            currentTeacherClass = teacherInfo.classPrefix;
+        }
         startApp();
     } else {
         alert('סיסמה שגויה');
     }
-}
-
-function updateStudentClassOptions() {
-    const select = document.getElementById('studentClass');
-    if (!select) return;
-    
-    const grade = adminClassFilter || 'ה';
-    select.innerHTML = `
-        <option value="${grade}1">כיתה ${grade}'1</option>
-        <option value="${grade}2">כיתה ${grade}'2</option>
-    `;
 }
 async function studentLogin() {
     const id = document.getElementById('studentSelect').value;
@@ -1437,13 +1439,30 @@ async function startApp() {
     document.getElementById('farm-grid').style.display    = 'grid';
     document.getElementById('tasks-area').style.display   = 'block';
     
-    if (currentUser === 'admin') {
+    // הצגת פאנל ניהול למנהל או למורים
+    if (currentUser === 'admin' || currentUser.startsWith('teacher_')) {
         document.getElementById('control-panel').style.display = 'flex';
-        updateStudentClassOptions();
+        
+        // עדכון אפשרויות הכיתה בדropdown לפי המורה המחובר
+        if (currentTeacherClass) {
+            const classSelect = document.getElementById('studentClass');
+            if (classSelect) {
+                // הסתרת כל האפשרויות והצגת רק של הכיתה הרלוונטית
+                Array.from(classSelect.options).forEach(opt => {
+                    opt.style.display = opt.value.startsWith(currentTeacherClass) ? 'block' : 'none';
+                });
+                // בחירה אוטומטית באפשרות הראשונה של הכיתה
+                const firstOption = classSelect.querySelector('option[value^="' + currentTeacherClass + '"]');
+                if (firstOption) classSelect.value = firstOption.value;
+            }
+        }
+        
         await Promise.all([loadAnnouncements(), loadWelcomeImageForAdmin(), initAdminSubmissions()]);
     } else {
+        // --- התחברות תלמיד ---
         document.getElementById('logout-btn-float').style.display = 'block';
         
+        // כאן אנחנו מציגים את כפתורי החנות והתיק החדשים:
         const newBtns = ['shop-btn', 'bag-btn'];
         newBtns.forEach(id => {
             const el = document.getElementById(id);
@@ -1453,9 +1472,10 @@ async function startApp() {
         await showWelcomeImageIfExists();
         
         const me = allStudents.find(s => s.id === currentUser);
+        // המנגנון הקיים שלך שמציג קרב ויכולת לפי רמה נשאר בדיוק אותו דבר!
         if (me && attacksByLevel(me.level) > 0) {
             document.getElementById('battle-float-btn').style.display = 'flex';
-            buildBattleSidebar(me);
+            buildBattleSidebar(me); // הפונקציה הזו אצלך גם מציגה את כפתור היכולת (skill)
         }
         setTimeout(() => checkPendingBattle(), 1500);
     }
@@ -2072,23 +2092,19 @@ function updateView() {
         const active = (s.isActive === true || s.isActive === "true");
         const nameMatch = s.full_name && s.full_name.toLowerCase().includes(searchTerm);
         
-        // סינון לפי כיתה אם יש מסנן פעיל
+        // סינון לפי כיתה של המורה המחובר
         let classMatch = true;
-        if (adminClassFilter && currentUser === 'admin') {
-            classMatch = s.className && s.className.startsWith(adminClassFilter);
+        if (currentTeacherClass) {
+            classMatch = s.className && s.className.startsWith(currentTeacherClass);
         }
-        
-        // סינון כיתה 1 או כיתה 2
-        if (sortBy === 'class1') classMatch = s.className && s.className.endsWith('1');
-        if (sortBy === 'class2') classMatch = s.className && s.className.endsWith('2');
         
         return active && nameMatch && classMatch;
     });
 
-    // לוגיקת מיון
+    // לוגיקת מיון (נשארת כפי שהייתה)
     if (sortBy === 'name') filtered.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'he'));
     if (sortBy === 'level') filtered.sort((a, b) => (b.level || 0) - (a.level || 0));
-    if (sortBy === 'class' || sortBy === 'class1' || sortBy === 'class2') {
+    if (sortBy === 'class') {
         const parse = cls => { 
             const m = cls?.match(/([א-ת])'?(\d+)/);
             if (!m) return { g: 0, n: 0 }; 
@@ -2180,7 +2196,7 @@ function updateView() {
                 </div>
                 <div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;">
                    <img id="img-${s.id}" src="${imgPath}" class="creature-img" 
-                          style="max-height:135px;object-fit:contain;margin-bottom:8px;cursor:${currentUser === 'admin' ? 'copy' : 'zoom-in'};"
+                         style="max-height:135px;object-fit:contain;margin-bottom:8px;cursor:${currentUser === 'admin' ? 'copy' : 'zoom-in'};"
                          onclick="event.stopPropagation(); ${currentUser === 'admin' ? `addXP('${s.id}')` : `if(typeof toggleCharacterZoom==='function') toggleCharacterZoom('${imgPath}')`}">
                     <div style="font-weight:bold;font-size:1.3em;line-height:1.2;display:flex;align-items:center;gap:6px;">
                         ${s.full_name} ${likeBtn} ${likeDisplay}
@@ -2307,11 +2323,12 @@ function toggleTaskBuilder() { togglePanel('panel-newtask'); }
 
 async function saveNewTask() {
     const title     = document.getElementById('taskTitle').value;
+    const deadline  = document.getElementById('taskDeadline').value;
     const xp        = parseInt(document.getElementById('taskXP').value) || 20;
     const cash      = parseInt(document.getElementById('taskCash').value) || 20;
     
-    const startDateInput = document.getElementById('taskStartDate').value;
-    const endDateInput   = document.getElementById('taskEndDate').value;
+    const startTime = document.getElementById('taskStartTime').value;
+    const endTime   = document.getElementById('taskEndTime').value;
 
     // Get all question elements from the questions constructor
     const qNodes = document.querySelectorAll('#questions-constructor .question-item');
@@ -2335,20 +2352,28 @@ async function saveNewTask() {
         return obj;
     });
 
-    // המרת datetime-local ל-ISO string
-    const formatDateTimeForDB = (dateTimeStr) => {
-        if (!dateTimeStr) return null;
-        const d = new Date(dateTimeStr);
-        return d.toISOString();
+    const formatTimeForDB = (timeStr) => {
+        if (!timeStr) return null;
+        const today = new Date();
+        const [hours, minutes] = timeStr.split(':');
+        
+        // יוצר תאריך עם הזמן המקומי
+        const localDate = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 
+                                 parseInt(hours), parseInt(minutes), 0);
+        
+        // שומר אותו כזמן מקומי בלי המרה ל-UTC
+        return localDate.toISOString();
     };
 
     const payload = {
         title,
+        deadline,
         xp,
         cash,
-        startTime: formatDateTimeForDB(startDateInput),  // מתי נפתחת
-        endTime: formatDateTimeForDB(endDateInput),      // מתי נסגמת
+        startTime: formatTimeForDB(startTime),
+        endTime: formatTimeForDB(endTime),
         questions,
+        // created_at נשאר רק אם זו משימה חדשה, בדרך כלל לא מעדכנים אותו בעריכה
     };
 
     try { 
@@ -2387,13 +2412,16 @@ async function saveNewTask() {
     const mainBtn = document.getElementById('publish-task-btn');
     if (mainBtn) mainBtn.innerText = 'פרסם מטלה 🚀'; 
 
-    ['taskTitle','taskStartDate','taskEndDate'].forEach(id => {
+    ['taskTitle','taskDeadline','taskStartTime','taskEndTime'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
     
     document.getElementById('taskXP').value = '20';
-    document.getElementById('taskCash').value = '20';
+    document.getElementById('taskCash').value = '20'; // הוספתי איפוס גם לכסף
+    
+    const timeLimitContainer = document.getElementById('time-limit-container');
+    if (timeLimitContainer) timeLimitContainer.style.display = 'none';
     
     document.getElementById('questions-constructor').innerHTML = '';
     
@@ -2423,21 +2451,31 @@ window.editTask = async function(taskId) {
         document.getElementById('taskXP').value = task.xp || 20;
         document.getElementById('taskCash').value = task.cash || 20;
         
-        // טיפול בתאריכים - המרה מ-ISO לפורמט datetime-local
-        const formatDateForInput = (isoString) => {
-            if (!isoString) return '';
-            const d = new Date(isoString);
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            const hours = String(d.getHours()).padStart(2, '0');
-            const minutes = String(d.getMinutes()).padStart(2, '0');
-            return `${year}-${month}-${day}T${hours}:${minutes}`;
-        };
+        // טיפול בתאריכים (חיתוך ה-ISO לפורמט של input date)
+        if (task.deadline) {
+            const dateStr = task.deadline.split('T')[0]; // לוקח רק את החלק של התאריך
+            document.getElementById('taskDeadline').value = dateStr;
+        }
         
-        // מילוי שדות התאריך והשעה
-        document.getElementById('taskStartDate').value = formatDateForInput(task.startTime);
-        document.getElementById('taskEndDate').value = formatDateForInput(task.endTime);
+        // טיפול בזמנים - אם יש זמנים, להציג את הקונטיינר ולמלא
+        if (task.startTime || task.endTime) {
+            const timeLimitContainer = document.getElementById('time-limit-container');
+            if (timeLimitContainer) timeLimitContainer.style.display = 'flex';
+            
+            if (task.startTime) {
+                const startDate = new Date(task.startTime);
+                const hours = String(startDate.getHours()).padStart(2, '0');
+                const minutes = String(startDate.getMinutes()).padStart(2, '0');
+                document.getElementById('taskStartTime').value = `${hours}:${minutes}`;
+            }
+            
+            if (task.endTime) {
+                const endDate = new Date(task.endTime);
+                const hours = String(endDate.getHours()).padStart(2, '0');
+                const minutes = String(endDate.getMinutes()).padStart(2, '0');
+                document.getElementById('taskEndTime').value = `${hours}:${minutes}`;
+            }
+        }
 
         // 4. בניית השאלות מחדש בתוך ה-constructor
         const constructor = document.getElementById('questions-constructor');
@@ -2677,33 +2715,16 @@ async function renderTasks() {
 
     allTasks.slice().reverse().forEach(task => {
         const div = document.createElement('div'); div.className = 'task-card';
-        
-        const now = new Date();
-        const openTime = task.startTime ? new Date(task.startTime) : null;
-        const closeTime = task.endTime ? new Date(task.endTime) : null;
-        const isNotYetOpen = openTime && now < openTime;
-        const isClosed = closeTime && now > closeTime;
-        
         let btn;
-        let timerHtml = '';
         
         if (currentUser === 'admin') {
             btn = `<button onclick="editTask('${task.id}')" style="background:#ff9800;margin-left:5px;">ערוך ✏️</button>
                    <button onclick="deleteTask('${task.id}')" style="background:#ff5252;">מחק 🗑️</button>`;
         } else if (submittedIds.includes(task.id)) {
             btn = `<button disabled style="background:#999;cursor:not-allowed;">כבר הגשת ✔️</button>`;
-        } else if (isClosed) {
-            btn = `<button disabled style="background:#555;cursor:not-allowed;">הזמן נגמר ❌</button>`;
-            timerHtml = `<br><span style="color:#c62828;">⏰ נסגר: ${formatDateTime(closeTime)}</span>`;
-        } else if (isNotYetOpen) {
-            btn = `<button disabled id="student-btn-${task.id}" style="background:#999;cursor:not-allowed;">🔒 נעול</button>`;
-            timerHtml = `<br><span style="color:#ff9800;">⏳ <span id="timer-${task.id}" style="font-weight:bold;">נפתח בעוד...</span></span>`;
         } else {
             const st = task.title.replace(/'/g, '׳').replace(/"/g, '״'); 
-            btn = `<button id="student-btn-${task.id}" onclick="openSubmitModal('${task.id}','${st}')" style="background:#1976d2;">פתח ✍️</button>`;
-            if (closeTime) {
-                timerHtml = `<br><span style="color:#2e7d32;">⏰ נסגר: ${formatDateTime(closeTime)}</span>`;
-            }
+            btn = `<button id="student-btn-${task.id}" onclick="openSubmitModal('${task.id}','${st}')" style="background:#1976d2;">פתח ✍️</button>`; 
         }
         
         div.innerHTML = `
@@ -2711,7 +2732,8 @@ async function renderTasks() {
                 <h4>${task.title}</h4>
                 <div style="font-size:0.85em;color:#555;margin-top:4px;">
                     🎁 ${task.xp || 20} XP
-                    ${timerHtml}
+                    ${task.deadline ? `<br>⏰ ${task.deadline}` : ''}
+                    ${(task.startTime && task.endTime) ? `<br>⏳ <span id="timer-${task.id}" style="color:#d32f2f;font-weight:bold;">מחשב...</span>` : ''}
                 </div>
             </div>
             <div>${btn}</div>`;
@@ -2721,31 +2743,13 @@ async function renderTasks() {
     if (typeof updateAllTimers === 'function') updateAllTimers();
 }
 
-function formatDateTime(date) {
-    if (!date) return '';
-    const d = new Date(date);
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
-    const hours = String(d.getHours()).padStart(2, '0');
-    const minutes = String(d.getMinutes()).padStart(2, '0');
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
-}
-
+    
 function openSubmitModal(id, title) {
-    const task = allTasks.find(t => t.id === id);
-    
-    // בדיקה אם המטלה עדיין פתוחה
-    const now = new Date();
-    if (task?.endTime && now > new Date(task.endTime)) {
-        alert('😢 המטלה נסגרה ולא ניתן להגיש יותר!');
-        return;
-    }
-    
     currentTaskToSubmit = id;
     const titleEl = document.getElementById('modal-task-title');
     if (titleEl) titleEl.innerText = title;
     
+    const task = allTasks.find(t => t.id === id);
     const container = document.getElementById('questions-display');
     if (!container) return;
     
@@ -2789,42 +2793,42 @@ function closeModal() {
 }
 
 async function sendSubmission() {
-    const task = allTasks.find(t => t.id === currentTaskToSubmit);
-    if (!task) return;
-    
-    // בדיקה אם המטלה נסגמה
-    if (task.endTime) {
-        const now = new Date();
-        const closeTime = new Date(task.endTime);
-        if (now > closeTime) {
-            alert('😢 המטלה נסגמה ולא ניתן להגיש יותר!');
-            closeModal();
-            return;
-        }
-    }
-    
-    const submitBtn = document.getElementById('submit-btn');
+    const submitBtn = document.getElementById('submit-btn'); // וודא שזה ה-ID של הכפתור
     if (submitBtn) {
-        if (submitBtn.disabled) return;
+        if (submitBtn.disabled) return; // הגנה נוספת אם הפונקציה נקראה איכשהו שוב
         submitBtn.disabled = true;
         submitBtn.innerText = "שולח... המתן ⏳";
     }
-    
     // בדיקה אם כבר קיימת הגשה
-    const { data: existing } = await supabase
-        .from(TABLES.submissions)
-        .select('id')
-        .eq('studentId', currentUser)
-        .eq('taskId', currentTaskToSubmit)
-        .maybeSingle();
-    
-    if (existing) {
-        alert('הגשת כבר מטלה זו!');
-        closeModal();
-        return;
-    }
+const { data: existing } = await supabase
+    .from(TABLES.submissions)
+    .select('id')
+    .eq('studentId', currentUser)
+    .eq('taskId', currentTaskToSubmit)
+    .maybeSingle();
 
-const answers = [];
+if (existing) {
+    return; // עוצר את הפונקציה ולא שולח שוב
+}
+    const task = allTasks.find(t => t.id === currentTaskToSubmit);
+    if (!task) return;
+
+    // 1. בדיקת כפילויות (הגשה כפולה)
+    try {
+        const { data: existing, error: checkErr } = await supabase
+            .from(TABLES.submissions)
+            .select('id') // שימוש ב-ID כפי שמופיע בטבלה שלך
+            .eq('studentId', currentUser)
+            .eq('taskId', currentTaskToSubmit);
+
+        if (existing && existing.length > 0) {
+            alert("הגשה נדחתה: הגשה כפולה");
+            closeModal();
+            return;
+        }
+    } catch (e) { console.error("Check failed", e); }
+
+const answers = []; 
     let allAnswered = true;
     let correctCount = 0; 
     let gradableCount = 0; // משתנה חדש: סופר רק שאלות עם ציון אוטומטי
@@ -4124,13 +4128,13 @@ async function checkBattlesSchema() {
 
 async function init() {
     await Promise.all([loadStudents(), loadTasks(), loadAnnouncements(), loadCreatureTypes()]);
-    
     if (currentUser && currentUser!=='admin') {
         const found=allStudents.find(s=>s.id===currentUser);
         if (found) startApp();
         else { localStorage.removeItem('farm_user_id'); currentUser=null; }
     }
     
+    // Debug: Check battles schema
     await checkBattlesSchema();
 }
 
@@ -4144,14 +4148,11 @@ function closeGenericModal() {
     document.getElementById('generic-modal-overlay').style.display = 'none';
     document.getElementById('generic-modal').style.display = 'none';
 }
-
-function logout() {
-    localStorage.removeItem('farm_user_id');
-    adminClassFilter = null;
-    currentUser = null;
-    location.reload();
+function logout() { 
+    localStorage.removeItem('farm_user_id'); 
+    currentTeacherClass = null;
+    location.reload(); 
 }
-
 setInterval(()=>{ updateAllTimers(); updateCooldownDisplay(); }, 1000);
 init();
 
@@ -4160,79 +4161,27 @@ function updateAllTimers() {
     if (typeof currentUser !== 'undefined' && currentUser === 'admin') return;
     
     const now = new Date();
-    const pad = n => String(Math.floor(n)).padStart(2, '0');
 
+    // הנחה: allTasks הוא המערך הגלובלי שמכיל את המשימות שמשכת מ-Supabase
     allTasks.forEach(task => {
+        if (!task.startTime || !task.endTime) return;
+
         const span = document.getElementById(`timer-${task.id}`);
         const btn = document.getElementById(`student-btn-${task.id}`);
 
         if (!span || !btn) return;
 
-        const openTime = task.startTime ? new Date(task.startTime) : null;
-        const closeTime = task.endTime ? new Date(task.endTime) : null;
-
-        // מקרה 1: יש גם פתיחה וגם סגירה
-        if (openTime && closeTime) {
-            if (now < openTime) {
-                // עוד לא נפתחה
-                const d = openTime - now;
-                span.innerText = `נפתחת בעוד ${pad(d / 60000)}:${pad((d % 60000) / 1000)}`;
-                span.style.color = "#ff9800";
-                btn.disabled = true;
-                btn.innerText = "🔒 נעול";
-                btn.style.backgroundColor = "#999";
-            } else if (now < closeTime) {
-                // פתוחה - מראה זמן לסגירה
-                const d = closeTime - now;
-                span.innerText = `נסגמת בעוד ${pad(d / 60000)}:${pad((d % 60000) / 1000)}`;
-                span.style.color = "#d32f2f";
-                btn.disabled = false;
-                btn.innerText = "פתח ✍️";
-                btn.style.backgroundColor = "#1976d2";
-            } else {
-                // נסגמה
-                span.innerText = "הזמן נגמר!";
-                span.style.color = "#555";
-                btn.disabled = true;
-                btn.innerText = "❌ נסגמה";
-                btn.style.backgroundColor = "#555";
-            }
-        }
-        // מקרה 2: רק פתיחה (ללא סגירה)
-        else if (openTime && !closeTime) {
-            if (now < openTime) {
-                const d = openTime - now;
-                span.innerText = `נפתחת בעוד ${pad(d / 60000)}:${pad((d % 60000) / 1000)}`;
-                span.style.color = "#ff9800";
-                btn.disabled = true;
-                btn.innerText = "🔒 נעול";
-                btn.style.backgroundColor = "#999";
-            } else {
-                span.innerText = "פתוחה";
-                span.style.color = "#2e7d32";
-                btn.disabled = false;
-                btn.innerText = "פתח ✍️";
-                btn.style.backgroundColor = "#1976d2";
-            }
-        }
-        // מקרה 3: רק סגירה (ללא פתיחה)
-        else if (!openTime && closeTime) {
-            if (now > closeTime) {
-                span.innerText = "הזמן נגמר!";
-                span.style.color = "#555";
-                btn.disabled = true;
-                btn.innerText = "❌ נסגמה";
-                btn.style.backgroundColor = "#555";
-            } else {
-                const d = closeTime - now;
-                span.innerText = `נסגמת בעוד ${pad(d / 60000)}:${pad((d % 60000) / 1000)}`;
-                span.style.color = "#d32f2f";
-                btn.disabled = false;
-                btn.innerText = "פתח ✍️";
-                btn.style.backgroundColor = "#1976d2";
-            }
-        }
-    });
+let start, end;
+if (task.startTime.includes('T') && (task.startTime.includes('Z') || task.startTime.includes('+'))) {
+    // ISO timestamp (עם Z או +00:00)
+    start = new Date(task.startTime);
+    end = new Date(task.endTime);
+} else {
+    // טקסט פשוט ("08:30")
+    const [sH, sM] = task.startTime.split(':').map(Number);
+    const [eH, eM] = task.endTime.split(':').map(Number);
+    start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), sH, sM, 0);
+    end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), eH, eM, 0);
 }
 
         const pad = n => String(Math.floor(n)).padStart(2, '0');
