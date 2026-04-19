@@ -2156,11 +2156,11 @@ function updateView() {
         
         // למורים: class1 = כיתה X'1, class2 = כיתה X'2
         if (currentTeacherClass && (sortBy === 'class1' || sortBy === 'class2')) {
-            const targetClass = currentTeacherClass + '\'' + (sortBy === 'class1' ? '1' : '2');
+            const targetClass = currentTeacherClass + (sortBy === 'class1' ? '1' : '2');
             filtered = filtered.filter(s => s.className === targetClass);
         } else if (sortBy !== 'all' && classMap[sortBy]) {
             // למנהל: class1-12 מתייחס לא'-ו'1/2
-            const targetClass = classMap[sortBy].letter + '\'' + classMap[sortBy].num;
+            const targetClass = classMap[sortBy].letter + classMap[sortBy].num;
             filtered = filtered.filter(s => s.className === targetClass);
         }
     }
