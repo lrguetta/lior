@@ -791,18 +791,18 @@ button {
 
 <div id="event-banner" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%) translateY(-200px); z-index:2000;">
     <div style="
-        background: linear-gradient(135deg, #f4e4bc 0%, #e8d4a8 50%, #d4c090 100%);
+        background-image: url('images/scroll.png');
+        background-size: cover;
+        background-position: center;
         border: 3px solid #8b7355;
         border-radius: 8px;
         padding: 25px 35px;
         box-shadow: 
             0 8px 30px rgba(0,0,0,0.4),
-            inset 0 0 50px rgba(139,115,85,0.1),
             2px 2px 0 #5d4e37;
         max-width: 500px;
         text-align: center;
         position: relative;
-        transform: rotate(-1deg);
     ">
         <!-- קישוטים בפינות -->
         <div style="position:absolute; top:8px; left:12px; font-size:1.5em; color:#8b7355;">🦄</div>
@@ -1779,6 +1779,9 @@ async function startApp() {
             buildBattleSidebar(me); // הפונקציה הזו אצלך גם מציגה את כפתור היכולת (skill)
         }
         setTimeout(() => checkPendingBattle(), 1500);
+        
+        // עדכון כרזת אירוע אחרי התחברות
+        updateEventBanner();
     }
     
     subscribeAll();
@@ -2231,7 +2234,8 @@ async function addXP(id) {
     // ✨ הפתרון: עדכון התמונה במסך בזמן אמת כשעולים רמה או בוקעים! ✨
     if (img) {
         const eggNum = (s.egg ?? 0) + 1;
-        img.src = nlv === 0 ? `images/egg${eggNum}.png` : `images/${s.type}${nlv >= 20 ? 3 : nlv >= 10 ? 2 : 1}.png`;
+        img.src = nlv === 0 ? `images/egg${eggNum}.png` : `images/${s.type}${nlv >= 50 ? 4 : nlv >= 20 ? 3 : nlv >= 10 ? 2 : 1}.png`;
+img.onerror = function() { this.src = nlv >= 20 ? `images/${s.type}${3}.png` : nlv >= 10 ? `images/${s.type}${2}.png` : `images/${s.type}${1}.png`; };
     }
 
     // עדכון היסטוריה
@@ -2277,7 +2281,7 @@ function openDeck(fullName) {
         const eggNum = (s.egg ?? 0) + 1;
         const imgPath = s.level === 0 
             ? `images/egg${eggNum}.png` 
-            : `images/${s.type}${s.level >= 20 ? 3 : s.level >= 10 ? 2 : 1}.png`;
+            : `images/${s.type}${s.level >= 50 ? 4 : s.level >= 20 ? 3 : s.level >= 10 ? 2 : 1}.png`;
             
         return `
         <div style="border:3px solid ${s.isActive ? '#4caf50' : '#ddd'}; border-radius:12px; padding:10px; min-width:110px; text-align:center; background:${s.isActive ? '#e8f5e9' : '#fff'}; position:relative;">
@@ -2429,11 +2433,11 @@ function updateView() {
         
         // למורים: class1 = כיתה X'1, class2 = כיתה X'2
         if (currentTeacherClass && (sortBy === 'class1' || sortBy === 'class2')) {
-            const targetClass = currentTeacherClass + (sortBy === 'class1' ? '1' : '2');
+            const targetClass = currentTeacherClass + '\'' + (sortBy === 'class1' ? '1' : '2');
             filtered = filtered.filter(s => s.className === targetClass);
         } else if (sortBy !== 'all' && classMap[sortBy]) {
             // למנהל: class1-12 מתייחס לא'-ו'1/2
-            const targetClass = classMap[sortBy].letter + classMap[sortBy].num;
+            const targetClass = classMap[sortBy].letter + '\'' + classMap[sortBy].num;
             filtered = filtered.filter(s => s.className === targetClass);
         }
     }
@@ -2452,7 +2456,7 @@ function updateView() {
         const eggNum = (s.egg ?? 0) + 1;
         const level = s.level || 0;
         const type = s.type || 'dragon';
-        const imgPath = level === 0 ? `images/egg${eggNum}.png` : `images/${type}${level >= 20 ? 3 : level >= 10 ? 2 : 1}.png`;
+        const imgPath = level === 0 ? `images/egg${eggNum}.png` : `images/${type}${level >= 50 ? 4 : level >= 20 ? 3 : level >= 10 ? 2 : 1}.png`;
         
         const historyObj = s.history || {};
         const brokenShields = historyObj.shields_broken || [];
@@ -2517,9 +2521,10 @@ function updateView() {
                     ${currentUser === 'admin' ? `<button class="remove-btn" onclick="event.stopPropagation(); deleteStudent('${s.id}')">✖</button>` : `<div></div>`}
                 </div>
                 <div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;">
-                   <img id="img-${s.id}" src="${imgPath}" class="creature-img" 
-                         style="max-height:135px;object-fit:contain;margin-bottom:8px;cursor:${currentUser === 'admin' ? 'copy' : 'zoom-in'};"
-                         onclick="event.stopPropagation(); ${currentUser === 'admin' ? `addXP('${s.id}')` : `if(typeof toggleCharacterZoom==='function') toggleCharacterZoom('${imgPath}')`}">
+<img id="img-${s.id}" src="${imgPath}" class="creature-img" 
+                          style="max-height:135px;object-fit:contain;margin-bottom:8px;cursor:${currentUser === 'admin' ? 'copy' : 'zoom-in'};"
+                          onclick="event.stopPropagation(); ${currentUser === 'admin' ? `addXP('${s.id}')` : `if(typeof toggleCharacterZoom==='function') toggleCharacterZoom('${imgPath}')`}"
+                          onerror="this.src='${`images/${s.type}${s.level >= 20 ? 3 : s.level >= 10 ? 2 : 1}.png`}'"
                     <div style="font-weight:bold;font-size:1.3em;line-height:1.2;display:flex;align-items:center;gap:6px;">
                         ${s.full_name} ${likeBtn} ${likeDisplay}
                     </div>
