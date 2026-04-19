@@ -1119,7 +1119,7 @@ const CREATURE_SEED_DATA = [
 ];
 
 let battleState = { selectedSkill:null, pendingBattleId:null, pendingBattle:null, stealMode:false, stealCallback:null };
-const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
+const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd', 'wsl', 'lmb', 'lio', 'hlz', 'egl', 'trk'];
 let allStudents=[], allTasks=[], editingTaskId=null, currentTaskToSubmit=null;
 let currentEvent = null;
 let currentUser = localStorage.getItem('farm_user_id') || null;
@@ -2088,7 +2088,7 @@ async function addStudent() {
         let creatureType, eggNum;
         if (currentEvent && currentEvent.creatureType) {
             creatureType = currentEvent.creatureType;
-            eggNum = 1; // ביצה ראשונה
+            eggNum = 6; // ביצה ראשונה
         } else {
             creatureType = CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)];
             eggNum = Math.floor(Math.random() * 5);
@@ -2433,11 +2433,11 @@ function updateView() {
         
         // למורים: class1 = כיתה X'1, class2 = כיתה X'2
         if (currentTeacherClass && (sortBy === 'class1' || sortBy === 'class2')) {
-            const targetClass = currentTeacherClass + '\'' + (sortBy === 'class1' ? '1' : '2');
+            const targetClass = currentTeacherClass + (sortBy === 'class1' ? '1' : '2');
             filtered = filtered.filter(s => s.className === targetClass);
         } else if (sortBy !== 'all' && classMap[sortBy]) {
             // למנהל: class1-12 מתייחס לא'-ו'1/2
-            const targetClass = classMap[sortBy].letter + '\'' + classMap[sortBy].num;
+            const targetClass = classMap[sortBy].letter + classMap[sortBy].num;
             filtered = filtered.filter(s => s.className === targetClass);
         }
     }
