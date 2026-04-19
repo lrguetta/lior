@@ -314,6 +314,7 @@ button {
 }
 
 .card-front {
+    transform: rotateY(0deg);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -976,6 +977,14 @@ button {
                 <input type="datetime-local" id="eventEndTime" style="flex:1;" title="זמן סיום">
             </div>
             <div style="display:flex; gap:10px; margin-bottom:15px; align-items:center;">
+                <span>ביצה:</span>
+                <select id="eventEggNum" style="width:70px;">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
                 <span>יצור מיוחד:</span>
                 <select id="eventCreatureType" style="width:120px;">
                     <option value="">-- בחר --</option>
@@ -1494,6 +1503,7 @@ async function saveEvent() {
     const desc = document.getElementById('eventDesc').value.trim();
     const endTime = document.getElementById('eventEndTime').value;
     const creatureType = document.getElementById('eventCreatureType').value;
+    const eggNum = parseInt(document.getElementById('eventEggNum').value);
 
     if (!title || !endTime) return alert('חובה כותרת וזמן סיום!');
     if (!creatureType) return alert('חובה לבחור יצור מיוחד!');
@@ -1509,6 +1519,7 @@ async function saveEvent() {
                 description: desc,
                 endTime,
                 creatureType,
+                eggNum,
                 created_at: new Date().toISOString()
             }]);
 
@@ -1521,6 +1532,7 @@ async function saveEvent() {
         document.getElementById('eventDesc').value = '';
         document.getElementById('eventEndTime').value = '';
         document.getElementById('eventCreatureType').value = '';
+        document.getElementById('eventEggNum').value = '1';
         
         await loadEvents();
 
@@ -1548,7 +1560,7 @@ function renderEventsList(events) {
                     <strong>${evt.title}</strong>
                     <div style="font-size:0.85em; color:#666;">${evt.description || ''}</div>
                     <div style="font-size:0.8em; color:#888;">🕒 עד: ${end.toLocaleString('he-IL')}</div>
-                    <div style="font-size:0.8em; color:#7b1fa2;">🐾 יצור: ${evt.creatureType}</div>
+                    <div style="font-size:0.8em; color:#7b1fa2;">🐾 יצור: ${evt.creatureType} | 🥚 ביצה: ${evt.eggNum || 1}</div>
                 </div>
                 <div style="display:flex; flex-direction:column; gap:8px; align-items:center;">
                     ${isActive ? '<span style="color:#9c27b0; font-weight:bold;">פעיל</span>' : '<span style="color:#999;">הסתיים</span>'}
@@ -2079,14 +2091,14 @@ async function addStudent() {
         const isFirst = existingGroup.length === 0;
         const sharedPass = isFirst ? null : existingGroup.find(s => s.password)?.password || null;
 
-        // בדיקה אם יש אירוע פעיל - אם כן משתמשים ביצור של האירוע
+        // בדיקה אם יש אירוע פעיל - אם כן משתמשים ביצור וביצה של האירוע
         let creatureType, eggNum;
         if (currentEvent && currentEvent.creatureType) {
             creatureType = currentEvent.creatureType;
-            eggNum = 6; // ביצה ראשונה
+            eggNum = currentEvent.eggNum || 1;
         } else {
             creatureType = CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)];
-            eggNum = Math.floor(Math.random() * 5);
+            eggNum = Math.floor(Math.random() * 5) + 1;
         }
 
         const payload = {
