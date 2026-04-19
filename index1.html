@@ -838,7 +838,9 @@ button {
         <select id="sortBy" onchange="updateView()" style="flex:1;">
             <option value="name">מיין לפי שם</option>
             <option value="level">מיין לפי רמה</option>
-            <option value="class">מיין לפי כיתה</option>
+            <option value="all">כל הכיתות</option>
+            <option value="class1">כיתה 1</option>
+            <option value="class2">כיתה 2</option>
         </select>
         <button onclick="logout()" style="background:#c62828;">התנתק 🚪</button>
     </div>
@@ -1338,7 +1340,8 @@ async function saveAnnouncements() {
     
 // מיפוי סיסמאות מורים לכיתות
 const teacherPasswords = {
-    'rabenu247': { classPrefix: 'ה', label: 'מנהל' },
+    'admin247': { classPrefix: null, label: 'מנהל מערכת' },
+    'rabenu247': { classPrefix: 'ה', label: 'כיתות ה' },
     'teacher1': { classPrefix: 'א', label: 'כיתה א' },
     'teacher2': { classPrefix: 'ב', label: 'כיתה ב' },
     'teacher3': { classPrefix: 'ג', label: 'כיתה ג' },
@@ -1353,7 +1356,7 @@ function checkAdmin() {
     const teacherInfo = teacherPasswords[pass];
     
     if (teacherInfo) {
-        if (pass === 'rabenu247') {
+        if (pass === 'admin247') {
             currentUser = 'admin';
             currentTeacherClass = null;
         } else {
@@ -1451,6 +1454,44 @@ async function startApp() {
                 // בחירה אוטומטית באפשרות הראשונה של הכיתה
                 const firstOption = classSelect.querySelector('option[value^="' + currentTeacherClass + '"]');
                 if (firstOption) classSelect.value = firstOption.value;
+            }
+            
+            // עדכון אפשרויות המיון לפי הכיתה של המורה
+            const sortBySelect = document.getElementById('sortBy');
+            if (sortBySelect) {
+                const heLetter = currentTeacherClass;
+                const letterLabel = { 'א': 'א', 'ב': 'ב', 'ג': 'ג', 'ד': 'ד', 'ה': 'ה', 'ו': 'ו' }[heLetter] || heLetter;
+                sortBySelect.innerHTML = `
+                    <option value="name">מיין לפי שם</option>
+                    <option value="level">מיין לפי רמה</option>
+                    <option value="all">כל הכיתות</option>
+                    <option value="class1">כיתה ${letterLabel}'1</option>
+                    <option value="class2">כיתה ${letterLabel}'2</option>
+                `;
+            }
+        }
+        
+        // למנהל מערכת - כל האפשרויות
+        if (currentUser === 'admin') {
+            const sortBySelect = document.getElementById('sortBy');
+            if (sortBySelect) {
+                sortBySelect.innerHTML = `
+                    <option value="name">מיין לפי שם</option>
+                    <option value="level">מיין לפי רמה</option>
+                    <option value="all">כל הכיתות</option>
+                    <option value="class1">כיתה א'1</option>
+                    <option value="class2">כיתה א'2</option>
+                    <option value="class3">כיתה ב'1</option>
+                    <option value="class4">כיתה ב'2</option>
+                    <option value="class5">כיתה ג'1</option>
+                    <option value="class6">כיתה ג'2</option>
+                    <option value="class7">כיתה ד'1</option>
+                    <option value="class8">כיתה ד'2</option>
+                    <option value="class9">כיתה ה'1</option>
+                    <option value="class10">כיתה ה'2</option>
+                    <option value="class11">כיתה ו'1</option>
+                    <option value="class12">כיתה ו'2</option>
+                `;
             }
         }
         
@@ -2101,16 +2142,27 @@ function updateView() {
     // לוגיקת מיון (נשארת כפי שהייתה)
     if (sortBy === 'name') filtered.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'he'));
     if (sortBy === 'level') filtered.sort((a, b) => (b.level || 0) - (a.level || 0));
-    if (sortBy === 'class') {
-        const parse = cls => { 
-            const m = cls?.match(/([א-ת])'?(\d+)/);
-            if (!m) return { g: 0, n: 0 }; 
-            return { g: 'אבגדהוזחטיכלמנסעפצקרשת'.indexOf(m[1]), n: +m[2] }; 
+    
+    // מיון לפי כיתה ספציפית
+    if (sortBy && (sortBy.startsWith('class') || sortBy === 'all')) {
+        const classMap = {
+            'class1': { letter: 'א', num: 1 }, 'class2': { letter: 'א', num: 2 },
+            'class3': { letter: 'ב', num: 1 }, 'class4': { letter: 'ב', num: 2 },
+            'class5': { letter: 'ג', num: 1 }, 'class6': { letter: 'ג', num: 2 },
+            'class7': { letter: 'ד', num: 1 }, 'class8': { letter: 'ד', num: 2 },
+            'class9': { letter: 'ה', num: 1 }, 'class10': { letter: 'ה', num: 2 },
+            'class11': { letter: 'ו', num: 1 }, 'class12': { letter: 'ו', num: 2 }
         };
-        filtered.sort((a, b) => { 
-            const ca = parse(a.className), cb = parse(b.className); 
-            return ca.g !== cb.g ? ca.g - cb.g : ca.n - cb.n; 
-        });
+        
+        // למורים: class1 = כיתה X'1, class2 = כיתה X'2
+        if (currentTeacherClass && (sortBy === 'class1' || sortBy === 'class2')) {
+            const targetClass = currentTeacherClass + '\'' + (sortBy === 'class1' ? '1' : '2');
+            filtered = filtered.filter(s => s.className === targetClass);
+        } else if (sortBy !== 'all' && classMap[sortBy]) {
+            // למנהל: class1-12 מתייחס לא'-ו'1/2
+            const targetClass = classMap[sortBy].letter + '\'' + classMap[sortBy].num;
+            filtered = filtered.filter(s => s.className === targetClass);
+        }
     }
 
     // יצירת ה-HTML
