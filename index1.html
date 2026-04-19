@@ -788,6 +788,22 @@ button {
     <h3 style="margin-top:0; color:#e65100; border-bottom:2px solid #ffcc80; padding-bottom:5px;">📢 מה חדש?</h3>
     <div id="announcements-content" style="white-space: pre-wrap; font-size: 0.95em; color: #333;">טוען עדכונים...</div>
 </div>
+
+<div id="event-banner" style="display:none; position:fixed; top:0; left:0; right:0; background:linear-gradient(135deg, #9c27b0, #673ab7); color:white; padding:12px 20px; z-index:1000; box-shadow:0 4px 15px rgba(103,58,183,0.4);">
+    <div style="display:flex; align-items:center; justify-content:space-between; max-width:1200px; margin:0 auto;">
+        <div style="display:flex; align-items:center; gap:15px; flex:1;">
+            <span style="font-size:2em;">🎉</span>
+            <div>
+                <div id="event-title" style="font-weight:bold; font-size:1.2em;"></div>
+                <div id="event-desc" style="font-size:0.9em; opacity:0.9;"></div>
+            </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:20px;">
+            <div id="event-timer" style="font-size:1.4em; font-weight:bold; font-family:monospace; background:rgba(0,0,0,0.3); padding:8px 15px; border-radius:8px;"></div>
+            <button id="toggle-event" onclick="toggleEventBanner()" style="background:rgba(255,255,255,0.2); border:none; color:white; padding:8px 12px; border-radius:5px; cursor:pointer;">−</button>
+        </div>
+    </div>
+</div>
     
 <div id="login-screen">
     <h2>החווה המופלאה 🐾</h2>
@@ -853,6 +869,7 @@ button {
         <button onclick="togglePanel('panel-newtask')"       style="background:#1976d2; padding:10px 14px; font-size:0.88em;">➕ פרסום מטלה</button>
         <button onclick="togglePanel('panel-submissions')"   style="background:#2e7d32; padding:10px 14px; font-size:0.88em;">📥 ניהול הגשות</button>
         <button onclick="togglePanel('panel-creatures')"     style="background:#7b1fa2; padding:10px 14px; font-size:0.88em;">🐾 ניהול דמויות</button>
+        <button onclick="togglePanel('panel-events')"         style="background:#9c27b0; padding:10px 14px; font-size:0.88em;">🎉 הוספת אירוע</button>
         <button onclick="smartCleanupAllStudents('smart-clean')"     style="background:#f44336; padding:10px 14px; font-size:0.88em;">🗑️ ניקוי היסטוריה</button>
      
     <div id="panel-announcements" style="display:none; width:100%; background:#fff3e0; padding:15px; border-radius:10px; border:1px solid #ffcc80; text-align:right; box-sizing:border-box; margin-top:12px;">
@@ -925,6 +942,28 @@ button {
             </div>
             <div id="creature-types-list" style="display:flex; flex-direction:column; gap:5px;">
                 <div style="color:#aaa; text-align:center; padding:10px;">טוען...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="panel-events" style="display:none; width:100%; margin-top:12px;">
+        <div style="background:rgba(255,255,255,0.97); border-radius:14px; padding:20px; border:2px solid #9c27b0;">
+            <h4 style="margin:0 0 15px 0; color:#6a1b9a;">🎉 ניהול אירועים</h4>
+            <div style="display:flex; gap:15px; margin-bottom:15px; flex-wrap:wrap;">
+                <input type="text" id="eventTitle" placeholder="כותרת האירוע" style="flex:2; min-width:200px;">
+                <input type="text" id="eventDesc" placeholder="תיאור קצר" style="flex:3; min-width:300px;">
+                <input type="datetime-local" id="eventEndTime" style="flex:1;" title="זמן סיום">
+            </div>
+            <div style="display:flex; gap:10px; margin-bottom:15px; align-items:center;">
+                <span>יצור מיוחד:</span>
+                <select id="eventCreatureType" style="width:120px;">
+                    <option value="">-- בחר --</option>
+                </select>
+                <button onclick="saveEvent()" style="background:#9c27b0; padding:10px 20px; font-size:1em;">פרסם אירוע 🚀</button>
+            </div>
+            <div style="background:#f3e5f5; padding:15px; border-radius:10px; border:1px solid #ce93d8;">
+                <h5 style="margin:0 0 10px 0; color:#7b1fa2;">אירועים קיימים</h5>
+                <div id="events-list" style="display:flex; flex-direction:column; gap:10px;"></div>
             </div>
         </div>
     </div>
@@ -1017,7 +1056,8 @@ const TABLES = {
     announcements: 'announcements',
     welcomeImage: 'welcomeImage',
     battles: 'battles',
-    creatureTypes: 'creature_types'
+    creatureTypes: 'creature_types',
+    events: 'events'
 };
 
     
@@ -1055,6 +1095,7 @@ const CREATURE_SEED_DATA = [
 let battleState = { selectedSkill:null, pendingBattleId:null, pendingBattle:null, stealMode:false, stealCallback:null };
 const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
 let allStudents=[], allTasks=[], editingTaskId=null, currentTaskToSubmit=null;
+let currentEvent = null;
 let currentUser = localStorage.getItem('farm_user_id') || null;
 
 const safe = t => typeof t!=='string' ? t : t.replace(/'/g,"&#39;").replace(/"/g,"&quot;");
@@ -1336,6 +1377,176 @@ async function saveAnnouncements() {
         console.error("שגיאה בפרסום הודעה:", e);
         alert('שגיאה בפרסום: ' + (e.message || e));
     }
+}
+
+// --- אירועים ---
+async function loadEvents() {
+    try {
+        const { data, error } = await supabase
+            .from(TABLES.events)
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // מציאת אירוע פעיל
+        const now = new Date();
+        currentEvent = null;
+        
+        if (data && data.length > 0) {
+            for (const evt of data) {
+                if (evt.endTime && new Date(evt.endTime) > now) {
+                    currentEvent = evt;
+                    break;
+                }
+            }
+        }
+
+        // עדכון הבאנר אם יש אירוע פעיל
+        updateEventBanner();
+        
+        // רענון רשימת האירועים בפאנל
+        renderEventsList(data || []);
+
+    } catch(e) { console.error("שגיאה בטעינת אירועים:", e); }
+}
+
+function updateEventBanner() {
+    const banner = document.getElementById('event-banner');
+    if (!banner) return;
+
+    if (currentEvent) {
+        document.getElementById('event-title').textContent = currentEvent.title || '';
+        document.getElementById('event-desc').textContent = currentEvent.description || '';
+        banner.style.display = 'block';
+        updateEventTimer();
+    } else {
+        banner.style.display = 'none';
+    }
+}
+
+function updateEventTimer() {
+    const timerEl = document.getElementById('event-timer');
+    if (!timerEl || !currentEvent) return;
+
+    const now = new Date();
+    const end = new Date(currentEvent.endTime);
+    const diff = end - now;
+
+    if (diff <= 0) {
+        timerEl.textContent = 'הסתיים!';
+        timerEl.style.background = 'rgba(255,0,0,0.5)';
+        setTimeout(() => {
+            loadEvents(); // בדיקה מחדש
+        }, 2000);
+        return;
+    }
+
+    const hours = Math.floor(diff / 3600000);
+    const mins = Math.floor((diff % 3600000) / 60000);
+    const secs = Math.floor((diff % 60000) / 1000);
+    
+    timerEl.textContent = String(hours).padStart(2,'0') + ':' + String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0');
+    
+    requestAnimationFrame(() => setTimeout(updateEventTimer, 1000));
+}
+
+function toggleEventBanner() {
+    const banner = document.getElementById('event-banner');
+    const btn = document.getElementById('toggle-event');
+    if (banner.style.display === 'none') {
+        banner.style.display = 'flex';
+        btn.textContent = '−';
+    } else {
+        banner.style.display = 'none';
+        btn.textContent = '+';
+    }
+}
+
+async function saveEvent() {
+    const title = document.getElementById('eventTitle').value.trim();
+    const desc = document.getElementById('eventDesc').value.trim();
+    const endTime = document.getElementById('eventEndTime').value;
+    const creatureType = document.getElementById('eventCreatureType').value;
+
+    if (!title || !endTime) return alert('חובה כותרת וזמן סיום!');
+    if (!creatureType) return alert('חובה לבחור יצור מיוחד!');
+
+    // בדיקה שהזמן בעתיד
+    if (new Date(endTime) <= new Date()) return alert('זמן הסיום חייב להיות בעתיד!');
+
+    try {
+        const { error } = await supabase
+            .from(TABLES.events)
+            .insert([{
+                title,
+                description: desc,
+                endTime,
+                creatureType,
+                created_at: new Date().toISOString()
+            }]);
+
+        if (error) throw error;
+
+        alert('האירוע פורסם בהצלחה! 🎉');
+        
+        // איפוס שדות
+        document.getElementById('eventTitle').value = '';
+        document.getElementById('eventDesc').value = '';
+        document.getElementById('eventEndTime').value = '';
+        document.getElementById('eventCreatureType').value = '';
+        
+        await loadEvents();
+
+    } catch(e) {
+        console.error("שגיאה בשמירת אירוע:", e);
+        alert('שגיאה: ' + e.message);
+    }
+}
+
+function renderEventsList(events) {
+    const container = document.getElementById('events-list');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const now = new Date();
+    
+    events.forEach(evt => {
+        const end = new Date(evt.endTime);
+        const isActive = end > now;
+        const div = document.createElement('div');
+        div.style.cssText = 'background:white; padding:12px; border-radius:8px; border-right:4px solid ' + (isActive ? '#9c27b0' : '#ccc') + ';';
+        div.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <strong>${evt.title}</strong>
+                    <div style="font-size:0.85em; color:#666;">${evt.description || ''}</div>
+                    <div style="font-size:0.8em; color:#888;">🕒 עד: ${end.toLocaleString('he-IL')}</div>
+                    <div style="font-size:0.8em; color:#7b1fa2;">🐾 יצור: ${evt.creatureType}</div>
+                </div>
+                <div>
+                    ${isActive ? '<span style="color:#9c27b0; font-weight:bold;">פעיל</span>' : '<span style="color:#999;">הסתיים</span>'}
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+
+    if (events.length === 0) {
+        container.innerHTML = '<div style="color:#999; text-align:center;">אין אירועים</div>';
+    }
+}
+
+function populateEventCreatureDropdown() {
+    const select = document.getElementById('eventCreatureType');
+    if (!select || select.options.length > 1) return;
+    
+    CREATURE_TYPES.forEach(type => {
+        const opt = document.createElement('option');
+        opt.value = type;
+        opt.textContent = type.toUpperCase();
+        select.appendChild(opt);
+    });
 }
     
 // מיפוי סיסמאות מורים לכיתות
@@ -1818,14 +2029,24 @@ async function addStudent() {
         const isFirst = existingGroup.length === 0;
         const sharedPass = isFirst ? null : existingGroup.find(s => s.password)?.password || null;
 
+        // בדיקה אם יש אירוע פעיל - אם כן משתמשים ביצור של האירוע
+        let creatureType, eggNum;
+        if (currentEvent && currentEvent.creatureType) {
+            creatureType = currentEvent.creatureType;
+            eggNum = 1; // ביצה ראשונה
+        } else {
+            creatureType = CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)];
+            eggNum = Math.floor(Math.random() * 5);
+        }
+
         const payload = {
             full_name: nameInput,
             className: document.getElementById('studentClass').value,
-            is_group: isGroupInput, // <--- הוספת השדה ל-Database
+            is_group: isGroupInput,
             xp: 0, 
             level: 0, 
-            type: CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)], 
-            egg: Math.floor(Math.random() * 5), 
+            type: creatureType,
+            egg: eggNum, 
             likes: {}, 
             history: {}, 
             isActive: isFirst, 
@@ -3312,7 +3533,7 @@ function handleOverlayClick(e) { if (e.target===document.getElementById('welcome
 document.addEventListener('keydown', e => { if (e.key==='Escape') closeWelcomeImage(); });
 // --- פאנל מנהל ---
 function togglePanel(id) {
-    const all=['panel-announcements','panel-banner','panel-newtask','panel-submissions','panel-creatures'];
+    const all=['panel-announcements','panel-banner','panel-newtask','panel-submissions','panel-creatures','panel-events'];
     all.forEach(p => {
         const el=document.getElementById(p); if(!el) return;
         if (p===id) {
@@ -3323,6 +3544,10 @@ function togglePanel(id) {
                 if (p==='panel-creatures') renderCreatureTypesList();
                 if (p==='panel-announcements') loadAnnouncements();
                 if (p==='panel-banner')        loadWelcomeImageForAdmin();
+                if (p==='panel-events') {
+                    loadEvents();
+                    populateEventCreatureDropdown();
+                }
             }
         } else el.style.display='none';
     });
@@ -4176,7 +4401,7 @@ async function checkBattlesSchema() {
 }
 
 async function init() {
-    await Promise.all([loadStudents(), loadTasks(), loadAnnouncements(), loadCreatureTypes()]);
+    await Promise.all([loadStudents(), loadTasks(), loadAnnouncements(), loadCreatureTypes(), loadEvents()]);
     if (currentUser && currentUser!=='admin') {
         const found=allStudents.find(s=>s.id===currentUser);
         if (found) startApp();
