@@ -2531,7 +2531,7 @@ function updateView() {
 <img id="img-${s.id}" src="${imgPath}" class="creature-img" 
                           style="max-height:135px;object-fit:contain;margin-bottom:8px;cursor:${currentUser === 'admin' ? 'copy' : 'zoom-in'};"
                           onclick="event.stopPropagation(); ${currentUser === 'admin' ? `addXP('${s.id}')` : `if(typeof toggleCharacterZoom==='function') toggleCharacterZoom('${imgPath}')`}"
-                          onerror="this.src='${`images/${s.type}${s.level >= 20 ? 3 : s.level >= 10 ? 2 : s.level >= 4 ? 1 : 1}.png`}'"
+                          onerror="this.src='images/${s.type}3.png'"
                     <div style="font-weight:bold;font-size:1.3em;line-height:1.2;display:flex;align-items:center;gap:6px;">
                         ${s.full_name} ${likeBtn} ${likeDisplay}
                     </div>
