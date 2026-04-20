@@ -3842,12 +3842,44 @@ function hideEventBanner() {
 function closeEventBanner() {
     // X button - fully hide (can be restored by clicking the minimized circle)
     hideEventBanner();
+    // Remove the minimized button
+    const minimizedEl = document.getElementById('event-banner-minimized-el');
+    if (minimizedEl) minimizedEl.remove();
+}
+
+function hideEventBanner() {
+    const overlay = document.getElementById('event-banner-overlay');
+    overlay.classList.remove('active');
+    overlay.classList.remove('minimized');
+    overlay.style.display = 'none';
+    if (eventTimerInterval) {
+        clearInterval(eventTimerInterval);
+        eventTimerInterval = null;
+    }
 }
 
 function minimizeEventBanner() {
     const overlay = document.getElementById('event-banner-overlay');
     overlay.classList.add('minimized');
     overlay.classList.remove('active');
+    // Show minimized version
+    overlay.style.display = 'flex';
+    
+    // Also show a clickable button
+    const minimizedEl = document.getElementById('event-banner-minimized-el');
+    if (!minimizedEl) {
+        const btn = document.createElement('div');
+        btn.id = 'event-banner-minimized-el';
+        btn.textContent = '🎉';
+        btn.style.cssText = 'position:fixed;top:20px;left:20px;width:60px;height:60px;border-radius:50%;background:#e65100;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;z-index:2600;';
+        btn.onclick = function() {
+            overlay.classList.remove('minimized');
+            overlay.classList.add('active');
+            overlay.style.display = 'block';
+            this.remove();
+        };
+        document.body.appendChild(btn);
+    }
 }
 
 function handleEventBannerClick(e) {
@@ -3859,14 +3891,6 @@ function handleEventBannerClick(e) {
         overlay.style.display = 'block';
     }
 }
-
-// Add click listener to the minimized banner
-document.addEventListener('DOMContentLoaded', function() {
-    const overlay = document.getElementById('event-banner-overlay');
-    if (overlay) {
-        overlay.addEventListener('click', handleEventBannerClick);
-    }
-});
 
 // --- קרבות ---
 function buildBattleSidebar(me) {
