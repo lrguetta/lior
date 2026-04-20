@@ -2023,8 +2023,8 @@ async function addStudent() {
         let eggNum = Math.floor(Math.random() * 5);
         
         if (currentActiveEvent && isFirst) {
-            creatureType = currentActiveEvent.creaturetype;
-            eggNum = currentActiveEvent.eggnum || 0;
+            creatureType = currentActiveEvent.creatureType;
+            eggNum = currentActiveEvent.eggNum || 0;
         }
 
         const payload = {
@@ -3647,7 +3647,7 @@ async function loadEvents() {
         
         // Check for active event
         const now = new Date();
-        const activeEvent = (data || []).find(e => new Date(e.endtime) > now);
+        const activeEvent = (data || []).find(e => new Date(e.endTime) > now);
         
         if (activeEvent) {
             currentActiveEvent = activeEvent;
@@ -3672,7 +3672,7 @@ function renderEventsList(events) {
     
     const now = new Date();
     container.innerHTML = events.map(e => {
-        const endTime = new Date(e.endtime);
+        const endTime = new Date(e.endTime);
         const isActive = endTime > now;
         const timeLeft = isActive ? getTimeRemaining(endTime) : 'הסתיים';
         
@@ -3683,7 +3683,7 @@ function renderEventsList(events) {
                         <strong style="color:#e65100; font-size:1.1em;">${e.title || 'אירוע'}</strong>
                         <div style="color:#666; font-size:0.9em; margin-top:5px;">${e.description || ''}</div>
                         <div style="color:#7b1fa2; font-size:0.85em; margin-top:5px;">
-                            🎁 דמות: ${e.creaturetype || 'רגילה'} | ביצה: ${(e.eggnum || 0) + 1}
+                            🎁 דמות: ${e.creatureType || 'רגילה'} | ביצה: ${(e.eggNum || 0) + 1}
                         </div>
                     </div>
                     <div style="text-align:left;">
@@ -3741,9 +3741,9 @@ async function addNewEvent() {
             .insert([{
                 title: title,
                 description: desc,
-                endtime: endTime.toISOString(),
-                creaturetype: creatureType,
-                eggnum: eggNum
+                endTime: endTime.toISOString(),
+                creatureType: creatureType,
+                eggNum: eggNum
             }]);
         
         if (error) throw error;
@@ -3803,15 +3803,16 @@ function showEventBanner(event) {
         'snl': 'סלמנדרה 🦎', 'owl': 'ינשוף 🦉', 'spd': 'עכביש 🕷️'
     };
     
-    const creatureName = creatureNames[event.creaturetype] || event.creaturetype;
-    const eggNum = (event.eggnum || 0) + 1;
+const creatureName = creatureNames[event.creatureType] || event.creatureType;
+    const eggNum = (event.eggNum || 0) + 1;
+    
     creature.innerHTML = `🎁 דמות מיוחדת: <strong>${creatureName}</strong><br>🥚 ביצה מספר: ${eggNum}`;
     
     // Start timer
     if (eventTimerInterval) clearInterval(eventTimerInterval);
     
     const updateTimer = () => {
-        const endTime = new Date(event.endtime);
+        const endTime = new Date(event.endTime);
         const now = new Date();
         const diff = endTime - now;
         
