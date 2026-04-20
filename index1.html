@@ -1803,9 +1803,12 @@ async function openShop() {
         if (items) {
             items.forEach(item => {
                 const canAfford = myCash >= item.price;
+                const iconHtml = (item.icon && item.icon.endsWith('.png')) 
+                    ? `<img src="${item.icon}" style="width:50px;height:50px;object-fit:contain;">` 
+                    : `<div style="font-size:40px; margin-bottom:5px;">${item.icon || '🎁'}</div>`;
                 html += `
                     <div class="shop-item" style="border:1px solid #ddd; padding:10px; border-radius:12px; text-align:center; background:${canAfford ? '#fff' : '#f5f5f5'}; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                        <div style="font-size:40px; margin-bottom:5px;">${item.icon || '🎁'}</div>
+                        ${iconHtml}
                         <div style="font-weight:bold; height:40px; display:flex; align-items:center; justify-content:center;">${item.name}</div>
                         <div style="color:#2e7d32; font-weight:bold; margin:10px 0;">${item.price} שקל</div>
                         <button 
@@ -1894,11 +1897,9 @@ async function handleItemUsage(entryId, itemName) {
         if (!me) return;
 
         if (itemName === "משקה אנרגיה") {
-            // 1. קבלת רשימת המתקפות של השחקן לפי סוג ורמה
             const attacks = (ATTACKS_BY_TYPE[me.type] || []).slice(0, attacksByLevel(me.level));
             let cleared = false;
 
-            // 2. מעבר על המתקפות ובדיקה איזו מהן בקולדאון ב-LocalStorage
             for (let atk of attacks) {
                 const name = typeof atk === 'object' ? atk.name : atk;
                 const storageKey = 'last_attack_' + currentUser + '_' + name;
@@ -1906,10 +1907,9 @@ async function handleItemUsage(entryId, itemName) {
                 const remaining = (60 * 60 * 1000) - (Date.now() - lastAttack);
 
                 if (remaining > 0) {
-                    // מצאנו מתקפה בקולדאון! נאפס אותה
                     localStorage.removeItem(storageKey);
                     cleared = true;
-                    break; // עוצרים אחרי איפוס מתקפה אחת בלבד כפי שביקשת
+                    break;
                 }
             }
 
@@ -1917,29 +1917,124 @@ async function handleItemUsage(entryId, itemName) {
                 alert("כל המתקפות שלך כבר מוכנות לשימוש!");
                 return;
             }
-        } else {
+        } 
+        else if (itemName === "סוכריית XP") {
+            // Add 50 XP
+            let newXP = me.xp + 50;
+            let newLevel = me.level;
+            while (newXP >= 100) { newLevel++; newXP -= 100; }
+            
+            const { error } = await supabase
+                .from('students')
+                .update({ xp: newXP, level: newLevel })
+                .eq('id', currentUser);
+            
+            if (error) throw error;
+            alert("🍬 קיבלת +50 XP!");
+        }
+        else if (itemName === "מגן פלדה") {
+            let history = (typeof me.history === 'string') ? JSON.parse(me.history || "{}") : (me.history || {});
+            const broken = history.shields_broken || [];
+            const totalShields = shieldsByLevel(me.level || 0);
+            
+            if (broken.length >= totalShields) {
+                alert("אין מקום למגן נוסף! המגינים מלאים.");
+                return;
+            }
+            
+            // Use first broken shield
+            const firstBroken = broken.findIndex(b => b !== undefined);
+            if (firstBroken >= 0) broken.splice(firstBroken, 1);
+            history.shields_broken = broken;
+            
+            const { error } = await supabase
+                .from('students')
+                .update({ history: history })
+                .eq('id', currentUser);
+            
+            if (error) throw error;
+            alert("🛡️ קיבלת מגן פלדה!");
+        }
+        else if (itemName === "נר נשמה") {
+            // Open candle modal
+            document.getElementById('generic-modal-content').innerHTML = `
+                <div style="text-align:center; padding:20px;">
+                    <h2 style="margin:0 0 20px 0;">🕯️ נר נשמה</h2>
+                    <p style="color:#666; margin-bottom:20px;">הדלק נר לזכר אהובים שאינם איתנו</p>
+                    <input type="text" id="candle-name" placeholder="שם הנפטר/ת" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #ddd; text-align:center;">
+                    <textarea id="candle-message" placeholder="פרטים נוספים (אופציונלי)" style="width:100%; height:80px; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #ddd; text-align:right;"></textarea>
+                    <button onclick="handleCandleUse('${entryId}')" style="background:#ff9800; color:white; padding:12px 24px; border:none; border-radius:10px; cursor:pointer; font-size:1.1em; width:100%;">הדלק נר 🕯️</button>
+                </div>
+            `;
+            return;
+        }
+        else if (itemName === "דגל ישראל") {
+            const { error } = await supabase
+                .from('students')
+                .update({ hasFlag: true })
+                .eq('id', currentUser);
+            
+            if (error) throw error;
+            alert("🇮🇱 הדגל הוצב על הכרטיס שלך!");
+        }
+        else {
             alert("לפריט זה אין עדיין שימוש מוגדר.");
             return;
         }
 
-        // --- עדכון המלאי ב-Database (הורדת המשקה) ---
+        // Delete item after use
         const { data: currentEntry } = await supabase.from('student_items').select('quantity').eq('id', entryId).single();
         if (currentEntry && currentEntry.quantity > 1) {
             await supabase.from('student_items').update({ quantity: currentEntry.quantity - 1 }).eq('id', entryId);
         } else {
             await supabase.from('student_items').delete().eq('id', entryId);
         }
-
-        alert(`השתמשת ב${itemName}! אחת המתקפות התאפסה.`);
         
+        alert(`השתמשת ב${itemName}!`);
         closeGenericModal();
-        // רענון הסיידבר כדי לראות את השינוי מיד
+        if (typeof loadStudents === 'function') await loadStudents();
         if (typeof buildBattleSidebar === 'function') buildBattleSidebar(me);
-        if (typeof fetchData === 'function') fetchData();
 
     } catch (err) {
         console.error("Usage Error:", err);
         alert("שגיאה בשימוש בפריט");
+    }
+}
+
+async function handleCandleUse(entryId) {
+    const name = document.getElementById('candle-name').value.trim();
+    const message = document.getElementById('candle-message').value.trim();
+    
+    if (!name) {
+        alert("חובה להזין שם!");
+        return;
+    }
+    
+    try {
+        const me = allStudents.find(s => s.id === currentUser);
+        let history = (typeof me.history === 'string') ? JSON.parse(me.history || "{}") : (me.history || {});
+        history['candle_' + Date.now()] = { name: name, message: message, time: Date.now() };
+        
+        const { error } = await supabase
+            .from('students')
+            .update({ history: history })
+            .eq('id', currentUser);
+        
+        if (error) throw error;
+        
+        // Delete candle
+        const { data: currentEntry } = await supabase.from('student_items').select('quantity').eq('id', entryId).single();
+        if (currentEntry && currentEntry.quantity > 1) {
+            await supabase.from('student_items').update({ quantity: currentEntry.quantity - 1 }).eq('id', entryId);
+        } else {
+            await supabase.from('student_items').delete().eq('id', entryId);
+        }
+        
+        alert("🕯️ הנר הודלק לעילוי נשמת " + name);
+        closeGenericModal();
+        if (typeof loadStudents === 'function') await loadStudents();
+    } catch(e) {
+        alert("שגיאה: " + e.message);
     }
 }
     
