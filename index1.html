@@ -3844,14 +3844,29 @@ function closeEventBanner() {
     hideEventBanner();
 }
 
+function minimizeEventBanner() {
+    const overlay = document.getElementById('event-banner-overlay');
+    overlay.classList.add('minimized');
+    overlay.classList.remove('active');
+}
+
 function handleEventBannerClick(e) {
     const overlay = document.getElementById('event-banner-overlay');
     if (overlay.classList.contains('minimized')) {
         // Click on minimized banner - restore it
         overlay.classList.remove('minimized');
         overlay.classList.add('active');
+        overlay.style.display = 'block';
     }
 }
+
+// Add click listener to the minimized banner
+document.addEventListener('DOMContentLoaded', function() {
+    const overlay = document.getElementById('event-banner-overlay');
+    if (overlay) {
+        overlay.addEventListener('click', handleEventBannerClick);
+    }
+});
 
 // --- קרבות ---
 function buildBattleSidebar(me) {
