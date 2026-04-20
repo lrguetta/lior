@@ -160,6 +160,34 @@ body {
     margin-top: 50px; 
     border: 2px solid #81c784;
 }
+
+.login-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+.login-tabs button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9em;
+    background: #e0e0e0;
+    color: #333;
+    transition: all 0.2s;
+}
+.login-tabs button.active {
+    background: #1976d2;
+    color: white;
+}
+.login-tabs button:hover:not(.active) {
+    background: #bdbdbd;
+}
+
+#teacher-login-area, #admin-login-area {
+    margin-bottom: 15px;
+}
 #control-panel { 
     display: none; 
     background: rgba(255, 255, 255, 0.95); 
@@ -314,7 +342,6 @@ button {
 }
 
 .card-front {
-    transform: rotateY(0deg);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -789,52 +816,38 @@ button {
     <h3 style="margin-top:0; color:#e65100; border-bottom:2px solid #ffcc80; padding-bottom:5px;">📢 מה חדש?</h3>
     <div id="announcements-content" style="white-space: pre-wrap; font-size: 0.95em; color: #333;">טוען עדכונים...</div>
 </div>
-
-<div id="event-banner" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%) translateY(-200px); z-index:2000;">
-    <div style="
-        background-image: url('images/scroll.png');
-        background-size: cover;
-        background-position: center;
-        padding: 25px 35px;
-        max-width: 500px;
-        text-align: center;
-        position: relative;
-    ">
-        <!-- קישוטים בפינות -->
-        <div style="position:absolute; top:8px; left:12px; font-size:1.5em; color:#8b7355;">🦄</div>
-        <div style="position:absolute; top:8px; right:12px; font-size:1.5em; color:#8b7355;">🐉</div>
-        <div style="position:absolute; bottom:8px; left:12px; font-size:1.5em; color:#8b7355;">🐴</div>
-        <div style="position:absolute; bottom:8px; right:12px; font-size:1.5em; color:#8b7355;">🔮</div>
-        
-        <div style="font-size:2.5em; margin-bottom:10px;">🎉✨ אירוע מיוחד! ✨🎉</div>
-        <div id="event-title" style="font-weight:bold; font-size:1.4em; color:#5d4e37; margin-bottom:8px; font-family:serif;"></div>
-        <div id="event-desc" style="font-size:1em; color:#6b5a45; margin-bottom:15px; font-style:italic;"></div>
-        
-        <div style="background:rgba(139,115,85,0.15); padding:12px 20px; border-radius:8px; margin-bottom:15px;">
-            <div style="font-size:0.85em; color:#8b7355; margin-bottom:5px;">🕒 נותר לסיום האירוע:</div>
-            <div id="event-timer" style="font-size:1.8em; font-weight:bold; color:#5d4e37; font-family:monospace; letter-spacing:3px;"></div>
-        </div>
-        
-        <button id="toggle-event" onclick="toggleEventBanner()" style="
-            background: #8b7355; 
-            color: #f4e4bc; 
-            border: none; 
-            padding: 8px 20px; 
-            border-radius: 4px; 
-            cursor: pointer;
-            font-size: 0.9em;
-        ">סגור 📜</button>
-    </div>
-</div>
     
 <div id="login-screen">
     <h2>החווה המופלאה 🐾</h2>
-    <div id="admin-login-area">
-        <input type="password" id="adminPass" placeholder="סיסמת מנהל/מורה" style="width:80%; margin-bottom:10px;">
-        <button onclick="checkAdmin()" style="width:90%;">כניסה 🔑</button>
+    
+    <div class="login-tabs">
+        <button id="tab-admin" onclick="showLoginTab('admin')">מנהל</button>
+        <button id="tab-teacher" onclick="showLoginTab('teacher')">מורה</button>
+        <button id="tab-student" onclick="showLoginTab('student')" class="active">תלמיד</button>
     </div>
+    
+    <div id="admin-login-area">
+        <input type="password" id="adminPass" placeholder="סיסמת מנהל" style="width:80%; margin-bottom:10px;">
+        <button onclick="checkAdmin()" style="width:90%;">כניסת מנהל 🔑</button>
+    </div>
+    
+    <div id="teacher-login-area" style="display:none; margin-bottom:15px;">
+        <select id="teacherGrade" style="width:90%; margin-bottom:10px;">
+            <option value="">בחר כיתה...</option>
+            <option value="א">כיתה א'</option>
+            <option value="ב">כיתה ב'</option>
+            <option value="ג">כיתה ג'</option>
+            <option value="ד">כיתה ד'</option>
+            <option value="ה">כיתה ה'</option>
+            <option value="ו">כיתה ו'</option>
+        </select>
+        <input type="password" id="teacherPass" placeholder="סיסמת מורה" style="width:90%; margin-bottom:10px; padding:12px; border-radius:10px; border:1px solid #ddd; box-sizing:border-box;">
+        <button onclick="checkTeacher()" style="width:90%; background-color:#7b1fa2;">כניסת מורה 📚</button>
+    </div>
+    
     <hr style="margin:20px 0;">
-    <div id="student-login-area">
+    
+    <div id="student-login-area" class="active">
         <p>כניסת תלמידים:</p>
         <select id="studentSelect" style="width:90%; margin-bottom:10px;">
             <option value="">טוען רשימה...</option>
@@ -854,18 +867,8 @@ button {
     </label>
 </div>
         <select id="studentClass">
-            <option value="א1">כיתה א'1</option>
-            <option value="א2">כיתה א'2</option>
-            <option value="ב1">כיתה ב'1</option>
-            <option value="ב2">כיתה ב'2</option>
-            <option value="ג1">כיתה ג'1</option>
-            <option value="ג2">כיתה ג'2</option>
-            <option value="ד1">כיתה ד'1</option>
-            <option value="ד2">כיתה ד'2</option>
             <option value="ה1">כיתה ה'1</option>
             <option value="ה2">כיתה ה'2</option>
-            <option value="ו1">כיתה ו'1</option>
-            <option value="ו2">כיתה ו'2</option>
         </select>
         <button onclick="addStudent()">צרף יצור לחווה 🐾</button>
         <button id="magic-btn" onclick="fixDatabase()" style="background:#8e24aa;">✨ סידור דמויות אוטומטי</button>
@@ -876,9 +879,9 @@ button {
         <select id="sortBy" onchange="updateView()" style="flex:1;">
             <option value="name">מיין לפי שם</option>
             <option value="level">מיין לפי רמה</option>
-            <option value="all">כל הכיתות</option>
-            <option value="class1">כיתה 1</option>
-            <option value="class2">כיתה 2</option>
+            <option value="class">מיין לפי כיתה</option>
+            <option value="class1">כיתה 1 בלבד</option>
+            <option value="class2">כיתה 2 בלבד</option>
         </select>
         <button onclick="logout()" style="background:#c62828;">התנתק 🚪</button>
     </div>
@@ -891,7 +894,6 @@ button {
         <button onclick="togglePanel('panel-newtask')"       style="background:#1976d2; padding:10px 14px; font-size:0.88em;">➕ פרסום מטלה</button>
         <button onclick="togglePanel('panel-submissions')"   style="background:#2e7d32; padding:10px 14px; font-size:0.88em;">📥 ניהול הגשות</button>
         <button onclick="togglePanel('panel-creatures')"     style="background:#7b1fa2; padding:10px 14px; font-size:0.88em;">🐾 ניהול דמויות</button>
-        <button onclick="togglePanel('panel-events')"         style="background:#9c27b0; padding:10px 14px; font-size:0.88em;">🎉 הוספת אירוע</button>
         <button onclick="smartCleanupAllStudents('smart-clean')"     style="background:#f44336; padding:10px 14px; font-size:0.88em;">🗑️ ניקוי היסטוריה</button>
      
     <div id="panel-announcements" style="display:none; width:100%; background:#fff3e0; padding:15px; border-radius:10px; border:1px solid #ffcc80; text-align:right; box-sizing:border-box; margin-top:12px;">
@@ -964,36 +966,6 @@ button {
             </div>
             <div id="creature-types-list" style="display:flex; flex-direction:column; gap:5px;">
                 <div style="color:#aaa; text-align:center; padding:10px;">טוען...</div>
-            </div>
-        </div>
-    </div>
-
-    <div id="panel-events" style="display:none; width:100%; margin-top:12px;">
-        <div style="background:rgba(255,255,255,0.97); border-radius:14px; padding:20px; border:2px solid #9c27b0;">
-            <h4 style="margin:0 0 15px 0; color:#6a1b9a;">🎉 ניהול אירועים</h4>
-            <div style="display:flex; gap:15px; margin-bottom:15px; flex-wrap:wrap;">
-                <input type="text" id="eventTitle" placeholder="כותרת האירוע" style="flex:2; min-width:200px;">
-                <input type="text" id="eventDesc" placeholder="תיאור קצר" style="flex:3; min-width:300px;">
-                <input type="datetime-local" id="eventEndTime" style="flex:1;" title="זמן סיום">
-            </div>
-            <div style="display:flex; gap:10px; margin-bottom:15px; align-items:center;">
-                <span>ביצה:</span>
-                <select id="eventEggNum" style="width:70px;">
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                </select>
-                <span>יצור מיוחד:</span>
-                <select id="eventCreatureType" style="width:120px;">
-                    <option value="">-- בחר --</option>
-                </select>
-                <button onclick="saveEvent()" style="background:#9c27b0; padding:10px 20px; font-size:1em;">פרסם אירוע 🚀</button>
-            </div>
-            <div style="background:#f3e5f5; padding:15px; border-radius:10px; border:1px solid #ce93d8;">
-                <h5 style="margin:0 0 10px 0; color:#7b1fa2;">אירועים קיימים</h5>
-                <div id="events-list" style="display:flex; flex-direction:column; gap:10px;"></div>
             </div>
         </div>
     </div>
@@ -1086,8 +1058,7 @@ const TABLES = {
     announcements: 'announcements',
     welcomeImage: 'welcomeImage',
     battles: 'battles',
-    creatureTypes: 'creature_types',
-    events: 'events'
+    creatureTypes: 'creature_types'
 };
 
     
@@ -1123,10 +1094,10 @@ const CREATURE_SEED_DATA = [
 ];
 
 let battleState = { selectedSkill:null, pendingBattleId:null, pendingBattle:null, stealMode:false, stealCallback:null };
-const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd', 'wsl', 'lmb', 'lio', 'hlz', 'egl', 'trk'];
+const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
 let allStudents=[], allTasks=[], editingTaskId=null, currentTaskToSubmit=null;
-let currentEvent = null;
 let currentUser = localStorage.getItem('farm_user_id') || null;
+let currentGrade = localStorage.getItem('farm_teacher_grade') || null;
 
 const safe = t => typeof t!=='string' ? t : t.replace(/'/g,"&#39;").replace(/"/g,"&quot;");
 
@@ -1408,234 +1379,52 @@ async function saveAnnouncements() {
         alert('שגיאה בפרסום: ' + (e.message || e));
     }
 }
-
-// --- אירועים ---
-async function loadEvents() {
-    try {
-        const { data, error } = await supabase
-            .from(TABLES.events)
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        // מציאת אירוע פעיל
-        const now = new Date();
-        currentEvent = null;
-        
-        if (data && data.length > 0) {
-            for (const evt of data) {
-                if (evt.endTime && new Date(evt.endTime) > now) {
-                    currentEvent = evt;
-                    break;
-                }
-            }
-        }
-
-        // עדכון הבאנר - רק לתלמידים (לא למנהל/מורה)
-        const isStudent = currentUser && currentUser !== 'admin' && !currentUser.startsWith('teacher_');
-        if (isStudent) {
-            updateEventBanner();
-        } else {
-            document.getElementById('event-banner').style.display = 'none';
-        }
-        
-        // רענון רשימת האירועים בפאנל
-        renderEventsList(data || []);
-
-    } catch(e) { console.error("שגיאה בטעינת אירועים:", e); }
-}
-
-function updateEventBanner() {
-    const banner = document.getElementById('event-banner');
-    if (!banner) return;
-
-    if (currentEvent) {
-        document.getElementById('event-title').textContent = currentEvent.title || '';
-        document.getElementById('event-desc').textContent = currentEvent.description || '';
-        banner.style.display = 'block';
-        updateEventTimer();
-    } else {
-        banner.style.display = 'none';
-    }
-}
-
-function updateEventTimer() {
-    const timerEl = document.getElementById('event-timer');
-    if (!timerEl || !currentEvent) return;
-
-    const now = new Date();
-    const end = new Date(currentEvent.endTime);
-    const diff = end - now;
-
-    if (diff <= 0) {
-        timerEl.textContent = 'הסתיים!';
-        timerEl.style.background = 'rgba(255,0,0,0.5)';
-        setTimeout(() => {
-            loadEvents(); // בדיקה מחדש
-        }, 2000);
-        return;
-    }
-
-    const hours = Math.floor(diff / 3600000);
-    const mins = Math.floor((diff % 3600000) / 60000);
-    const secs = Math.floor((diff % 60000) / 1000);
     
-    timerEl.textContent = String(hours).padStart(2,'0') + ':' + String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0');
-    
-    requestAnimationFrame(() => setTimeout(updateEventTimer, 1000));
-}
-
-function toggleEventBanner() {
-    const banner = document.getElementById('event-banner');
-    const btn = document.getElementById('toggle-event');
-    if (banner.style.display === 'none') {
-        banner.style.display = 'flex';
-        btn.textContent = '−';
-    } else {
-        banner.style.display = 'none';
-        btn.textContent = '+';
-    }
-}
-
-async function saveEvent() {
-    const title = document.getElementById('eventTitle').value.trim();
-    const desc = document.getElementById('eventDesc').value.trim();
-    const endTime = document.getElementById('eventEndTime').value;
-    const creatureType = document.getElementById('eventCreatureType').value;
-    const eggNum = parseInt(document.getElementById('eventEggNum').value);
-
-    if (!title || !endTime) return alert('חובה כותרת וזמן סיום!');
-    if (!creatureType) return alert('חובה לבחור יצור מיוחד!');
-
-    // בדיקה שהזמן בעתיד
-    if (new Date(endTime) <= new Date()) return alert('זמן הסיום חייב להיות בעתיד!');
-
-    try {
-        const { error } = await supabase
-            .from(TABLES.events)
-            .insert([{
-                title,
-                description: desc,
-                endTime,
-                creatureType,
-                eggNum,
-                created_at: new Date().toISOString()
-            }]);
-
-        if (error) throw error;
-
-        alert('האירוע פורסם בהצלחה! 🎉');
-        
-        // איפוס שדות
-        document.getElementById('eventTitle').value = '';
-        document.getElementById('eventDesc').value = '';
-        document.getElementById('eventEndTime').value = '';
-        document.getElementById('eventCreatureType').value = '';
-        document.getElementById('eventEggNum').value = '1';
-        
-        await loadEvents();
-
-    } catch(e) {
-        console.error("שגיאה בשמירת אירוע:", e);
-        alert('שגיאה: ' + e.message);
-    }
-}
-
-function renderEventsList(events) {
-    const container = document.getElementById('events-list');
-    if (!container) return;
-    container.innerHTML = '';
-
-    const now = new Date();
-    
-    events.forEach(evt => {
-        const end = new Date(evt.endTime);
-        const isActive = end > now;
-        const div = document.createElement('div');
-        div.style.cssText = 'background:white; padding:12px; border-radius:8px; border-right:4px solid ' + (isActive ? '#9c27b0' : '#ccc') + ';';
-        div.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <strong>${evt.title}</strong>
-                    <div style="font-size:0.85em; color:#666;">${evt.description || ''}</div>
-                    <div style="font-size:0.8em; color:#888;">🕒 עד: ${end.toLocaleString('he-IL')}</div>
-                    <div style="font-size:0.8em; color:#7b1fa2;">🐾 יצור: ${evt.creatureType} | 🥚 ביצה: ${evt.eggNum || 1}</div>
-                </div>
-                <div style="display:flex; flex-direction:column; gap:8px; align-items:center;">
-                    ${isActive ? '<span style="color:#9c27b0; font-weight:bold;">פעיל</span>' : '<span style="color:#999;">הסתיים</span>'}
-                    <button onclick="deleteEvent('${evt.id}')" style="background:#f44336; color:white; border:none; padding:5px 10px; border-radius:4px; font-size:0.75em; cursor:pointer;">🗑️ מחק</button>
-                </div>
-            </div>
-        `;
-        container.appendChild(div);
-    });
-
-    if (events.length === 0) {
-        container.innerHTML = '<div style="color:#999; text-align:center;">אין אירועים</div>';
-    }
-}
-
-function populateEventCreatureDropdown() {
-    const select = document.getElementById('eventCreatureType');
-    if (!select || select.options.length > 1) return;
-    
-    CREATURE_TYPES.forEach(type => {
-        const opt = document.createElement('option');
-        opt.value = type;
-        opt.textContent = type.toUpperCase();
-        select.appendChild(opt);
-    });
-}
-
-async function deleteEvent(eventId) {
-    if (!confirm('האם למחוק את האירוע?')) return;
-    
-    try {
-        const { error } = await supabase
-            .from(TABLES.events)
-            .delete()
-            .eq('id', eventId);
-        
-        if (error) throw error;
-        
-        alert('האירוע נמחק!');
-        await loadEvents();
-        
-    } catch(e) {
-        console.error("שגיאה במחיקת אירוע:", e);
-        alert('שגיאה: ' + e.message);
-    }
+function showLoginTab(tab) {
+    document.querySelectorAll('.login-tabs button').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.getElementById('admin-login-area').style.display = tab === 'admin' ? 'block' : 'none';
+    document.getElementById('teacher-login-area').style.display = tab === 'teacher' ? 'block' : 'none';
+    document.getElementById('student-login-area').style.display = tab === 'student' ? 'block' : 'none';
 }
     
-// מיפוי סיסמאות מורים לכיתות
-const teacherPasswords = {
-    'admin247': { classPrefix: null, label: 'מנהל מערכת' },
-    'rabenu247': { classPrefix: 'ה', label: 'כיתות ה' },
-    'teacher1': { classPrefix: 'א', label: 'כיתה א' },
-    'teacher2': { classPrefix: 'ב', label: 'כיתה ב' },
-    'teacher3': { classPrefix: 'ג', label: 'כיתה ג' },
-    'teacher4': { classPrefix: 'ד', label: 'כיתה ד' },
-    'teacher5': { classPrefix: 'ה', label: 'כיתה ה' },
-    'teacher6': { classPrefix: 'ו', label: 'כיתה ו' }
-};
-let currentTeacherClass = null;
-
 function checkAdmin() {
     const pass = document.getElementById('adminPass').value;
-    const teacherInfo = teacherPasswords[pass];
-    
-    if (teacherInfo) {
-        if (pass === 'admin247') {
-            currentUser = 'admin';
-            currentTeacherClass = null;
-        } else {
-            currentUser = 'teacher_' + pass;
-            currentTeacherClass = teacherInfo.classPrefix;
-        }
+    if (pass === 'admin247148') {
+        currentUser = 'admin';
+        currentGrade = null;
+        localStorage.removeItem('farm_teacher_grade');
         startApp();
     } else {
         alert('סיסמה שגויה');
+    }
+}
+
+function checkTeacher() {
+    const grade = document.getElementById('teacherGrade').value;
+    const pass = document.getElementById('teacherPass').value;
+    
+    if (!grade) {
+        alert('בחר כיתה!');
+        return;
+    }
+    
+    const teacherPasswords = {
+        'א': 'teacher1',
+        'ב': 'teacher2',
+        'ג': 'teacher3',
+        'ד': 'teacher4',
+        'ה': 'rabenu247',
+        'ו': 'teacher6'
+    };
+    
+    if (pass === teacherPasswords[grade]) {
+        currentUser = 'teacher_' + grade;
+        currentGrade = grade;
+        localStorage.setItem('farm_teacher_grade', grade);
+        startApp();
+    } else {
+        alert('סיסמה שגויה לכיתה ' + grade);
     }
 }
 async function studentLogin() {
@@ -1709,63 +1498,24 @@ async function startApp() {
     document.getElementById('farm-grid').style.display    = 'grid';
     document.getElementById('tasks-area').style.display   = 'block';
     
-    // הצגת פאנל ניהול למנהל או למורים
-    if (currentUser === 'admin' || currentUser.startsWith('teacher_')) {
+    const isTeacher = currentUser && currentUser.startsWith('teacher_');
+    
+    if (currentUser === 'admin' || isTeacher) {
         document.getElementById('control-panel').style.display = 'flex';
         
-        // עדכון אפשרויות הכיתה בדropdown לפי המורה המחובר
-        if (currentTeacherClass) {
+        // Update class select based on teacher grade
+        if (isTeacher && currentGrade) {
             const classSelect = document.getElementById('studentClass');
-            if (classSelect) {
-                // הסתרת כל האפשרויות והצגת רק של הכיתה הרלוונטית
-                Array.from(classSelect.options).forEach(opt => {
-                    opt.style.display = opt.value.startsWith(currentTeacherClass) ? 'block' : 'none';
-                });
-                // בחירה אוטומטית באפשרות הראשונה של הכיתה
-                const firstOption = classSelect.querySelector('option[value^="' + currentTeacherClass + '"]');
-                if (firstOption) classSelect.value = firstOption.value;
-            }
-            
-            // עדכון אפשרויות המיון לפי הכיתה של המורה
-            const sortBySelect = document.getElementById('sortBy');
-            if (sortBySelect) {
-                const heLetter = currentTeacherClass;
-                const letterLabel = { 'א': 'א', 'ב': 'ב', 'ג': 'ג', 'ד': 'ד', 'ה': 'ה', 'ו': 'ו' }[heLetter] || heLetter;
-                sortBySelect.innerHTML = `
-                    <option value="name">מיין לפי שם</option>
-                    <option value="level">מיין לפי רמה</option>
-                    <option value="all">כל הכיתות</option>
-                    <option value="class1">כיתה ${letterLabel}'1</option>
-                    <option value="class2">כיתה ${letterLabel}'2</option>
-                `;
-            }
+            classSelect.innerHTML = `
+                <option value="${currentGrade}1">כיתה ${currentGrade}'1</option>
+                <option value="${currentGrade}2">כיתה ${currentGrade}'2</option>
+            `;
         }
         
-        // למנהל מערכת - כל האפשרויות
         if (currentUser === 'admin') {
-            const sortBySelect = document.getElementById('sortBy');
-            if (sortBySelect) {
-                sortBySelect.innerHTML = `
-                    <option value="name">מיין לפי שם</option>
-                    <option value="level">מיין לפי רמה</option>
-                    <option value="all">כל הכיתות</option>
-                    <option value="class1">כיתה א'1</option>
-                    <option value="class2">כיתה א'2</option>
-                    <option value="class3">כיתה ב'1</option>
-                    <option value="class4">כיתה ב'2</option>
-                    <option value="class5">כיתה ג'1</option>
-                    <option value="class6">כיתה ג'2</option>
-                    <option value="class7">כיתה ד'1</option>
-                    <option value="class8">כיתה ד'2</option>
-                    <option value="class9">כיתה ה'1</option>
-                    <option value="class10">כיתה ה'2</option>
-                    <option value="class11">כיתה ו'1</option>
-                    <option value="class12">כיתה ו'2</option>
-                `;
-            }
+            await Promise.all([loadAnnouncements(), loadWelcomeImageForAdmin(), initAdminSubmissions()]);
+            document.getElementById('magic-btn').style.display = 'inline-block';
         }
-        
-        await Promise.all([loadAnnouncements(), loadWelcomeImageForAdmin(), initAdminSubmissions()]);
     } else {
         // --- התחברות תלמיד ---
         document.getElementById('logout-btn-float').style.display = 'block';
@@ -1786,9 +1536,6 @@ async function startApp() {
             buildBattleSidebar(me); // הפונקציה הזו אצלך גם מציגה את כפתור היכולת (skill)
         }
         setTimeout(() => checkPendingBattle(), 1500);
-        
-        // עדכון כרזת אירוע אחרי התחברות
-        updateEventBanner();
     }
     
     subscribeAll();
@@ -2086,29 +1833,29 @@ async function addStudent() {
     
     if (!nameInput) return;
     
+    // בדיקה: מורה יכול להוסיף רק תלמידי כיתתו
+    if (currentGrade && currentUser.startsWith('teacher_')) {
+        const classSelect = document.getElementById('studentClass');
+        const selectedClass = classSelect.value;
+        if (!selectedClass.startsWith(currentGrade)) {
+            alert('אתה יכול להוסיף רק תלמידים לכיתה ' + currentGrade);
+            return;
+        }
+    }
+    
     try {
         const existingGroup = allStudents.filter(s => s.full_name === nameInput);
         const isFirst = existingGroup.length === 0;
         const sharedPass = isFirst ? null : existingGroup.find(s => s.password)?.password || null;
 
-        // בדיקה אם יש אירוע פעיל - אם כן משתמשים ביצור וביצה של האירוע
-        let creatureType, eggNum;
-        if (currentEvent && currentEvent.creatureType) {
-            creatureType = currentEvent.creatureType;
-            eggNum = currentEvent.eggNum || 1;
-        } else {
-            creatureType = CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)];
-            eggNum = Math.floor(Math.random() * 5) + 1;
-        }
-
         const payload = {
             full_name: nameInput,
             className: document.getElementById('studentClass').value,
-            is_group: isGroupInput,
+            is_group: isGroupInput, // <--- הוספת השדה ל-Database
             xp: 0, 
             level: 0, 
-            type: creatureType,
-            egg: eggNum, 
+            type: CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)], 
+            egg: Math.floor(Math.random() * 5), 
             likes: {}, 
             history: {}, 
             isActive: isFirst, 
@@ -2241,8 +1988,7 @@ async function addXP(id) {
     // ✨ הפתרון: עדכון התמונה במסך בזמן אמת כשעולים רמה או בוקעים! ✨
     if (img) {
         const eggNum = (s.egg ?? 0) + 1;
-        img.src = nlv === 0 ? `images/egg${eggNum}.png` : `images/${s.type}${nlv >= 50 ? 4 : nlv >= 20 ? 3 : nlv >= 10 ? 2 : 1}.png`;
-img.onerror = function() { this.src = nlv >= 20 ? `images/${s.type}${3}.png` : nlv >= 10 ? `images/${s.type}${2}.png` : `images/${s.type}${1}.png`; };
+        img.src = nlv === 0 ? `images/egg${eggNum}.png` : `images/${s.type}${nlv >= 20 ? 3 : nlv >= 10 ? 2 : 1}.png`;
     }
 
     // עדכון היסטוריה
@@ -2288,7 +2034,7 @@ function openDeck(fullName) {
         const eggNum = (s.egg ?? 0) + 1;
         const imgPath = s.level === 0 
             ? `images/egg${eggNum}.png` 
-            : `images/${s.type}${s.level >= 50 ? 4 : s.level >= 20 ? 3 : s.level >= 10 ? 2 : 1}.png`;
+            : `images/${s.type}${s.level >= 20 ? 3 : s.level >= 10 ? 2 : 1}.png`;
             
         return `
         <div style="border:3px solid ${s.isActive ? '#4caf50' : '#ddd'}; border-radius:12px; padding:10px; min-width:110px; text-align:center; background:${s.isActive ? '#e8f5e9' : '#fff'}; position:relative;">
@@ -2414,39 +2160,36 @@ function updateView() {
         const active = (s.isActive === true || s.isActive === "true");
         const nameMatch = s.full_name && s.full_name.toLowerCase().includes(searchTerm);
         
-        // סינון לפי כיתה של המורה המחובר
-        let classMatch = true;
-        if (currentTeacherClass) {
-            classMatch = s.className && s.className.startsWith(currentTeacherClass);
+        // סינון לפי כיתה עבור מורים
+        let gradeMatch = true;
+        if (currentGrade && currentUser.startsWith('teacher_')) {
+            const className = s.className || '';
+            gradeMatch = className.startsWith(currentGrade);
         }
         
-        return active && nameMatch && classMatch;
+        return active && nameMatch && gradeMatch;
     });
 
     // לוגיקת מיון (נשארת כפי שהייתה)
     if (sortBy === 'name') filtered.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '', 'he'));
     if (sortBy === 'level') filtered.sort((a, b) => (b.level || 0) - (a.level || 0));
-    
-    // מיון לפי כיתה ספציפית
-    if (sortBy && (sortBy.startsWith('class') || sortBy === 'all')) {
-        const classMap = {
-            'class1': { letter: 'א', num: 1 }, 'class2': { letter: 'א', num: 2 },
-            'class3': { letter: 'ב', num: 1 }, 'class4': { letter: 'ב', num: 2 },
-            'class5': { letter: 'ג', num: 1 }, 'class6': { letter: 'ג', num: 2 },
-            'class7': { letter: 'ד', num: 1 }, 'class8': { letter: 'ד', num: 2 },
-            'class9': { letter: 'ה', num: 1 }, 'class10': { letter: 'ה', num: 2 },
-            'class11': { letter: 'ו', num: 1 }, 'class12': { letter: 'ו', num: 2 }
+    if (sortBy === 'class') {
+        const parse = cls => { 
+            const m = cls?.match(/([א-ת])'?(\d+)/);
+            if (!m) return { g: 0, n: 0 }; 
+            return { g: 'אבגדהוזחטיכלמנסעפצקרשת'.indexOf(m[1]), n: +m[2] }; 
         };
-        
-        // למורים: class1 = כיתה X'1, class2 = כיתה X'2
-        if (currentTeacherClass && (sortBy === 'class1' || sortBy === 'class2')) {
-            const targetClass = currentTeacherClass + (sortBy === 'class1' ? '1' : '2');
-            filtered = filtered.filter(s => s.className === targetClass);
-        } else if (sortBy !== 'all' && classMap[sortBy]) {
-            // למנהל: class1-12 מתייחס לא'-ו'1/2
-            const targetClass = classMap[sortBy].letter + classMap[sortBy].num;
-            filtered = filtered.filter(s => s.className === targetClass);
-        }
+        filtered.sort((a, b) => { 
+            const ca = parse(a.className), cb = parse(b.className); 
+            return ca.g !== cb.g ? ca.g - cb.g : ca.n - cb.n; 
+        });
+    }
+    // מיון לפי כיתה 1 או 2 עבור מורים
+    if (sortBy === 'class1') {
+        filtered = filtered.filter(s => (s.className || '').endsWith('1'));
+    }
+    if (sortBy === 'class2') {
+        filtered = filtered.filter(s => (s.className || '').endsWith('2'));
     }
 
     // יצירת ה-HTML
@@ -2463,7 +2206,7 @@ function updateView() {
         const eggNum = (s.egg ?? 0) + 1;
         const level = s.level || 0;
         const type = s.type || 'dragon';
-        const imgPath = level === 0 ? `images/egg${eggNum}.png` : `images/${type}${level >= 50 ? 4 : level >= 20 ? 3 : level >= 10 ? 2 : 1}.png`;
+        const imgPath = level === 0 ? `images/egg${eggNum}.png` : `images/${type}${level >= 20 ? 3 : level >= 10 ? 2 : 1}.png`;
         
         const historyObj = s.history || {};
         const brokenShields = historyObj.shields_broken || [];
@@ -2528,10 +2271,9 @@ function updateView() {
                     ${currentUser === 'admin' ? `<button class="remove-btn" onclick="event.stopPropagation(); deleteStudent('${s.id}')">✖</button>` : `<div></div>`}
                 </div>
                 <div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;">
-<img id="img-${s.id}" src="${imgPath}" class="creature-img" 
-                          style="max-height:135px;object-fit:contain;margin-bottom:8px;cursor:${currentUser === 'admin' ? 'copy' : 'zoom-in'};"
-                          onclick="event.stopPropagation(); ${currentUser === 'admin' ? `addXP('${s.id}')` : `if(typeof toggleCharacterZoom==='function') toggleCharacterZoom('${imgPath}')`}"
-                          onerror="this.src='https://lrguetta.github.io/lior/images/${s.type}3.png'"
+                   <img id="img-${s.id}" src="${imgPath}" class="creature-img" 
+                         style="max-height:135px;object-fit:contain;margin-bottom:8px;cursor:${currentUser === 'admin' ? 'copy' : 'zoom-in'};"
+                         onclick="event.stopPropagation(); ${currentUser === 'admin' ? `addXP('${s.id}')` : `if(typeof toggleCharacterZoom==='function') toggleCharacterZoom('${imgPath}')`}">
                     <div style="font-weight:bold;font-size:1.3em;line-height:1.2;display:flex;align-items:center;gap:6px;">
                         ${s.full_name} ${likeBtn} ${likeDisplay}
                     </div>
@@ -3255,14 +2997,10 @@ async function initAdminSubmissions() {
                 *,
                 students (full_name)
             `)
-            .eq('status', 'submitted')
+            .eq('status', 'submitted') // מציג רק מה שסטטוס שלו "submitted"
             .order('created_at', { ascending: false });
 
-        if (error) {
-            console.log('Error loading submissions:', error.message, error.details);
-            itemsContainer.innerHTML = `<div style="color:#f44336;text-align:center;">שגיאה: ${error.message}</div>`;
-            return;
-        }
+        if (error) throw error;
 
         // 3. בדיקה אם יש נתונים
         if (!subs || subs.length === 0) { 
@@ -3601,7 +3339,7 @@ function handleOverlayClick(e) { if (e.target===document.getElementById('welcome
 document.addEventListener('keydown', e => { if (e.key==='Escape') closeWelcomeImage(); });
 // --- פאנל מנהל ---
 function togglePanel(id) {
-    const all=['panel-announcements','panel-banner','panel-newtask','panel-submissions','panel-creatures','panel-events'];
+    const all=['panel-announcements','panel-banner','panel-newtask','panel-submissions','panel-creatures'];
     all.forEach(p => {
         const el=document.getElementById(p); if(!el) return;
         if (p===id) {
@@ -3612,10 +3350,6 @@ function togglePanel(id) {
                 if (p==='panel-creatures') renderCreatureTypesList();
                 if (p==='panel-announcements') loadAnnouncements();
                 if (p==='panel-banner')        loadWelcomeImageForAdmin();
-                if (p==='panel-events') {
-                    loadEvents();
-                    populateEventCreatureDropdown();
-                }
             }
         } else el.style.display='none';
     });
@@ -4469,8 +4203,11 @@ async function checkBattlesSchema() {
 }
 
 async function init() {
-    await Promise.all([loadStudents(), loadTasks(), loadAnnouncements(), loadCreatureTypes(), loadEvents()]);
-    if (currentUser && currentUser!=='admin') {
+    await Promise.all([loadStudents(), loadTasks(), loadAnnouncements(), loadCreatureTypes()]);
+    const isTeacher = currentUser && currentUser.startsWith('teacher_');
+    if (currentUser && (currentUser === 'admin' || isTeacher)) {
+        startApp();
+    } else if (currentUser) {
         const found=allStudents.find(s=>s.id===currentUser);
         if (found) startApp();
         else { localStorage.removeItem('farm_user_id'); currentUser=null; }
@@ -4492,7 +4229,9 @@ function closeGenericModal() {
 }
 function logout() { 
     localStorage.removeItem('farm_user_id'); 
-    currentTeacherClass = null;
+    localStorage.removeItem('farm_teacher_grade');
+    currentUser = null;
+    currentGrade = null;
     location.reload(); 
 }
 setInterval(()=>{ updateAllTimers(); updateCooldownDisplay(); }, 1000);
