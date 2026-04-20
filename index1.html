@@ -1117,7 +1117,7 @@ button {
                 </div>
             </div>
             
-            <button onclick="createEvent()" style="background:#e65100; width:100%; padding:12px; font-size:1.1em; color:white; border:none; border-radius:10px; cursor:pointer;">🎉 צור אירוע חדש</button>
+            <button onclick="addNewEvent()" style="background:#e65100; width:100%; padding:12px; font-size:1.1em; color:white; border:none; border-radius:10px; cursor:pointer;">🎉 צור אירוע חדש</button>
             
             <div id="events-list" style="margin-top:20px;"></div>
         </div>
@@ -3715,7 +3715,7 @@ function getTimeRemaining(endTime) {
     return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
-async function createEvent() {
+async function addNewEvent() {
     const title = document.getElementById('event-title').value.trim();
     const desc = document.getElementById('event-desc').value.trim();
     const hours = parseInt(document.getElementById('event-hours').value) || 24;
