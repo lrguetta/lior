@@ -3796,8 +3796,6 @@ function showEventBanner(event) {
     const timer = document.getElementById('event-banner-timer');
     const creatureDiv = document.getElementById('event-banner-creature');
     
-    overlay.classList.remove('minimized');
-    overlay.classList.add('active');
     overlay.style.display = 'block';
     
     title.textContent = event.title || 'אירוע מיוחד!';
@@ -3830,21 +3828,22 @@ function showEventBanner(event) {
 
 function hideEventBanner() {
     const overlay = document.getElementById('event-banner-overlay');
-    overlay.classList.remove('active');
-    overlay.classList.remove('minimized');
     overlay.style.display = 'none';
     if (eventTimerInterval) {
         clearInterval(eventTimerInterval);
         eventTimerInterval = null;
     }
+    // Also remove restore button
+    const restoreBtn = document.getElementById('event-banner-restore-btn');
+    if (restoreBtn) restoreBtn.remove();
 }
 
 function closeEventBanner() {
-    // X button - fully hide (can be restored by clicking the minimized circle)
+    // X button - fully hide
     hideEventBanner();
-    // Remove the minimized button
-    const minimizedEl = document.getElementById('event-banner-minimized-el');
-    if (minimizedEl) minimizedEl.remove();
+    // Remove restore button if exists
+    const restoreBtn = document.getElementById('event-banner-restore-btn');
+    if (restoreBtn) restoreBtn.remove();
 }
 
 function hideEventBanner() {
@@ -3859,26 +3858,25 @@ function hideEventBanner() {
 }
 
 function minimizeEventBanner() {
+    // Hide banner, show small restore button
     const overlay = document.getElementById('event-banner-overlay');
-    overlay.classList.add('minimized');
-    overlay.classList.remove('active');
-    // Show minimized version
-    overlay.style.display = 'flex';
+    overlay.style.display = 'none';
     
-    // Also show a clickable button
-    const minimizedEl = document.getElementById('event-banner-minimized-el');
-    if (!minimizedEl) {
-        const btn = document.createElement('div');
-        btn.id = 'event-banner-minimized-el';
-        btn.textContent = '🎉';
-        btn.style.cssText = 'position:fixed;top:20px;left:20px;width:60px;height:60px;border-radius:50%;background:#e65100;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;z-index:2600;';
-        btn.onclick = function() {
-            overlay.classList.remove('minimized');
-            overlay.classList.add('active');
+    // Create or show restore button
+    let restoreBtn = document.getElementById('event-banner-restore-btn');
+    if (!restoreBtn) {
+        restoreBtn = document.createElement('div');
+        restoreBtn.id = 'event-banner-restore-btn';
+        restoreBtn.textContent = '🎉';
+        restoreBtn.style.cssText = 'position:fixed;top:20px;left:20px;width:60px;height:60px;border-radius:50%;background:#e65100;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;z-index:2600;box-shadow:0 4px 10px rgba(0,0,0,0.3);';
+        restoreBtn.title = 'פתח את הכרזה';
+        restoreBtn.onclick = function() {
             overlay.style.display = 'block';
             this.remove();
         };
-        document.body.appendChild(btn);
+        document.body.appendChild(restoreBtn);
+    } else {
+        restoreBtn.style.display = 'flex';
     }
 }
 
