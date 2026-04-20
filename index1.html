@@ -30,6 +30,94 @@ body {
 }
 #welcome-image-overlay.active { display: flex; }
 
+#event-banner-overlay {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2500;
+    max-width: 90vw;
+    max-height: 90vh;
+}
+#event-banner-overlay.active { display: block; }
+
+#event-banner-overlay.minimized {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    transform: none;
+    max-width: 200px;
+    cursor: pointer;
+}
+#event-banner-overlay.minimized #event-banner-box {
+    padding: 10px;
+}
+#event-banner-overlay.minimized #event-banner-timer {
+    font-size: 0.7em;
+}
+
+#event-banner-box {
+    background: url('https://lrguetta.github.io/lior/images/scroll.png') no-repeat center center;
+    background-size: contain;
+    padding: 40px 50px;
+    text-align: center;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    position: relative;
+    max-width: 600px;
+}
+#event-banner-close {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-size: 1em;
+}
+#event-banner-close:hover { background: rgba(220,50,50,0.8); }
+#event-banner-minimize {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-size: 1em;
+}
+#event-banner-minimize:hover { background: rgba(100,100,100,0.8); }
+#event-banner-title {
+    font-size: 2em;
+    color: #8b4513;
+    margin: 0 0 15px 0;
+    font-weight: bold;
+}
+#event-banner-desc {
+    font-size: 1.2em;
+    color: #5d4037;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+#event-banner-timer {
+    font-size: 1.5em;
+    color: #d32f2f;
+    font-weight: bold;
+}
+#event-banner-creature {
+    margin-top: 20px;
+    font-size: 1.1em;
+    color: #7b1fa2;
+}
+
 @keyframes fadeInOverlay {
     from { opacity: 0; }
     to   { opacity: 1; }
@@ -894,6 +982,7 @@ button {
         <button onclick="togglePanel('panel-newtask')"       style="background:#1976d2; padding:10px 14px; font-size:0.88em;">➕ פרסום מטלה</button>
         <button onclick="togglePanel('panel-submissions')"   style="background:#2e7d32; padding:10px 14px; font-size:0.88em;">📥 ניהול הגשות</button>
         <button onclick="togglePanel('panel-creatures')"     style="background:#7b1fa2; padding:10px 14px; font-size:0.88em;">🐾 ניהול דמויות</button>
+        <button onclick="togglePanel('panel-events')"        style="background:#e65100; padding:10px 14px; font-size:0.88em;">🎉 ניהול אירועים</button>
         <button onclick="smartCleanupAllStudents('smart-clean')"     style="background:#f44336; padding:10px 14px; font-size:0.88em;">🗑️ ניקוי היסטוריה</button>
      
     <div id="panel-announcements" style="display:none; width:100%; background:#fff3e0; padding:15px; border-radius:10px; border:1px solid #ffcc80; text-align:right; box-sizing:border-box; margin-top:12px;">
@@ -969,6 +1058,70 @@ button {
             </div>
         </div>
     </div>
+
+    <div id="panel-events" style="display:none; width:100%; margin-top:12px;">
+        <div style="background:rgba(255,255,255,0.97); border-radius:14px; padding:20px; border:2px solid #e65100;">
+            <h4 style="margin:0 0 15px 0; color:#e65100;">🎉 ניהול אירועים מיוחדים</h4>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
+                <div>
+                    <label style="display:block; margin-bottom:5px; color:#e65100; font-weight:bold;">כותרת האירוע:</label>
+                    <input type="text" id="event-title" placeholder="לדוגמה: שבוע הדינוזאורים!" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ffb74d;">
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:5px; color:#e65100; font-weight:bold;">משך האירוע (בשעות):</label>
+                    <input type="number" id="event-hours" placeholder="24" value="24" min="1" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ffb74d;">
+                </div>
+            </div>
+            
+            <div style="margin-bottom:20px;">
+                <label style="display:block; margin-bottom:5px; color:#e65100; font-weight:bold;">תיאור האירוע:</label>
+                <textarea id="event-desc" placeholder="תאר את האירוע לתלמידים..." style="width:100%; height:80px; resize:vertical; padding:10px; border-radius:8px; border:1px solid #ffb74d; box-sizing:border-box;"></textarea>
+            </div>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
+                <div>
+                    <label style="display:block; margin-bottom:5px; color:#e65100; font-weight:bold;">דמות מיוחדת:</label>
+                    <select id="event-creature-type" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ffb74d;">
+                        <option value="">בחר דמות...</option>
+                        <option value="trt">צב 🐢</option>
+                        <option value="snk">נחש 🐍</option>
+                        <option value="hnd">צבוע 🐺</option>
+                        <option value="cat">חתול 🐱</option>
+                        <option value="crw">עורב 🦅</option>
+                        <option value="fsh">דג 🐟</option>
+                        <option value="chk">תרנגול 🐓</option>
+                        <option value="fox">שועל 🦊</option>
+                        <option value="zbr">זברה 🦓</option>
+                        <option value="mnk">קוף 🐒</option>
+                        <option value="shp">כבשה 🐑</option>
+                        <option value="cow">פרה 🐄</option>
+                        <option value="ost">יען 🦤</option>
+                        <option value="rbt">ארנב 🐰</option>
+                        <option value="dnk">חילזון 🐌</option>
+                        <option value="duk">ברווז 🦆</option>
+                        <option value="snl">סלמנדרה 🦎</option>
+                        <option value="owl">ינשוף 🦉</option>
+                        <option value="spd">עכביש 🕷️</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:5px; color:#e65100; font-weight:bold;">מספר ביצה:</label>
+                    <select id="event-egg-num" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ffb74d;">
+                        <option value="0">ביצה 1</option>
+                        <option value="1">ביצה 2</option>
+                        <option value="2">ביצה 3</option>
+                        <option value="3">ביצה 4</option>
+                        <option value="4">ביצה 5</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button onclick="createEvent()" style="background:#e65100; width:100%; padding:12px; font-size:1.1em; color:white; border:none; border-radius:10px; cursor:pointer;">🎉 צור אירוע חדש</button>
+            
+            <div id="events-list" style="margin-top:20px;"></div>
+        </div>
+    </div>
 </div>
 
 <div id="tasks-area" style="display:none; width:90%; max-width:1200px; margin-bottom:20px; text-align:right;">
@@ -1016,6 +1169,17 @@ button {
     </div>
 </div>
 
+<div id="event-banner-overlay" onclick="handleEventBannerClick(event)">
+    <div id="event-banner-box">
+        <button id="event-banner-close" onclick="closeEventBanner()" title="סגור">✕</button>
+        <button id="event-banner-minimize" onclick="minimizeEventBanner()" title="מזער">−</button>
+        <h2 id="event-banner-title"></h2>
+        <p id="event-banner-desc"></p>
+        <div id="event-banner-timer"></div>
+        <div id="event-banner-creature"></div>
+    </div>
+</div>
+
 <div id="defense-modal-overlay" onclick="closeDefenseModal()"></div>
 <div id="defense-modal">
     <div style="font-size:2em; margin-bottom:6px;">⚔️</div>
@@ -1058,7 +1222,8 @@ const TABLES = {
     announcements: 'announcements',
     welcomeImage: 'welcomeImage',
     battles: 'battles',
-    creatureTypes: 'creature_types'
+    creatureTypes: 'creature_types',
+    events: 'events'
 };
 
     
@@ -1513,12 +1678,17 @@ async function startApp() {
         }
         
         if (currentUser === 'admin') {
-            await Promise.all([loadAnnouncements(), loadWelcomeImageForAdmin(), initAdminSubmissions()]);
+            await Promise.all([loadAnnouncements(), loadWelcomeImageForAdmin(), initAdminSubmissions(), loadEvents()]);
             document.getElementById('magic-btn').style.display = 'inline-block';
+        } else {
+            await loadEvents();
         }
     } else {
         // --- התחברות תלמיד ---
         document.getElementById('logout-btn-float').style.display = 'block';
+        
+        // Load events and show banner if active
+        await loadEvents();
         
         // כאן אנחנו מציגים את כפתורי החנות והתיק החדשים:
         const newBtns = ['shop-btn', 'bag-btn'];
@@ -1848,14 +2018,23 @@ async function addStudent() {
         const isFirst = existingGroup.length === 0;
         const sharedPass = isFirst ? null : existingGroup.find(s => s.password)?.password || null;
 
+        // Check for active event - new students get special creature and egg
+        let creatureType = CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)];
+        let eggNum = Math.floor(Math.random() * 5);
+        
+        if (currentActiveEvent && isFirst) {
+            creatureType = currentActiveEvent.creaturetype;
+            eggNum = currentActiveEvent.eggnum || 0;
+        }
+
         const payload = {
             full_name: nameInput,
             className: document.getElementById('studentClass').value,
             is_group: isGroupInput, // <--- הוספת השדה ל-Database
             xp: 0, 
             level: 0, 
-            type: CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)], 
-            egg: Math.floor(Math.random() * 5), 
+            type: creatureType, 
+            egg: eggNum, 
             likes: {}, 
             history: {}, 
             isActive: isFirst, 
@@ -3339,7 +3518,7 @@ function handleOverlayClick(e) { if (e.target===document.getElementById('welcome
 document.addEventListener('keydown', e => { if (e.key==='Escape') closeWelcomeImage(); });
 // --- פאנל מנהל ---
 function togglePanel(id) {
-    const all=['panel-announcements','panel-banner','panel-newtask','panel-submissions','panel-creatures'];
+    const all=['panel-announcements','panel-banner','panel-newtask','panel-submissions','panel-creatures','panel-events'];
     all.forEach(p => {
         const el=document.getElementById(p); if(!el) return;
         if (p===id) {
@@ -3348,6 +3527,7 @@ function togglePanel(id) {
             if (opening) {
                 if (p==='panel-submissions')   initAdminSubmissions();
                 if (p==='panel-creatures') renderCreatureTypesList();
+                if (p==='panel-events') loadEvents();
                 if (p==='panel-announcements') loadAnnouncements();
                 if (p==='panel-banner')        loadWelcomeImageForAdmin();
             }
@@ -3448,6 +3628,231 @@ async function saveCreatureField(docId, field, value) {
         await loadCreatureTypes(); 
     }
     catch(e) { alert(e.message); }
+}
+
+// --- אירועים מיוחדים ---
+let currentActiveEvent = null;
+let eventTimerInterval = null;
+
+async function loadEvents() {
+    try {
+        const { data, error } = await supabase
+            .from(TABLES.events)
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        renderEventsList(data || []);
+        
+        // Check for active event
+        const now = new Date();
+        const activeEvent = (data || []).find(e => new Date(e.endtime) > now);
+        
+        if (activeEvent) {
+            currentActiveEvent = activeEvent;
+            showEventBanner(activeEvent);
+        } else {
+            currentActiveEvent = null;
+            hideEventBanner();
+        }
+    } catch(e) {
+        console.error('Error loading events:', e);
+    }
+}
+
+function renderEventsList(events) {
+    const container = document.getElementById('events-list');
+    if (!container) return;
+    
+    if (!events || events.length === 0) {
+        container.innerHTML = '<div style="text-align:center; color:#999; padding:20px;">אין אירועים עדיין</div>';
+        return;
+    }
+    
+    const now = new Date();
+    container.innerHTML = events.map(e => {
+        const endTime = new Date(e.endtime);
+        const isActive = endTime > now;
+        const timeLeft = isActive ? getTimeRemaining(endTime) : 'הסתיים';
+        
+        return `
+            <div style="background:#fff3e0; padding:15px; border-radius:10px; margin-top:15px; border:1px solid #ffcc80;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <strong style="color:#e65100; font-size:1.1em;">${e.title || 'אירוע'}</strong>
+                        <div style="color:#666; font-size:0.9em; margin-top:5px;">${e.description || ''}</div>
+                        <div style="color:#7b1fa2; font-size:0.85em; margin-top:5px;">
+                            🎁 דמות: ${e.creaturetype || 'רגילה'} | ביצה: ${(e.eggnum || 0) + 1}
+                        </div>
+                    </div>
+                    <div style="text-align:left;">
+                        <div style="color:${isActive ? '#2e7d32' : '#999'}; font-weight:bold;">${timeLeft}</div>
+                        ${isActive ? '<span style="color:#2e7d32; font-size:0.8em;">פעיל</span>' : '<span style="color:#999; font-size:0.8em;">הסתיים</span>'}
+                    </div>
+                </div>
+                <button onclick="deleteEvent('${e.id}')" style="background:#f44336; color:white; border:none; padding:8px 16px; border-radius:6px; margin-top:10px; cursor:pointer; font-size:0.85em;">🗑️ מחק אירוע</button>
+            </div>
+        `;
+    }).join('');
+}
+
+function getTimeRemaining(endTime) {
+    const now = new Date();
+    const diff = endTime - now;
+    
+    if (diff <= 0) return 'הסתיים';
+    
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    
+    if (hours > 24) {
+        const days = Math.floor(hours / 24);
+        return `${days} ימים ${hours % 24} שעות`;
+    }
+    
+    return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+async function createEvent() {
+    const title = document.getElementById('event-title').value.trim();
+    const desc = document.getElementById('event-desc').value.trim();
+    const hours = parseInt(document.getElementById('event-hours').value) || 24;
+    const creatureType = document.getElementById('event-creature-type').value;
+    const eggNum = parseInt(document.getElementById('event-egg-num').value) || 0;
+    
+    if (!title) {
+        alert('חובה להזין כותרת לאירוע!');
+        return;
+    }
+    
+    if (!creatureType) {
+        alert('חובה לבחור דמות מיוחדת!');
+        return;
+    }
+    
+    try {
+        const endTime = new Date();
+        endTime.setHours(endTime.getHours() + hours);
+        
+        const { error } = await supabase
+            .from(TABLES.events)
+            .insert([{
+                title: title,
+                description: desc,
+                endtime: endTime.toISOString(),
+                creaturetype: creatureType,
+                eggnum: eggNum
+            }]);
+        
+        if (error) throw error;
+        
+        // Clear form
+        document.getElementById('event-title').value = '';
+        document.getElementById('event-desc').value = '';
+        document.getElementById('event-creature-type').value = '';
+        
+        alert('האירוע נוצר בהצלחה! 🎉');
+        await loadEvents();
+        
+    } catch(e) {
+        console.error('Error creating event:', e);
+        alert('שגיאה ביצירת האירוע: ' + e.message);
+    }
+}
+
+async function deleteEvent(eventId) {
+    if (!confirm('האם אתה בטוח שברצונך למחוק את האירוע?')) return;
+    
+    try {
+        const { error } = await supabase
+            .from(TABLES.events)
+            .delete()
+            .eq('id', eventId);
+        
+        if (error) throw error;
+        
+        alert('האירוע נמחק');
+        await loadEvents();
+        
+    } catch(e) {
+        console.error('Error deleting event:', e);
+        alert('שגיאה במחיקת האירוע: ' + e.message);
+    }
+}
+
+function showEventBanner(event) {
+    const overlay = document.getElementById('event-banner-overlay');
+    const title = document.getElementById('event-banner-title');
+    const desc = document.getElementById('event-banner-desc');
+    const timer = document.getElementById('event-banner-timer');
+    const creature = document.getElementById('event-banner-creature');
+    
+    overlay.classList.remove('minimized');
+    overlay.classList.add('active');
+    
+    title.textContent = event.title || 'אירוע מיוחד!';
+    desc.textContent = event.description || 'הצטרפו לאירוע המיוחד!';
+    
+    const creatureNames = {
+        'trt': 'צב 🐢', 'snk': 'נחש 🐍', 'hnd': 'צבוע 🐺', 'cat': 'חתול 🐱',
+        'crw': 'עורב 🦅', 'fsh': 'דג 🐟', 'chk': 'תרנגול 🐓', 'fox': 'שועל 🦊',
+        'zbr': 'זברה 🦓', 'mnk': 'קוף 🐒', 'shp': 'כבשה 🐑', 'cow': 'פרה 🐄',
+        'ost': 'יען 🦤', 'rbt': 'ארנב 🐰', 'dnk': 'חילזון 🐌', 'duk': 'ברווז 🦆',
+        'snl': 'סלמנדרה 🦎', 'owl': 'ינשוף 🦉', 'spd': 'עכביש 🕷️'
+    };
+    
+    const creatureName = creatureNames[event.creaturetype] || event.creaturetype;
+    const eggNum = (event.eggnum || 0) + 1;
+    creature.innerHTML = `🎁 דמות מיוחדת: <strong>${creatureName}</strong><br>🥚 ביצה מספר: ${eggNum}`;
+    
+    // Start timer
+    if (eventTimerInterval) clearInterval(eventTimerInterval);
+    
+    const updateTimer = () => {
+        const endTime = new Date(event.endtime);
+        const now = new Date();
+        const diff = endTime - now;
+        
+        if (diff <= 0) {
+            timer.textContent = 'האירוע הסתיים!';
+            if (eventTimerInterval) clearInterval(eventTimerInterval);
+            hideEventBanner();
+            return;
+        }
+        
+        timer.textContent = '⏰ נותר: ' + getTimeRemaining(endTime);
+    };
+    
+    updateTimer();
+    eventTimerInterval = setInterval(updateTimer, 1000);
+}
+
+function hideEventBanner() {
+    const overlay = document.getElementById('event-banner-overlay');
+    overlay.classList.remove('active');
+    overlay.classList.remove('minimized');
+    if (eventTimerInterval) {
+        clearInterval(eventTimerInterval);
+        eventTimerInterval = null;
+    }
+}
+
+function closeEventBanner() {
+    hideEventBanner();
+}
+
+function minimizeEventBanner() {
+    const overlay = document.getElementById('event-banner-overlay');
+    overlay.classList.add('minimized');
+}
+
+function handleEventBannerClick(e) {
+    const overlay = document.getElementById('event-banner-overlay');
+    if (e.target === overlay && overlay.classList.contains('minimized')) {
+        overlay.classList.remove('minimized');
+    }
 }
 
 // --- קרבות ---
