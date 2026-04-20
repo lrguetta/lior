@@ -2531,7 +2531,7 @@ function updateView() {
 <img id="img-${s.id}" src="${imgPath}" class="creature-img" 
                           style="max-height:135px;object-fit:contain;margin-bottom:8px;cursor:${currentUser === 'admin' ? 'copy' : 'zoom-in'};"
                           onclick="event.stopPropagation(); ${currentUser === 'admin' ? `addXP('${s.id}')` : `if(typeof toggleCharacterZoom==='function') toggleCharacterZoom('${imgPath}')`}"
-                          onerror="this.src='images/${s.type}3.png'"
+                          onerror="this.src='https://lrguetta.github.io/lior/images/${s.type}3.png'"
                     <div style="font-weight:bold;font-size:1.3em;line-height:1.2;display:flex;align-items:center;gap:6px;">
                         ${s.full_name} ${likeBtn} ${likeDisplay}
                     </div>
@@ -3255,10 +3255,14 @@ async function initAdminSubmissions() {
                 *,
                 students (full_name)
             `)
-            .eq('status', 'submitted') // מציג רק מה שסטטוס שלו "submitted"
+            .eq('status', 'submitted')
             .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+            console.log('Error loading submissions:', error.message, error.details);
+            itemsContainer.innerHTML = `<div style="color:#f44336;text-align:center;">שגיאה: ${error.message}</div>`;
+            return;
+        }
 
         // 3. בדיקה אם יש נתונים
         if (!subs || subs.length === 0) { 
