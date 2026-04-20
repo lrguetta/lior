@@ -2422,6 +2422,13 @@ function updateView() {
                 `<span class="shield-item ${brokenShields.includes(i) ? 'broken' : ''}" style="cursor:default;">${brokenShields.includes(i) ? '💔' : '🛡️'}</span>`
             ).join('')}</div>` : '';
 
+        // Check for candle and flag
+        const hasCandle = s.history && Object.keys(s.history).some(k => k.startsWith('candle_'));
+        const hasFlag = s.hasFlag === true || s.hasFlag === 'true';
+        
+        const flagBadge = hasFlag ? `<span style="margin-left:3px;font-size:0.8em;">🇮🇱</span>` : '';
+        const candleDisplay = isMine && hasCandle ? `<span style="font-size:1.2em; margin-right:5px;" title="נר נשמה">🕯️</span>` : '';
+
         const shieldsOverlay = (!isMine && currentUser !== 'admin') ? `
             <div id="shields-overlay-${s.id}" class="shields-overlay">
                 <div class="shields-title">⚔️ בחר מגן לתקוף!</div>
@@ -2453,19 +2460,19 @@ function updateView() {
             ${shieldsOverlay}
             <div class="card-front" style="display:flex;flex-direction:column;justify-content:space-between;align-items:center;height:100%;padding:15px;box-sizing:border-box; ${groupStyle}">
                 <div style="width:100%;display:flex;justify-content:space-between;align-items:flex-start;">
-                    <div class="level-text-badge">Lv.${level}</div>
+                    <div class="level-text-badge">Lv.${level}${flagBadge}</div>
                     ${currentUser === 'admin' ? `<button class="remove-btn" onclick="event.stopPropagation(); deleteStudent('${s.id}')">✖</button>` : `<div></div>`}
                 </div>
-                <div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;">
-                   <img id="img-${s.id}" src="${imgPath}" class="creature-img" 
-                         style="max-height:135px;object-fit:contain;margin-bottom:8px;cursor:${currentUser === 'admin' ? 'copy' : 'zoom-in'};"
-                         onclick="event.stopPropagation(); ${currentUser === 'admin' ? `addXP('${s.id}')` : `if(typeof toggleCharacterZoom==='function') toggleCharacterZoom('${imgPath}')`}">
-                    <div style="font-weight:bold;font-size:1.3em;line-height:1.2;display:flex;align-items:center;gap:6px;">
-                        ${s.full_name} ${likeBtn} ${likeDisplay}
-                    </div>
-                    <div style="color:#666;font-size:0.95em;">כיתה ${s.className || ''}</div>
-                    ${myShields}
-                </div>
+<div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;">
+                    <img id="img-${s.id}" src="${imgPath}" class="creature-img" 
+                          style="max-height:135px;object-fit:contain;margin-bottom:8px;cursor:${currentUser === 'admin' ? 'copy' : 'zoom-in'};"
+                          onclick="event.stopPropagation(); ${currentUser === 'admin' ? `addXP('${s.id}')` : `if(typeof toggleCharacterZoom==='function') toggleCharacterZoom('${imgPath}')`}">
+                     <div style="font-weight:bold;font-size:1.3em;line-height:1.2;display:flex;align-items:center;gap:6px;">
+                         ${s.full_name} ${candleDisplay} ${likeBtn} ${likeDisplay}
+                     </div>
+                     <div style="color:#666;font-size:0.95em;">כיתה ${s.className || ''}</div>
+                     ${myShields}
+                 </div>
                 <div style="width:100%;margin-top:10px;">
                     <div class="xp-container"><div class="xp-bar" style="width:${s.xp || 0}%;"></div></div>
                     <div style="font-size:0.75em;color:#2e7d32;font-weight:bold;margin-top:5px;text-align:center;">
@@ -4456,26 +4463,145 @@ async function checkPendingBattle() {
 }
 
 async function useItem(entryId, itemName) {
+    const me = allStudents.find(s => s.id === currentUser);
+    
     if (itemName === 'משקה אנרגיה') {
         if (!confirm("להשתמש במשקה אנרגיה ולאפס את הקולדאון?")) return;
 
-        // 1. עדכון זמן התקיפה האחרון ל-null או לזמן ישן מאוד בטבלת הסטודנטים
         const { error: updateErr } = await supabase
             .from('students')
-            .update({ last_attack: null }) // או זמן מלפני שעה
+            .update({ last_attack: null })
             .eq('id', currentUser);
 
         if (updateErr) return alert("שגיאה בשימוש בחפץ");
 
-        // 2. מחיקת/הפחתת המשקה מהתיק (student_items)
-        // כאן צריכה להיות הלוגיקה הקיימת שלך למחיקת חפץ אחרי שימוש
         await deleteItemAfterUse(entryId); 
-
         alert("⚡ האנרגיה חזרה! אתה יכול לתקוף שוב!");
         closeGenericModal();
         if (typeof loadStudents === 'function') await loadStudents();
-    } else {
+    }
+    else if (itemName === 'סוכריית XP') {
+        // Add 50 XP
+        if (!confirm("להשתמש בסוכריית XP ולקבל +50 XP?")) return;
+        
+        let newXP = me.xp + 50;
+        let newLevel = me.level;
+        while (newXP >= 100) { newLevel++; newXP -= 100; }
+        
+        const { error } = await supabase
+            .from('students')
+            .update({ xp: newXP, level: newLevel })
+            .eq('id', currentUser);
+        
+        if (error) return alert("שגיאה בשימוש בחפץ");
+        
+        await deleteItemAfterUse(entryId);
+        alert("🍬 קיבלת +50 XP! הרמה שלך עלתה!");
+        closeGenericModal();
+        if (typeof loadStudents === 'function') await loadStudents();
+    }
+    else if (itemName === 'מגן פלדה') {
+        // Add shield if there's room
+        let history = (typeof me.history === 'string') ? JSON.parse(me.history || "{}") : (me.history || {});
+        const broken = history.shields_broken || [];
+        const totalShields = shieldsByLevel(me.level || 0);
+        const usedShields = broken.length;
+        
+        if (usedShields >= totalShields) {
+            alert("אין מקום למגן נוסף! המגינים מלאים.");
+            return;
+        }
+        
+        // Remove first broken shield or add new shield
+        const firstBroken = broken.findIndex(b => b !== undefined);
+        if (firstBroken >= 0) {
+            broken.splice(firstBroken, 1);
+        }
+        history.shields_broken = broken;
+        
+        const { error } = await supabase
+            .from('students')
+            .update({ history: history })
+            .eq('id', currentUser);
+        
+        if (error) return alert("שגיאה בשימוש בחפץ");
+        
+        await deleteItemAfterUse(entryId);
+        alert("🛡️ קיבלת מגן פלדה! המגן נוסף לך.");
+        closeGenericModal();
+        if (typeof loadStudents === 'function') await loadStudents();
+    }
+    else if (itemName === 'נר נשמה') {
+        // Open candle modal
+        openCandleModal(entryId);
+    }
+    else if (itemName === 'דגל ישראל') {
+        // Add flag to student
+        if (!confirm("להשתמש בדגל ישראל ולהציב אותו על כרטיס?")) return;
+        
+        const { error } = await supabase
+            .from('students')
+            .update({ hasFlag: true })
+            .eq('id', currentUser);
+        
+        if (error) return alert("שגיאה בשימוש בחפץ");
+        
+        await deleteItemAfterUse(entryId);
+        alert("🇮🇱 הדגל הוצב על הכרטיס שלך!");
+        closeGenericModal();
+        if (typeof loadStudents === 'function') await loadStudents();
+    }
+    else {
         alert("חפץ זה אינו ניתן לשימוש כרגע.");
+    }
+}
+
+// נר נשמה modal
+function openCandleModal(entryId) {
+    const html = `
+        <div style="text-align:center; padding:20px;">
+            <h2 style="margin:0 0 20px 0;">🕯️ נר נשמה</h2>
+            <p style="color:#666; margin-bottom:20px;">הדלק נר לזכר אהובים שאינם איתנו</p>
+            <input type="text" id="candle-name" placeholder="שם הנפטר/ת" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #ddd; text-align:center;">
+            <textarea id="candle-message" placeholder="פרטים נוספים (אופציונלי)" style="width:100%; height:80px; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #ddd; text-align:right;"></textarea>
+            <button onclick="useCandle('${entryId}')" style="background:#ff9800; color:white; padding:12px 24px; border:none; border-radius:10px; cursor:pointer; font-size:1.1em; width:100%;">הדלק נר 🕯️</button>
+            <button onclick="closeGenericModal()" style="background:#999; color:white; padding:10px; border:none; border-radius:8px; cursor:pointer; margin-top:10px; width:100%;">ביטול</button>
+        </div>
+    `;
+    openGenericModal(html);
+}
+
+async function useCandle(entryId) {
+    const name = document.getElementById('candle-name').value.trim();
+    const message = document.getElementById('candle-message').value.trim();
+    
+    if (!name) {
+        alert("חובה להזין שם!");
+        return;
+    }
+    
+    try {
+        // Add candle to history
+        let history = (typeof me.history === 'string') ? JSON.parse(me.history || "{}") : (me.history || {});
+        history['candle_' + Date.now()] = {
+            name: name,
+            message: message,
+            time: Date.now()
+        };
+        
+        const { error } = await supabase
+            .from('students')
+            .update({ history: history })
+            .eq('id', currentUser);
+        
+        if (error) throw error;
+        
+        await deleteItemAfterUse(entryId);
+        alert("🕯️ הנר הודלק לעילוי נשמת " + name);
+        closeGenericModal();
+        if (typeof loadStudents === 'function') await loadStudents();
+    } catch(e) {
+        alert("שגיאה: " + e.message);
     }
 }
 function openDefenseModal(battle) {
