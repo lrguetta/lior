@@ -2108,13 +2108,13 @@ async function addStudent() {
         let creatureType = CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)];
         let eggNum = Math.floor(Math.random() * 5);
         
-        if (currentActiveEvent && isFirst) {
+        if (currentActiveEvent) {
             console.log('DEBUG: currentActiveEvent found:', currentActiveEvent);
             creatureType = currentActiveEvent.creatureType;
             eggNum = (currentActiveEvent.eggNum || 0) + 1;
             console.log('DEBUG: Using event eggNum:', eggNum, 'creatureType:', creatureType);
         } else {
-            console.log('DEBUG: currentActiveEvent is null or not isFirst. currentActiveEvent:', currentActiveEvent, 'isFirst:', isFirst);
+            console.log('DEBUG: No active event. currentActiveEvent:', currentActiveEvent);
         }
 
         const payload = {
