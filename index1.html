@@ -1804,7 +1804,7 @@ async function openShop() {
             items.forEach(item => {
                 const canAfford = myCash >= item.price;
                 let itemIcon = item.icon;
-                if (item.name === 'נר נשמה') itemIcon = 'images/candle.png';
+                if (item.name === 'נר נשמה') itemIcon = 'images/izkor.gif';
                 else if (item.name === 'דגל ישראל') itemIcon = 'images/flag.gif';
                 const iconHtml = (itemIcon && (itemIcon.endsWith('.png') || itemIcon.endsWith('.gif'))) 
                     ? `<img src="${itemIcon}" style="width:50px;height:50px;object-fit:contain;">` 
@@ -1867,7 +1867,7 @@ async function openBag() {
                 const itemDetails = allItems ? allItems.find(i => i.id == entry.item_id) : null;
                 if (itemDetails) {
                     let bagIcon = itemDetails.icon;
-                    if (itemDetails.name === 'נר נשמה') bagIcon = 'images/candle.png';
+                    if (itemDetails.name === 'נר נשמה') bagIcon = 'images/izkor.gif';
                     else if (itemDetails.name === 'דגל ישראל') bagIcon = 'images/flag.gif';
                     const bagIconHtml = (bagIcon && (bagIcon.endsWith('.png') || bagIcon.endsWith('.gif')))
                         ? `<img src="${bagIcon}" style="width:40px;height:40px;object-fit:contain;">`
@@ -2531,7 +2531,7 @@ function updateView() {
         const hasFlag = s.hasFlag === true || s.hasFlag === 'true';
         
         const flagBadge = hasFlag ? `<img src="images/flag.gif" style="width:18px;height:18px;vertical-align:middle;margin-right:3px;">` : '';
-        const candleDisplay = isMine && hasCandle ? `<img src="images/candle.gif" style="width:24px;height:24px;vertical-align:middle;margin-right:5px;" title="נר נשמה">` : '';
+        const candleDisplay = isMine && hasCandle ? `<img src="images/izkor.gif" style="width:24px;height:24px;vertical-align:middle;margin-right:5px;" title="נר נשמה">` : '';
         const flagDisplay = hasFlag ? `<img src="images/flag.gif" style="width:24px;height:24px;vertical-align:middle;margin-left:5px;" title="דגל ישראל">` : '';
 
         const shieldsOverlay = (!isMine && currentUser !== 'admin') ? `
