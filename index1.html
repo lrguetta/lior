@@ -2284,13 +2284,16 @@ async function addXP(id) {
 }
 
 // --- מנגנון DECK (החלפת דמויות) ---
-function openDeck(fullName) {
+function openDeck(fullName, className) {
     // עדכון הכותרת במודל
-    document.getElementById('deck-student-name').innerText = fullName;
+    const displayName = className ? `${fullName} (${className})` : fullName;
+    document.getElementById('deck-student-name').innerText = displayName;
     const deckList = document.getElementById('deck-list');
     
-    // תיקון: סינון לפי השדה הנכון שקיים ב-Supabase
-    const myCards = allStudents.filter(s => s.full_name === fullName);
+    // סינון: שם + כיתה (אם צוינה)
+    const myCards = className 
+        ? allStudents.filter(s => s.full_name === fullName && s.className === className)
+        : allStudents.filter(s => s.full_name === fullName);
     
     if(myCards.length <= 1 && currentUser !== 'admin') {
         alert("אין לך דמויות נוספות במחסן.");
@@ -2581,7 +2584,7 @@ function updateView() {
                     <div style="font-size:0.75em;color:#2e7d32;font-weight:bold;margin-top:5px;text-align:center;">
                         <span style="cursor:pointer;" onclick="event.stopPropagation(); this.closest('.student-card').classList.toggle('flipped')">🔄 לחץ להיפוך</span>
                         &nbsp;|&nbsp;
-                        <span style="cursor:pointer; color:#1976d2;" data-deckname="${(s.full_name || '').replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); openDeck(this.dataset.deckname)">🎴 מחסן דמויות</span>
+                        <span style="cursor:pointer; color:#1976d2;" data-deckname="${(s.full_name || '').replace(/"/g, '&quot;')}" data-classname="${s.className || ''}" onclick="event.stopPropagation(); openDeck(this.dataset.deckname, this.dataset.classname)">🎴 מחסן דמויות</span>
                     </div>
                 </div>
             </div>
