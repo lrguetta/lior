@@ -2108,9 +2108,13 @@ async function addStudent() {
         let creatureType = CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)];
         let eggNum = Math.floor(Math.random() * 5);
         
-        if (currentActiveEvent && isFirst) {
+        if (currentActiveEvent) {
+            console.log('DEBUG: currentActiveEvent.eggNum:', currentActiveEvent.eggNum);
             creatureType = currentActiveEvent.creatureType;
             eggNum = currentActiveEvent.eggNum || 0;
+            console.log('DEBUG: Using event eggNum (no +1):', eggNum, 'creatureType:', creatureType);
+        } else {
+            console.log('DEBUG: No active event. currentActiveEvent:', currentActiveEvent);
         }
 
         const payload = {
@@ -2140,6 +2144,7 @@ async function addStudent() {
             document.getElementById('isGroupCheckbox').checked = false;
         }
 
+        await loadEvents();
         if (typeof loadStudents === 'function') await loadStudents();
         alert('הדמות צורפה בהצלחה! ✨');
         
@@ -3794,9 +3799,11 @@ async function loadEvents() {
         
         if (activeEvent) {
             currentActiveEvent = activeEvent;
+            console.log('DEBUG: Active event loaded:', currentActiveEvent);
             showEventBanner(activeEvent);
         } else {
             currentActiveEvent = null;
+            console.log('DEBUG: No active event found');
             hideEventBanner();
         }
     } catch(e) {
@@ -3986,17 +3993,6 @@ function closeEventBanner() {
     // Remove restore button if exists
     const restoreBtn = document.getElementById('event-banner-restore-btn');
     if (restoreBtn) restoreBtn.remove();
-}
-
-function hideEventBanner() {
-    const overlay = document.getElementById('event-banner-overlay');
-    overlay.classList.remove('active');
-    overlay.classList.remove('minimized');
-    overlay.style.display = 'none';
-    if (eventTimerInterval) {
-        clearInterval(eventTimerInterval);
-        eventTimerInterval = null;
-    }
 }
 
 function minimizeEventBanner() {
