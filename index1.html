@@ -2524,22 +2524,22 @@ function updateView() {
                 `<span class="shield-item ${brokenShields.includes(i) ? 'broken' : ''}" style="cursor:default;">${brokenShields.includes(i) ? '💔' : '🛡️'}</span>`
             ).join('')}</div>` : '';
 
-        // Check for candle and flag
-        // בדיקה אם יש חפץ פעיל ואם הוא נר (או כל חפץ אחר שתרצה להציג בפינה)
+   // לוגיקת האייקון הפעיל (נר או אחר)
         const activeItem = s.activeItem; 
-        const candleIcon = (activeItem && activeItem.icon) ? activeItem.icon : null;
+        const activeIcon = (activeItem && activeItem.icon) ? activeItem.icon : null;
         let candleDisplayHtml = '';
-            if (candleIcon) {
-        const isImage = candleIcon.match(/\.(png|jpe?g|gif|webp)$/i);
-            candleDisplayHtml = isImage 
-                ? `<img src="${candleIcon}" style="width:35px; height:35px; object-fit:contain; position:absolute; bottom:25px; left:10px; z-index:5; filter:drop-shadow(0 0 3px rgba(0,0,0,0.3));">`
-                : `<span style="position:absolute; bottom:25px; left:10px; font-size:20px; z-index:5;">${candleIcon}</span>`;
-                            }
-        const hasFlag = s.hasFlag === true || s.hasFlag === 'true';
-        
-        const flagBadge = hasFlag ? `<span style="margin-left:3px;font-size:0.8em;">🇮🇱</span>` : '';
-        const candleDisplay = isMine && hasCandle ? `<span style="font-size:1.2em; margin-right:5px;" title="נר נשמה">🕯️</span>` : '';
+        if (activeIcon) {
+            const isImage = activeIcon.match(/\.(png|jpe?g|gif|webp)$/i);
+            if (isImage) {
+                candleDisplayHtml = `<img src="${activeIcon}" title="${activeItem.name || ''}" 
+                    style="width:40px; height:40px; object-fit:contain; position:absolute; bottom:35px; left:10px; z-index:10; filter:drop-shadow(0 0 3px rgba(0,0,0,0.4)); pointer-events:none;">`;
+            } else {
+                candleDisplayHtml = `<span style="position:absolute; bottom:35px; left:10px; font-size:24px; z-index:10; pointer-events:none;">${activeIcon}</span>`;
+            }
+        }
 
+        const hasFlag = s.hasFlag === true || s.hasFlag === 'true';
+        const flagBadge = hasFlag ? `<span style="margin-left:3px;font-size:0.8em;">🇮🇱</span>` : '';
         const shieldsOverlay = (!isMine && currentUser !== 'admin') ? `
             <div id="shields-overlay-${s.id}" class="shields-overlay">
                 <div class="shields-title">⚔️ בחר מגן לתקוף!</div>
@@ -2569,6 +2569,7 @@ function updateView() {
              onclick="if(typeof handleCardClick==='function') handleCardClick(event, this, '${s.id}')">
             <div class="card-inner">
             ${shieldsOverlay}
+            ${candleDisplayHtml}
             <div class="card-front" style="display:flex;flex-direction:column;justify-content:space-between;align-items:center;height:100%;padding:15px;box-sizing:border-box; ${groupStyle}">
                 <div style="width:100%;display:flex;justify-content:space-between;align-items:flex-start;">
                     <div class="level-text-badge">Lv.${level}${flagBadge}</div>
@@ -2580,7 +2581,7 @@ function updateView() {
                           style="max-height:135px;object-fit:contain;margin-bottom:8px;cursor:${currentUser === 'admin' ? 'copy' : 'zoom-in'};"
                           onclick="event.stopPropagation(); ${currentUser === 'admin' ? `addXP('${s.id}')` : `if(typeof toggleCharacterZoom==='function') toggleCharacterZoom('${imgPath}')`}">
                      <div style="font-weight:bold;font-size:1.3em;line-height:1.2;display:flex;align-items:center;gap:6px;">
-                         ${s.full_name} ${candleDisplay} ${likeBtn} ${likeDisplay}
+                         ${s.full_name} ${likeBtn} ${likeDisplay}
                      </div>
                      <div style="color:#666;font-size:0.95em;">כיתה ${s.className || ''}</div>
                      ${myShields}
