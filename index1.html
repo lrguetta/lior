@@ -2531,7 +2531,7 @@ function updateView() {
         const hasFlag = s.hasFlag === true || s.hasFlag === 'true';
         
         const flagBadge = hasFlag ? `<img src="images/flag.gif" style="width:50px;height:60px;vertical-align:middle;margin-right:15px;">` : '';
-        const candleDisplay = isMine && hasCandle ? `<img src="images/izkor.gif" style="width:50px;height:65px;vertical-align:middle;margin-right:25px;" title="נר נשמה">` : '';
+        const candleDisplay = isMine && hasCandle ? `<img src="images/izkor.gif" style="width:70px;height:85px;vertical-align:middle;margin-right:25px;" title="נר נשמה">` : '';
         const flagDisplay = hasFlag ? `<img src="images/flag.gif" style="width:24px;height:24px;vertical-align:middle;margin-left:5px;" title="דגל ישראל">` : '';
 
         const shieldsOverlay = (!isMine && currentUser !== 'admin') ? `
@@ -2573,7 +2573,7 @@ function updateView() {
                           style="max-height:135px;object-fit:contain;margin-bottom:8px;cursor:${currentUser === 'admin' ? 'copy' : 'zoom-in'};"
                           onclick="event.stopPropagation(); ${currentUser === 'admin' ? `addXP('${s.id}')` : `if(typeof toggleCharacterZoom==='function') toggleCharacterZoom('${imgPath}')`}">
                      <div style="font-weight:bold;font-size:1.3em;line-height:1.2;display:flex;align-items:center;gap:6px;">
-                         ${s.full_name} ${candleDisplay} ${likeBtn} ${likeDisplay}
+                        ${candleDisplay} ${s.full_name}  ${likeBtn} ${likeDisplay}
                      </div>
                      <div style="color:#666;font-size:0.95em;">כיתה ${s.className || ''}</div>
                      ${myShields}
