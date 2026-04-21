@@ -2204,7 +2204,8 @@ async function savePersonalNote(id) {
 // --- XP (מנהל) + פתרון לבאג הלחיצות המהירות ---
 let isUpdatingXP = false;
 async function addXP(id) {
-    if (currentUser !== 'admin') return;
+    const isAdminOrTeacher = currentUser === 'admin' || (currentUser && currentUser.startsWith('teacher_'));
+    if (!isAdminOrTeacher) return;
     if (isUpdatingXP) return; 
     
     const s = allStudents.find(x => x.id === id);
