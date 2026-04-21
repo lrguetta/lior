@@ -30,6 +30,101 @@ body {
 }
 #welcome-image-overlay.active { display: flex; }
 
+#event-banner-overlay {
+    display: none;
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2500;
+    width: 90%;
+    max-width: 700px;
+}
+
+#event-banner-overlay.minimized {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    transform: none;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    cursor: pointer;
+    background: #e65100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+#event-banner-overlay.minimized #event-banner-box {
+    display: none;
+}
+
+#event-banner-overlay.minimized::after {
+    content: "🎉";
+}
+
+#event-banner-box {
+    background: url('https://lrguetta.github.io/lior/images/scroll.png') no-repeat center center;
+    background-size: 100% 100%;
+    padding: 50px 60px;
+    text-align: center;
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+}
+#event-banner-close {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-size: 1em;
+}
+#event-banner-close:hover { background: rgba(220,50,50,0.8); }
+#event-banner-minimize {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-size: 1em;
+}
+#event-banner-minimize:hover { background: rgba(100,100,100,0.8); }
+#event-banner-title {
+    font-size: 2.2em;
+    color: #8b4513;
+    margin: 0 0 15px 0;
+    font-weight: bold;
+}
+#event-banner-desc {
+    font-size: 1.2em;
+    color: #5d4037;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+#event-banner-timer {
+    font-size: 1.5em;
+    color: #d32f2f;
+    font-weight: bold;
+}
+#event-banner-creature {
+    margin-top: 20px;
+    font-size: 1.1em;
+    color: #7b1fa2;
+}
+
 @keyframes fadeInOverlay {
     from { opacity: 0; }
     to   { opacity: 1; }
@@ -159,6 +254,34 @@ body {
     width: 320px;
     margin-top: 50px; 
     border: 2px solid #81c784;
+}
+
+.login-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+.login-tabs button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9em;
+    background: #e0e0e0;
+    color: #333;
+    transition: all 0.2s;
+}
+.login-tabs button.active {
+    background: #1976d2;
+    color: white;
+}
+.login-tabs button:hover:not(.active) {
+    background: #bdbdbd;
+}
+
+#teacher-login-area, #admin-login-area {
+    margin-bottom: 15px;
 }
 #control-panel { 
     display: none; 
@@ -791,12 +914,35 @@ button {
     
 <div id="login-screen">
     <h2>החווה המופלאה 🐾</h2>
+    
+    <div class="login-tabs">
+        <button id="tab-admin" onclick="showLoginTab('admin')">מנהל</button>
+        <button id="tab-teacher" onclick="showLoginTab('teacher')">מורה</button>
+        <button id="tab-student" onclick="showLoginTab('student')" class="active">תלמיד</button>
+    </div>
+    
     <div id="admin-login-area">
         <input type="password" id="adminPass" placeholder="סיסמת מנהל" style="width:80%; margin-bottom:10px;">
         <button onclick="checkAdmin()" style="width:90%;">כניסת מנהל 🔑</button>
     </div>
+    
+    <div id="teacher-login-area" style="display:none; margin-bottom:15px;">
+        <select id="teacherGrade" style="width:90%; margin-bottom:10px;">
+            <option value="">בחר כיתה...</option>
+            <option value="א">כיתה א'</option>
+            <option value="ב">כיתה ב'</option>
+            <option value="ג">כיתה ג'</option>
+            <option value="ד">כיתה ד'</option>
+            <option value="ה">כיתה ה'</option>
+            <option value="ו">כיתה ו'</option>
+        </select>
+        <input type="password" id="teacherPass" placeholder="סיסמת מורה" style="width:90%; margin-bottom:10px; padding:12px; border-radius:10px; border:1px solid #ddd; box-sizing:border-box;">
+        <button onclick="checkTeacher()" style="width:90%; background-color:#7b1fa2;">כניסת מורה 📚</button>
+    </div>
+    
     <hr style="margin:20px 0;">
-    <div id="student-login-area">
+    
+    <div id="student-login-area" class="active">
         <p>כניסת תלמידים:</p>
         <select id="studentSelect" style="width:90%; margin-bottom:10px;">
             <option value="">טוען רשימה...</option>
@@ -829,6 +975,8 @@ button {
             <option value="name">מיין לפי שם</option>
             <option value="level">מיין לפי רמה</option>
             <option value="class">מיין לפי כיתה</option>
+            <option value="class1">כיתה 1 בלבד</option>
+            <option value="class2">כיתה 2 בלבד</option>
         </select>
         <button onclick="logout()" style="background:#c62828;">התנתק 🚪</button>
     </div>
@@ -841,6 +989,7 @@ button {
         <button onclick="togglePanel('panel-newtask')"       style="background:#1976d2; padding:10px 14px; font-size:0.88em;">➕ פרסום מטלה</button>
         <button onclick="togglePanel('panel-submissions')"   style="background:#2e7d32; padding:10px 14px; font-size:0.88em;">📥 ניהול הגשות</button>
         <button onclick="togglePanel('panel-creatures')"     style="background:#7b1fa2; padding:10px 14px; font-size:0.88em;">🐾 ניהול דמויות</button>
+        <button onclick="togglePanel('panel-events')"        style="background:#e65100; padding:10px 14px; font-size:0.88em;">🎉 ניהול אירועים</button>
         <button onclick="smartCleanupAllStudents('smart-clean')"     style="background:#f44336; padding:10px 14px; font-size:0.88em;">🗑️ ניקוי היסטוריה</button>
      
     <div id="panel-announcements" style="display:none; width:100%; background:#fff3e0; padding:15px; border-radius:10px; border:1px solid #ffcc80; text-align:right; box-sizing:border-box; margin-top:12px;">
@@ -916,6 +1065,70 @@ button {
             </div>
         </div>
     </div>
+
+    <div id="panel-events" style="display:none; width:100%; margin-top:12px;">
+        <div style="background:rgba(255,255,255,0.97); border-radius:14px; padding:20px; border:2px solid #e65100;">
+            <h4 style="margin:0 0 15px 0; color:#e65100;">🎉 ניהול אירועים מיוחדים</h4>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
+                <div>
+                    <label style="display:block; margin-bottom:5px; color:#e65100; font-weight:bold;">כותרת האירוע:</label>
+                    <input type="text" id="event-title" placeholder="לדוגמה: שבוע הדינוזאורים!" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ffb74d;">
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:5px; color:#e65100; font-weight:bold;">משך האירוע (בשעות):</label>
+                    <input type="number" id="event-hours" placeholder="24" value="24" min="1" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ffb74d;">
+                </div>
+            </div>
+            
+            <div style="margin-bottom:20px;">
+                <label style="display:block; margin-bottom:5px; color:#e65100; font-weight:bold;">תיאור האירוע:</label>
+                <textarea id="event-desc" placeholder="תאר את האירוע לתלמידים..." style="width:100%; height:80px; resize:vertical; padding:10px; border-radius:8px; border:1px solid #ffb74d; box-sizing:border-box;"></textarea>
+            </div>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
+                <div>
+                    <label style="display:block; margin-bottom:5px; color:#e65100; font-weight:bold;">דמות מיוחדת:</label>
+                    <select id="event-creature-type" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ffb74d;">
+                        <option value="">בחר דמות...</option>
+                        <option value="trt">צב 🐢</option>
+                        <option value="snk">נחש 🐍</option>
+                        <option value="hnd">צבוע 🐺</option>
+                        <option value="cat">חתול 🐱</option>
+                        <option value="crw">עורב 🦅</option>
+                        <option value="fsh">דג 🐟</option>
+                        <option value="chk">תרנגול 🐓</option>
+                        <option value="fox">שועל 🦊</option>
+                        <option value="zbr">זברה 🦓</option>
+                        <option value="mnk">קוף 🐒</option>
+                        <option value="shp">כבשה 🐑</option>
+                        <option value="cow">פרה 🐄</option>
+                        <option value="ost">יען 🦤</option>
+                        <option value="rbt">ארנב 🐰</option>
+                        <option value="dnk">חילזון 🐌</option>
+                        <option value="duk">ברווז 🦆</option>
+                        <option value="snl">סלמנדרה 🦎</option>
+                        <option value="owl">ינשוף 🦉</option>
+                        <option value="spd">עכביש 🕷️</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:5px; color:#e65100; font-weight:bold;">מספר ביצה:</label>
+                    <select id="event-egg-num" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ffb74d;">
+                        <option value="0">ביצה 1</option>
+                        <option value="1">ביצה 2</option>
+                        <option value="2">ביצה 3</option>
+                        <option value="3">ביצה 4</option>
+                        <option value="4">ביצה 5</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button onclick="addNewEvent()" style="background:#e65100; width:100%; padding:12px; font-size:1.1em; color:white; border:none; border-radius:10px; cursor:pointer;">🎉 צור אירוע חדש</button>
+            
+            <div id="events-list" style="margin-top:20px;"></div>
+        </div>
+    </div>
 </div>
 
 <div id="tasks-area" style="display:none; width:90%; max-width:1200px; margin-bottom:20px; text-align:right;">
@@ -963,6 +1176,17 @@ button {
     </div>
 </div>
 
+<div id="event-banner-overlay" onclick="handleEventBannerClick(event)">
+    <div id="event-banner-box">
+        <button id="event-banner-close" onclick="closeEventBanner()" title="סגור">✕</button>
+        <button id="event-banner-minimize" onclick="minimizeEventBanner()" title="מזער">−</button>
+        <h2 id="event-banner-title"></h2>
+        <p id="event-banner-desc"></p>
+        <div id="event-banner-timer"></div>
+        <div id="event-banner-creature"></div>
+    </div>
+</div>
+
 <div id="defense-modal-overlay" onclick="closeDefenseModal()"></div>
 <div id="defense-modal">
     <div style="font-size:2em; margin-bottom:6px;">⚔️</div>
@@ -1005,7 +1229,8 @@ const TABLES = {
     announcements: 'announcements',
     welcomeImage: 'welcomeImage',
     battles: 'battles',
-    creatureTypes: 'creature_types'
+    creatureTypes: 'creature_types',
+    events: 'events'
 };
 
     
@@ -1044,6 +1269,7 @@ let battleState = { selectedSkill:null, pendingBattleId:null, pendingBattle:null
 const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
 let allStudents=[], allTasks=[], editingTaskId=null, currentTaskToSubmit=null;
 let currentUser = localStorage.getItem('farm_user_id') || null;
+let currentGrade = localStorage.getItem('farm_teacher_grade') || null;
 
 const safe = t => typeof t!=='string' ? t : t.replace(/'/g,"&#39;").replace(/"/g,"&quot;");
 
@@ -1326,9 +1552,52 @@ async function saveAnnouncements() {
     }
 }
     
+function showLoginTab(tab) {
+    document.querySelectorAll('.login-tabs button').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.getElementById('admin-login-area').style.display = tab === 'admin' ? 'block' : 'none';
+    document.getElementById('teacher-login-area').style.display = tab === 'teacher' ? 'block' : 'none';
+    document.getElementById('student-login-area').style.display = tab === 'student' ? 'block' : 'none';
+}
+    
 function checkAdmin() {
-    if (document.getElementById('adminPass').value === 'rabenu247') { currentUser='admin'; startApp(); }
-    else alert('סיסמה שגויה');
+    const pass = document.getElementById('adminPass').value;
+    if (pass === 'admin247148') {
+        currentUser = 'admin';
+        currentGrade = null;
+        localStorage.removeItem('farm_teacher_grade');
+        startApp();
+    } else {
+        alert('סיסמה שגויה');
+    }
+}
+
+function checkTeacher() {
+    const grade = document.getElementById('teacherGrade').value;
+    const pass = document.getElementById('teacherPass').value;
+    
+    if (!grade) {
+        alert('בחר כיתה!');
+        return;
+    }
+    
+    const teacherPasswords = {
+        'א': 'teacher1',
+        'ב': 'teacher2',
+        'ג': 'teacher3',
+        'ד': 'teacher4',
+        'ה': 'rabenu247',
+        'ו': 'teacher6'
+    };
+    
+    if (pass === teacherPasswords[grade]) {
+        currentUser = 'teacher_' + grade;
+        currentGrade = grade;
+        localStorage.setItem('farm_teacher_grade', grade);
+        startApp();
+    } else {
+        alert('סיסמה שגויה לכיתה ' + grade);
+    }
 }
 async function studentLogin() {
     const id = document.getElementById('studentSelect').value;
@@ -1401,12 +1670,32 @@ async function startApp() {
     document.getElementById('farm-grid').style.display    = 'grid';
     document.getElementById('tasks-area').style.display   = 'block';
     
-    if (currentUser === 'admin') {
+    const isTeacher = currentUser && currentUser.startsWith('teacher_');
+    
+    if (currentUser === 'admin' || isTeacher) {
         document.getElementById('control-panel').style.display = 'flex';
-        await Promise.all([loadAnnouncements(), loadWelcomeImageForAdmin(), initAdminSubmissions()]);
+        
+        // Update class select based on teacher grade
+        if (isTeacher && currentGrade) {
+            const classSelect = document.getElementById('studentClass');
+            classSelect.innerHTML = `
+                <option value="${currentGrade}1">כיתה ${currentGrade}'1</option>
+                <option value="${currentGrade}2">כיתה ${currentGrade}'2</option>
+            `;
+        }
+        
+        if (currentUser === 'admin') {
+            await Promise.all([loadAnnouncements(), loadWelcomeImageForAdmin(), initAdminSubmissions(), loadEvents()]);
+            document.getElementById('magic-btn').style.display = 'inline-block';
+        } else {
+            await loadEvents();
+        }
     } else {
         // --- התחברות תלמיד ---
         document.getElementById('logout-btn-float').style.display = 'block';
+        
+        // Load events and show banner if active
+        await loadEvents();
         
         // כאן אנחנו מציגים את כפתורי החנות והתיק החדשים:
         const newBtns = ['shop-btn', 'bag-btn'];
@@ -1514,9 +1803,15 @@ async function openShop() {
         if (items) {
             items.forEach(item => {
                 const canAfford = myCash >= item.price;
+                let itemIcon = item.icon;
+                if (item.name === 'נר נשמה') itemIcon = 'images/izkor.gif';
+                else if (item.name === 'דגל ישראל') itemIcon = 'images/flag.gif';
+                const iconHtml = (itemIcon && (itemIcon.endsWith('.png') || itemIcon.endsWith('.gif'))) 
+                    ? `<img src="${itemIcon}" style="width:50px;height:50px;object-fit:contain;">` 
+                    : `<div style="font-size:40px; margin-bottom:5px;">${item.icon || '🎁'}</div>`;
                 html += `
                     <div class="shop-item" style="border:1px solid #ddd; padding:10px; border-radius:12px; text-align:center; background:${canAfford ? '#fff' : '#f5f5f5'}; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                        <div style="font-size:40px; margin-bottom:5px;">${item.icon || '🎁'}</div>
+                        ${iconHtml}
                         <div style="font-weight:bold; height:40px; display:flex; align-items:center; justify-content:center;">${item.name}</div>
                         <div style="color:#2e7d32; font-weight:bold; margin:10px 0;">${item.price} שקל</div>
                         <button 
@@ -1571,9 +1866,15 @@ async function openBag() {
             bagData.forEach(entry => {
                 const itemDetails = allItems ? allItems.find(i => i.id == entry.item_id) : null;
                 if (itemDetails) {
+                    let bagIcon = itemDetails.icon;
+                    if (itemDetails.name === 'נר נשמה') bagIcon = 'images/izkor.gif';
+                    else if (itemDetails.name === 'דגל ישראל') bagIcon = 'images/flag.gif';
+                    const bagIconHtml = (bagIcon && (bagIcon.endsWith('.png') || bagIcon.endsWith('.gif')))
+                        ? `<img src="${bagIcon}" style="width:40px;height:40px;object-fit:contain;">`
+                        : `<div style="font-size:35px;">${itemDetails.icon || '📦'}</div>`;
                     html += `
                         <div class="item-slot" style="border:2px solid #eee; border-radius:10px; padding:10px; text-align:center; position:relative; background:white; display:flex; flex-direction:column; align-items:center;">
-                            <div style="font-size:35px;">${itemDetails.icon || '📦'}</div>
+                            ${bagIconHtml}
                             <div style="font-size:12px; font-weight:bold; margin-top:5px;">${itemDetails.name}</div>
                             <div style="position:absolute; top:-5px; right:-5px; background:#ff5252; color:white; border-radius:50%; width:22px; height:22px; font-size:12px; display:flex; align-items:center; justify-content:center; border:2px solid white; font-weight:bold;">
                                 ${entry.quantity}
@@ -1605,11 +1906,9 @@ async function handleItemUsage(entryId, itemName) {
         if (!me) return;
 
         if (itemName === "משקה אנרגיה") {
-            // 1. קבלת רשימת המתקפות של השחקן לפי סוג ורמה
             const attacks = (ATTACKS_BY_TYPE[me.type] || []).slice(0, attacksByLevel(me.level));
             let cleared = false;
 
-            // 2. מעבר על המתקפות ובדיקה איזו מהן בקולדאון ב-LocalStorage
             for (let atk of attacks) {
                 const name = typeof atk === 'object' ? atk.name : atk;
                 const storageKey = 'last_attack_' + currentUser + '_' + name;
@@ -1617,10 +1916,9 @@ async function handleItemUsage(entryId, itemName) {
                 const remaining = (60 * 60 * 1000) - (Date.now() - lastAttack);
 
                 if (remaining > 0) {
-                    // מצאנו מתקפה בקולדאון! נאפס אותה
                     localStorage.removeItem(storageKey);
                     cleared = true;
-                    break; // עוצרים אחרי איפוס מתקפה אחת בלבד כפי שביקשת
+                    break;
                 }
             }
 
@@ -1628,29 +1926,124 @@ async function handleItemUsage(entryId, itemName) {
                 alert("כל המתקפות שלך כבר מוכנות לשימוש!");
                 return;
             }
-        } else {
+        } 
+        else if (itemName === "סוכריית XP") {
+            // Add 50 XP
+            let newXP = me.xp + 50;
+            let newLevel = me.level;
+            while (newXP >= 100) { newLevel++; newXP -= 100; }
+            
+            const { error } = await supabase
+                .from('students')
+                .update({ xp: newXP, level: newLevel })
+                .eq('id', currentUser);
+            
+            if (error) throw error;
+            alert("🍬 קיבלת +50 XP!");
+        }
+        else if (itemName === "מגן פלדה") {
+            let history = (typeof me.history === 'string') ? JSON.parse(me.history || "{}") : (me.history || {});
+            const broken = history.shields_broken || [];
+            const totalShields = shieldsByLevel(me.level || 0);
+            
+            if (broken.length >= totalShields) {
+                alert("אין מקום למגן נוסף! המגינים מלאים.");
+                return;
+            }
+            
+            // Use first broken shield
+            const firstBroken = broken.findIndex(b => b !== undefined);
+            if (firstBroken >= 0) broken.splice(firstBroken, 1);
+            history.shields_broken = broken;
+            
+            const { error } = await supabase
+                .from('students')
+                .update({ history: history })
+                .eq('id', currentUser);
+            
+            if (error) throw error;
+            alert("🛡️ קיבלת מגן פלדה!");
+        }
+        else if (itemName === "נר נשמה") {
+            // Open candle modal
+            document.getElementById('generic-modal-content').innerHTML = `
+                <div style="text-align:center; padding:20px;">
+                    <h2 style="margin:0 0 20px 0;">🕯️ נר נשמה</h2>
+                    <p style="color:#666; margin-bottom:20px;">הדלק נר לזכר אהובים שאינם איתנו</p>
+                    <input type="text" id="candle-name" placeholder="שם הנפטר/ת" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #ddd; text-align:center;">
+                    <textarea id="candle-message" placeholder="פרטים נוספים (אופציונלי)" style="width:100%; height:80px; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #ddd; text-align:right;"></textarea>
+                    <button onclick="handleCandleUse('${entryId}')" style="background:#ff9800; color:white; padding:12px 24px; border:none; border-radius:10px; cursor:pointer; font-size:1.1em; width:100%;">הדלק נר 🕯️</button>
+                </div>
+            `;
+            return;
+        }
+        else if (itemName === "דגל ישראל") {
+            const { error } = await supabase
+                .from('students')
+                .update({ hasFlag: true })
+                .eq('id', currentUser);
+            
+            if (error) throw error;
+            alert("🇮🇱 הדגל הוצב על הכרטיס שלך!");
+        }
+        else {
             alert("לפריט זה אין עדיין שימוש מוגדר.");
             return;
         }
 
-        // --- עדכון המלאי ב-Database (הורדת המשקה) ---
+        // Delete item after use
         const { data: currentEntry } = await supabase.from('student_items').select('quantity').eq('id', entryId).single();
         if (currentEntry && currentEntry.quantity > 1) {
             await supabase.from('student_items').update({ quantity: currentEntry.quantity - 1 }).eq('id', entryId);
         } else {
             await supabase.from('student_items').delete().eq('id', entryId);
         }
-
-        alert(`השתמשת ב${itemName}! אחת המתקפות התאפסה.`);
         
+        alert(`השתמשת ב${itemName}!`);
         closeGenericModal();
-        // רענון הסיידבר כדי לראות את השינוי מיד
+        if (typeof loadStudents === 'function') await loadStudents();
         if (typeof buildBattleSidebar === 'function') buildBattleSidebar(me);
-        if (typeof fetchData === 'function') fetchData();
 
     } catch (err) {
         console.error("Usage Error:", err);
         alert("שגיאה בשימוש בפריט");
+    }
+}
+
+async function handleCandleUse(entryId) {
+    const name = document.getElementById('candle-name').value.trim();
+    const message = document.getElementById('candle-message').value.trim();
+    
+    if (!name) {
+        alert("חובה להזין שם!");
+        return;
+    }
+    
+    try {
+        const me = allStudents.find(s => s.id === currentUser);
+        let history = (typeof me.history === 'string') ? JSON.parse(me.history || "{}") : (me.history || {});
+        history['candle_' + Date.now()] = { name: name, message: message, time: Date.now() };
+        
+        const { error } = await supabase
+            .from('students')
+            .update({ history: history })
+            .eq('id', currentUser);
+        
+        if (error) throw error;
+        
+        // Delete candle
+        const { data: currentEntry } = await supabase.from('student_items').select('quantity').eq('id', entryId).single();
+        if (currentEntry && currentEntry.quantity > 1) {
+            await supabase.from('student_items').update({ quantity: currentEntry.quantity - 1 }).eq('id', entryId);
+        } else {
+            await supabase.from('student_items').delete().eq('id', entryId);
+        }
+        
+        alert("🕯️ הנר הודלק לעילוי נשמת " + name);
+        closeGenericModal();
+        if (typeof loadStudents === 'function') await loadStudents();
+    } catch(e) {
+        alert("שגיאה: " + e.message);
     }
 }
     
@@ -1721,10 +2114,29 @@ async function addStudent() {
     
     if (!nameInput) return;
     
+    // בדיקה: מורה יכול להוסיף רק תלמידי כיתתו
+    if (currentGrade && currentUser.startsWith('teacher_')) {
+        const classSelect = document.getElementById('studentClass');
+        const selectedClass = classSelect.value;
+        if (!selectedClass.startsWith(currentGrade)) {
+            alert('אתה יכול להוסיף רק תלמידים לכיתה ' + currentGrade);
+            return;
+        }
+    }
+    
     try {
         const existingGroup = allStudents.filter(s => s.full_name === nameInput);
         const isFirst = existingGroup.length === 0;
         const sharedPass = isFirst ? null : existingGroup.find(s => s.password)?.password || null;
+
+        // Check for active event - new students get special creature and egg
+        let creatureType = CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)];
+        let eggNum = Math.floor(Math.random() * 5);
+        
+        if (currentActiveEvent && isFirst) {
+            creatureType = currentActiveEvent.creatureType;
+            eggNum = currentActiveEvent.eggNum || 0;
+        }
 
         const payload = {
             full_name: nameInput,
@@ -1732,8 +2144,8 @@ async function addStudent() {
             is_group: isGroupInput, // <--- הוספת השדה ל-Database
             xp: 0, 
             level: 0, 
-            type: CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)], 
-            egg: Math.floor(Math.random() * 5), 
+            type: creatureType, 
+            egg: eggNum, 
             likes: {}, 
             history: {}, 
             isActive: isFirst, 
@@ -2037,7 +2449,15 @@ function updateView() {
     let filtered = allStudents.filter(s => {
         const active = (s.isActive === true || s.isActive === "true");
         const nameMatch = s.full_name && s.full_name.toLowerCase().includes(searchTerm);
-        return active && nameMatch;
+        
+        // סינון לפי כיתה עבור מורים
+        let gradeMatch = true;
+        if (currentGrade && currentUser.startsWith('teacher_')) {
+            const className = s.className || '';
+            gradeMatch = className.startsWith(currentGrade);
+        }
+        
+        return active && nameMatch && gradeMatch;
     });
 
     // לוגיקת מיון (נשארת כפי שהייתה)
@@ -2053,6 +2473,13 @@ function updateView() {
             const ca = parse(a.className), cb = parse(b.className); 
             return ca.g !== cb.g ? ca.g - cb.g : ca.n - cb.n; 
         });
+    }
+    // מיון לפי כיתה 1 או 2 עבור מורים
+    if (sortBy === 'class1') {
+        filtered = filtered.filter(s => (s.className || '').endsWith('1'));
+    }
+    if (sortBy === 'class2') {
+        filtered = filtered.filter(s => (s.className || '').endsWith('2'));
     }
 
     // יצירת ה-HTML
@@ -2099,6 +2526,33 @@ function updateView() {
                 `<span class="shield-item ${brokenShields.includes(i) ? 'broken' : ''}" style="cursor:default;">${brokenShields.includes(i) ? '💔' : '🛡️'}</span>`
             ).join('')}</div>` : '';
 
+        // Check for candle and flag
+        const hasCandle = s.history && Object.keys(s.history).some(k => k.startsWith('candle_'));
+        const hasFlag = s.hasFlag === true || s.hasFlag === 'true';
+        
+        // Get candle details for tooltip
+        let candleTooltip = '';
+        if (hasCandle) {
+            const candleKeys = Object.keys(s.history).filter(k => k.startsWith('candle_'));
+            const candleData = candleKeys.length > 0 ? s.history[candleKeys[candleKeys.length - 1]] : null;
+            if (candleData) {
+                candleTooltip = `נר נשמה לעילוי נשמת ${candleData.name || ''}${candleData.message ? ' - ' + candleData.message : ''}`;
+            }
+        }
+        
+        const flagBadge = hasFlag ? `<img src="images/flag.gif" style="width:18px;height:18px;vertical-align:middle;margin-right:3px;">` : '';
+        const candleDisplay = hasCandle ? `
+            <div style="position:relative;display:inline-block;">
+                <img src="images/izkor.gif" style="width:70px;height:85px;vertical-align:middle;margin-right:8px;cursor:help;"
+                     onmouseenter="this.nextElementSibling.style.display='block'"
+                     onmouseleave="this.nextElementSibling.style.display='none'">
+                <div style="display:none;position:absolute;bottom:120%;left:0;transform:translateX(-50%);background:#fff9c4;border:2px solid #f9a825;border-radius:10px;padding:8px 12px;white-space:nowrap;box-shadow:0 4px 15px rgba(0,0,0,0.2);z-index:9999;font-size:0.85em;color:#5d4037;min-width:150px;">
+                    🕯️ ${candleTooltip}
+                    <div style="position:absolute;bottom:-8px;left:20px;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid #f9a825;"></div>
+                </div>
+            </div>` : '';
+        const flagDisplay = hasFlag ? `<img src="images/flag.gif" style="width:24px;height:24px;vertical-align:middle;margin-left:5px;" title="דגל ישראל">` : '';
+
         const shieldsOverlay = (!isMine && currentUser !== 'admin') ? `
             <div id="shields-overlay-${s.id}" class="shields-overlay">
                 <div class="shields-title">⚔️ בחר מגן לתקוף!</div>
@@ -2130,19 +2584,19 @@ function updateView() {
             ${shieldsOverlay}
             <div class="card-front" style="display:flex;flex-direction:column;justify-content:space-between;align-items:center;height:100%;padding:15px;box-sizing:border-box; ${groupStyle}">
                 <div style="width:100%;display:flex;justify-content:space-between;align-items:flex-start;">
-                    <div class="level-text-badge">Lv.${level}</div>
+                    <div class="level-text-badge">Lv.${level}${flagBadge}</div>
                     ${currentUser === 'admin' ? `<button class="remove-btn" onclick="event.stopPropagation(); deleteStudent('${s.id}')">✖</button>` : `<div></div>`}
                 </div>
-                <div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;">
-                   <img id="img-${s.id}" src="${imgPath}" class="creature-img" 
-                         style="max-height:135px;object-fit:contain;margin-bottom:8px;cursor:${currentUser === 'admin' ? 'copy' : 'zoom-in'};"
-                         onclick="event.stopPropagation(); ${currentUser === 'admin' ? `addXP('${s.id}')` : `if(typeof toggleCharacterZoom==='function') toggleCharacterZoom('${imgPath}')`}">
-                    <div style="font-weight:bold;font-size:1.3em;line-height:1.2;display:flex;align-items:center;gap:6px;">
-                        ${s.full_name} ${likeBtn} ${likeDisplay}
-                    </div>
-                    <div style="color:#666;font-size:0.95em;">כיתה ${s.className || ''}</div>
-                    ${myShields}
-                </div>
+<div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;">
+                    <img id="img-${s.id}" src="${imgPath}" class="creature-img" 
+                          style="max-height:135px;object-fit:contain;margin-bottom:8px;cursor:${currentUser === 'admin' ? 'copy' : 'zoom-in'};"
+                          onclick="event.stopPropagation(); ${currentUser === 'admin' ? `addXP('${s.id}')` : `if(typeof toggleCharacterZoom==='function') toggleCharacterZoom('${imgPath}')`}">
+<div style="font-weight:bold;font-size:1.3em;line-height:1.2;display:flex;align-items:center;gap:6px;">
+                          ${candleDisplay} ${s.full_name} ${likeBtn} ${likeDisplay}
+                     </div>
+                     <div style="color:#666;font-size:0.95em;">כיתה ${s.className || ''}</div>
+                     ${myShields}
+                 </div>
                 <div style="width:100%;margin-top:10px;">
                     <div class="xp-container"><div class="xp-bar" style="width:${s.xp || 0}%;"></div></div>
                     <div style="font-size:0.75em;color:#2e7d32;font-weight:bold;margin-top:5px;text-align:center;">
@@ -3202,7 +3656,7 @@ function handleOverlayClick(e) { if (e.target===document.getElementById('welcome
 document.addEventListener('keydown', e => { if (e.key==='Escape') closeWelcomeImage(); });
 // --- פאנל מנהל ---
 function togglePanel(id) {
-    const all=['panel-announcements','panel-banner','panel-newtask','panel-submissions','panel-creatures'];
+    const all=['panel-announcements','panel-banner','panel-newtask','panel-submissions','panel-creatures','panel-events'];
     all.forEach(p => {
         const el=document.getElementById(p); if(!el) return;
         if (p===id) {
@@ -3211,6 +3665,7 @@ function togglePanel(id) {
             if (opening) {
                 if (p==='panel-submissions')   initAdminSubmissions();
                 if (p==='panel-creatures') renderCreatureTypesList();
+                if (p==='panel-events') loadEvents();
                 if (p==='panel-announcements') loadAnnouncements();
                 if (p==='panel-banner')        loadWelcomeImageForAdmin();
             }
@@ -3311,6 +3766,259 @@ async function saveCreatureField(docId, field, value) {
         await loadCreatureTypes(); 
     }
     catch(e) { alert(e.message); }
+}
+
+// --- אירועים מיוחדים ---
+let currentActiveEvent = null;
+let eventTimerInterval = null;
+
+async function loadEvents() {
+    try {
+        const { data, error } = await supabase
+            .from(TABLES.events)
+            .select('*')
+            .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        renderEventsList(data || []);
+        
+        // Check for active event
+        const now = new Date();
+        const activeEvent = (data || []).find(e => new Date(e.endTime) > now);
+        
+        if (activeEvent) {
+            currentActiveEvent = activeEvent;
+            showEventBanner(activeEvent);
+        } else {
+            currentActiveEvent = null;
+            hideEventBanner();
+        }
+    } catch(e) {
+        console.error('Error loading events:', e);
+    }
+}
+
+function renderEventsList(events) {
+    const container = document.getElementById('events-list');
+    if (!container) return;
+    
+    if (!events || events.length === 0) {
+        container.innerHTML = '<div style="text-align:center; color:#999; padding:20px;">אין אירועים עדיין</div>';
+        return;
+    }
+    
+    const now = new Date();
+    container.innerHTML = events.map(e => {
+        const endTime = new Date(e.endTime);
+        const isActive = endTime > now;
+        const timeLeft = isActive ? getTimeRemaining(endTime) : 'הסתיים';
+        
+        return `
+            <div style="background:#fff3e0; padding:15px; border-radius:10px; margin-top:15px; border:1px solid #ffcc80;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <strong style="color:#e65100; font-size:1.1em;">${e.title || 'אירוע'}</strong>
+                        <div style="color:#666; font-size:0.9em; margin-top:5px;">${e.description || ''}</div>
+                        <div style="color:#7b1fa2; font-size:0.85em; margin-top:5px;">
+                            🎁 דמות: ${e.creatureType || 'רגילה'} | ביצה: ${(e.eggNum || 0) + 1}
+                        </div>
+                    </div>
+                    <div style="text-align:left;">
+                        <div style="color:${isActive ? '#2e7d32' : '#999'}; font-weight:bold;">${timeLeft}</div>
+                        ${isActive ? '<span style="color:#2e7d32; font-size:0.8em;">פעיל</span>' : '<span style="color:#999; font-size:0.8em;">הסתיים</span>'}
+                    </div>
+                </div>
+                <button onclick="deleteEvent('${e.id}')" style="background:#f44336; color:white; border:none; padding:8px 16px; border-radius:6px; margin-top:10px; cursor:pointer; font-size:0.85em;">🗑️ מחק אירוע</button>
+            </div>
+        `;
+    }).join('');
+}
+
+function getTimeRemaining(endTime) {
+    const now = new Date();
+    const diff = endTime - now;
+    
+    if (diff <= 0) return 'הסתיים';
+    
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    
+    if (hours > 24) {
+        const days = Math.floor(hours / 24);
+        return `${days} ימים ${hours % 24} שעות`;
+    }
+    
+    return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+async function addNewEvent() {
+    const title = document.getElementById('event-title').value.trim();
+    const desc = document.getElementById('event-desc').value.trim();
+    const hours = parseInt(document.getElementById('event-hours').value) || 24;
+    const creatureType = document.getElementById('event-creature-type').value;
+    const eggNum = parseInt(document.getElementById('event-egg-num').value) || 0;
+    
+    if (!title) {
+        alert('חובה להזין כותרת לאירוע!');
+        return;
+    }
+    
+    if (!creatureType) {
+        alert('חובה לבחור דמות מיוחדת!');
+        return;
+    }
+    
+    try {
+        const endTime = new Date();
+        endTime.setHours(endTime.getHours() + hours);
+        
+        const { error } = await supabase
+            .from(TABLES.events)
+            .insert([{
+                title: title,
+                description: desc,
+                endTime: endTime.toISOString(),
+                creatureType: creatureType,
+                eggNum: eggNum
+            }]);
+        
+        if (error) throw error;
+        
+        // Clear form
+        document.getElementById('event-title').value = '';
+        document.getElementById('event-desc').value = '';
+        document.getElementById('event-creature-type').value = '';
+        
+        alert('האירוע נוצר בהצלחה! 🎉');
+        await loadEvents();
+        
+    } catch(e) {
+        console.error('Error creating event:', e);
+        alert('שגיאה ביצירת האירוע: ' + e.message);
+    }
+}
+
+async function deleteEvent(eventId) {
+    if (!confirm('האם אתה בטוח שברצונך למחוק את האירוע?')) return;
+    
+    try {
+        const { error } = await supabase
+            .from(TABLES.events)
+            .delete()
+            .eq('id', eventId);
+        
+        if (error) throw error;
+        
+        alert('האירוע נמחק');
+        await loadEvents();
+        
+    } catch(e) {
+        console.error('Error deleting event:', e);
+        alert('שגיאה במחיקת האירוע: ' + e.message);
+    }
+}
+
+function showEventBanner(event) {
+    const overlay = document.getElementById('event-banner-overlay');
+    const title = document.getElementById('event-banner-title');
+    const desc = document.getElementById('event-banner-desc');
+    const timer = document.getElementById('event-banner-timer');
+    const creatureDiv = document.getElementById('event-banner-creature');
+    
+    overlay.style.display = 'block';
+    
+    title.textContent = event.title || 'אירוע מיוחד!';
+    desc.textContent = event.description || 'הצטרפו לאירוע המיוחד!';
+    
+    // Hide creature info - it's a surprise!
+    creatureDiv.style.display = 'none';
+    
+    // Start timer
+    if (eventTimerInterval) clearInterval(eventTimerInterval);
+    
+    const updateTimer = () => {
+        const endTime = new Date(event.endTime);
+        const now = new Date();
+        const diff = endTime - now;
+        
+        if (diff <= 0) {
+            timer.textContent = 'האירוע הסתיים!';
+            if (eventTimerInterval) clearInterval(eventTimerInterval);
+            hideEventBanner();
+            return;
+        }
+        
+        timer.textContent = '⏰ נותר: ' + getTimeRemaining(endTime);
+    };
+    
+    updateTimer();
+    eventTimerInterval = setInterval(updateTimer, 1000);
+}
+
+function hideEventBanner() {
+    const overlay = document.getElementById('event-banner-overlay');
+    overlay.style.display = 'none';
+    if (eventTimerInterval) {
+        clearInterval(eventTimerInterval);
+        eventTimerInterval = null;
+    }
+    // Also remove restore button
+    const restoreBtn = document.getElementById('event-banner-restore-btn');
+    if (restoreBtn) restoreBtn.remove();
+}
+
+function closeEventBanner() {
+    // X button - fully hide
+    hideEventBanner();
+    // Remove restore button if exists
+    const restoreBtn = document.getElementById('event-banner-restore-btn');
+    if (restoreBtn) restoreBtn.remove();
+}
+
+function hideEventBanner() {
+    const overlay = document.getElementById('event-banner-overlay');
+    overlay.classList.remove('active');
+    overlay.classList.remove('minimized');
+    overlay.style.display = 'none';
+    if (eventTimerInterval) {
+        clearInterval(eventTimerInterval);
+        eventTimerInterval = null;
+    }
+}
+
+function minimizeEventBanner() {
+    // Hide banner, show small restore button
+    const overlay = document.getElementById('event-banner-overlay');
+    overlay.style.display = 'none';
+    
+    // Create or show restore button
+    let restoreBtn = document.getElementById('event-banner-restore-btn');
+    if (!restoreBtn) {
+        restoreBtn = document.createElement('div');
+        restoreBtn.id = 'event-banner-restore-btn';
+        restoreBtn.textContent = '🎉';
+        restoreBtn.style.cssText = 'position:fixed;top:5px;left:50%;transform:translateX(-50%);width:45px;height:45px;border-radius:50%;background:#e65100;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;z-index:2600;box-shadow:0 4px 10px rgba(0,0,0,0.3);';
+        restoreBtn.title = 'פתח את הכרזה';
+        restoreBtn.onclick = function() {
+            overlay.style.display = 'block';
+            this.remove();
+        };
+        document.body.appendChild(restoreBtn);
+    } else {
+        restoreBtn.style.display = 'flex';
+    }
+}
+
+function handleEventBannerClick(e) {
+    const overlay = document.getElementById('event-banner-overlay');
+    if (overlay.classList.contains('minimized')) {
+        // Click on minimized banner - restore it
+        overlay.classList.remove('minimized');
+        overlay.classList.add('active');
+        overlay.style.display = 'block';
+    }
 }
 
 // --- קרבות ---
@@ -3879,26 +4587,145 @@ async function checkPendingBattle() {
 }
 
 async function useItem(entryId, itemName) {
+    const me = allStudents.find(s => s.id === currentUser);
+    
     if (itemName === 'משקה אנרגיה') {
         if (!confirm("להשתמש במשקה אנרגיה ולאפס את הקולדאון?")) return;
 
-        // 1. עדכון זמן התקיפה האחרון ל-null או לזמן ישן מאוד בטבלת הסטודנטים
         const { error: updateErr } = await supabase
             .from('students')
-            .update({ last_attack: null }) // או זמן מלפני שעה
+            .update({ last_attack: null })
             .eq('id', currentUser);
 
         if (updateErr) return alert("שגיאה בשימוש בחפץ");
 
-        // 2. מחיקת/הפחתת המשקה מהתיק (student_items)
-        // כאן צריכה להיות הלוגיקה הקיימת שלך למחיקת חפץ אחרי שימוש
         await deleteItemAfterUse(entryId); 
-
         alert("⚡ האנרגיה חזרה! אתה יכול לתקוף שוב!");
         closeGenericModal();
         if (typeof loadStudents === 'function') await loadStudents();
-    } else {
+    }
+    else if (itemName === 'סוכריית XP') {
+        // Add 50 XP
+        if (!confirm("להשתמש בסוכריית XP ולקבל +50 XP?")) return;
+        
+        let newXP = me.xp + 50;
+        let newLevel = me.level;
+        while (newXP >= 100) { newLevel++; newXP -= 100; }
+        
+        const { error } = await supabase
+            .from('students')
+            .update({ xp: newXP, level: newLevel })
+            .eq('id', currentUser);
+        
+        if (error) return alert("שגיאה בשימוש בחפץ");
+        
+        await deleteItemAfterUse(entryId);
+        alert("🍬 קיבלת +50 XP! הרמה שלך עלתה!");
+        closeGenericModal();
+        if (typeof loadStudents === 'function') await loadStudents();
+    }
+    else if (itemName === 'מגן פלדה') {
+        // Add shield if there's room
+        let history = (typeof me.history === 'string') ? JSON.parse(me.history || "{}") : (me.history || {});
+        const broken = history.shields_broken || [];
+        const totalShields = shieldsByLevel(me.level || 0);
+        const usedShields = broken.length;
+        
+        if (usedShields >= totalShields) {
+            alert("אין מקום למגן נוסף! המגינים מלאים.");
+            return;
+        }
+        
+        // Remove first broken shield or add new shield
+        const firstBroken = broken.findIndex(b => b !== undefined);
+        if (firstBroken >= 0) {
+            broken.splice(firstBroken, 1);
+        }
+        history.shields_broken = broken;
+        
+        const { error } = await supabase
+            .from('students')
+            .update({ history: history })
+            .eq('id', currentUser);
+        
+        if (error) return alert("שגיאה בשימוש בחפץ");
+        
+        await deleteItemAfterUse(entryId);
+        alert("🛡️ קיבלת מגן פלדה! המגן נוסף לך.");
+        closeGenericModal();
+        if (typeof loadStudents === 'function') await loadStudents();
+    }
+    else if (itemName === 'נר נשמה') {
+        // Open candle modal
+        openCandleModal(entryId);
+    }
+    else if (itemName === 'דגל ישראל') {
+        // Add flag to student
+        if (!confirm("להשתמש בדגל ישראל ולהציב אותו על כרטיס?")) return;
+        
+        const { error } = await supabase
+            .from('students')
+            .update({ hasFlag: true })
+            .eq('id', currentUser);
+        
+        if (error) return alert("שגיאה בשימוש בחפץ");
+        
+        await deleteItemAfterUse(entryId);
+        alert("🇮🇱 הדגל הוצב על הכרטיס שלך!");
+        closeGenericModal();
+        if (typeof loadStudents === 'function') await loadStudents();
+    }
+    else {
         alert("חפץ זה אינו ניתן לשימוש כרגע.");
+    }
+}
+
+// נר נשמה modal
+function openCandleModal(entryId) {
+    const html = `
+        <div style="text-align:center; padding:20px;">
+            <h2 style="margin:0 0 20px 0;">🕯️ נר נשמה</h2>
+            <p style="color:#666; margin-bottom:20px;">הדלק נר לזכר אהובים שאינם איתנו</p>
+            <input type="text" id="candle-name" placeholder="שם הנפטר/ת" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #ddd; text-align:center;">
+            <textarea id="candle-message" placeholder="פרטים נוספים (אופציונלי)" style="width:100%; height:80px; padding:10px; margin-bottom:10px; border-radius:8px; border:1px solid #ddd; text-align:right;"></textarea>
+            <button onclick="useCandle('${entryId}')" style="background:#ff9800; color:white; padding:12px 24px; border:none; border-radius:10px; cursor:pointer; font-size:1.1em; width:100%;">הדלק נר 🕯️</button>
+            <button onclick="closeGenericModal()" style="background:#999; color:white; padding:10px; border:none; border-radius:8px; cursor:pointer; margin-top:10px; width:100%;">ביטול</button>
+        </div>
+    `;
+    openGenericModal(html);
+}
+
+async function useCandle(entryId) {
+    const name = document.getElementById('candle-name').value.trim();
+    const message = document.getElementById('candle-message').value.trim();
+    
+    if (!name) {
+        alert("חובה להזין שם!");
+        return;
+    }
+    
+    try {
+        // Add candle to history
+        let history = (typeof me.history === 'string') ? JSON.parse(me.history || "{}") : (me.history || {});
+        history['candle_' + Date.now()] = {
+            name: name,
+            message: message,
+            time: Date.now()
+        };
+        
+        const { error } = await supabase
+            .from('students')
+            .update({ history: history })
+            .eq('id', currentUser);
+        
+        if (error) throw error;
+        
+        await deleteItemAfterUse(entryId);
+        alert("🕯️ הנר הודלק לעילוי נשמת " + name);
+        closeGenericModal();
+        if (typeof loadStudents === 'function') await loadStudents();
+    } catch(e) {
+        alert("שגיאה: " + e.message);
     }
 }
 function openDefenseModal(battle) {
@@ -4067,7 +4894,10 @@ async function checkBattlesSchema() {
 
 async function init() {
     await Promise.all([loadStudents(), loadTasks(), loadAnnouncements(), loadCreatureTypes()]);
-    if (currentUser && currentUser!=='admin') {
+    const isTeacher = currentUser && currentUser.startsWith('teacher_');
+    if (currentUser && (currentUser === 'admin' || isTeacher)) {
+        startApp();
+    } else if (currentUser) {
         const found=allStudents.find(s=>s.id===currentUser);
         if (found) startApp();
         else { localStorage.removeItem('farm_user_id'); currentUser=null; }
@@ -4087,7 +4917,13 @@ function closeGenericModal() {
     document.getElementById('generic-modal-overlay').style.display = 'none';
     document.getElementById('generic-modal').style.display = 'none';
 }
-function logout() { localStorage.removeItem('farm_user_id'); location.reload(); }
+function logout() { 
+    localStorage.removeItem('farm_user_id'); 
+    localStorage.removeItem('farm_teacher_grade');
+    currentUser = null;
+    currentGrade = null;
+    location.reload(); 
+}
 setInterval(()=>{ updateAllTimers(); updateCooldownDisplay(); }, 1000);
 init();
 
