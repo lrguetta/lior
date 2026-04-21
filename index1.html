@@ -1086,23 +1086,51 @@ button {
                 <textarea id="event-desc" placeholder="תאר את האירוע לתלמידים..." style="width:100%; height:80px; resize:vertical; padding:10px; border-radius:8px; border:1px solid #ffb74d; box-sizing:border-box;"></textarea>
             </div>
             
-       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
-    <div>
-        <label style="display:block; margin-bottom:5px; color:#e65100; font-weight:bold;">דמות לאירוע:</label>
-        <select id="event-creature-type" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ffb74d;">
-            <option value="">טוען דמויות...</option>
-        </select>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
+                <div>
+                    <label style="display:block; margin-bottom:5px; color:#e65100; font-weight:bold;">דמות מיוחדת:</label>
+                    <select id="event-creature-type" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ffb74d;">
+                        <option value="">בחר דמות...</option>
+                        <option value="trt">צב 🐢</option>
+                        <option value="snk">נחש 🐍</option>
+                        <option value="hnd">צבוע 🐺</option>
+                        <option value="cat">חתול 🐱</option>
+                        <option value="crw">עורב 🦅</option>
+                        <option value="fsh">דג 🐟</option>
+                        <option value="chk">תרנגול 🐓</option>
+                        <option value="fox">שועל 🦊</option>
+                        <option value="zbr">זברה 🦓</option>
+                        <option value="mnk">קוף 🐒</option>
+                        <option value="shp">כבשה 🐑</option>
+                        <option value="cow">פרה 🐄</option>
+                        <option value="ost">יען 🦤</option>
+                        <option value="rbt">ארנב 🐰</option>
+                        <option value="dnk">חילזון 🐌</option>
+                        <option value="duk">ברווז 🦆</option>
+                        <option value="snl">סלמנדרה 🦎</option>
+                        <option value="owl">ינשוף 🦉</option>
+                        <option value="spd">עכביש 🕷️</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:5px; color:#e65100; font-weight:bold;">מספר ביצה:</label>
+                    <select id="event-egg-num" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ffb74d;">
+                        <option value="0">ביצה 1</option>
+                        <option value="1">ביצה 2</option>
+                        <option value="2">ביצה 3</option>
+                        <option value="3">ביצה 4</option>
+                        <option value="4">ביצה 5</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button onclick="addNewEvent()" style="background:#e65100; width:100%; padding:12px; font-size:1.1em; color:white; border:none; border-radius:10px; cursor:pointer;">🎉 צור אירוע חדש</button>
+            
+            <div id="events-list" style="margin-top:20px;"></div>
+        </div>
     </div>
-   <div>
-    <label style="display:block; margin-bottom:5px; color:#e65100; font-weight:bold;">מספר ביצה (1-5):</label>
-    <input type="number" id="event-egg-num" min="1" max="100" value="1" 
-           style="width:100%; padding:10px; border-radius:8px; border:1px solid #ffb74d; box-sizing: border-box;">
-</div>
 </div>
 
-<button onclick="addNewEvent()" style="background:#e65100; width:100%; padding:12px; font-size:1.1em; color:white; border:none; border-radius:10px; cursor:pointer;">🎉 צור אירוע חדש</button>
-
-<div id="events-list" style="margin-top:20px;"></div>
 <div id="tasks-area" style="display:none; width:90%; max-width:1200px; margin-bottom:20px; text-align:right;">
     <h3 style="margin-bottom:10px;">משימות להשלמה 📝</h3>
     <div id="tasks-list"></div>
@@ -1238,7 +1266,7 @@ const CREATURE_SEED_DATA = [
 ];
 
 let battleState = { selectedSkill:null, pendingBattleId:null, pendingBattle:null, stealMode:false, stealCallback:null };
-const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd', 'wsl', 'lmb', 'hlz', 'egl', 'lio', 'pgn', 'trk'];
+const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
 let allStudents=[], allTasks=[], editingTaskId=null, currentTaskToSubmit=null;
 let currentUser = localStorage.getItem('farm_user_id') || null;
 let currentGrade = localStorage.getItem('farm_teacher_grade') || null;
@@ -3662,19 +3690,6 @@ async function renderCreatureTypesList() {
         if (!data.length) { container.innerHTML='<div style="color:#e53935;text-align:center;padding:10px;">אין נתונים</div>'; }
         else {
             container.innerHTML='';
-
-            // --- תוספת קטנה לסנכרון תפריט האירועים ---
-            const eventSelect = document.getElementById('event-creature-type');
-            if (eventSelect) {
-                eventSelect.innerHTML = '<option value="">-- בחר דמות מהמערכת --</option>';
-                data.forEach(doc => {
-                    const opt = document.createElement('option');
-                    opt.value = doc.typeId;
-                    opt.textContent = `${doc.label || doc.typeId} (${doc.typeId})`;
-                    eventSelect.appendChild(opt);
-                });
-            }
-                
 data.forEach(doc => {
     const row=document.createElement('div');
     row.style.cssText='display:grid;grid-template-columns:55px 75px 1fr 1fr 1fr;gap:5px;align-items:start;background:#f9f0ff;padding:7px 8px;border-radius:8px;border:1px solid #ce93d8;';
