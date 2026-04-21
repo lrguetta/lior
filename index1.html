@@ -1802,17 +1802,17 @@ async function openShop() {
 
         if (items) {
             items.forEach(item => {
-                const canAfford = myCash >= item.price;
-                const iconHtml = (item.icon && item.icon.match(/\.(png|jpe?g|gif|webp)$/i)) 
-                ? `<img src="${item.icon}" style="width:50px;height:50px;object-fit:contain;">` 
-                : `<div style="font-size:40px; margin-bottom:5px;">${item.icon || '🎁'}</div>`;
+                const canAfford = myCash >= items.price;
+                const iconHtml = (items.icon && items.icon.match(/\.(png|jpe?g|gif|webp)$/i)) 
+                ? `<img src="${items.icon}" style="width:50px;height:50px;object-fit:contain;">` 
+                : `<div style="font-size:40px; margin-bottom:5px;">${items.icon || '🎁'}</div>`;
                 html += `
                     <div class="shop-item" style="border:1px solid #ddd; padding:10px; border-radius:12px; text-align:center; background:${canAfford ? '#fff' : '#f5f5f5'}; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
                         ${iconHtml}
-                        <div style="font-weight:bold; height:40px; display:flex; align-items:center; justify-content:center;">${item.name}</div>
-                        <div style="color:#2e7d32; font-weight:bold; margin:10px 0;">${item.price} שקל</div>
+                        <div style="font-weight:bold; height:40px; display:flex; align-items:center; justify-content:center;">${items.name}</div>
+                        <div style="color:#2e7d32; font-weight:bold; margin:10px 0;">${items.price} שקל</div>
                         <button 
-                            onclick="buyItem('${item.id}', ${item.price}, '${item.name}')"
+                            onclick="buyItem('${items.id}', ${items.price}, '${items.name}')"
                             class="action-btn"
                             style="width:100%; padding:8px; cursor:${canAfford ? 'pointer' : 'not-allowed'}; background:${canAfford ? '#4caf50' : '#ccc'}"
                             ${!canAfford ? 'disabled' : ''}>
