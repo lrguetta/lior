@@ -2409,6 +2409,8 @@ function updateView() {
     const grid = document.getElementById('farm-grid');
     if (!grid || !currentUser) return;
 
+    const isAdminOrTeacher = currentUser === 'admin' || (currentUser && currentUser.startsWith('teacher_'));
+
     // שמירת מצב הכרטיסים ההפוכים
     const flippedIds = new Set(
         [...document.querySelectorAll('.student-card.flipped')]
@@ -2528,7 +2530,7 @@ function updateView() {
             </div>` : '';
         const flagDisplay = hasFlag ? `<img src="images/flag.gif" style="width:24px;height:24px;vertical-align:middle;margin-left:5px;" title="דגל ישראל">` : '';
 
-        const shieldsOverlay = (!isMine && currentUser !== 'admin') ? `
+        const shieldsOverlay = (!isMine && !isAdminOrTeacher) ? `
             <div id="shields-overlay-${s.id}" class="shields-overlay">
                 <div class="shields-title">⚔️ בחר מגן לתקוף!</div>
                 <div class="shields-row">${Array.from({ length: sc }, (_, i) => {
@@ -2538,7 +2540,7 @@ function updateView() {
                 <button class="cancel-btn" onclick="event.stopPropagation(); if(typeof cancelAttack==='function') cancelAttack()">ביטול</button>
             </div>` : '';
 
-        const likeBtn = !isMine && currentUser !== 'admin' ? `
+        const likeBtn = !isMine && !isAdminOrTeacher ? `
             <button class="like-btn ${iLiked ? 'liked' : ''}" onclick="event.stopPropagation(); if(typeof toggleLike==='function') toggleLike('${s.id}')">
                 ${iLiked ? '❤️' : '🤍'}</button>` : '';
 
@@ -2560,12 +2562,12 @@ function updateView() {
             <div class="card-front" style="display:flex;flex-direction:column;justify-content:space-between;align-items:center;height:100%;padding:15px;box-sizing:border-box; ${groupStyle}">
                 <div style="width:100%;display:flex;justify-content:space-between;align-items:flex-start;">
                     <div class="level-text-badge">Lv.${level}${flagBadge}</div>
-                    ${currentUser === 'admin' ? `<button class="remove-btn" onclick="event.stopPropagation(); deleteStudent('${s.id}')">✖</button>` : `<div></div>`}
+                    ${isAdminOrTeacher ? `<button class="remove-btn" onclick="event.stopPropagation(); deleteStudent('${s.id}')">✖</button>` : `<div></div>`}
                 </div>
 <div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;">
                     <img id="img-${s.id}" src="${imgPath}" class="creature-img" 
-                          style="max-height:135px;object-fit:contain;margin-bottom:8px;cursor:${currentUser === 'admin' ? 'copy' : 'zoom-in'};"
-                          onclick="event.stopPropagation(); ${currentUser === 'admin' ? `addXP('${s.id}')` : `if(typeof toggleCharacterZoom==='function') toggleCharacterZoom('${imgPath}')`}">
+                          style="max-height:135px;object-fit:contain;margin-bottom:8px;cursor:${isAdminOrTeacher ? 'copy' : 'zoom-in'};"
+                          onclick="event.stopPropagation(); ${isAdminOrTeacher ? `addXP('${s.id}')` : `if(typeof toggleCharacterZoom==='function') toggleCharacterZoom('${imgPath}')`}">
 <div style="font-weight:bold;font-size:1.3em;line-height:1.2;display:flex;align-items:center;gap:6px;">
                           ${candleDisplay} ${s.full_name} ${likeBtn} ${likeDisplay}
                      </div>
