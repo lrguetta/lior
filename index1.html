@@ -2250,7 +2250,7 @@ async function addXP(id) {
 
     // ✨ הפתרון: עדכון התמונה במסך בזמן אמת כשעולים רמה או בוקעים! ✨
     if (img) {
-        const eggNum = (s.egg ?? 0) + 1;
+        const eggNum = s.egg || 1;
         img.src = nlv === 0 ? `images/egg${eggNum}.png` : `images/${s.type}${nlv >= 20 ? 3 : nlv >= 10 ? 2 : 1}.png`;
     }
 
@@ -2294,7 +2294,7 @@ function openDeck(fullName) {
     }
     
     deckList.innerHTML = myCards.map(s => {
-        const eggNum = (s.egg ?? 0) + 1;
+        const eggNum = s.egg || 1;
         const imgPath = s.level === 0 
             ? `images/egg${eggNum}.png` 
             : `images/${s.type}${s.level >= 20 ? 3 : s.level >= 10 ? 2 : 1}.png`;
@@ -2468,7 +2468,7 @@ function updateView() {
         const groupStyle = isGroup ? 'background-color: #ffcc80 !important;' : '';
         // ------------------------------
 
-        const eggNum = (s.egg ?? 0) + 1;
+        const eggNum = s.egg || 1;
         const level = s.level || 0;
         const type = s.type || 'dragon';
         const imgPath = level === 0 ? `images/egg${eggNum}.png` : `images/${type}${level >= 20 ? 3 : level >= 10 ? 2 : 1}.png`;
