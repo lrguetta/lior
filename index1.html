@@ -2097,10 +2097,10 @@ async function addStudent() {
             alert('אתה יכול להוסיף רק תלמידים לכיתה ' + currentGrade);
             return;
         }
-    }
-    
+}
+     
     let creatureType, eggNum;
-        
+         
         if (currentActiveEvent) {
             creatureType = currentActiveEvent.creatureType;
             eggNum = (currentActiveEvent.eggNum || 0) + 1;
@@ -2109,18 +2109,22 @@ async function addStudent() {
             eggNum = Math.floor(Math.random() * 5);
         }
 
+        const selectedClass = document.getElementById('studentClass').value;
+        const existingSameClass = allStudents.find(s => s.full_name === nameInput && s.className === selectedClass);
+        const isActive = !existingSameClass;
+
         try {
             const payload = {
                 full_name: nameInput,
-                className: document.getElementById('studentClass').value,
+                className: selectedClass,
                 is_group: isGroupInput,
                 xp: 0, 
                 level: 0, 
-                type: creatureType, 
+                type: creatureType,
                 egg: eggNum, 
                 likes: {}, 
                 history: {}, 
-                isActive: true, 
+                isActive: isActive, 
                 password: null,
                 created_at: new Date().toISOString()
             };
