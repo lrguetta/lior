@@ -2540,10 +2540,10 @@ function updateView() {
             }
         }
         
-        const flagBadge = hasFlag ? `<img src="lior/images/flag.gif" style="width:18px;height:18px;vertical-align:middle;margin-right:3px;">` : '';
+        const flagBadge = hasFlag ? `<img src="images/flag.gif" style="width:18px;height:18px;vertical-align:middle;margin-right:3px;">` : '';
         const candleDisplay = hasCandle ? `
             <div style="position:relative;display:inline-block;">
-                <img src="lior/images/izkor.gif" style="width:32px;height:32px;vertical-align:middle;margin-right:8px;cursor:help;"
+                <img src="images/izkor.gif" style="width:32px;height:32px;vertical-align:middle;margin-right:8px;cursor:help;"
                      onmouseenter="this.nextElementSibling.style.display='block'"
                      onmouseleave="this.nextElementSibling.style.display='none'">
                 <div style="display:none;position:absolute;bottom:120%;left:0;transform:translateX(-50%);background:#fff9c4;border:2px solid #f9a825;border-radius:10px;padding:8px 12px;white-space:nowrap;box-shadow:0 4px 15px rgba(0,0,0,0.2);z-index:9999;font-size:0.85em;color:#5d4037;min-width:150px;">
@@ -2551,7 +2551,7 @@ function updateView() {
                     <div style="position:absolute;bottom:-8px;left:20px;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid #f9a825;"></div>
                 </div>
             </div>` : '';
-        const flagDisplay = hasFlag ? `<img src="lior/images/flag.gif" style="width:24px;height:24px;vertical-align:middle;margin-left:5px;" title="דגל ישראל">` : '';
+        const flagDisplay = hasFlag ? `<img src="images/flag.gif" style="width:24px;height:24px;vertical-align:middle;margin-left:5px;" title="דגל ישראל">` : '';
 
         const shieldsOverlay = (!isMine && currentUser !== 'admin') ? `
             <div id="shields-overlay-${s.id}" class="shields-overlay">
