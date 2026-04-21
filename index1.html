@@ -2109,10 +2109,10 @@ async function addStudent() {
         let eggNum = Math.floor(Math.random() * 5);
         
         if (currentActiveEvent) {
-            console.log('DEBUG: currentActiveEvent found:', currentActiveEvent);
+            console.log('DEBUG: currentActiveEvent.eggNum:', currentActiveEvent.eggNum);
             creatureType = currentActiveEvent.creatureType;
-            eggNum = (currentActiveEvent.eggNum || 0) + 1;
-            console.log('DEBUG: Using event eggNum:', eggNum, 'creatureType:', creatureType);
+            eggNum = currentActiveEvent.eggNum || 0;
+            console.log('DEBUG: Using event eggNum (no +1):', eggNum, 'creatureType:', creatureType);
         } else {
             console.log('DEBUG: No active event. currentActiveEvent:', currentActiveEvent);
         }
