@@ -1093,14 +1093,11 @@ button {
             <option value="">טוען דמויות...</option>
         </select>
     </div>
-    <div>
-        <label style="display:block; margin-bottom:5px; color:#e65100; font-weight:bold;">ביצה:</label>
-        <select id="event-egg-num" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ffb74d;">
-            <option value="0">רגיל</option>
-            <option value="1">בונוס 1</option>
-            <option value="2">בונוס 2</option>
-        </select>
-    </div>
+   <div>
+    <label style="display:block; margin-bottom:5px; color:#e65100; font-weight:bold;">מספר ביצה (1-5):</label>
+    <input type="number" id="event-egg-num" min="1" max="100" value="1" 
+           style="width:100%; padding:10px; border-radius:8px; border:1px solid #ffb74d; box-sizing: border-box;">
+</div>
 </div>
 
 <button onclick="addNewEvent()" style="background:#e65100; width:100%; padding:12px; font-size:1.1em; color:white; border:none; border-radius:10px; cursor:pointer;">🎉 צור אירוע חדש</button>
