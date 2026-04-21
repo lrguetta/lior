@@ -2525,7 +2525,16 @@ function updateView() {
             ).join('')}</div>` : '';
 
         // Check for candle and flag
-        const hasCandle = s.history && Object.keys(s.history).some(k => k.startsWith('candle_'));
+        // בדיקה אם יש חפץ פעיל ואם הוא נר (או כל חפץ אחר שתרצה להציג בפינה)
+        const activeItem = s.activeItem; 
+        const candleIcon = (activeItem && activeItem.icon) ? activeItem.icon : null;
+        let candleDisplayHtml = '';
+            if (candleIcon) {
+        const isImage = candleIcon.match(/\.(png|jpe?g|gif|webp)$/i);
+            candleDisplayHtml = isImage 
+                ? `<img src="${candleIcon}" style="width:35px; height:35px; object-fit:contain; position:absolute; bottom:25px; left:10px; z-index:5; filter:drop-shadow(0 0 3px rgba(0,0,0,0.3));">`
+                : `<span style="position:absolute; bottom:25px; left:10px; font-size:20px; z-index:5;">${candleIcon}</span>`;
+                            }
         const hasFlag = s.hasFlag === true || s.hasFlag === 'true';
         
         const flagBadge = hasFlag ? `<span style="margin-left:3px;font-size:0.8em;">🇮🇱</span>` : '';
@@ -2565,6 +2574,7 @@ function updateView() {
                     <div class="level-text-badge">Lv.${level}${flagBadge}</div>
                     ${currentUser === 'admin' ? `<button class="remove-btn" onclick="event.stopPropagation(); deleteStudent('${s.id}')">✖</button>` : `<div></div>`}
                 </div>
+                    ${candleDisplayHtml} <div style="flex-grow:1; ...">
 <div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;">
                     <img id="img-${s.id}" src="${imgPath}" class="creature-img" 
                           style="max-height:135px;object-fit:contain;margin-bottom:8px;cursor:${currentUser === 'admin' ? 'copy' : 'zoom-in'};"
