@@ -2109,41 +2109,41 @@ async function addStudent() {
             eggNum = Math.floor(Math.random() * 5);
         }
 
-        const payload = {
-            full_name: nameInput,
-            className: document.getElementById('studentClass').value,
-            is_group: isGroupInput,
-            xp: 0, 
-            level: 0, 
-            type: creatureType, 
-            egg: eggNum, 
-            likes: {}, 
-            history: {}, 
-            isActive: true, 
-            password: null,
-            created_at: new Date().toISOString()
-        };
+        try {
+            const payload = {
+                full_name: nameInput,
+                className: document.getElementById('studentClass').value,
+                is_group: isGroupInput,
+                xp: 0, 
+                level: 0, 
+                type: creatureType, 
+                egg: eggNum, 
+                likes: {}, 
+                history: {}, 
+                isActive: true, 
+                password: null,
+                created_at: new Date().toISOString()
+            };
 
-        const { error } = await supabase
-            .from(TABLES.students)
-            .insert([payload]);
+            const { error } = await supabase
+                .from(TABLES.students)
+                .insert([payload]);
 
-        if (error) throw error;
-
-        // איפוס השדות
-        document.getElementById('studentName').value = '';
-        if (document.getElementById('isGroupCheckbox')) {
-            document.getElementById('isGroupCheckbox').checked = false;
+            if (error) throw error;
+            
+            // איפוס השדות
+            document.getElementById('studentName').value = '';
+            if (document.getElementById('isGroupCheckbox')) {
+                document.getElementById('isGroupCheckbox').checked = false;
+            }
+            
+            await loadEvents();
+            if (typeof loadStudents === 'function') await loadStudents();
+            alert('הדמות צורפה בהצלחה! ✨');
+        } catch(e) { 
+            console.error("שגיאה בהוספת תלמיד:", e);
+            alert('שגיאה: ' + e.message); 
         }
-
-        await loadEvents();
-        if (typeof loadStudents === 'function') await loadStudents();
-        alert('הדמות צורפה בהצלחה! ✨');
-        
-    } catch(e) { 
-        console.error("שגיאה בהוספת תלמיד:", e);
-        alert('שגיאה: ' + e.message); 
-    }
 }
 
 async function deleteStudent(id) {
