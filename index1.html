@@ -2110,7 +2110,7 @@ async function addStudent() {
         
         if (currentActiveEvent && isFirst) {
             creatureType = currentActiveEvent.creatureType;
-            eggNum = currentActiveEvent.eggNum || 0;
+            eggNum = (currentActiveEvent.eggNum || 0) + 1;
         }
 
         const payload = {
