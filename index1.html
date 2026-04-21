@@ -2099,36 +2099,28 @@ async function addStudent() {
         }
     }
     
-    try {
-        const existingGroup = allStudents.filter(s => s.full_name === nameInput);
-        const isFirst = existingGroup.length === 0;
-        const sharedPass = isFirst ? null : existingGroup.find(s => s.password)?.password || null;
-
-        // Check for active event - new students get special creature and egg
-        let creatureType = CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)];
-        let eggNum = Math.floor(Math.random() * 5);
+    let creatureType, eggNum;
         
         if (currentActiveEvent) {
-            console.log('DEBUG: currentActiveEvent.eggNum:', currentActiveEvent.eggNum);
             creatureType = currentActiveEvent.creatureType;
-            eggNum = currentActiveEvent.eggNum || 0;
-            console.log('DEBUG: Using event eggNum (no +1):', eggNum, 'creatureType:', creatureType);
+            eggNum = (currentActiveEvent.eggNum || 0) + 1;
         } else {
-            console.log('DEBUG: No active event. currentActiveEvent:', currentActiveEvent);
+            creatureType = CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)];
+            eggNum = Math.floor(Math.random() * 5);
         }
 
         const payload = {
             full_name: nameInput,
             className: document.getElementById('studentClass').value,
-            is_group: isGroupInput, // <--- הוספת השדה ל-Database
+            is_group: isGroupInput,
             xp: 0, 
             level: 0, 
             type: creatureType, 
             egg: eggNum, 
             likes: {}, 
             history: {}, 
-            isActive: isFirst, 
-            password: sharedPass,
+            isActive: true, 
+            password: null,
             created_at: new Date().toISOString()
         };
 
