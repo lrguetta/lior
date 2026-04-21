@@ -2530,8 +2530,8 @@ function updateView() {
         const hasCandle = s.history && Object.keys(s.history).some(k => k.startsWith('candle_'));
         const hasFlag = s.hasFlag === true || s.hasFlag === 'true';
         
-        const flagBadge = hasFlag ? `<img src="images/flag.gif" style="width:18px;height:18px;vertical-align:middle;margin-right:3px;">` : '';
-        const candleDisplay = isMine && hasCandle ? `<img src="images/izkor.gif" style="width:24px;height:24px;vertical-align:middle;margin-right:5px;" title="נר נשמה">` : '';
+        const flagBadge = hasFlag ? `<img src="images/flag.gif" style="width:50px;height:60px;vertical-align:middle;margin-right:15px;">` : '';
+        const candleDisplay = isMine && hasCandle ? `<img src="images/izkor.gif" style="width:50px;height:65px;vertical-align:middle;margin-right:25px;" title="נר נשמה">` : '';
         const flagDisplay = hasFlag ? `<img src="images/flag.gif" style="width:24px;height:24px;vertical-align:middle;margin-left:5px;" title="דגל ישראל">` : '';
 
         const shieldsOverlay = (!isMine && currentUser !== 'admin') ? `
