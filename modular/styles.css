@@ -1,0 +1,708 @@
+/* ============================================
+   חוות הטמגוצ'י - קובץ CSS מרכזי
+   ============================================ */
+
+body { 
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: #e0f7fa url('images/background.jpg') no-repeat center center fixed; 
+    background-size: cover; 
+    margin: 0; 
+    padding: 20px; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center;
+}
+
+/* --- מודל תמונת הברכה --- */
+#welcome-image-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 3000;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(4px);
+    animation: fadeInOverlay 0.4s ease;
+}
+#welcome-image-overlay.active { display: flex; }
+
+#event-banner-overlay {
+    display: none;
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2500;
+    width: 90%;
+    max-width: 700px;
+}
+
+#event-banner-overlay.minimized {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    transform: none;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    cursor: pointer;
+    background: #e65100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+#event-banner-overlay.minimized #event-banner-box { display: none; }
+#event-banner-overlay.minimized::after { content: "🎉"; }
+
+#event-banner-box {
+    background: url('https://lrguetta.github.io/lior/images/scroll.png') no-repeat center center;
+    background-size: 100% 100%;
+    padding: 50px 60px;
+    text-align: center;
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+}
+#event-banner-close {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-size: 1em;
+}
+#event-banner-close:hover { background: rgba(220,50,50,0.8); }
+#event-banner-minimize {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-size: 1em;
+}
+#event-banner-minimize:hover { background: rgba(100,100,100,0.8); }
+#event-banner-title { font-size: 2.2em; color: #8b4513; margin: 0 0 15px 0; font-weight: bold; }
+#event-banner-desc { font-size: 1.2em; color: #5d4037; margin-bottom: 20px; line-height: 1.5; }
+#event-banner-timer { font-size: 1.5em; color: #d32f2f; font-weight: bold; }
+#event-banner-creature { margin-top: 20px; font-size: 1.1em; color: #7b1fa2; }
+
+@keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
+
+#welcome-image-box {
+    position: relative;
+    max-width: 85vw;
+    max-height: 85vh;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes popIn { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+#welcome-image-box img {
+    display: block;
+    max-width: 85vw;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: 16px;
+}
+
+#close-welcome-img {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.3em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.2s;
+    line-height: 1;
+}
+#close-welcome-img:hover { background: rgba(220,50,50,0.8); transform: scale(1.1); }
+
+#welcome-img-caption {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.65));
+    color: white;
+    padding: 20px 20px 14px;
+    font-size: 1em;
+    text-align: center;
+    border-radius: 0 0 16px 16px;
+}
+
+/* ---- לוח מודעות ---- */
+#announcements-board {
+    position: fixed; right: 20px; top: 20px; width: 250px;
+    background: rgba(255, 255, 255, 0.95); padding: 15px;
+    border-radius: 15px; border: 2px solid #ff9800;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 50;
+    text-align: right; max-height: 80vh; overflow-y: auto;
+}
+@media (max-width: 1000px) {
+    #announcements-board {
+        position: static; width: 90%; max-width: 900px;
+        margin: 10px auto; order: -1;
+    }
+}
+#announcements-board.minimized {
+    width: 40px; height: 40px; overflow: hidden;
+    padding: 0; border-radius: 50%; cursor: pointer;
+}
+#announcements-board.minimized > *:not(#toggle-board) { display: none; }
+#toggle-board {
+    background: #ff9800; color: white; border: none;
+    border-radius: 4px; cursor: pointer; float: left;
+    font-weight: bold; padding: 2px 8px; margin-bottom: 10px;
+}
+#announcements-board.minimized #toggle-board {
+    float: none; width: 100%; height: 100%;
+    margin: 0; border-radius: 50%; font-size: 20px;
+}
+
+/* --- מסכי התחברות --- */
+#login-screen { 
+    background: rgba(255, 255, 255, 0.95);
+    padding: 30px; border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+    text-align: center; width: 320px; margin-top: 50px; 
+    border: 2px solid #81c784;
+}
+.login-tabs {
+    display: flex; justify-content: center; gap: 10px; margin-bottom: 15px;
+}
+.login-tabs button {
+    padding: 8px 16px; border: none; border-radius: 20px;
+    cursor: pointer; font-size: 0.9em;
+    background: #e0e0e0; color: #333; transition: all 0.2s;
+}
+.login-tabs button.active { background: #1976d2; color: white; }
+.login-tabs button:hover:not(.active) { background: #bdbdbd; }
+#teacher-login-area, #admin-login-area { margin-bottom: 15px; }
+
+/* --- לוח בקרה --- */
+#control-panel { 
+    display: none; 
+    background: rgba(255, 255, 255, 0.95); 
+    padding: 25px; border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15); 
+    margin-bottom: 30px; width: 90%; max-width: 900px; 
+    flex-wrap: wrap; gap: 15px; justify-content: center;
+    border: 2px solid #81c784; 
+}
+
+input, select, button, textarea { 
+    padding: 12px; border-radius: 10px;
+    border: 1px solid #ddd; font-size: 15px;
+    font-family: inherit; box-sizing: border-box; 
+}
+button { 
+    background-color: #2e7d32; color: white;
+    cursor: pointer; border: none; font-weight: bold; 
+}
+
+/* --- רשת התלמידים --- */
+#farm-grid { 
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+    gap: 20px; width: 90%; max-width: 1200px; justify-items: center;
+}
+
+/* --- כרטיס תלמיד --- */
+.student-card {
+    perspective: 1000px;
+    width: 220px;
+    height: 340px;
+    margin: 10px;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    cursor: pointer;
+    display: inline-block;
+    vertical-align: top;
+    overflow: visible;
+}
+.student-card.group-card .card-front {
+    background-color: #ffcc80 !important; 
+    border-bottom: 5px solid #e65100 !important;
+}
+.student-card.group-card:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100%);
+    background-color: #fffaf0;
+    color: #bf360c;
+    padding: 12px 18px;
+    border-radius: 14px;
+    border: 2px solid #ffb74d;
+    white-space: pre-wrap;
+    z-index: 1000;
+    font-size: 0.95em;
+    text-align: center;
+    min-width: 140px;
+    box-shadow: 0 8px 25px rgba(230, 81, 0, 0.25);
+    pointer-events: none;
+    line-height: 1.4;
+}
+.student-card.group-card:hover::before {
+    content: '';
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid #ffb74d;
+    z-index: 1001;
+    pointer-events: none;
+}
+.student-card.my-creature { transform: scale(1.05); z-index: 5; }
+
+.card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+    -webkit-transform-style: preserve-3d;
+    will-change: transform;
+    transform: translateZ(0);
+    display: block;
+}
+.student-card.flipped .card-inner { transform: rotateY(180deg); }
+
+.card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
+    background: white;
+    border-radius: 20px;
+    padding: 15px;
+    box-sizing: border-box;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border-bottom: 5px solid #81c784;
+    padding-bottom: 20px;
+}
+.card-front {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+}
+.card-back {
+    transform: rotateY(180deg);
+    background: #f1f8e9;
+    overflow-y: auto;
+    display: block;
+    text-align: right;
+}
+
+/* --- לייקים --- */
+.like-btn {
+    background: none;
+    border: none;
+    font-size: 1.4em;
+    cursor: pointer;
+    transition: transform 0.2s;
+    padding: 2px 6px;
+    line-height: 1;
+}
+.like-btn:hover { transform: scale(1.3); }
+.like-btn.liked { filter: drop-shadow(0 0 4px red); }
+
+/* --- XP ורמות --- */
+.level-text-badge { 
+    position: absolute;
+    top: 5px; right: 15px; 
+    font-family: 'Arial Black', sans-serif; 
+    font-size: 1.7em;
+    font-weight: 900;
+    color: #2e7d32; 
+    z-index: 10;
+    text-shadow: -1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff, 0 2px 4px rgba(0,0,0,0.3);
+}
+.creature-img { width: 150px; height: 150px; object-fit: contain; margin-bottom: 10px; }
+.glow-effect { animation: glow-pulse 0.6s ease-out; }
+@keyframes glow-pulse { 
+    0% { filter: brightness(1); transform: scale(1); } 
+    50% { filter: brightness(1.6) drop-shadow(0 0 15px gold); transform: scale(1.25); } 
+    100% { filter: brightness(1); transform: scale(1); } 
+}
+.xp-container {
+    width: 90%;
+    background-color: #e0e0e0;
+    border-radius: 10px;
+    height: 15px;
+    margin-top: auto;
+    overflow: hidden;
+    border: 1px solid #ccc;
+}
+.xp-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #4caf50, #81c784);
+    transition: width 0.5s ease-in-out;
+}
+.remove-btn { 
+    position: absolute; top: 10px; left: 10px;
+    background: #ff5252; color: white; border-radius: 50%; 
+    width: 28px; height: 28px; display: flex; 
+    align-items: center; justify-content: center; 
+}
+.xp-float { 
+    position: absolute;
+    font-weight: bold; color: gold;
+    font-size: 1.2em; 
+    animation: floatUp 0.8s ease-out forwards; 
+    left: 50%; top: 60px;
+}
+@keyframes floatUp { 
+    0% { opacity: 1; transform: translate(-50%,0); } 
+    100% { opacity: 0; transform: translate(-50%,-40px); } 
+}
+.levelup { 
+    position: absolute;
+    top: 20%; left: 50%; 
+    transform: translate(-50%, -50%); 
+    background: #ffd700; color: #1b5e20; 
+    font-weight: bold; font-size: 1.5em;
+    padding: 10px 20px; border-radius: 15px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.3); z-index: 100; 
+    pointer-events: none; 
+    animation: levelPop 2s ease-out forwards;
+}
+@keyframes levelPop { 
+    0% { opacity: 0; transform: translate(-50%, 0) scale(0.5); } 
+    20% { opacity: 1; transform: translate(-50%, -30px) scale(1.2); } 
+    80% { opacity: 1; transform: translate(-50%, -40px) scale(1); } 
+    100% { opacity: 0; transform: translate(-50%, -60px) scale(0.8); } 
+}
+
+/* --- כפתורי צד צפים --- */
+.float-action-btn {
+    display: none;
+    position: fixed;
+    left: 10px;
+    width: 100px;
+    height: 100px;
+    z-index: 500;
+    background: transparent;
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    padding: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.float-action-btn:hover { transform: scale(1.1); }
+.float-action-btn img { width: 120%; height: 120%; object-fit: cover; }
+#battle-float-btn { top: 10px; }
+#skill-float-btn { top: 100px; }
+#shop-btn { top: 200px; }
+#bag-btn { top: 310px; }
+
+/* --- סיידבר קרבות --- */
+#battle-sidebar {
+    display: none;
+    position: fixed;
+    top: 18px;
+    left: 60px;
+    z-index: 499;
+    background: rgba(255,255,255,0.98);
+    border: 7px solid #e53935;
+    border-radius: 26px;
+    flex-direction: row; 
+    align-items: center;
+    gap: 12px;
+    padding: 10px 15px;
+    box-shadow: 0 4px 20px rgba(229,57,53,0.25);
+    min-width: auto;
+    max-width: none; 
+    height: auto;
+    animation: slideLeftIn 0.3s ease;
+}
+#battle-sidebar.open { display: flex; }
+@keyframes slideLeftIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+#battle-sidebar .sidebar-title {
+    font-size: 0.8em;
+    font-weight: bold;
+    color: #b71c1c;
+    text-align: center;
+    margin-bottom: 0;
+    margin-top: 0;
+    margin-left: 10px;
+    white-space: nowrap;
+}
+.attack-btn {
+    background: linear-gradient(135deg, #ef5350, #b71c1c);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.85em;
+    cursor: pointer;
+    font-weight: bold;
+    text-align: center;
+    transition: transform 0.15s, filter 0.15s;
+}
+.attack-btn:hover { transform: scale(1.05); filter: brightness(1.15); }
+.attack-btn.selected-skill {
+    background: linear-gradient(135deg, #ffd600, #ff6f00);
+    color: #1a1a1a;
+    box-shadow: 0 0 0 2px #ff6f00;
+}
+#battle-pick-banner {
+    display: none;
+    position: fixed;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 600;
+    background: linear-gradient(135deg, #e53935, #ff6f00);
+    color: white;
+    padding: 10px 22px;
+    border-radius: 30px;
+    font-size: 0.95em;
+    font-weight: bold;
+    box-shadow: 0 4px 14px rgba(229,57,53,0.4);
+    white-space: nowrap;
+    cursor: pointer;
+}
+#battle-pick-banner.visible { display: block; }
+
+/* --- מגינים --- */
+.shields-overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.96);
+    border-radius: 20px;
+    z-index: 50;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px;
+    border: 3px solid #e53935;
+}
+.shields-overlay.visible { display: flex; }
+.shields-overlay .shields-title {
+    font-size: 0.85em;
+    font-weight: bold;
+    color: #c62828;
+    text-align: center;
+}
+.shields-row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.shield-item {
+    font-size: 1.6em;
+    cursor: pointer;
+    transition: transform 0.15s;
+    user-select: none;
+}
+.shield-item:hover { transform: scale(1.35); }
+.shield-item.broken { filter: grayscale(1) opacity(0.3); cursor: default; pointer-events: none; }
+.shields-overlay .cancel-btn {
+    font-size: 0.78em;
+    background: #999;
+    padding: 5px 14px;
+    border-radius: 8px;
+    margin-top: 4px;
+}
+.my-shields-row {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+
+/* --- מודל הגנה --- */
+#defense-modal {
+    display: none;
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border: 3px solid #e53935;
+    border-radius: 20px;
+    padding: 28px 24px;
+    z-index: 3500;
+    min-width: 300px;
+    max-width: 380px;
+    text-align: center;
+    box-shadow: 0 8px 40px rgba(229,57,53,0.3);
+}
+#defense-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 3499;
+    backdrop-filter: blur(3px);
+}
+
+/* --- אבן נייר מספריים --- */
+.rps-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+}
+.rps-modal {
+    display: none;
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    border: 5px solid #e53935;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    z-index: 1001;
+    text-align: center;
+    direction: rtl;
+}
+.rps-modal-title { font-size: 1.5em; font-weight: bold; color: #b71c1c; margin-bottom: 10px; }
+.rps-modal-desc { font-size: 1em; color: #333; margin-bottom: 25px; }
+.rps-options { display: flex; justify-content: center; gap: 20px; }
+.rps-option {
+    font-size: 4em;
+    cursor: pointer;
+    transition: transform 0.2s, filter 0.2s;
+}
+.rps-option:hover { transform: scale(1.2); filter: brightness(1.1); }
+
+/* --- מטלות --- */
+.task-card { 
+    background: white; padding: 15px; border-radius: 12px;
+    margin-bottom: 10px; border-right: 6px solid #1976d2; 
+    display: flex; justify-content: space-between; align-items: center; 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+.task-info h4 { margin: 0; color: #333; }
+.question-item { 
+    background: white; padding: 15px;
+    border: 1px solid #81c784; 
+    margin-bottom: 10px;
+    border-radius: 8px;
+    position: relative; 
+    text-align: right;
+}
+
+/* --- מודלים --- */
+#deck-modal, #submit-modal, #generic-modal {
+    display: none;
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+    z-index: 4000;
+    min-width: 320px;
+    max-width: 90vw;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    text-align: right;
+}
+#deck-modal-overlay, #submit-modal-overlay, #generic-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 3999;
+    backdrop-filter: blur(2px);
+}
+#likes-popup {
+    display: none;
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 0 40px rgba(233,30,99,0.3);
+    border: 3px solid #f48fb1;
+    z-index: 2000;
+    min-width: 280px;
+    max-width: 400px;
+    text-align: center;
+}
+#likes-popup-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 1999;
+}
+#character-zoom-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    animation: fadeIn 0.3s ease;
+}
+#zoomed-character-img {
+    max-width: 90%; max-height: 80%;
+    border-radius: 20px;
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+}
+
+/* --- מצבי כרטיס --- */
+.student-card.pick-mode:not(.my-creature) {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ctext y='28' font-size='28'%3E⚔️%3C/text%3E%3C/svg%3E") 16 16, crosshair !important;
+}
+.student-card.steal-mode:not(.my-creature) {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ctext y='28' font-size='28'%3E🫳%3C/text%3E%3C/svg%3E") 16 16, grab !important;
+}
+.student-card.steal-mode:not(.my-creature):hover .card-inner {
+    box-shadow: 0 0 0 3px #ab47bc, 0 0 14px rgba(171,71,188,0.5);
+    transform: scale(1.03);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.student-card.pick-mode:not(.my-creature):hover .card-inner {
+    box-shadow: 0 0 0 3px #43a047, 0 0 14px rgba(67,160,71,0.4);
+    transform: scale(1.03);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.student-card.under-attack .card-inner {
+    box-shadow: 0 0 0 3px #e53935, 0 0 12px rgba(229,57,53,0.4);
+    animation: attackPulse 1.2s infinite alternate;
+}
+@keyframes attackPulse {
+    from { box-shadow: 0 0 0 3px #e53935, 0 0 8px rgba(229,57,53,0.3); }
+    to   { box-shadow: 0 0 0 3px #ff1744, 0 0 20px rgba(255,23,68,0.55); }
+}
