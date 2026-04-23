@@ -266,7 +266,7 @@ const CREATURE_SEED_DATA = [
 ];
 
 let ATTACKS_BY_TYPE = {};
-const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd'];
+const CREATURE_TYPES = ['trt','snk','hnd','cat','crw','fsh','chk','fox','zbr','mnk','shp','cow','ost','rbt','dnk','duk','snl','owl','spd', 'egl', 'lio', 'lmb', 'hlz', 'wsl'];
 
 async function subscribeAll() {
     console.log("מתחיל האזנה לשינויים...");
