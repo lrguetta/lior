@@ -316,6 +316,14 @@ async function init() {
         const found = allStudents.find(s => s.id === currentUser);
         if (found) {
             await startApp();
+            activateStudentMap();
+            setTimeout(() => {
+                const mapContainer = document.getElementById('map-container');
+                const farmGrid = document.getElementById('farm-grid');
+                farmGrid.style.display = 'none';
+                mapContainer.style.display = 'grid';
+                initGameMap();
+            }, 100);
         } else { 
             localStorage.removeItem('farm_user_id'); 
             currentUser = null; 

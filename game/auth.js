@@ -89,6 +89,13 @@ async function studentLogin() {
     document.getElementById('studentPass').value = '';
     await startApp();
     activateStudentMap();
+    setTimeout(() => {
+        const mapContainer = document.getElementById('map-container');
+        const farmGrid = document.getElementById('farm-grid');
+        farmGrid.style.display = 'none';
+        mapContainer.style.display = 'grid';
+        initGameMap();
+    }, 100);
 }
 
 function logout() { 
