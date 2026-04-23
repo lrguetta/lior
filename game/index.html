@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>חוות הטמגוצ'י - גרסת ניהול ותלמידים</title>
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- CSS חיצוני -->
+<link rel="stylesheet" href="styles.css">
+
+<!-- JS חיצוניים -->
+<script src="core.js"></script>
+<script src="auth.js"></script>
+<script src="students.js"></script>
+<script src="tasks.js"></script>
+<script src="submissions.js"></script>
+<script src="battles.js"></script>
+<script src="skills.js"></script>
+<script src="shop.js"></script>
+<script src="events.js"></script>
+<script src="game.js"></script>
+</head>
+<body>
+    <!-- לוח מודעות -->
+    <div id="announcements-board">
+        <button id="toggle-board" onclick="toggleBoard()" title="מזער לוח">−</button>
+        <h3 style="margin-top:0; color:#e65100; border-bottom:2px solid #ffcc80; padding-bottom:5px;">📢 מה חדש?</h3>
+        <div id="announcements-content" style="white-space: pre-wrap; font-size: 0.95em; color: #333;">טוען עדכונים...</div>
+    </div>
+    
+    <!-- מסך התחברות -->
+    <div id="login-screen">
+        <h2>החווה המופלאה 🐾</h2>
+        
+        <div class="login-tabs">
+            <button id="tab-admin" onclick="showLoginTab('admin')">מנהל</button>
+            <button id="tab-teacher" onclick="showLoginTab('teacher')">מורה</button>
+            <button id="tab-student" onclick="showLoginTab('student')" class="active">תלמיד</button>
+        </div>
+        
+        <div id="admin-login-area">
+            <input type="password" id="adminPass" placeholder="סיסמת מנהל" style="width:80%; margin-bottom:10px;">
+            <button onclick="checkAdmin()" style="width:90%;">כניסת מנהל 🔑</button>
+        </div>
+        
+        <div id="teacher-login-area" style="display:none; margin-bottom:15px;">
+            <select id="teacherGrade" style="width:90%; margin-bottom:10px;">
+                <option value="">בחר כיתה...</option>
+                <option value="א">כיתה א'</option>
+                <option value="ב">כיתה ב'</option>
+                <option value="ג">כיתה ג'</option>
+                <option value="ד">כיתה ד'</option>
+                <option value="ה">כיתה ה'</option>
+                <option value="ו">כיתה ו'</option>
+            </select>
+            <input type="password" id="teacherPass" placeholder="סיסמת מורה" style="width:90%; margin-bottom:10px; padding:12px; border-radius:10px; border:1px solid #ddd; box-sizing:border-box;">
+            <button onclick="checkTeacher()" style="width:90%; background-color:#7b1fa2;">כניסת מורה 📚</button>
+        </div>
+        
+        <hr style="margin:20px 0;">
+        
+        <div id="student-login-area" class="active">
+            <p>כניסת תלמידים:</p>
+            <select id="studentSelect" style="width:90%; margin-bottom:10px;">
+                <option value="">טוען רשימה...</option>
+            </select>
+            <input type="password" id="studentPass" placeholder="סיסמה (בפעם ה-1: זו תהיה הסיסמתך הקבועה!)" style="width:90%; margin-bottom:10px; padding:12px; border-radius:10px; border:1px solid #ddd; box-sizing:border-box;">
+            <button onclick="studentLogin()" style="width:90%; background-color:#1976d2;">אני רוצה להיכנס! ✨</button>
+        </div>
+    </div>
+
+    <!-- לוח בקרה למנהל/מורה -->
+    <div id="control-panel">
+        <div style="display:flex; gap:10px; width:100%; flex-wrap:wrap; justify-content:center;">
+            <input type="text" id="studentName" placeholder="שם התלמיד">
+            <div style="margin: 10px 0; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="isGroupCheckbox" style="width: 20px; height: 20px;">
+                    <span style="font-weight: bold; color: #e65100;">קבוצה</span>
+                </label>
+            </div>
+            <select id="studentClass">
+                <option value="ה1">כיתה ה'1</option>
+                <option value="ה2">כיתה ה'2</option>
+            </select>
+            <button onclick="addStudent()">צרף יצור לחווה 🐾</button>
+            <button id="magic-btn" onclick="fixDatabase()" style="background:#8e24aa;">✨ סידור דמויות אוטומטי</button>
+        </div>
+
+        <div style="width:100%; display:flex; gap:10px; margin-top:10px;">
+            <input type="text" id="search" placeholder="חפש לפי שם..." oninput="updateView()" style="flex:2;">
+            <select id="sortBy" onchange="updateView()" style="flex:1;">
+                <option value="name">מיין לפי שם</option>
+                <option value="level">מיין לפי רמה</option>
+                <option value="class">מיין לפי כיתה</option>
+                <option value="class1">כיתה 1 בלבד</option>
+                <option value="class2">כיתה 2 בלבד</option>
+            </select>
+            <button onclick="logout()" style="background:#c62828;">התנתק 🚪</button>
+        </div>
+
+        <hr style="width:100%; margin: 15px 0;">
+
+        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center; width:100%;">
+            <button onclick="togglePanel('panel-announcements')" style="background:#ff9800; padding:10px 14px; font-size:0.88em;">📢 לוח מודעות</button>
+            <button onclick="togglePanel('panel-banner')" style="background:#283593; padding:10px 14px; font-size:0.88em;">🖼️ פרסום כרזה</button>
+            <button onclick="togglePanel('panel-newtask')" style="background:#1976d2; padding:10px 14px; font-size:0.88em;">➕ פרסום מטלה</button>
+            <button onclick="togglePanel('panel-submissions')" style="background:#2e7d32; padding:10px 14px; font-size:0.88em;">📥 ניהול הגשות</button>
+            <button onclick="togglePanel('panel-creatures')" style="background:#7b1fa2; padding:10px 14px; font-size:0.88em;">🐾 ניהול דמויות</button>
+            <button onclick="togglePanel('panel-events')" style="background:#e65100; padding:10px 14px; font-size:0.88em;">🎉 ניהול אירועים</button>
+            <button onclick="smartCleanupAllStudents()" style="background:#f44336; padding:10px 14px; font-size:0.88em;">🗑️ ניקוי היסטוריה</button>
+        </div>
+
+        <!-- פאנל לוח מודעות -->
+        <div id="panel-announcements" style="display:none; width:100%; background:#fff3e0; padding:15px; border-radius:10px; border:1px solid #ffcc80; text-align:right; box-sizing:border-box; margin-top:12px;">
+            <h4 style="margin:0 0 10px 0; color:#e65100;">📢 ניהול לוח מודעות</h4>
+            <textarea id="adminAnnouncementsText" style="width:100%; height:80px; resize:vertical; margin-bottom:10px; padding:10px; border-radius:8px; border:1px solid #ffb74d;" placeholder="כתוב כאן את העדכונים החדשים..."></textarea>
+            <button onclick="saveAnnouncements()" style="background:#ff9800; width:100%; padding:10px; font-size:1.1em;">עדכן ופרסם לתלמידים 💾</button>
+        </div>
+
+        <!-- פאנל כרזה -->
+        <div id="panel-banner" style="display:none; width:100%; background:#e8eaf6; padding:15px; border-radius:10px; border:1px solid #9fa8da; text-align:right; box-sizing:border-box; margin-top:12px;">
+            <h4 style="margin:0 0 10px 0; color:#283593;">🖼️ פרסום כרזה</h4>
+            <input type="text" id="welcomeImgUrl" placeholder="קישור לתמונה/סרטון" style="width:100%; margin-bottom:10px; box-sizing:border-box;">
+            <input type="text" id="welcomeImgCaption" placeholder="כיתוב מתחת לכרזה" style="width:100%; margin-bottom:10px; box-sizing:border-box;">
+            <button onclick="publishWelcomeImageUrl()" style="background:#283593; padding:11px;">פרסם כרזה 🚀</button>
+        </div>
+
+        <!-- פאנל משימה חדשה -->
+        <div id="panel-newtask" style="display:none; width:100%; background:#e3f2fd; padding:15px; border-radius:10px; border:1px solid #90caf9; text-align:right; box-sizing:border-box; margin-top:12px;">
+            <h4 style="margin:0 0 12px 0; color:#1565c0;">➕ פרסום מטלה חדשה</h4>
+            <div style="background:#f1f8e9; padding:15px; border-radius:10px; border:1px solid #c5e1a5; text-align:right; box-sizing:border-box;">
+                <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap; align-items:center;">
+                    <input type="text" id="taskTitle" placeholder="כותרת המטלה" style="flex:2;">
+                    <input type="date" id="taskDeadline" style="flex:1;" title="תאריך">
+                    <input type="number" id="taskXP" placeholder="XP" style="width:70px;" value="20">
+                    <input type="number" id="taskCash" placeholder="$$$" style="width:70px;" value="20">
+                    <button type="button" onclick="document.getElementById('time-limit-container').style.display='flex'" style="background:#8e24aa; padding:12px;">⏲️ הגבלת זמן</button>
+                </div>
+                <div id="time-limit-container" style="display:none; gap:10px; margin-bottom:15px; background:#e1bee7; padding:10px; border-radius:8px; align-items:center;">
+                    <strong>🕒 משעה:</strong> <input type="time" id="taskStartTime" style="flex:1;">
+                    <span>עד שעה:</span> <input type="time" id="taskEndTime" style="flex:1;">
+                    <button type="button" onclick="document.getElementById('time-limit-container').style.display='none'; document.getElementById('taskStartTime').value=''; document.getElementById('taskEndTime').value='';" style="background:#d32f2f; padding:8px;">ביטול</button>
+                </div>
+                <div id="questions-constructor"></div>
+                <div style="display:flex; gap:10px; margin-top:15px; align-items:center;">
+                    <select id="questionType">
+                        <option value="open">שאלה פתוחה</option>
+                        <option value="multiple">אמריקאית</option>
+                        <option value="boolean">נכון / לא נכון</option>
+                        <option value="survey">סקר</option>
+                        <option value="study_unit">יחידת לימוד</option>
+                    </select>
+                    <button onclick="addQuestionField()" style="background:#0288d1;">הוסף שאלה</button>
+                    <button id="publish-task-btn" onclick="saveNewTask()" style="background:#4caf50; margin-right:auto; padding:12px 25px;">פרסם מטלה 🚀</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- פאנל הגשות -->
+        <div id="panel-submissions" style="display:none; width:100%; background:#f1f8e9; padding:15px; border-radius:10px; border:1px dashed #2e7d32; text-align:right; margin-top:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h4 style="margin:0; color:#2e7d32;">📥 ניהול הגשות</h4>
+                <button onclick="removeDuplicateSubmissions()" style="background:#e65100; padding:8px 15px; font-size:0.85em;">🗑️ הסר הגשות כפולות</button>
+            </div>
+            <div id="submissions-list">אין הגשות חדשות</div>
+        </div>
+
+        <!-- פאנל דמויות -->
+        <div id="panel-creatures" style="display:none; width:100%; margin-top:12px;">
+            <div style="background:rgba(255,255,255,0.97); border-radius:14px; padding:20px; border:2px solid #7b1fa2;">
+                <h4 style="margin:0 0 15px 0; color:#6a1b9a;">🐾 ניהול מתקפות דמויות</h4>
+                <div id="creature-types-list">טוען...</div>
+            </div>
+        </div>
+
+        <!-- פאנל אירועים -->
+        <div id="panel-events" style="display:none; width:100%; margin-top:12px;">
+            <div style="background:rgba(255,255,255,0.97); border-radius:14px; padding:20px; border:2px solid #e65100;">
+                <h4 style="margin:0 0 15px 0; color:#e65100;">🎉 ניהול אירועים מיוחדים</h4>
+                <input type="text" id="event-title" placeholder="כותרת האירוע" style="width:100%; margin-bottom:10px; padding:10px; border-radius:8px; border:1px solid #ffb74d;">
+                <input type="number" id="event-hours" placeholder="משף בשעות" value="24" min="1" style="width:100px; margin-bottom:10px; padding:10px; border-radius:8px; border:1px solid #ffb74d;">
+                <textarea id="event-desc" placeholder="תיאור האירוע" style="width:100%; height:60px; margin-bottom:10px; padding:10px; border-radius:8px; border:1px solid #ffb74d; box-sizing:border-box;"></textarea>
+                <select id="event-creature-type" style="width:100%; margin-bottom:10px; padding:10px; border-radius:8px; border:1px solid #ffb74d;">
+                    <option value="">בחר דמות...</option>
+                </select>
+                <input type="number" id="event-egg-num" min="1" max="50" value="1" style="width:100px; margin-bottom:10px; padding:10px; border-radius:8px; border:1px solid #ffb74d; box-sizing:border-box;">
+                <button onclick="addNewEvent()" style="background:#e65100; width:100%; padding:12px; font-size:1.1em; border-radius:10px;">🎉 צור אירוע חדש</button>
+                <div id="events-list" style="margin-top:20px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- אזור משימות -->
+    <div id="tasks-area" style="display:none; width:90%; max-width:1200px; margin-bottom:20px; text-align:right;">
+        <h3 style="margin-bottom:10px;">משימות להשלמה 📝</h3>
+        <div id="tasks-list"></div>
+    </div>
+
+    <!-- רשת התלמידים -->
+    <div id="farm-grid"></div>
+
+    <!-- מפת המשחק -->
+    <div id="map-container" style="display:none; justify-content:center; margin:20px auto; max-width:700px;"></div>
+
+    <!-- מודל מחסן דמו��ות -->
+    <div id="deck-modal-overlay" onclick="closeDeck()"></div>
+    <div id="deck-modal">
+        <div style="font-size:2.5em; margin-bottom:10px; text-align:center;">🎴</div>
+        <h3 style="margin:0 0 15px 0; color:#1976d2; text-align:center;">מחסן הדמויות של <span id="deck-student-name"></span></h3>
+        <div id="deck-list" style="display:flex; gap:15px; overflow-x:auto; padding-bottom:15px; justify-content:center;"></div>
+        <button onclick="closeDeck()" style="margin-top:15px; background:#999; width:100%; padding:10px; border-radius:10px;">סגור מחסן</button>
+    </div>
+
+    <!-- מודל הגשת משימה -->
+    <div id="submit-modal-overlay" onclick="closeModal()"></div>
+    <div id="submit-modal" style="background:white; padding:25px; border-radius:15px; box-shadow:0 0 30px rgba(0,0,0,0.5); z-index:1000; width:90%; max-width:500px; max-height:85vh; overflow-y:auto; text-align:right; border:3px solid #1976d2;">
+        <h3 id="modal-task-title" style="text-align:center; margin-top:0;">הגשת מטלה</h3>
+        <div id="questions-display" style="margin-bottom:20px;"></div>
+        <div style="display:flex; gap:10px;">
+            <button onclick="sendSubmission()" style="flex:1; background:#4caf50;">שלח הגשה 🚀</button>
+            <button onclick="closeModal()" style="flex:1; background:#999;">ביטול</button>
+        </div>
+    </div>
+
+    <!-- מודל גנרי -->
+    <div id="generic-modal-overlay" onclick="closeGenericModal()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:5000; backdrop-filter: blur(3px);"></div>
+    <div id="generic-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; border-radius:20px; padding:25px; z-index:5001; min-width:320px; max-width:90vw; max-height:85vh; overflow-y:auto; box-shadow: 0 10px 40px rgba(0,0,0,0.4); text-align:right; border:3px solid #ff9800;">
+        <div id="generic-modal-content"></div>
+    </div>
+
+    <!-- מודל לייקים -->
+    <div id="likes-popup-overlay" onclick="closeLikesPopup()"></div>
+    <div id="likes-popup">
+        <div style="font-size:2em; margin-bottom:10px;">❤️</div>
+        <h3 style="margin:0 0 15px 0; color:#e91e63;">הלבבות שקיבלת!</h3>
+        <div id="likes-popup-content"></div>
+        <button onclick="closeLikesPopup()" style="margin-top:15px; background:#e91e63; width:100%; padding:10px;">סגור 💕</button>
+    </div>
+
+    <!-- כפתור התנתקות -->
+    <div id="logout-btn-float" style="display:none; position:fixed; bottom:20px; left:20px; z-index:200;">
+        <button onclick="logout()" style="background:#c62828; border-radius:50px; padding:10px 18px; font-size:0.9em; box-shadow:0 4px 10px rgba(0,0,0,0.2);">🚪 התנתק</button>
+    </div>
+
+    <!-- אוברליי תמונת פתיחה -->
+    <div id="welcome-image-overlay">
+        <div id="welcome-image-box">
+            <button id="close-welcome-img" onclick="closeWelcomeImage()" title="סגור">✕</button>
+            <img id="welcome-img-el" src="" alt="תמונת הברכה">
+            <div id="welcome-img-caption"></div>
+        </div>
+    </div>
+
+    <!-- באנר אירוע -->
+    <div id="event-banner-overlay">
+        <div id="event-banner-box">
+            <button id="event-banner-close" onclick="closeEventBanner()" title="סגור">✕</button>
+            <button id="event-banner-minimize" onclick="minimizeEventBanner()" title="מזער">−</button>
+            <h2 id="event-banner-title"></h2>
+            <p id="event-banner-desc"></p>
+            <div id="event-banner-timer"></div>
+            <div id="event-banner-creature"></div>
+        </div>
+    </div>
+
+    <!-- מודל הגנה -->
+    <div id="defense-modal-overlay" onclick="closeDefenseModal()"></div>
+    <div id="defense-modal">
+        <div style="font-size:2em; margin-bottom:6px;">⚔️</div>
+        <h3 id="defense-modal-title" style="margin:0 0 6px 0; color:#c62828;">הכרטיס שלך תחת מתקפה!</h3>
+        <p id="defense-modal-desc" style="font-size:0.9em; color:#555; margin:0 0 14px 0;"></p>
+        <div id="defense-shields-row" class="shields-row" style="font-size:2em; justify-content:center; gap:12px; margin-bottom:16px;"></div>
+        <button onclick="closeDefenseModal()" style="background:#999; padding:8px 20px; border-radius:8px; font-size:0.9em;">סגור</button>
+    </div>
+
+    <!-- כפתורי צד צפים -->
+    <button id="battle-float-btn" class="float-action-btn" onclick="toggleBattleSidebar()"><img src="images/icons/battle1.png"></button>
+    <button id="skill-float-btn" class="float-action-btn" onclick="activateSpecialSkill()"><img src="images/icons/special1.png"></button>
+    <button id="shop-btn" class="float-action-btn" onclick="openShop()"><img src="images/icons/shop.png"></button>
+    <button id="map-btn" class="float-action-btn" onclick="toggleMap()" style="display:none;">🗺️</button>
+    <button id="bag-btn" class="float-action-btn" onclick="openBag()"><img src="images/icons/bag.png"></button>
+
+    <!-- סיידבר קרבות -->
+    <div id="battle-sidebar"><div class="sidebar-title">⚔️ בחר מתקפה:</div></div>
+    <div id="battle-pick-banner" onclick="cancelAttack()">🎯 בחר כרטיס תלמיד לתקוף — לחץ כאן לביטול</div>
+
+    <!-- RPS Modal -->
+    <div id="rps-modal-overlay" class="rps-modal-overlay"></div>
+    <div id="rps-modal" class="rps-modal">
+        <div id="rps-modal-title" class="rps-modal-title">⚔️ דו-קרב על המגן האחרון!</div>
+        <div id="rps-modal-desc" class="rps-modal-desc">בחר את הנשק שלך:</div>
+        <div class="rps-options">
+            <span class="rps-option" onclick="chooseRPS('אבן')">✊</span>
+            <span class="rps-option" onclick="chooseRPS('נייר')">✋</span>
+            <span class="rps-option" onclick="chooseRPS('מספריים')">✌️</span>
+        </div>
+    </div>
+
+<script>
+// אתחול ראשי - מתקן סדר טעינה
+async function init() {
+    // קודם כל נתונים בסיסיים
+    await loadStudents();
+    await loadTasks();
+    await loadAnnouncements();
+    await loadCreatureTypes();
+    
+    // אתחול תצוגה
+    const isTeacher = currentUser && currentUser.startsWith('teacher_');
+    if (currentUser && (currentUser === 'admin' || isTeacher)) {
+        await startApp();
+    } else if (currentUser) {
+        const found = allStudents.find(s => s.id === currentUser);
+        if (found) {
+            await startApp();
+        } else { 
+            localStorage.removeItem('farm_user_id'); 
+            currentUser = null; 
+        }
+    } else {
+        // לא מחובר - הצג מסך התחברות
+        document.getElementById('login-screen').style.display = 'block';
+    }
+    
+    // בדיקת סכמת קרבות
+    await checkBattlesSchema();
+}
+
+// טיפול בלחיצות על כרטיסים
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('farm-grid').addEventListener('click', function(e) {
+        if (!battleState.selectedSkill) return;
+        const card = e.target.closest('.student-card');
+        if (!card) return;
+        const studentId = card.dataset.sid;
+        if (!studentId || studentId === currentUser) return;
+        e.stopPropagation();
+        document.querySelectorAll('.shields-overlay').forEach(o => o.classList.remove('visible'));
+        document.getElementById('shields-overlay-' + studentId)?.classList.add('visible');
+    });
+});
+
+// עדכון טיימרים
+function updateAllTimers() {
+    if (currentUser === 'admin') return;
+    
+    const now = new Date();
+    allTasks.forEach(task => {
+        if (!task.startTime || !task.endTime) return;
+        const span = document.getElementById('timer-' + task.id);
+        const btn = document.getElementById('student-btn-' + task.id);
+        if (!span || !btn) return;
+
+        let start, end;
+        if (task.startTime.includes('T')) {
+            start = new Date(task.startTime);
+            end = new Date(task.endTime);
+        } else {
+            const [sH, sM] = task.startTime.split(':').map(Number);
+            const [eH, eM] = task.endTime.split(':').map(Number);
+            start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), sH, sM, 0);
+            end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), eH, eM, 0);
+        }
+
+        const pad = n => String(Math.floor(n)).padStart(2, '0');
+        if (now < start) {
+            const d = start - now;
+            span.innerText = `תיפתח בעוד ${pad(d/60000)}:${pad((d%60000)/1000)}`;
+            span.style.color = "#ff9800";
+            btn.disabled = true;
+            btn.innerText = "טרם נפתח 🔒";
+            btn.style.backgroundColor = "#999";
+        } else if (now < end) {
+            const d = end - now;
+            span.innerText = `נותרו: ${pad(d/60000)}:${pad((d%60000)/1000)}`;
+            span.style.color = "#d32f2f";
+            btn.disabled = false;
+            btn.innerText = "פתח משימה ✍️";
+            btn.style.backgroundColor = "#1976d2";
+        } else {
+            span.innerText = "הזמן נגמר!";
+            span.style.color = "#555";
+            btn.disabled = true;
+            btn.innerText = "הזמן נגמר! ⏳";
+            btn.style.backgroundColor = "#555";
+        }
+    });
+}
+
+// טעינת נתונים ראשונית
+setInterval(() => { updateAllTimers(); updateCooldownDisplay(); }, 1000);
+init();
+</script>
+</body>
+</html>
