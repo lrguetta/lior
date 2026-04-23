@@ -32,10 +32,6 @@ const HOUSES = {
 // מיקום התחלתי - דרום מזרח (ליד הבית)
 let playerPos = { x: 22, y: 11 };
 let playerDir = 'up';
-
-// משתני משחק
-let playerPos = { x: 7, y: 14 };
-let playerDir = 'up';
 const TILE_SIZE = 40;
 
 // צבעים
