@@ -3,45 +3,35 @@
    ============================================ */
 
 // מפת המשחק - כל מספר = סוג משבצת
+// 0 = דשא, 1 = קיר/גדר, 2 = בית צפון-מערב, 3 = בית צפון-מזרח, 4 = בית דרום-מערב, 5 = בית דרום-מזרח
 const GAME_MAP = [
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,2,2,0,0,0,0,0,0,0,0,3,0,1],  // 2 = בית שמאלי, 3 = בית ימני
-    [1,0,2,2,0,0,0,0,0,0,0,0,3,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,1,1,1,1,1,0,0,0,1,1,1,1,1,1],  // 0 באמצע = שער יציאה
-    [1,1,1,1,1,1,0,4,0,1,1,1,1,1,1],  // 4 = מיקום התחלתי
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,3,1],
+    [1,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,3,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,5,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 ];
 
-// הגדרות בתים - מי נמצא באיזה בית
+// הגדרות בתים
 const HOUSES = {
-    'house_left': { 
-        name: 'בית שמאל', 
-        className: 'ה1', 
-        x: 2, y: 2,
-        students: [] // יתמלא אוטומטי
-    },
-    'house_right': { 
-        name: 'בית ימני', 
-        className: 'ה2', 
-        x: 12, y: 2,
-        students: []
-    },
-    'player_house': {
-        name: 'הבית שלך',
-        x: 7, y: 14,
-        students: []
-    }
+    'house_sw': { name: 'בית כיתה 1', className: 'ה1', students: [] },
+    'house_se': { name: 'הבית שלך', className: 'personal', students: [] },
+    'house_nw': { name: 'בית כיתה 2', className: 'ה2', students: [] },
+    'house_ne': { name: 'חנות', className: 'shop', students: [] },
 };
+
+// מיקום התחלתי - דרום מזרח (ליד הבית)
+let playerPos = { x: 22, y: 11 };
+let playerDir = 'up';
 
 // משתני משחק
 let playerPos = { x: 7, y: 14 };
@@ -71,20 +61,24 @@ function initGameMap() {
 
 // חלוקת תלמידים לבתים לפי כיתה
 function loadStudentsToHouses() {
-    // הבית של השחקן - כיתה שלו
     const currentStudent = allStudents.find(s => s.id === currentUser);
     const myClass = currentStudent?.className || 'ה1';
     
-    // בית שמאל - כיתה א'
-    HOUSES.player_house.students = allStudents.filter(s => 
-        s.isActive && s.id !== currentUser && s.className === myClass
+    // בית דרום מערב - תלמידי כיתה 1 (מסתיים ב-1)
+    HOUSES.house_sw.students = allStudents.filter(s => 
+        s.isActive && s.className?.endsWith('1') && s.id !== currentUser
     );
-    HOUSES.house_left.students = allStudents.filter(s => 
-        s.isActive && s.className === 'ה1'
+    
+    // בית דרום מזרח - רק השחקן עצמו
+    HOUSES.house_se.students = [currentStudent].filter(Boolean);
+    
+    // בית צפון מערב - תלמידי כיתה 2 (מסתיים ב-2)
+    HOUSES.house_nw.students = allStudents.filter(s => 
+        s.isActive && s.className?.endsWith('2')
     );
-    HOUSES.house_right.students = allStudents.filter(s => 
-        s.isActive && s.className === 'ה2'
-    );
+    
+    // צפון מזרח - חנות (אין תלמידים כאן)
+    HOUSES.house_ne.students = [];
 }
 
 // ציור המפה
@@ -93,41 +87,82 @@ function drawMap() {
     if (!container) return;
     
     container.innerHTML = '';
-    container.style.display = 'grid';
-    container.style.gridTemplateColumns = `repeat(${GAME_MAP[0].length}, ${TILE_SIZE}px)`;
+    container.style.display = 'block';
+    container.style.position = 'relative';
+    container.style.width = '100%';
+    container.style.maxWidth = '1376px';
+    container.style.height = 'auto';
+    container.style.aspectRatio = '16/9';
+    container.style.backgroundImage = 'url("images/gameMap.png")';
+    container.style.backgroundSize = 'cover';
+    container.style.backgroundRepeat = 'no-repeat';
+    
+    // יצירת שכבת משבצות שקופות
+    const tilesLayer = document.createElement('div');
+    tilesLayer.style.position = 'absolute';
+    tilesLayer.style.top = '0';
+    tilesLayer.style.left = '0';
+    tilesLayer.style.width = '100%';
+    tilesLayer.style.height = '100%';
+    tilesLayer.style.display = 'grid';
+    tilesLayer.style.gridTemplateColumns = `repeat(${GAME_MAP[0].length}, 1fr)`;
+    tilesLayer.style.gridTemplateRows = `repeat(${GAME_MAP.length}, 1fr)`;
     
     for (let y = 0; y < GAME_MAP.length; y++) {
         for (let x = 0; x < GAME_MAP[y].length; x++) {
             const tile = document.createElement('div');
-            tile.style.width = TILE_SIZE + 'px';
-            tile.style.height = TILE_SIZE + 'px';
             tile.style.display = 'flex';
             tile.style.alignItems = 'center';
             tile.style.justifyContent = 'center';
             tile.style.fontSize = '20px';
             
-            const tileType = GAME_MAP[y][x];
-            
-            // צבע רקע
-            tile.style.backgroundColor = TILE_COLORS[tileType] || '#4CAF50';
-            
-            // תוכן לפי סוג
             if (x === playerPos.x && y === playerPos.y) {
                 tile.innerHTML = getPlayerEmoji();
+                tile.style.position = 'relative';
                 tile.style.zIndex = '10';
-            } else if (tileType === 2) {
-                tile.innerHTML = '🏠';
-                tile.style.cursor = 'pointer';
-                tile.onclick = () => enterHouse('house_left');
-            } else if (tileType === 3) {
-                tile.innerHTML = '🏠';
-                tile.style.cursor = 'pointer';
-                tile.onclick = () => enterHouse('house_right');
             }
             
-            container.appendChild(tile);
+            tilesLayer.appendChild(tile);
         }
     }
+    
+    container.appendChild(tilesLayer);
+    
+    // שכבת בתים - בלחיצה
+    const housesLayer = document.createElement('div');
+    housesLayer.style.position = 'absolute';
+    housesLayer.style.top = '0';
+    housesLayer.style.left = '0';
+    housesLayer.style.width = '100%';
+    housesLayer.style.height = '100%';
+    housesLayer.style.display = 'grid';
+    housesLayer.style.gridTemplateColumns = `repeat(${GAME_MAP[0].length}, 1fr)`;
+    housesLayer.style.gridTemplateRows = `repeat(${GAME_MAP.length}, 1fr)`;
+    
+    for (let y = 0; y < GAME_MAP.length; y++) {
+        for (let x = 0; x < GAME_MAP[y].length; x++) {
+            const tileType = GAME_MAP[y][x];
+            const btn = document.createElement('div');
+            
+            if (tileType === 2) {
+                btn.style.cursor = 'pointer';
+                btn.onclick = () => enterHouse('house_nw');
+            } else if (tileType === 3) {
+                btn.style.cursor = 'pointer';
+                btn.onclick = () => enterHouse('house_ne');
+            } else if (tileType === 4) {
+                btn.style.cursor = 'pointer';
+                btn.onclick = () => enterHouse('house_sw');
+            } else if (tileType === 5) {
+                btn.style.cursor = 'pointer';
+                btn.onclick = () => enterHouse('house_se');
+            }
+            
+            housesLayer.appendChild(btn);
+        }
+    }
+    
+    container.appendChild(housesLayer);
 }
 
 // אימוג'י לשחקן לפי כיוון
@@ -148,26 +183,24 @@ function handleKeyDown(e) {
         case 'w':
         case 'W':
             newY--;
-            newX++; // אלכסון ימינה-למעלה
             playerDir = 'up';
             break;
         case 'ArrowDown':
         case 's':
         case 'S':
             newY++;
-            newX++; // אלכסון ימינה-למטה
             playerDir = 'down';
             break;
         case 'ArrowLeft':
         case 'a':
         case 'A':
-            newX++; // ימינה
+            newX++;
             playerDir = 'left';
             break;
         case 'ArrowRight':
         case 'd':
         case 'D':
-            newX--; // שמאלה
+            newX--;
             playerDir = 'right';
             break;
         default:
@@ -195,8 +228,10 @@ function canMoveTo(x, y) {
 // בדיקה אם נכנס לבית
 function checkHouseEntry() {
     const tile = GAME_MAP[playerPos.y][playerPos.x];
-    if (tile === 2) enterHouse('house_left');
-    else if (tile === 3) enterHouse('house_right');
+    if (tile === 2) enterHouse('house_nw');
+    else if (tile === 3) enterHouse('house_ne');
+    else if (tile === 4) enterHouse('house_sw');
+    else if (tile === 5) enterHouse('house_se');
 }
 
 // כניסה לבית
@@ -204,13 +239,26 @@ function enterHouse(houseId) {
     const house = HOUSES[houseId];
     if (!house) return;
     
+    // אם זו החנות
+    if (houseId === 'house_ne') {
+        closeGenericModal();
+        openShop();
+        return;
+    }
+    
     const studentsInHouse = house.students || [];
     
     let html = `
         <div style="text-align:center; padding:20px;">
             <h2 style="margin:0 0 15px 0;">🏠 ${house.name}</h2>
-            <p style="color:#666; margin-bottom:15px;">כאלה התלמידים שנמצאים פה:</p>
     `;
+    
+    // הודעה מיוחדת לבית האישי
+    if (houseId === 'house_se') {
+        html += '<p style="color:#666; margin-bottom:15px;">הנה כל הדמויות שלך!</p>';
+    } else {
+        html += '<p style="color:#666; margin-bottom:15px;">כאלה התלמידים שנמצאים פה:</p>';
+    }
     
     if (studentsInHouse.length === 0) {
         html += '<p style="color:#999;">אין כאן אף אחד...</p>';
