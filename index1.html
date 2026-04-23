@@ -1046,8 +1046,13 @@ button {
         </div>
     </div>
 
-    <div id="panel-submissions" style="display:none; width:100%; background:#f1f8e9; padding:15px; border-radius:10px; border:1px dashed #2e7d32; text-align:right; margin-top:12px;">
-        <div id="submissions-list">אין הגשות חדשות</div>
+   <div id="panel-submissions" style="display:none; width:100%; background:#f1f8e9; padding:15px; border-radius:10px; border:1px dashed #2e7d32; text-align:right; margin-top:12px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h4 style="margin:0; color:#2e7d32;">📥 ניהול הגשות</h4>
+        <button onclick="removeDuplicateSubmissions()" style="background:#e65100; padding:8px 15px; font-size:0.85em;">🗑️ הסר הגשות כפולות</button>
+    </div>
+    <div id="submissions-list">אין הגשות חדשות</div>
+</div>
     </div>
     </div>
     <div id="panel-creatures" style="display:none; width:100%; margin-top:12px;">
@@ -3355,6 +3360,63 @@ async function initAdminSubmissions() {
     } catch (e) { 
         console.error("Error in initAdminSubmissions:", e);
         itemsContainer.innerHTML = `<div style="color:red;padding:20px;">שגיאה בטעינת הנתונים: ${e.message}</div>`; 
+    }
+}
+
+async function removeDuplicateSubmissions() {
+    if (!confirm("האם אתה בטוח שברצונך למחוק הגשות כפולות? (תישאר רק ההגשה האחרונה של כל תלמיד לכל מטלה)")) return;
+
+    try {
+        // 1. שליפת כל ההגשות מטבלת submissions
+        const { data: subs, error } = await supabase
+            .from(TABLES.submissions)
+            .select('*')
+            .order('created_at', { ascending: false }); // האחרון יהיה ראשון
+
+        if (error) throw error;
+        if (!subs || subs.length === 0) {
+            alert("לא נמצאו הגשות.");
+            return;
+        }
+
+        const seen = new Set();
+        const toDelete = [];
+
+        // 2. זיהוי כפילויות לפי שם תלמיד ושם מטלה
+        subs.forEach(s => {
+            // מייצרים מפתח ייחודי המורכב משם התלמיד ושם המטלה
+            const key = `${s.student_name}_${s.task_title}`;
+            
+            if (seen.has(key)) {
+                // אם כבר ראינו את השילוב הזה, זו הגשה ישנה יותר (כי המערך ממוין מהחדש לישן)
+                toDelete.push(s.id);
+            } else {
+                // פעם ראשונה שרואים את השילוב - זו ההגשה הכי עדכנית
+                seen.add(key);
+            }
+        });
+
+        if (toDelete.length === 0) {
+            alert("לא נמצאו הגשות כפולות לניקוי.");
+            return;
+        }
+
+        // 3. מחיקת הכפילויות ממסד הנתונים
+        const { error: deleteError } = await supabase
+            .from(TABLES.submissions)
+            .delete()
+            .in('id', toDelete);
+
+        if (deleteError) throw deleteError;
+
+        alert(`הניקוי בוצע בהצלחה! הוסרו ${toDelete.length} הגשות כפולות. ✨`);
+        
+        // רענון הרשימה בממשק (בהנחה שקיימת פונקציית loadSubmissions)
+        if (typeof loadSubmissions === 'function') await loadSubmissions();
+        
+    } catch (e) {
+        console.error("Error cleaning duplicates:", e);
+        alert("שגיאה בביצוע הניקוי: " + e.message);
     }
 }
 
