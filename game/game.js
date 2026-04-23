@@ -6,18 +6,17 @@
 // 0 = דשא, 1 = קיר/גדר, 2 = בית צפון-מערב, 3 = בית צפון-מזרח, 4 = בית דרום-מערב, 5 = בית דרום-מזרח
 const GAME_MAP = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,3,1],
-    [1,2,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,3,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,1],  // 4=כיתה1 (col 7), 5=בית שחקן (col 17)
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],  // 2=כיתה2 (col 6)
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,1],  // 3=חנות (col 9)
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,5,1],
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 ];
 
@@ -29,8 +28,8 @@ const HOUSES = {
     'house_ne': { name: 'חנות', className: 'shop', students: [] },
 };
 
-// מיקום התחלתי - דרום מזרח (ליד הבית)
-let playerPos = { x: 22, y: 11 };
+// מיקום התחלתי - ליד הבית של השחקן
+let playerPos = { x: 16, y: 3 };
 let playerDir = 'up';
 const TILE_SIZE = 40;
 
@@ -104,17 +103,26 @@ function drawMap() {
     tilesLayer.style.gridTemplateColumns = `repeat(${GAME_MAP[0].length}, 1fr)`;
     tilesLayer.style.gridTemplateRows = `repeat(${GAME_MAP.length}, 1fr)`;
     
+    const player = getPlayerCharacter();
+    
     for (let y = 0; y < GAME_MAP.length; y++) {
         for (let x = 0; x < GAME_MAP[y].length; x++) {
             const tile = document.createElement('div');
             tile.style.display = 'flex';
             tile.style.alignItems = 'center';
             tile.style.justifyContent = 'center';
-            tile.style.fontSize = '20px';
             
             if (x === playerPos.x && y === playerPos.y) {
-                tile.innerHTML = getPlayerEmoji();
-                tile.style.position = 'relative';
+                // הדמות של השחקן עם אפקט glow
+                const img = document.createElement('img');
+                img.src = player.img;
+                img.style.width = '80%';
+                img.style.maxWidth = '50px';
+                img.style.height = 'auto';
+                img.style.filter = 'drop-shadow(0 0 8px #FFD700) drop-shadow(0 0 15px #FFA500)';
+                img.style.zIndex = '10';
+                img.style.position = 'relative';
+                tile.appendChild(img);
                 tile.style.zIndex = '10';
             }
             
@@ -161,15 +169,35 @@ function drawMap() {
     container.appendChild(housesLayer);
 }
 
-// אימוג'י לשחקן לפי כיוון
+// קבלת הדמות של השחקן
+function getPlayerCharacter() {
+    const me = allStudents.find(s => s.id === currentUser);
+    if (!me) return { type: 'egg', level: 0, img: 'images/egg1.png' };
+    
+    let imgPath;
+    if (me.level === 0) {
+        imgPath = `images/egg${me.egg || 1}.png`;
+    } else {
+        const stage = me.level >= 20 ? 3 : me.level >= 10 ? 2 : 1;
+        imgPath = `images/${me.type}${stage}.png`;
+    }
+    
+    return { ...me, img: imgPath };
+}
+
+// אייקון לשחקן (משמש ל-backward compatibility)
 function getPlayerEmoji() {
-    const emojis = { up: '👤', down: '👤', left: '👤', right: '👤' };
-    return emojis[playerDir] || '👤';
+    return '<span style="font-size:24px;">👤</span>';
 }
 
 // טיפול במקשים
 function handleKeyDown(e) {
     if (!currentUser || currentUser === 'admin') return;
+    
+    // מניעת גלילה וקפיצה
+    if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) {
+        e.preventDefault();
+    }
     
     let newX = playerPos.x;
     let newY = playerPos.y;
