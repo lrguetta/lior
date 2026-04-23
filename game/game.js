@@ -148,24 +148,26 @@ function handleKeyDown(e) {
         case 'w':
         case 'W':
             newY--;
+            newX++; // אלכסון ימינה-למעלה
             playerDir = 'up';
             break;
         case 'ArrowDown':
         case 's':
         case 'S':
             newY++;
+            newX++; // אלכסון ימינה-למטה
             playerDir = 'down';
             break;
         case 'ArrowLeft':
         case 'a':
         case 'A':
-            newX--;
+            newX++; // ימינה
             playerDir = 'left';
             break;
         case 'ArrowRight':
         case 'd':
         case 'D':
-            newX++;
+            newX--; // שמאלה
             playerDir = 'right';
             break;
         default:
