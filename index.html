@@ -295,24 +295,32 @@
     </div>
 
 <script>
-// אתחול ראשי
+// אתחול ראשי - מתקן סדר טעינה
 async function init() {
-    await Promise.all([
-        loadStudents(), 
-        loadTasks(), 
-        loadAnnouncements(), 
-        loadCreatureTypes()
-    ]);
+    // קודם כל נתונים בסיסיים
+    await loadStudents();
+    await loadTasks();
+    await loadAnnouncements();
+    await loadCreatureTypes();
     
+    // אתחול תצוגה
     const isTeacher = currentUser && currentUser.startsWith('teacher_');
     if (currentUser && (currentUser === 'admin' || isTeacher)) {
-        startApp();
+        await startApp();
     } else if (currentUser) {
         const found = allStudents.find(s => s.id === currentUser);
-        if (found) startApp();
-        else { localStorage.removeItem('farm_user_id'); currentUser = null; }
+        if (found) {
+            await startApp();
+        } else { 
+            localStorage.removeItem('farm_user_id'); 
+            currentUser = null; 
+        }
+    } else {
+        // לא מחובר - הצג מסך התחברות
+        document.getElementById('login-screen').style.display = 'block';
     }
     
+    // בדיקת סכמת קרבות
     await checkBattlesSchema();
 }
 
