@@ -29,7 +29,7 @@ const HOUSES = {
 };
 
 // מיקום התחלתי - ליד הבית של השחקן
-let playerPos = { x: 6, y: 9 };
+let playerPos = { x: 16, y: 9 };
 let playerDir = 'up';
 const TILE_SIZE = 40;
 
