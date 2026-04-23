@@ -281,3 +281,12 @@ async function subscribeAll() {
         });
     }
 }
+
+// בדיקת סכמת קרבות
+async function checkBattlesSchema() {
+    try {
+        const { data, error } = await supabase.from(TABLES.battles).select('*').limit(1);
+        if (error) { console.log('Battles table not ready:', error); return; }
+        console.log('Battles table ready');
+    } catch (e) { console.log('Battles table check failed:', e); }
+}
