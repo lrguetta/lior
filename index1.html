@@ -3213,23 +3213,39 @@ const answers = [];
     let correctCount = 0; 
     let gradableCount = 0; // משתנה חדש: סופר רק שאלות עם ציון אוטומטי
 
-    // 2. איסוף תשובות וחישוב ציון
+ // 2. איסוף תשובות וחישוב ציון
     if (task?.questions) {
         task.questions.forEach((q, i) => {
             let val = '';
-            
+            let isCorrect = false; // משתנה עזר לבדיקת נכונות התשובה
+
             if (q.type === 'open') {
                 val = document.querySelector(`textarea[data-index="${i}"]`)?.value.trim() || '';
             } else if (q.type === 'survey') {
                 val = Array.from(document.querySelectorAll(`input[name="q${i}"]:checked`)).map(c => c.value).join(' | ');
             } else if (q.type === 'study_unit') {
+                // שליפת תשובת התלמיד
                 const ch = document.getElementById(`study_chapter_${i}`)?.value.trim() || '';
                 const st = document.getElementById(`study_start_${i}`)?.value.trim() || '';
                 const en = document.getElementById(`study_end_${i}`)?.value.trim() || '';
                 val = (ch || st || en) ? `פרק ${ch}, פסוקים ${st}-${en}` : '';
+
+                // בדיקת נכונות מול תשובת המורה השמורה (השוואת 3 השדות)
+                const correctCh = (q.chapter || '').trim();
+                const correctSt = (q.start || '').trim();
+                const correctEn = (q.end || '').trim();
+
+                if (ch === correctCh && st === correctSt && en === correctEn) {
+                    isCorrect = true;
+                }
             } else {
+                // שאלות אמריקאיות / נכון-לא נכון
                 const c = document.querySelector(`input[name="q${i}"]:checked`);
                 val = c ? c.value : '';
+
+                if (q.correct && val.trim() === String(q.correct).trim()) {
+                    isCorrect = true;
+                }
             }
             
             if (!val) allAnswered = false;
@@ -3239,7 +3255,7 @@ const answers = [];
 
             if (isGradable) {
                 gradableCount++; // סופרים רק את השאלות הסגורות
-                if (q.correct && val.trim() === String(q.correct).trim()) {
+                if (isCorrect) {
                     correctCount++;
                 }
             }
@@ -3247,7 +3263,6 @@ const answers = [];
             answers.push({ q: q.text, a: val });
         });
     }
-
     // חישוב הציון המוצע - רק ביחס לשאלות שאפשר לבדוק
     // אם המטלה מכילה *רק* שאלות פתוחות (gradableCount === 0), הציון המוצע יהיה 100 כברירת מחדל
     const suggestedGrade = gradableCount > 0 ? Math.round((correctCount / gradableCount) * 100) : 100;
