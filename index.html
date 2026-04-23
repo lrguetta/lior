@@ -1046,8 +1046,13 @@ button {
         </div>
     </div>
 
-    <div id="panel-submissions" style="display:none; width:100%; background:#f1f8e9; padding:15px; border-radius:10px; border:1px dashed #2e7d32; text-align:right; margin-top:12px;">
-        <div id="submissions-list">אין הגשות חדשות</div>
+   <div id="panel-submissions" style="display:none; width:100%; background:#f1f8e9; padding:15px; border-radius:10px; border:1px dashed #2e7d32; text-align:right; margin-top:12px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h4 style="margin:0; color:#2e7d32;">📥 ניהול הגשות</h4>
+        <button onclick="removeDuplicateSubmissions()" style="background:#e65100; padding:8px 15px; font-size:0.85em;">🗑️ הסר הגשות כפולות</button>
+    </div>
+    <div id="submissions-list">אין הגשות חדשות</div>
+</div>
     </div>
     </div>
     <div id="panel-creatures" style="display:none; width:100%; margin-top:12px;">
@@ -2097,61 +2102,57 @@ async function addStudent() {
             alert('אתה יכול להוסיף רק תלמידים לכיתה ' + currentGrade);
             return;
         }
-    }
-    
-    try {
-        const existingGroup = allStudents.filter(s => s.full_name === nameInput);
-        const isFirst = existingGroup.length === 0;
-        const sharedPass = isFirst ? null : existingGroup.find(s => s.password)?.password || null;
-
-        // Check for active event - new students get special creature and egg
-        let creatureType = CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)];
-        let eggNum = Math.floor(Math.random() * 5);
-        
+}
+     
+    let creatureType, eggNum;
+         
         if (currentActiveEvent) {
-            console.log('DEBUG: currentActiveEvent.eggNum:', currentActiveEvent.eggNum);
             creatureType = currentActiveEvent.creatureType;
-            eggNum = currentActiveEvent.eggNum || 0;
-            console.log('DEBUG: Using event eggNum (no +1):', eggNum, 'creatureType:', creatureType);
+            eggNum = (currentActiveEvent.eggNum || 0) + 1;
         } else {
-            console.log('DEBUG: No active event. currentActiveEvent:', currentActiveEvent);
+            creatureType = CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)];
+            eggNum = Math.floor(Math.random() * 5);
         }
 
-        const payload = {
-            full_name: nameInput,
-            className: document.getElementById('studentClass').value,
-            is_group: isGroupInput, // <--- הוספת השדה ל-Database
-            xp: 0, 
-            level: 0, 
-            type: creatureType, 
-            egg: eggNum, 
-            likes: {}, 
-            history: {}, 
-            isActive: isFirst, 
-            password: sharedPass,
-            created_at: new Date().toISOString()
-        };
+        const selectedClass = document.getElementById('studentClass').value;
+        const existingSameClass = allStudents.find(s => s.full_name === nameInput && s.className === selectedClass);
+        const isActive = !existingSameClass;
 
-        const { error } = await supabase
-            .from(TABLES.students)
-            .insert([payload]);
+        try {
+            const payload = {
+                full_name: nameInput,
+                className: selectedClass,
+                is_group: isGroupInput,
+                xp: 0, 
+                level: 0, 
+                type: creatureType,
+                egg: eggNum, 
+                likes: {}, 
+                history: {}, 
+                isActive: isActive, 
+                password: null,
+                created_at: new Date().toISOString()
+            };
 
-        if (error) throw error;
+            const { error } = await supabase
+                .from(TABLES.students)
+                .insert([payload]);
 
-        // איפוס השדות
-        document.getElementById('studentName').value = '';
-        if (document.getElementById('isGroupCheckbox')) {
-            document.getElementById('isGroupCheckbox').checked = false;
+            if (error) throw error;
+            
+            // איפוס השדות
+            document.getElementById('studentName').value = '';
+            if (document.getElementById('isGroupCheckbox')) {
+                document.getElementById('isGroupCheckbox').checked = false;
+            }
+            
+            await loadEvents();
+            if (typeof loadStudents === 'function') await loadStudents();
+            alert('הדמות צורפה בהצלחה! ✨');
+        } catch(e) { 
+            console.error("שגיאה בהוספת תלמיד:", e);
+            alert('שגיאה: ' + e.message); 
         }
-
-        await loadEvents();
-        if (typeof loadStudents === 'function') await loadStudents();
-        alert('הדמות צורפה בהצלחה! ✨');
-        
-    } catch(e) { 
-        console.error("שגיאה בהוספת תלמיד:", e);
-        alert('שגיאה: ' + e.message); 
-    }
 }
 
 async function deleteStudent(id) {
@@ -2258,7 +2259,7 @@ async function addXP(id) {
 
     // ✨ הפתרון: עדכון התמונה במסך בזמן אמת כשעולים רמה או בוקעים! ✨
     if (img) {
-        const eggNum = (s.egg ?? 0) + 1;
+        const eggNum = s.egg || 1;
         img.src = nlv === 0 ? `images/egg${eggNum}.png` : `images/${s.type}${nlv >= 20 ? 3 : nlv >= 10 ? 2 : 1}.png`;
     }
 
@@ -2288,13 +2289,16 @@ async function addXP(id) {
 }
 
 // --- מנגנון DECK (החלפת דמויות) ---
-function openDeck(fullName) {
+function openDeck(fullName, className) {
     // עדכון הכותרת במודל
-    document.getElementById('deck-student-name').innerText = fullName;
+    const displayName = className ? `${fullName} (${className})` : fullName;
+    document.getElementById('deck-student-name').innerText = displayName;
     const deckList = document.getElementById('deck-list');
     
-    // תיקון: סינון לפי השדה הנכון שקיים ב-Supabase
-    const myCards = allStudents.filter(s => s.full_name === fullName);
+    // סינון: שם + כיתה (אם צוינה)
+    const myCards = className 
+        ? allStudents.filter(s => s.full_name === fullName && s.className === className)
+        : allStudents.filter(s => s.full_name === fullName);
     
     if(myCards.length <= 1 && currentUser !== 'admin') {
         alert("אין לך דמויות נוספות במחסן.");
@@ -2302,7 +2306,7 @@ function openDeck(fullName) {
     }
     
     deckList.innerHTML = myCards.map(s => {
-        const eggNum = (s.egg ?? 0) + 1;
+        const eggNum = s.egg || 1;
         const imgPath = s.level === 0 
             ? `images/egg${eggNum}.png` 
             : `images/${s.type}${s.level >= 20 ? 3 : s.level >= 10 ? 2 : 1}.png`;
@@ -2476,7 +2480,7 @@ function updateView() {
         const groupStyle = isGroup ? 'background-color: #ffcc80 !important;' : '';
         // ------------------------------
 
-        const eggNum = (s.egg ?? 0) + 1;
+        const eggNum = s.egg || 1;
         const level = s.level || 0;
         const type = s.type || 'dragon';
         const imgPath = level === 0 ? `images/egg${eggNum}.png` : `images/${type}${level >= 20 ? 3 : level >= 10 ? 2 : 1}.png`;
@@ -2523,7 +2527,7 @@ function updateView() {
             }
         }
         
-        const flagBadge = hasFlag ? `<img src="images/flag.gif" style="width:18px;height:18px;vertical-align:middle;margin-right:3px;">` : '';
+        const flagBadge = hasFlag ? `<img src="images/flag.gif" style="width:78px;height:78px;vertical-align:middle;margin-right:3px;">` : '';
         const candleDisplay = hasCandle ? `
             <div style="position:relative;display:inline-block;">
                 <img src="images/izkor.gif" style="width:70px;height:85px;vertical-align:middle;margin-right:8px;cursor:help;"
@@ -2534,7 +2538,7 @@ function updateView() {
                     <div style="position:absolute;bottom:-8px;left:20px;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid #f9a825;"></div>
                 </div>
             </div>` : '';
-        const flagDisplay = hasFlag ? `<img src="images/flag.gif" style="width:24px;height:24px;vertical-align:middle;margin-left:5px;" title="דגל ישראל">` : '';
+        const flagDisplay = hasFlag ? `<img src="images/flag.gif" style="width:78px;height:78px;vertical-align:middle;margin-left:5px;" title="דגל ישראל">` : '';
 
         const shieldsOverlay = (!isMine && !isAdminOrTeacher) ? `
             <div id="shields-overlay-${s.id}" class="shields-overlay">
@@ -2585,7 +2589,7 @@ function updateView() {
                     <div style="font-size:0.75em;color:#2e7d32;font-weight:bold;margin-top:5px;text-align:center;">
                         <span style="cursor:pointer;" onclick="event.stopPropagation(); this.closest('.student-card').classList.toggle('flipped')">🔄 לחץ להיפוך</span>
                         &nbsp;|&nbsp;
-                        <span style="cursor:pointer; color:#1976d2;" data-deckname="${(s.full_name || '').replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); openDeck(this.dataset.deckname)">🎴 מחסן דמויות</span>
+                        <span style="cursor:pointer; color:#1976d2;" data-deckname="${(s.full_name || '').replace(/"/g, '&quot;')}" data-classname="${s.className || ''}" onclick="event.stopPropagation(); openDeck(this.dataset.deckname, this.dataset.classname)">🎴 מחסן דמויות</span>
                     </div>
                 </div>
             </div>
@@ -3209,23 +3213,39 @@ const answers = [];
     let correctCount = 0; 
     let gradableCount = 0; // משתנה חדש: סופר רק שאלות עם ציון אוטומטי
 
-    // 2. איסוף תשובות וחישוב ציון
+ // 2. איסוף תשובות וחישוב ציון
     if (task?.questions) {
         task.questions.forEach((q, i) => {
             let val = '';
-            
+            let isCorrect = false; // משתנה עזר לבדיקת נכונות התשובה
+
             if (q.type === 'open') {
                 val = document.querySelector(`textarea[data-index="${i}"]`)?.value.trim() || '';
             } else if (q.type === 'survey') {
                 val = Array.from(document.querySelectorAll(`input[name="q${i}"]:checked`)).map(c => c.value).join(' | ');
             } else if (q.type === 'study_unit') {
+                // שליפת תשובת התלמיד
                 const ch = document.getElementById(`study_chapter_${i}`)?.value.trim() || '';
                 const st = document.getElementById(`study_start_${i}`)?.value.trim() || '';
                 const en = document.getElementById(`study_end_${i}`)?.value.trim() || '';
                 val = (ch || st || en) ? `פרק ${ch}, פסוקים ${st}-${en}` : '';
+
+                // בדיקת נכונות מול תשובת המורה השמורה (השוואת 3 השדות)
+                const correctCh = (q.chapter || '').trim();
+                const correctSt = (q.start || '').trim();
+                const correctEn = (q.end || '').trim();
+
+                if (ch === correctCh && st === correctSt && en === correctEn) {
+                    isCorrect = true;
+                }
             } else {
+                // שאלות אמריקאיות / נכון-לא נכון
                 const c = document.querySelector(`input[name="q${i}"]:checked`);
                 val = c ? c.value : '';
+
+                if (q.correct && val.trim() === String(q.correct).trim()) {
+                    isCorrect = true;
+                }
             }
             
             if (!val) allAnswered = false;
@@ -3235,7 +3255,7 @@ const answers = [];
 
             if (isGradable) {
                 gradableCount++; // סופרים רק את השאלות הסגורות
-                if (q.correct && val.trim() === String(q.correct).trim()) {
+                if (isCorrect) {
                     correctCount++;
                 }
             }
@@ -3243,7 +3263,6 @@ const answers = [];
             answers.push({ q: q.text, a: val });
         });
     }
-
     // חישוב הציון המוצע - רק ביחס לשאלות שאפשר לבדוק
     // אם המטלה מכילה *רק* שאלות פתוחות (gradableCount === 0), הציון המוצע יהיה 100 כברירת מחדל
     const suggestedGrade = gradableCount > 0 ? Math.round((correctCount / gradableCount) * 100) : 100;
@@ -3356,6 +3375,63 @@ async function initAdminSubmissions() {
     } catch (e) { 
         console.error("Error in initAdminSubmissions:", e);
         itemsContainer.innerHTML = `<div style="color:red;padding:20px;">שגיאה בטעינת הנתונים: ${e.message}</div>`; 
+    }
+}
+
+async function removeDuplicateSubmissions() {
+    if (!confirm("האם אתה בטוח שברצונך למחוק הגשות כפולות? (תישאר רק ההגשה האחרונה של כל תלמיד לכל מטלה)")) return;
+
+    try {
+        // 1. שליפת כל ההגשות מטבלת submissions
+        const { data: subs, error } = await supabase
+            .from(TABLES.submissions)
+            .select('*')
+            .order('created_at', { ascending: false }); // האחרון יהיה ראשון
+
+        if (error) throw error;
+        if (!subs || subs.length === 0) {
+            alert("לא נמצאו הגשות.");
+            return;
+        }
+
+        const seen = new Set();
+        const toDelete = [];
+
+        // 2. זיהוי כפילויות לפי שם תלמיד ושם מטלה
+        subs.forEach(s => {
+            // מייצרים מפתח ייחודי המורכב משם התלמיד ושם המטלה
+            const key = `${s.student_name}_${s.task_title}`;
+            
+            if (seen.has(key)) {
+                // אם כבר ראינו את השילוב הזה, זו הגשה ישנה יותר (כי המערך ממוין מהחדש לישן)
+                toDelete.push(s.id);
+            } else {
+                // פעם ראשונה שרואים את השילוב - זו ההגשה הכי עדכנית
+                seen.add(key);
+            }
+        });
+
+        if (toDelete.length === 0) {
+            alert("לא נמצאו הגשות כפולות לניקוי.");
+            return;
+        }
+
+        // 3. מחיקת הכפילויות ממסד הנתונים
+        const { error: deleteError } = await supabase
+            .from(TABLES.submissions)
+            .delete()
+            .in('id', toDelete);
+
+        if (deleteError) throw deleteError;
+
+        alert(`הניקוי בוצע בהצלחה! הוסרו ${toDelete.length} הגשות כפולות. ✨`);
+        
+        // רענון הרשימה בממשק (בהנחה שקיימת פונקציית loadSubmissions)
+        if (typeof loadSubmissions === 'function') await loadSubmissions();
+        
+    } catch (e) {
+        console.error("Error cleaning duplicates:", e);
+        alert("שגיאה בביצוע הניקוי: " + e.message);
     }
 }
 
