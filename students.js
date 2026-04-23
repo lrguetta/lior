@@ -107,7 +107,7 @@ function updateView() {
         
         const historyObj = s.history || {};
         const brokenShields = historyObj.shields_broken || [];
-        const sc = typeof shieldsByLevel === 'function' ? shieldsByLevel(level) : 0;
+        const sc = shieldsByLevel(level);
 
         const histHtml = Object.values(historyObj)
             .filter(h => h && h.msg)
@@ -119,9 +119,6 @@ function updateView() {
         const likes = s.likes || {};
         const likeCount = Object.keys(likes).length;
         const iLiked = likes[currentUser] === true;
-        const likerNames = Object.keys(likes)
-            .map(uid => allStudents.find(x => x.id === uid)?.full_name)
-            .filter(Boolean);
 
         const noteHtml = s.lastNote ? `<div style="background:#fff3e0;border-radius:6px;padding:8px;border-right:3px solid #ff9800;font-size:0.85em;color:#e65100;">📝 ${s.lastNote}</div>` : '';
         const personalNoteHtml = s.personalNote ? `<div style="background:#e8f5e9;border-radius:6px;padding:8px;border-right:3px solid #4caf50;font-size:0.85em;color:#1b5e20;">💬 <b>על עצמי:</b> ${s.personalNote}</div>` : '';
@@ -130,20 +127,14 @@ function updateView() {
 
         const hasCandle = s.history && Object.keys(s.history).some(k => k.startsWith('candle_'));
         const hasFlag = s.hasFlag === true || s.hasFlag === 'true';
-        let candleTooltip = '';
-        if (hasCandle) {
-            const candleKeys = Object.keys(s.history).filter(k => k.startsWith('candle_'));
-            const candleData = candleKeys.length > 0 ? s.history[candleKeys[candleKeys.length - 1]] : null;
-            if (candleData) candleTooltip = `נר נשמה לעילוי נשמת ${candleData.name || ''}`;
-        }
         
-        const candleDisplay = hasCandle ? `<img src="images/izkor.gif" style="width:70px;height:85px;vertical-align:middle;margin-right:8px;cursor:help;" title="${candleTooltip}">` : '';
+        const candleDisplay = hasCandle ? `<img src="images/izkor.gif" style="width:70px;height:85px;vertical-align:middle;margin-right:8px;cursor:help;">` : '';
         const flagDisplay = hasFlag ? `<img src="images/flag.gif" style="width:78px;height:78px;vertical-align:middle;margin-left:5px;">` : '';
 
-        const shieldsOverlay = (!isMine && !isAdminOrTeacher) ? `<div id="shields-overlay-${s.id}" class="shields-overlay"><div class="shields-title">⚔️ בחר מגן לתקוף!</div><div class="shields-row">${Array.from({ length: sc }, (_, i) => { const broken = brokenShields.includes(i); return `<span class="shield-item ${broken ? 'broken' : ''}" onclick="event.stopPropagation(); pickTargetShield('${s.id}',${i})" title="${broken ? 'שבור' : 'בחר'}">${broken ? '💔' : '🛡️'}</span>`; }).join('')}</div><button class="cancel-btn" onclick="cancelAttack()">ביטול</button></div>` : '';
+        const shieldsOverlay = (!isMine && !isAdminOrTeacher) ? `<div id="shields-overlay-${s.id}" class="shields-overlay"><div class="shields-title">⚔️ בחר מגן!</div><div class="shields-row">${Array.from({ length: sc }, (_, i) => { const broken = brokenShields.includes(i); return `<span class="shield-item ${broken ? 'broken' : ''}" onclick="pickTargetShield('${s.id}',${i})">${broken ? '💔' : '🛡️'}</span>`; }).join('')}</div><button class="cancel-btn" onclick="cancelAttack()">ביטול</button></div>` : '';
 
         const likeBtn = !isMine && !isAdminOrTeacher ? `<button class="like-btn ${iLiked ? 'liked' : ''}" onclick="toggleLike('${s.id}')">${iLiked ? '❤️' : '🤍'}</button>` : '';
-        const likeDisplay = isMine && likeCount > 0 ? `<span class="like-btn" onclick="showLikesPopup('${s.id}')">❤️ ${likeCount}</span>` : isMine ? '<span style="font-size:0.8em;color:#ccc;">🤍</span>' : '';
+        const likeDisplay = isMine && likeCount > 0 ? `<span class="like-btn">❤️ ${likeCount}</span>` : isMine ? '<span style="font-size:0.8em;color:#ccc;">🤍</span>' : '';
 
         return `
         <div class="student-card ${groupClass} ${isMine ? 'my-creature' : ''} ${pending.includes(s.id) ? 'under-attack' : ''}" data-sid="${s.id}" ${tooltipAttr} onclick="handleCardClick(event, this, '${s.id}')">
@@ -173,7 +164,7 @@ function updateView() {
             </div>
             <div class="card-back" style="padding:12px;display:flex;flex-direction:column;gap:8px;">
                 <h4 style="margin:0 0 6px 0;color:#2e7d32;border-bottom:1px solid #ccc;padding-bottom:5px;">יומן פעילות</h4>
-                <div style="font-size:0.8em;color:#777;border-top:1px solid #eee;padding-top:6px;">${histHtml || 'אין פעילות לאחרונה'} ${noteHtml}</div>
+                <div style="font-size:0.8em;color:#777;border-top:1px solid #eee;padding-top:6px;">${histHtml || 'אין פעילות'} ${noteHtml}</div>
                 ${personalNoteHtml}
                 ${isMine ? `<div style="margin-top:8px;border-top:1px solid #c8e6c9;padding-top:8px;">
                     <div style="font-size:0.85em;color:#2e7d32;font-weight:bold;margin-bottom:5px;">✏️ הערה:</div>
@@ -211,7 +202,7 @@ async function toggleLike(studentId) {
     const s = allStudents.find(x=>x.id===studentId);
     if (!s) return;
     const likes = {...s.likes};
-    likes[currentUser] ? delete likes[currentUser] : (likes[currentUser] = true);
+    likes[currentUser] ? delete likes[currentUser] : (likes[currentUser]=true);
     try { 
         const { error } = await supabase.from(TABLES.students).update({ likes }).eq('id', studentId);
         if (error) throw error;
@@ -266,13 +257,13 @@ async function addXP(id) {
     s.history = history;
     
     try {
-        const { error } = await supabase.from(TABLES.students).update({ xp: nxp, level: nlv, history: history }).eq('id', id);
+        const { error } = await supabase.from(TABLES.students).update({ xp: nxp, level: nlv, history }).eq('id', id);
         if (error) throw error;
-    } catch (e) { console.error("שגיאה בעדכון XP:", e); }
+    } catch (e) { console.error("שגיאה:", e); }
 }
 
 async function deleteStudent(id) {
-    if (!confirm('למחוק את הדמות הזו?')) return;
+    if (!confirm('למחוק את הדמות?')) return;
     try { 
         const s = allStudents.find(x => x.id === id);
         const { error: delError } = await supabase.from(TABLES.students).delete().eq('id', id);
@@ -281,13 +272,12 @@ async function deleteStudent(id) {
         if (s && s.isActive) {
             const remaining = allStudents.filter(x => x.full_name === s.full_name && x.id !== id);
             if (remaining.length > 0) {
-                const { error: upError } = await supabase.from(TABLES.students).update({ isActive: true }).eq('id', remaining[0].id);
-                if (upError) throw upError;
+                await supabase.from(TABLES.students).update({ isActive: true }).eq('id', remaining[0].id);
             }
         }
         
         await loadStudents(); 
-    } catch(e) { console.error("שגיאה במחיקה:", e); }
+    } catch(e) { console.error(e); }
 }
 
 async function savePersonalNote(id) {
@@ -297,7 +287,7 @@ async function savePersonalNote(id) {
         if (error) throw error;
         await loadStudents();
         alert('הערה נשמרה!');
-    } catch(e) { console.error("שגיאה בשמירת הערה:", e); }
+    } catch(e) { console.error(e); }
 }
 
 async function addStudent() {
@@ -309,7 +299,7 @@ async function addStudent() {
         const classSelect = document.getElementById('studentClass');
         const selectedClass = classSelect.value;
         if (!selectedClass.startsWith(currentGrade)) {
-            alert('אתה יכול להוסיף רק תלמידים לכיתה ' + currentGrade);
+            alert('אתה יכול להוסיף רק לכיתה ' + currentGrade);
             return;
         }
     }
@@ -346,7 +336,7 @@ async function addStudent() {
         await loadStudents();
         alert('הדמות צורפה בהצלחה! ✨');
     } catch(e) { 
-        console.error("שגיאה בהוספת תלמיד:", e);
+        console.error("שגיאה:", e);
         alert('שגיאה: ' + e.message); 
     }
 }
@@ -360,7 +350,7 @@ async function openDeck(fullName, className) {
         : allStudents.filter(s => s.full_name === fullName);
     
     if(myCards.length <= 1 && currentUser !== 'admin') {
-        alert("אין לך דמויות נוספות במחסן.");
+        alert("אין לך דמויות נוספות.");
         return;
     }
     
@@ -391,11 +381,8 @@ async function switchActiveCharacter(newId, full_name) {
     closeDeck();
     
     try {
-        const { error: err1 } = await supabase.from(TABLES.students).update({ isActive: false }).eq('full_name', full_name);
-        if (err1) throw err1;
-
-        const { error: err2 } = await supabase.from(TABLES.students).update({ isActive: true }).eq('id', newId);
-        if (err2) throw err2;
+        await supabase.from(TABLES.students).update({ isActive: false }).eq('full_name', full_name);
+        await supabase.from(TABLES.students).update({ isActive: true }).eq('id', newId);
 
         allStudents.forEach(s => { if (s.full_name === full_name) s.isActive = (s.id === newId); });
 
@@ -408,6 +395,76 @@ async function switchActiveCharacter(newId, full_name) {
         }
 
         await loadStudents();
-        alert("הדמות הוחלפה בהצלחה!");
-    } catch(e) { console.error("Error switching character:", e); alert("שגיאה: " + e.message); }
+        alert("הוחלף בהצלחה!");
+    } catch(e) { console.error(e); alert("שגיאה: " + e.message); }
+}
+
+/* ============================================
+   ניקוי וסידור - LEGACY FIXES
+   ============================================ */
+
+async function smartCleanupAllStudents() {
+    if (!confirm("לנקות לוגים ישנים?")) return;
+    
+    let count = 0;
+    for (let student of allStudents) {
+        try {
+            let h = {};
+            try { h = JSON.parse(student.history || "{}"); } catch(e) {}
+            
+            const keysToKeep = ['shields_broken','steel_armor_until','snake_poison','fox_trap_until','double_shield_active','double_attack_ready','rooster_active','spider_trap','counter_active'];
+            let newH = {};
+            keysToKeep.forEach(key => { if (h[key] !== undefined) newH[key] = h[key]; });
+            
+            let logKeys = Object.keys(h).filter(k => k.startsWith('log_') || k.startsWith('win_') || k.startsWith('lose_')).sort().slice(-10);
+            logKeys.forEach(k => newH[k] = h[k]);
+
+            const { error } = await supabase.from(TABLES.students).update({ history: newH }).eq('id', student.id);
+            if (error) throw error;
+            count++;
+        } catch (e) { console.error(e); }
+    }
+    alert(`נוקו ${count} תלמידים.`);
+    await loadStudents();
+}
+
+async function fixDatabase() {
+    if (!confirm("לסדר מצב 'פעיל' וסיסמאות?")) return;
+    const btn = document.getElementById('magic-btn');
+    if (btn) { btn.innerText = '⏳ עדכון...'; btn.disabled = true; }
+
+    const nameGroups = {};
+    allStudents.forEach(s => {
+        if (!nameGroups[s.full_name]) nameGroups[s.full_name] = [];
+        nameGroups[s.full_name].push(s);
+    });
+
+    const updates = [];
+    for (const name in nameGroups) {
+        const group = nameGroups[name];
+        const passDoc = group.find(s => s.password);
+        const sharedPass = passDoc ? passDoc.password : null;
+        let hasActive = group.some(s => s.isActive);
+        
+        for (let i = 0; i < group.length; i++) {
+            const doc = group[i];
+            let shouldBeActive = (!hasActive && i === 0);
+            if (hasActive && doc.isActive) shouldBeActive = true;
+            
+            const needsUpdate = doc.isActive !== shouldBeActive || doc.password !== sharedPass;
+            if (needsUpdate) {
+                updates.push(
+                    supabase.from(TABLES.students).update({ isActive: shouldBeActive, password: sharedPass }).eq('id', doc.id)
+                );
+            }
+        }
+    }
+    try {
+        await Promise.all(updates);
+        alert("✅ הסידור הושלם!");
+        await loadStudents();
+    } catch(e) {
+        alert("❌ שגיאה: " + e.message);
+    }
+    if (btn) { btn.innerText = '✨ סידור דמויות אוטומטי'; btn.disabled = false; }
 }

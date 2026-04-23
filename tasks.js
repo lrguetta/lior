@@ -2,6 +2,27 @@
    מטלות ושאלות - TASKS
    ============================================ */
 
+async function loadTasks() {
+    try {
+        const { data, error } = await supabase
+            .from(TABLES.tasks)
+            .select('*')
+            .limit(200);
+
+        if (error) throw error;
+
+        allTasks = data.map(d => ({
+            id: d.id,
+            title: d.title || '',
+            content: d.content || '',
+            xp: d.xp || 0,
+            ...d
+        }));
+
+        if (currentUser) renderTasks();
+    } catch(e) { console.error("שגיאה בטעינת מטלות:", e); }
+}
+
 function addQuestionField(existingType=null, qData=null) {
     const type = existingType || document.getElementById('questionType').value;
     const container = document.getElementById('questions-constructor');

@@ -2,6 +2,68 @@
    הגשות - SUBMISSIONS
    ============================================ */
 
+async function initAdminSubmissions() {
+    const container = document.getElementById('submissions-list');
+    if (!container) return;
+    
+    container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+            <h4 style="margin:0; color:#2e7d32;">📥 הגשות לבדיקה</h4>
+            <button onclick="downloadSubmissionsReport()" style="background:#1976d2; color:white; border:none; padding:8px 12px; border-radius:5px; cursor:pointer; font-size:0.85em;">📊 דוח</button>
+        </div>
+        <div id="subs-items-container" style="color:#888;text-align:center;">טוען...</div>
+    `;
+
+    const itemsContainer = document.getElementById('subs-items-container');
+
+    try {
+        const { data: subs, error } = await supabase
+            .from(TABLES.submissions)
+            .select(`*, students (full_name)`)
+            .eq('status', 'submitted')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        if (!subs || subs.length === 0) { 
+            itemsContainer.innerHTML = '<div style="color:#666;text-align:center;padding:20px;">אין הגשות חדשות ✨</div>'; 
+            return; 
+        }
+
+        itemsContainer.innerHTML = '';
+
+        subs.forEach(sub => {
+            const task = allTasks.find(t => t.id === sub.taskId);
+            const studentName = sub.students?.full_name || 'תלמיד לא ידוע';
+            const grade = sub.grade !== undefined ? sub.grade : null;
+            
+            const gradeDisplay = grade !== null ? 
+                `<span style="background:#e3f2fd; color:#1565c0; padding:2px 8px; border-radius:10px; font-size:0.85em; font-weight:bold;">ציון: ${grade}</span>` : "";
+
+            const d = document.createElement('div');
+            d.style = 'background:white;padding:15px;margin:10px 0;border-radius:8px;border-right:5px solid gold;text-align:right;box-shadow:0 2px 4px rgba(0,0,0,0.1);';
+            
+            d.innerHTML = `
+                <div style="margin-bottom:10px; display:flex; justify-content:space-between; align-items:start;">
+                    <div>
+                        <strong style="color:#2e7d32; font-size:1.1em;">${studentName}</strong>
+                        <div style="font-size:0.85em;color:#666;">מטלה: ${task?.title || 'כללית'} | XP: ${task?.xp || 20}</div>
+                    </div>
+                    ${gradeDisplay}
+                </div>
+                <div style="display:flex;gap:5px;margin-top:10px;">
+                    <button onclick="approveSub('${sub.id}','${sub.studentId}',1)" style="background:#4caf50;flex:1;color:white;border:none;padding:8px;border-radius:4px;cursor:pointer;font-weight:bold;">אשר מלא</button>
+                    <button onclick="approveSub('${sub.id}','${sub.studentId}',0.5)" style="background:#ffc107;flex:1;color:white;border:none;padding:8px;border-radius:4px;cursor:pointer;font-weight:bold;">אשר חלקי</button>
+                    <button onclick="rejectSub('${sub.id}','${sub.studentId}')" style="background:#f44336;flex:1;color:white;border:none;padding:8px;border-radius:4px;cursor:pointer;font-weight:bold;">דחה</button>
+                </div>
+            `;
+            itemsContainer.appendChild(d);
+        });
+    } catch (e) { 
+        console.error("Error:", e);
+        itemsContainer.innerHTML = `<div style="color:red;">שגיאה: ${e.message}</div>`; 
+    }
+}
+
 async function renderTasks() {
     const list = document.getElementById('tasks-list');
     if (!list) return;

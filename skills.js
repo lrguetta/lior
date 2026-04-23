@@ -246,4 +246,5 @@ const CreatureSkills = {
     }
 };
 
-module.exports = CreatureSkills;
+// Remove Node.js syntax for browser compatibility
+// module.exports = CreatureSkills;

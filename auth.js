@@ -97,3 +97,120 @@ function logout() {
     currentGrade = null;
     location.reload(); 
 }
+
+// אתחול האפליקציה
+async function startApp() {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('farm-grid').style.display = 'grid';
+    document.getElementById('tasks-area').style.display = 'block';
+    
+    const isTeacher = currentUser && currentUser.startsWith('teacher_');
+    
+    if (currentUser === 'admin' || isTeacher) {
+        document.getElementById('control-panel').style.display = 'flex';
+        
+        if (isTeacher && currentGrade) {
+            const classSelect = document.getElementById('studentClass');
+            classSelect.innerHTML = `
+                <option value="${currentGrade}1">כיתה ${currentGrade}'1</option>
+                <option value="${currentGrade}2">כיתה ${currentGrade}'2</option>
+            `;
+        }
+        
+        if (currentUser === 'admin') {
+            await Promise.all([loadAnnouncements(), loadWelcomeImageForAdmin(), initAdminSubmissions(), loadEvents()]);
+            document.getElementById('magic-btn').style.display = 'inline-block';
+        } else {
+            await loadEvents();
+        }
+    } else {
+        // תלמיד - הצגת כפתורים וכרטיסים
+        document.getElementById('logout-btn-float').style.display = 'block';
+        await loadEvents();
+        
+        // הצגת כפתורי חנות ותיק
+        ['shop-btn', 'bag-btn'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'flex';
+        });
+
+        await showWelcomeImageIfExists();
+        
+        const me = allStudents.find(s => s.id === currentUser);
+        if (me && attacksByLevel(me.level) > 0) {
+            document.getElementById('battle-float-btn').style.display = 'flex';
+            buildBattleSidebar(me);
+        }
+        setTimeout(() => checkPendingBattle(), 1500);
+    }
+    
+    subscribeAll();
+    updateView();
+    renderTasks();
+}
+
+// תצוגת תמונת פתיחה
+async function showWelcomeImageIfExists() {
+    try {
+        const { data } = await supabase.from(TABLES.welcomeImage).select('*').limit(1);
+        const doc = data[0];
+        if (!doc?.url) return;
+        
+        const overlay = document.getElementById('welcome-image-overlay');
+        const imgEl = document.getElementById('welcome-img-el');
+        const caption = document.getElementById('welcome-img-caption');
+        const old = document.getElementById('welcome-video-frame');
+        if (old) old.remove();
+        
+        if (doc.url.includes('streamable.com')) {
+            imgEl.style.display = 'none';
+            const iframe = document.createElement('iframe');
+            iframe.id = 'welcome-video-frame';
+            iframe.src = 'https://streamable.com/e/' + doc.url.split('streamable.com/').pop().split('?')[0];
+            iframe.setAttribute('allowfullscreen', '');
+            iframe.style = 'width:80vw;max-width:800px;height:45vw;max-height:450px;border-radius:12px;display:block;';
+            imgEl.parentNode.insertBefore(iframe, imgEl);
+        } else {
+            imgEl.style.display = 'block';
+            imgEl.src = doc.url;
+        }
+        caption.innerText = doc.caption || '';
+        caption.style.display = doc.caption ? 'block' : 'none';
+        overlay.classList.add('active');
+    } catch(e) { console.error(e); }
+}
+
+// סגירת תמונת פתיחה
+function closeWelcomeImage() {
+    document.getElementById('welcome-image-overlay').classList.remove('active');
+    const f = document.getElementById('welcome-video-frame');
+    if (f) f.src = '';
+}
+
+// מחיקת כפילויות הגשות
+async function removeDuplicateSubmissions() {
+    if (!confirm("למחוק הגשות כפולות?")) return;
+    try {
+        const { data: subs, error } = await supabase.from(TABLES.submissions).select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+        
+        const seen = new Set();
+        const toDelete = [];
+        subs.forEach(s => {
+            const key = `${s.studentId}_${s.taskId}`;
+            if (seen.has(key)) toDelete.push(s.id);
+            else seen.add(key);
+        });
+        
+        if (toDelete.length === 0) {
+            alert("אין כפילויות.");
+            return;
+        }
+        
+        const { error: deleteError } = await supabase.from(TABLES.submissions).delete().in('id', toDelete);
+        if (deleteError) throw deleteError;
+        
+        alert(`הוסרו ${toDelete.length} הגשות כפולות.`);
+        if (typeof initAdminSubmissions === 'function') await initAdminSubmissions();
+    } catch(e) { alert("שגיאה: " + e.message); }
+}
