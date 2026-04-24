@@ -43,6 +43,13 @@ let playerPos = { x: 16, y: 9 };
 let playerDir = 'up';
 const TILE_SIZE = 40;
 
+// גודל התצוגה (במשבצות) - מה שרואים על המסך
+const VIEWPORT_WIDTH = 16;
+const VIEWPORT_HEIGHT = 9;
+
+// אזורים שנגלו (fog of war)
+let discoveredAreas = new Set();
+
 // צבעים
 const TILE_COLORS = {
     0: '#4CAF50',  // דשא - ירוק
@@ -92,38 +99,56 @@ function drawMap() {
     if (!container) return;
     
     container.innerHTML = '';
+    
+    // גודל המפה בפיקסלים
+    const mapPixelWidth = GAME_MAP[0].length * TILE_SIZE;
+    const mapPixelHeight = GAME_MAP.length * TILE_SIZE;
+    
+    // גודל ה-viewport בפיקסלים
+    const viewportPixelWidth = VIEWPORT_WIDTH * TILE_SIZE;
+    const viewportPixelHeight = VIEWPORT_HEIGHT * TILE_SIZE;
+    
+    // הגדרת הקונטיינר הראשי - גודל המפה המלאה
     container.style.display = 'block';
     container.style.position = 'relative';
-    container.style.width = '250%';
-    container.style.maxWidth = '2752px';
-    container.style.height = 'auto';
-    container.style.aspectRatio = '16/9';
+    container.style.width = mapPixelWidth + 'px';
+    container.style.height = mapPixelHeight + 'px';
     container.style.backgroundImage = 'url("images/newFarmBG1.jpeg")';
     container.style.backgroundSize = 'cover';
     container.style.backgroundRepeat = 'no-repeat';
     
-    // יצירת שכבת משבצות שקופות
+    // יצירת שכבת הרקע (שקופה)
+    const backgroundLayer = document.createElement('div');
+    backgroundLayer.style.position = 'absolute';
+    backgroundLayer.style.top = '0';
+    backgroundLayer.style.left = '0';
+    backgroundLayer.style.width = mapPixelWidth + 'px';
+    backgroundLayer.style.height = mapPixelHeight + 'px';
+    container.appendChild(backgroundLayer);
+    
+    // יצירת שכבת המשבצות
     const tilesLayer = document.createElement('div');
     tilesLayer.style.position = 'absolute';
     tilesLayer.style.top = '0';
     tilesLayer.style.left = '0';
-    tilesLayer.style.width = '100%';
-    tilesLayer.style.height = '100%';
+    tilesLayer.style.width = mapPixelWidth + 'px';
+    tilesLayer.style.height = mapPixelHeight + 'px';
     tilesLayer.style.display = 'grid';
-    tilesLayer.style.gridTemplateColumns = `repeat(${GAME_MAP[0].length}, 1fr)`;
-    tilesLayer.style.gridTemplateRows = `repeat(${GAME_MAP.length}, 1fr)`;
+    tilesLayer.style.gridTemplateColumns = `repeat(${GAME_MAP[0].length}, ${TILE_SIZE}px)`;
+    tilesLayer.style.gridTemplateRows = `repeat(${GAME_MAP.length}, ${TILE_SIZE}px)`;
     
     const player = getPlayerCharacter();
     
     for (let y = 0; y < GAME_MAP.length; y++) {
         for (let x = 0; x < GAME_MAP[y].length; x++) {
             const tile = document.createElement('div');
+            tile.style.width = TILE_SIZE + 'px';
+            tile.style.height = TILE_SIZE + 'px';
             tile.style.display = 'flex';
             tile.style.alignItems = 'center';
             tile.style.justifyContent = 'center';
             
             if (x === playerPos.x && y === playerPos.y) {
-                // הדמות של השחקן עם אפקט glow
                 const img = document.createElement('img');
                 img.src = player.img;
                 img.style.width = '80%';
@@ -142,16 +167,16 @@ function drawMap() {
     
     container.appendChild(tilesLayer);
     
-    // שכבת בתים - בלחיצה
+    // שכבת בתים
     const housesLayer = document.createElement('div');
     housesLayer.style.position = 'absolute';
     housesLayer.style.top = '0';
     housesLayer.style.left = '0';
-    housesLayer.style.width = '100%';
-    housesLayer.style.height = '100%';
+    housesLayer.style.width = mapPixelWidth + 'px';
+    housesLayer.style.height = mapPixelHeight + 'px';
     housesLayer.style.display = 'grid';
-    housesLayer.style.gridTemplateColumns = `repeat(${GAME_MAP[0].length}, 1fr)`;
-    housesLayer.style.gridTemplateRows = `repeat(${GAME_MAP.length}, 1fr)`;
+    housesLayer.style.gridTemplateColumns = `repeat(${GAME_MAP[0].length}, ${TILE_SIZE}px)`;
+    housesLayer.style.gridTemplateRows = `repeat(${GAME_MAP.length}, ${TILE_SIZE}px)`;
     
     for (let y = 0; y < GAME_MAP.length; y++) {
         for (let x = 0; x < GAME_MAP[y].length; x++) {
@@ -177,6 +202,53 @@ function drawMap() {
     }
     
     container.appendChild(housesLayer);
+    
+    // גלילה למיקום השחקן והסתרת החלק שמחוץ ל-viewport
+    scrollToPlayer();
+    
+    // סימון האזור כנגלה
+    discoverArea();
+}
+
+// גלילה למיקום השחקן במפה
+function scrollToPlayer() {
+    const container = document.getElementById('map-container');
+    if (!container) return;
+    
+    const mapWidth = GAME_MAP[0].length * TILE_SIZE;
+    const mapHeight = GAME_MAP.length * TILE_SIZE;
+    const viewportWidth = VIEWPORT_WIDTH * TILE_SIZE;
+    const viewportHeight = VIEWPORT_HEIGHT * TILE_SIZE;
+    
+    // חישוב הקואורדינטות של השחקן בפיקסלים
+    const playerPixelX = playerPos.x * TILE_SIZE;
+    const playerPixelY = playerPos.y * TILE_SIZE;
+    
+    // חישוב הקיזוז - לשמור את השחקן במרכז
+    let offsetX = playerPixelX - viewportWidth / 2 + TILE_SIZE / 2;
+    let offsetY = playerPixelY - viewportHeight / 2 + TILE_SIZE / 2;
+    
+    // הגבלה לגבולות המפה
+    offsetX = Math.max(0, Math.min(offsetX, mapWidth - viewportWidth));
+    offsetY = Math.max(0, Math.min(offsetY, mapHeight - viewportHeight));
+    
+    // החלקת הגלילה
+    container.style.transition = 'transform 0.3s ease-out';
+    container.style.transform = `translate(${-offsetX}px, ${-offsetY}px)`;
+}
+
+// גילוי אזורים סביב השחקן
+function discoverArea() {
+    const radius = 3;
+    for (let dy = -radius; dy <= radius; dy++) {
+        for (let dx = -radius; dx <= radius; dx++) {
+            const nx = playerPos.x + dx;
+            const ny = playerPos.y + dy;
+            if (ny >= 0 && ny < GAME_MAP.length && nx >= 0 && nx < GAME_MAP[0].length) {
+                discoveredAreas.add(`${nx},${ny}`);
+            }
+        }
+    }
 }
 
 // קבלת הדמות של השחקן
@@ -328,15 +400,15 @@ function showMapButton() {
 
 // החלפת תצוגה בין מפה לרשת
 function toggleMap() {
-    const mapContainer = document.getElementById('map-container');
+    const mapWrapper = document.getElementById('map-wrapper');
     const farmGrid = document.getElementById('farm-grid');
     
-    if (mapContainer.style.display === 'none' || !mapContainer.style.display) {
+    if (mapWrapper.style.display === 'none' || !mapWrapper.style.display) {
         farmGrid.style.display = 'none';
-        mapContainer.style.display = 'grid';
+        mapWrapper.style.display = 'flex';
         initGameMap();
     } else {
-        mapContainer.style.display = 'none';
+        mapWrapper.style.display = 'none';
         farmGrid.style.display = 'grid';
     }
 }
