@@ -203,9 +203,7 @@
     <div id="farm-grid"></div>
 
     <!-- מפת המשחק -->
-    <div id="map-wrapper" style="display:none; justify-content:center; align-items:center; margin:20px auto; overflow:hidden; position:relative; width:640px; height:360px; border:3px solid #4CAF50; border-radius:10px; background:#000;">
-        <div id="map-container" style="position:relative; overflow:hidden;"></div>
-    </div>
+    <div id="map-container" style="display:none; justify-content:center; margin:20px auto; max-width:700px;"></div>
 
     <!-- מודל מחסן דמו��ות -->
     <div id="deck-modal-overlay" onclick="closeDeck()"></div>
@@ -320,10 +318,10 @@ async function init() {
             await startApp();
             activateStudentMap();
             setTimeout(() => {
-                const mapWrapper = document.getElementById('map-wrapper');
+                const mapContainer = document.getElementById('map-container');
                 const farmGrid = document.getElementById('farm-grid');
                 farmGrid.style.display = 'none';
-                mapWrapper.style.display = 'flex';
+                mapContainer.style.display = 'block';
                 initGameMap();
             }, 100);
         } else { 

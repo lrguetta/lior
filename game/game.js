@@ -8,14 +8,13 @@ const GAME_MAP = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,3,0,0,0,0,0,0,1,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],  // 4=כיתה1 (col 7), 5=בית שחקן (col 17)
+    [1,0,0,0,0,0,3,0,0,0,0,0,0,1,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],  // 2=כיתה2 (col 6)
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],  // 3=חנות (col 9)
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
@@ -43,12 +42,15 @@ let playerPos = { x: 16, y: 9 };
 let playerDir = 'up';
 const TILE_SIZE = 40;
 
-// גודל התצוגה (במשבצות) - מה שרואים על המסך
-const VIEWPORT_WIDTH = 16;
-const VIEWPORT_HEIGHT = 9;
+// גודל המפה המלאה (בפיקסלים)
+const MAP_WIDTH = GAME_MAP[0].length * TILE_SIZE;
+const MAP_HEIGHT = GAME_MAP.length * TILE_SIZE;
 
-// אזורים שנגלו (fog of war)
-let discoveredAreas = new Set();
+// גודל התצוגה (viewport) - 16x9 משבצות
+const VIEWPORT_TILES_W = 16;
+const VIEWPORT_TILES_H = 9;
+const VIEWPORT_WIDTH = VIEWPORT_TILES_W * TILE_SIZE;
+const VIEWPORT_HEIGHT = VIEWPORT_TILES_H * TILE_SIZE;
 
 // צבעים
 const TILE_COLORS = {
@@ -61,13 +63,8 @@ const TILE_COLORS = {
 
 // אתחול המפה
 function initGameMap() {
-    // טעינת תלמידים לבתים
     loadStudentsToHouses();
-    
-    // ציור ראשוני
     drawMap();
-    
-    // הוספת מאזין מקשים
     document.addEventListener('keydown', handleKeyDown);
 }
 
@@ -76,21 +73,29 @@ function loadStudentsToHouses() {
     const currentStudent = allStudents.find(s => s.id === currentUser);
     const myClass = currentStudent?.className || 'ה1';
     
-    // בית דרום מערב - תלמידי כיתה 1 (מסתיים ב-1)
     HOUSES.house_sw.students = allStudents.filter(s => 
         s.isActive && s.className?.endsWith('1') && s.id !== currentUser
     );
     
-    // בית דרום מזרח - רק השחקן עצמו
     HOUSES.house_se.students = [currentStudent].filter(Boolean);
     
-    // בית צפון מערב - תלמידי כיתה 2 (מסתיים ב-2)
     HOUSES.house_nw.students = allStudents.filter(s => 
         s.isActive && s.className?.endsWith('2')
     );
     
-    // צפון מזרח - חנות (אין תלמידים כאן)
     HOUSES.house_ne.students = [];
+}
+
+// חישוב הקיזוז לפי מיקום השחקן
+function getScrollOffset() {
+    let offsetX = playerPos.x * TILE_SIZE - VIEWPORT_WIDTH / 2 + TILE_SIZE / 2;
+    let offsetY = playerPos.y * TILE_SIZE - VIEWPORT_HEIGHT / 2 + TILE_SIZE / 2;
+    
+    // הגבלה לגבולות
+    offsetX = Math.max(0, Math.min(offsetX, MAP_WIDTH - VIEWPORT_WIDTH));
+    offsetY = Math.max(0, Math.min(offsetY, MAP_HEIGHT - VIEWPORT_HEIGHT));
+    
+    return { x: offsetX, y: offsetY };
 }
 
 // ציור המפה
@@ -98,44 +103,44 @@ function drawMap() {
     const container = document.getElementById('map-container');
     if (!container) return;
     
+    const offset = getScrollOffset();
+    
     container.innerHTML = '';
-    
-    // גודל המפה בפיקסלים
-    const mapPixelWidth = GAME_MAP[0].length * TILE_SIZE;
-    const mapPixelHeight = GAME_MAP.length * TILE_SIZE;
-    
-    // גודל ה-viewport בפיקסלים
-    const viewportPixelWidth = VIEWPORT_WIDTH * TILE_SIZE;
-    const viewportPixelHeight = VIEWPORT_HEIGHT * TILE_SIZE;
-    
-    // הגדרת הקונטיינר הראשי - גודל המפה המלאה
     container.style.display = 'block';
     container.style.position = 'relative';
-    container.style.width = mapPixelWidth + 'px';
-    container.style.height = mapPixelHeight + 'px';
-    container.style.backgroundImage = 'url("images/newFarmBG1.jpeg")';
-    container.style.backgroundSize = 'cover';
-    container.style.backgroundRepeat = 'no-repeat';
+    container.style.width = VIEWPORT_WIDTH + 'px';
+    container.style.height = VIEWPORT_HEIGHT + 'px';
+    container.style.overflow = 'hidden';
+    container.style.margin = '20px auto';
+    container.style.border = '3px solid #4CAF50';
+    container.style.borderRadius = '10px';
     
-    // יצירת שכבת הרקע (שקופה)
-    const backgroundLayer = document.createElement('div');
-    backgroundLayer.style.position = 'absolute';
-    backgroundLayer.style.top = '0';
-    backgroundLayer.style.left = '0';
-    backgroundLayer.style.width = mapPixelWidth + 'px';
-    backgroundLayer.style.height = mapPixelHeight + 'px';
-    container.appendChild(backgroundLayer);
+    // יצירת שכבת הרקע הגדולה
+    const bgLayer = document.createElement('div');
+    bgLayer.style.position = 'absolute';
+    bgLayer.style.top = '0';
+    bgLayer.style.left = '0';
+    bgLayer.style.width = MAP_WIDTH + 'px';
+    bgLayer.style.height = MAP_HEIGHT + 'px';
+    bgLayer.style.backgroundImage = 'url("images/newFarmBG1.jpeg")';
+    bgLayer.style.backgroundSize = 'cover';
+    bgLayer.style.backgroundRepeat = 'no-repeat';
+    bgLayer.style.transform = `translate(${-offset.x}px, ${-offset.y}px)`;
+    bgLayer.style.transition = 'transform 0.3s ease-out';
+    container.appendChild(bgLayer);
     
     // יצירת שכבת המשבצות
     const tilesLayer = document.createElement('div');
     tilesLayer.style.position = 'absolute';
     tilesLayer.style.top = '0';
     tilesLayer.style.left = '0';
-    tilesLayer.style.width = mapPixelWidth + 'px';
-    tilesLayer.style.height = mapPixelHeight + 'px';
+    tilesLayer.style.width = MAP_WIDTH + 'px';
+    tilesLayer.style.height = MAP_HEIGHT + 'px';
     tilesLayer.style.display = 'grid';
     tilesLayer.style.gridTemplateColumns = `repeat(${GAME_MAP[0].length}, ${TILE_SIZE}px)`;
     tilesLayer.style.gridTemplateRows = `repeat(${GAME_MAP.length}, ${TILE_SIZE}px)`;
+    tilesLayer.style.transform = `translate(${-offset.x}px, ${-offset.y}px)`;
+    tilesLayer.style.transition = 'transform 0.3s ease-out';
     
     const player = getPlayerCharacter();
     
@@ -172,11 +177,13 @@ function drawMap() {
     housesLayer.style.position = 'absolute';
     housesLayer.style.top = '0';
     housesLayer.style.left = '0';
-    housesLayer.style.width = mapPixelWidth + 'px';
-    housesLayer.style.height = mapPixelHeight + 'px';
+    housesLayer.style.width = MAP_WIDTH + 'px';
+    housesLayer.style.height = MAP_HEIGHT + 'px';
     housesLayer.style.display = 'grid';
     housesLayer.style.gridTemplateColumns = `repeat(${GAME_MAP[0].length}, ${TILE_SIZE}px)`;
     housesLayer.style.gridTemplateRows = `repeat(${GAME_MAP.length}, ${TILE_SIZE}px)`;
+    housesLayer.style.transform = `translate(${-offset.x}px, ${-offset.y}px)`;
+    housesLayer.style.transition = 'transform 0.3s ease-out';
     
     for (let y = 0; y < GAME_MAP.length; y++) {
         for (let x = 0; x < GAME_MAP[y].length; x++) {
@@ -202,53 +209,6 @@ function drawMap() {
     }
     
     container.appendChild(housesLayer);
-    
-    // גלילה למיקום השחקן והסתרת החלק שמחוץ ל-viewport
-    scrollToPlayer();
-    
-    // סימון האזור כנגלה
-    discoverArea();
-}
-
-// גלילה למיקום השחקן במפה
-function scrollToPlayer() {
-    const container = document.getElementById('map-container');
-    if (!container) return;
-    
-    const mapWidth = GAME_MAP[0].length * TILE_SIZE;
-    const mapHeight = GAME_MAP.length * TILE_SIZE;
-    const viewportWidth = VIEWPORT_WIDTH * TILE_SIZE;
-    const viewportHeight = VIEWPORT_HEIGHT * TILE_SIZE;
-    
-    // חישוב הקואורדינטות של השחקן בפיקסלים
-    const playerPixelX = playerPos.x * TILE_SIZE;
-    const playerPixelY = playerPos.y * TILE_SIZE;
-    
-    // חישוב הקיזוז - לשמור את השחקן במרכז
-    let offsetX = playerPixelX - viewportWidth / 2 + TILE_SIZE / 2;
-    let offsetY = playerPixelY - viewportHeight / 2 + TILE_SIZE / 2;
-    
-    // הגבלה לגבולות המפה
-    offsetX = Math.max(0, Math.min(offsetX, mapWidth - viewportWidth));
-    offsetY = Math.max(0, Math.min(offsetY, mapHeight - viewportHeight));
-    
-    // החלקת הגלילה
-    container.style.transition = 'transform 0.3s ease-out';
-    container.style.transform = `translate(${-offsetX}px, ${-offsetY}px)`;
-}
-
-// גילוי אזורים סביב השחקן
-function discoverArea() {
-    const radius = 3;
-    for (let dy = -radius; dy <= radius; dy++) {
-        for (let dx = -radius; dx <= radius; dx++) {
-            const nx = playerPos.x + dx;
-            const ny = playerPos.y + dy;
-            if (ny >= 0 && ny < GAME_MAP.length && nx >= 0 && nx < GAME_MAP[0].length) {
-                discoveredAreas.add(`${nx},${ny}`);
-            }
-        }
-    }
 }
 
 // קבלת הדמות של השחקן
@@ -276,7 +236,6 @@ function getPlayerEmoji() {
 function handleKeyDown(e) {
     if (!currentUser || currentUser === 'admin') return;
     
-    // מניעת גלילה וקפיצה
     if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) {
         e.preventDefault();
     }
@@ -300,26 +259,23 @@ function handleKeyDown(e) {
         case 'ArrowLeft':
         case 'a':
         case 'A':
-            newX++;
+            newX--;
             playerDir = 'left';
             break;
         case 'ArrowRight':
         case 'd':
         case 'D':
-            newX--;
+            newX++;
             playerDir = 'right';
             break;
         default:
             return;
     }
     
-    // בדיקה אם אפשר לזוז
     if (canMoveTo(newX, newY)) {
         playerPos.x = newX;
         playerPos.y = newY;
         drawMap();
-        
-        // בדיקה אם נכנס לבית
         checkHouseEntry();
     }
 }
@@ -328,7 +284,7 @@ function handleKeyDown(e) {
 function canMoveTo(x, y) {
     if (y < 0 || y >= GAME_MAP.length || x < 0 || x >= GAME_MAP[0].length) return false;
     const tile = GAME_MAP[y][x];
-    return tile !== 1; // 1 = קיר
+    return tile !== 1;
 }
 
 // בדיקה אם נכנס לבית
@@ -345,7 +301,6 @@ function enterHouse(houseId) {
     const house = HOUSES[houseId];
     if (!house) return;
     
-    // אם זו החנות
     if (houseId === 'house_ne') {
         closeGenericModal();
         openShop();
@@ -359,7 +314,6 @@ function enterHouse(houseId) {
             <h2 style="margin:0 0 15px 0;">🏠 ${house.name}</h2>
     `;
     
-    // הודעה מיוחדת לבית האישי
     if (houseId === 'house_se') {
         html += '<p style="color:#666; margin-bottom:15px;">הנה כל הדמויות שלך!</p>';
     } else {
@@ -400,15 +354,15 @@ function showMapButton() {
 
 // החלפת תצוגה בין מפה לרשת
 function toggleMap() {
-    const mapWrapper = document.getElementById('map-wrapper');
+    const mapContainer = document.getElementById('map-container');
     const farmGrid = document.getElementById('farm-grid');
     
-    if (mapWrapper.style.display === 'none' || !mapWrapper.style.display) {
+    if (mapContainer.style.display === 'none' || !mapContainer.style.display) {
         farmGrid.style.display = 'none';
-        mapWrapper.style.display = 'flex';
+        mapContainer.style.display = 'block';
         initGameMap();
     } else {
-        mapWrapper.style.display = 'none';
+        mapContainer.style.display = 'none';
         farmGrid.style.display = 'grid';
     }
 }

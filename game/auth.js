@@ -90,10 +90,10 @@ async function studentLogin() {
     await startApp();
     activateStudentMap();
     setTimeout(() => {
-        const mapWrapper = document.getElementById('map-wrapper');
+        const mapContainer = document.getElementById('map-container');
         const farmGrid = document.getElementById('farm-grid');
         farmGrid.style.display = 'none';
-        mapWrapper.style.display = 'flex';
+        mapContainer.style.display = 'block';
         initGameMap();
     }, 100);
 }
