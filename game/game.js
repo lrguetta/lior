@@ -94,8 +94,8 @@ function drawMap() {
     container.innerHTML = '';
     container.style.display = 'block';
     container.style.position = 'relative';
-    container.style.width = '100%';
-    container.style.maxWidth = '1376px';
+    container.style.width = '250%';
+    container.style.maxWidth = '2752px';
     container.style.height = 'auto';
     container.style.aspectRatio = '16/9';
     container.style.backgroundImage = 'url("images/newFarmBG1.jpeg")';
