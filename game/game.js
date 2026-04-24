@@ -41,7 +41,7 @@ const HOUSES = {
 // מיקום התחלתי - ליד הבית של השחקן
 let playerPos = { x: 26, y: 17 };
 let playerDir = 'up';
-const TILE_SIZE = 40;
+const TILE_SIZE = 15;
 
 // צבעים
 const TILE_COLORS = {
