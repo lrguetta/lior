@@ -105,7 +105,7 @@ function drawMap() {
     container.style.maxWidth = '2752px';
     container.style.height = 'auto';
     container.style.aspectRatio = '16/9';
-    container.style.backgroundImage = 'url("images/newFarmBG1.jpeg")';
+    container.style.backgroundImage = 'url("images/newmap2.png")';
     container.style.backgroundSize = 'cover';
     container.style.backgroundRepeat = 'no-repeat';
     
