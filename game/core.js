@@ -75,14 +75,22 @@ function docToTask(d) {
 
 // בניית מודלים
 function openGenericModal(html) {
+    const modal = document.getElementById('generic-modal');
+    const overlay = document.getElementById('generic-modal-overlay');
     document.getElementById('generic-modal-content').innerHTML = html;
-    document.getElementById('generic-modal-overlay').style.display = 'block';
-    document.getElementById('generic-modal').style.display = 'block';
+    overlay.style.display = 'block';
+    modal.style.display = 'block';
+    modal.style.animation = 'fadeIn 0.3s ease-out';
 }
 
 function closeGenericModal() {
-    document.getElementById('generic-modal-overlay').style.display = 'none';
-    document.getElementById('generic-modal').style.display = 'none';
+    const modal = document.getElementById('generic-modal');
+    const overlay = document.getElementById('generic-modal-overlay');
+    modal.style.animation = 'fadeOut 0.2s ease-out';
+    setTimeout(() => {
+        overlay.style.display = 'none';
+        modal.style.display = 'none';
+    }, 200);
 }
 
 function togglePanel(id) {

@@ -2,6 +2,16 @@
    חוות הטמגוצ'י - קובץ CSS מרכזי
    ============================================ */
 
+@keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    to { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+}
+
 body { 
     font-family: 'Segoe UI', Tahoma, sans-serif;
     background: #e0f7fa url('images/background.jpg') no-repeat center center fixed; 
