@@ -470,9 +470,6 @@ function canMoveIndoor(x, y) {
     if (x < 0 || x >= INDOOR_GRID_COLS || y < 0 || y >= INDOOR_GRID_ROWS) return false;
     return true;
 }
-        checkHouseEntry();
-    }
-}
 
 // האם אפשר לזוז למשבצת
 function canMoveTo(x, y) {
@@ -513,42 +510,6 @@ function exitHouse() {
     isIndoor = false;
     playerPos = { x: outdoorPos.x, y: outdoorPos.y };
     drawMap();
-}
-    
-    let html = `
-        <div style="text-align:center; padding:20px;">
-            <h2 style="margin:0 0 15px 0;">🏠 ${house.name}</h2>
-    `;
-    
-    // הודעה מיוחדת לבית האישי
-    if (houseId === 'house_se') {
-        html += '<p style="color:#666; margin-bottom:15px;">הנה כל הדמויות שלך!</p>';
-    } else {
-        html += '<p style="color:#666; margin-bottom:15px;">כאלה התלמידים שנמצאים פה:</p>';
-    }
-    
-    if (studentsInHouse.length === 0) {
-        html += '<p style="color:#999;">אין כאן אף אחד...</p>';
-    } else {
-        html += '<div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center;">';
-        studentsInHouse.forEach(s => {
-            const imgPath = s.level === 0 ? `images/egg${s.egg || 1}.png` : `images/${s.type}${s.level >= 20 ? 3 : s.level >= 10 ? 2 : 1}.png`;
-            html += `
-                <div style="text-align:center; padding:10px; background:#f5f5f5; border-radius:10px; min-width:80px;">
-                    <img src="${imgPath}" style="width:50px; height:50px; object-fit:contain;">
-                    <div style="font-size:12px; margin-top:5px;">${s.full_name}</div>
-                    <div style="font-size:10px; color:#888;">Lv.${s.level}</div>
-                </div>
-            `;
-        });
-    }
-    
-    html += `
-        </div>
-        <button onclick="closeGenericModal()" style="margin-top:20px; padding:10px 30px; background:#666; color:white; border:none; border-radius:8px; cursor:pointer;">צא 🏃</button>
-    `;
-    
-    openGenericModal(html);
 }
 
 // הצגת כפתור המפה בתפריט
