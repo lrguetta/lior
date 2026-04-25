@@ -146,8 +146,11 @@ async function startApp() {
         
         const me = allStudents.find(s => s.id === currentUser);
         if (me && attacksByLevel(me.level) > 0) {
-            document.getElementById('battle-float-btn').style.display = 'flex';
-            buildBattleSidebar(me);
+            const battleBtn = document.getElementById('battle-float-btn');
+            if (battleBtn) {
+                battleBtn.style.display = 'flex';
+                buildBattleSidebar(me);
+            }
         }
         setTimeout(() => checkPendingBattle(), 1500);
     }
