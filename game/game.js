@@ -373,24 +373,12 @@ window.startBattleFromMap = function(targetId) {
     shieldsDiv.innerHTML = Array.from({ length: shieldsCount }, (_, i) => 
         `<span style="cursor:pointer; margin:0 10px;" onclick="confirmBattleFromMap('${targetId}', ${i})">🛡️</span>`
     ).join('');
-};
+}
 
 function confirmBattleFromMap(targetId, shieldIndex) {
     closeGenericModal();
     exitHouse();
     alert('הקרב יתחיל! (טרם מושלם)');
-};
-                btn.onclick = () => enterHouse('house_sw');
-            } else if (tileType === 5) {
-                btn.style.cursor = 'pointer';
-                btn.onclick = () => enterHouse('house_se');
-            }
-            
-            housesLayer.appendChild(btn);
-        }
-    }
-    
-    container.appendChild(housesLayer);
 }
 
 // קבלת הדמות של השחקן
