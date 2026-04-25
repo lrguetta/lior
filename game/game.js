@@ -3,7 +3,15 @@
    ============================================ */
 
 // מפת המשחק - כל מספר = סוג משבצת
-// 0 = דשא, 1 = קיר/גדר, 2 = בית צפון-מערב, 0 = בית צפון-מזרח, 4 = בית דרום-מערב, 5 = בית דרום-מזרח
+// 0 = דשא, 1 = קיר/גדר, 2 = בית צפון-מערב, 3 = בית צפון-מזרח, 4 = בית דרום-מערב, 5 = בית דרום-מזרח
+
+// מצב: האם נמצא בתוך בית
+let isIndoor = false;
+let currentIndoorType = null;
+let outdoorPos = { x: 26, y: 17 }; // שמירת מיקום חיצוני
+
+const INDOOR_GRID_COLS = 8;
+const INDOOR_GRID_ROWS = 6;
 const GAME_MAP = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
@@ -23,11 +31,11 @@ const GAME_MAP = [
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], // בית שלי = 5
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], // חנות = 3
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,5,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1], // חנות = 3
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,5,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,3,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
@@ -46,9 +54,12 @@ const HOUSES = {
 };
 
 // מיקום התחלתי - ליד הבית של השחקן
-let playerPos = { x: 30, y: 6 };
+let playerPos = { x: 26, y: 17 };
 let playerDir = 'up';
 const TILE_SIZE = 15;
+
+// מיקום בתוך הבית
+let indoorPos = { x: 0, y: 0 };
 
 // צבעים
 const TILE_COLORS = {
@@ -59,15 +70,18 @@ const TILE_COLORS = {
     4: '#9C27B0',  // שחקן - סגול
 };
 
+// תמונות רקע לבתים
+const HOUSE_BACKGROUNDS = {
+    'house_sw': 'url("images/class1.png")',
+    'house_se': 'url("images/home.png")',
+    'house_nw': 'url("images/class2.png")',
+    'house_ne': 'url("images/shop.png")',
+};
+
 // אתחול המפה
 function initGameMap() {
-    // טעינת תלמידים לבתים
     loadStudentsToHouses();
-    
-    // ציור ראשוני
     drawMap();
-    
-    // הוספת מאזין מקשים
     document.addEventListener('keydown', handleKeyDown);
 }
 
@@ -99,17 +113,26 @@ function drawMap() {
     if (!container) return;
     
     container.innerHTML = '';
+    
+    if (isIndoor) {
+        drawIndoorMap(container);
+    } else {
+        drawOutdoorMap(container);
+    }
+}
+
+// מפה חיצונית
+function drawOutdoorMap(container) {
     container.style.display = 'block';
     container.style.position = 'relative';
     container.style.width = '250%';
     container.style.maxWidth = '2752px';
     container.style.height = 'auto';
     container.style.aspectRatio = '16/9';
-    container.style.backgroundImage = 'url("images/newmap2.png")';
+    container.style.backgroundImage = 'url("images/newFarmBG1.jpeg")';
     container.style.backgroundSize = 'cover';
     container.style.backgroundRepeat = 'no-repeat';
     
-    // יצירת שכבת משבצות שקופות
     const tilesLayer = document.createElement('div');
     tilesLayer.style.position = 'absolute';
     tilesLayer.style.top = '0';
@@ -130,7 +153,6 @@ function drawMap() {
             tile.style.justifyContent = 'center';
             
             if (x === playerPos.x && y === playerPos.y) {
-                // הדמות של השחקן עם אפקט glow
                 const img = document.createElement('img');
                 img.src = player.img;
                 img.style.width = '80%';
@@ -149,7 +171,7 @@ function drawMap() {
     
     container.appendChild(tilesLayer);
     
-    // שכבת בתים - בלחיצה
+    // שכבת בתים
     const housesLayer = document.createElement('div');
     housesLayer.style.position = 'absolute';
     housesLayer.style.top = '0';
@@ -173,6 +195,191 @@ function drawMap() {
                 btn.onclick = () => enterHouse('house_ne');
             } else if (tileType === 4) {
                 btn.style.cursor = 'pointer';
+                btn.onclick = () => enterHouse('house_sw');
+            } else if (tileType === 5) {
+                btn.style.cursor = 'pointer';
+                btn.onclick = () => enterHouse('house_se');
+            }
+            
+            housesLayer.appendChild(btn);
+        }
+    }
+    
+    container.appendChild(housesLayer);
+}
+
+// מפה פנימית (בתוך בית)
+function drawIndoorMap(container) {
+    const house = HOUSES[currentIndoorType];
+    const students = house?.students || [];
+    
+    const mapW = INDOOR_GRID_COLS * TILE_SIZE;
+    const mapH = INDOOR_GRID_ROWS * TILE_SIZE;
+    const viewW = 640;
+    const viewH = 360;
+    
+    container.style.display = 'block';
+    container.style.position = 'relative';
+    container.style.width = viewW + 'px';
+    container.style.height = viewH + 'px';
+    container.style.overflow = 'hidden';
+    container.style.margin = '20px auto';
+    container.style.border = '3px solid #4CAF50';
+    container.style.borderRadius = '10px';
+    
+    // רקע הבית
+    const bgLayer = document.createElement('div');
+    bgLayer.style.position = 'absolute';
+    bgLayer.style.top = '0';
+    bgLayer.style.left = '0';
+    bgLayer.style.width = mapW + 'px';
+    bgLayer.style.height = mapH + 'px';
+    bgLayer.style.backgroundImage = HOUSE_BACKGROUNDS[currentIndoorType];
+    bgLayer.style.backgroundSize = 'cover';
+    bgLayer.style.backgroundRepeat = 'no-repeat';
+    
+    // חישוב גלילה
+    let offsetX = indoorPos.x * TILE_SIZE - viewW / 2 + TILE_SIZE / 2;
+    let offsetY = indoorPos.y * TILE_SIZE - viewH / 2 + TILE_SIZE / 2;
+    offsetX = Math.max(0, Math.min(offsetX, mapW - viewW));
+    offsetY = Math.max(0, Math.min(offsetY, mapH - viewH));
+    bgLayer.style.transform = `translate(${-offsetX}px, ${-offsetY}px)`;
+    bgLayer.style.transition = 'transform 0.3s ease-out';
+    
+    container.appendChild(bgLayer);
+    
+    // שכבת תלמידים
+    const studentsLayer = document.createElement('div');
+    studentsLayer.style.position = 'absolute';
+    studentsLayer.style.top = '0';
+    studentsLayer.style.left = '0';
+    studentsLayer.style.width = mapW + 'px';
+    studentsLayer.style.height = mapH + 'px';
+    studentsLayer.style.transform = `translate(${-offsetX}px, ${-offsetY}px)`;
+    studentsLayer.style.transition = 'transform 0.3s ease-out';
+    
+    // הצגת השחקן
+    const playerImg = document.createElement('img');
+    playerImg.src = getPlayerCharacter().img;
+    playerImg.style.position = 'absolute';
+    playerImg.style.left = (indoorPos.x * TILE_SIZE) + 'px';
+    playerImg.style.top = (indoorPos.y * TILE_SIZE) + 'px';
+    playerImg.style.width = TILE_SIZE + 'px';
+    playerImg.style.height = TILE_SIZE + 'px';
+    playerImg.style.filter = 'drop-shadow(0 0 8px #FFD700)';
+    playerImg.style.zIndex = '10';
+    studentsLayer.appendChild(playerImg);
+    
+    // הצגת תלמידים אחרים
+    students.forEach((s, i) => {
+        const sImg = document.createElement('img');
+        const imgPath = s.level === 0 ? `images/egg${s.egg || 1}.png` : `images/${s.type}${s.level >= 20 ? 3 : s.level >= 10 ? 2 : 1}.png`;
+        sImg.src = imgPath;
+        sImg.style.position = 'absolute';
+        sImg.style.left = ((i % INDOOR_GRID_COLS) * TILE_SIZE) + 'px';
+        sImg.style.top = (Math.floor(i / INDOOR_GRID_COLS) * TILE_SIZE) + 'px';
+        sImg.style.width = TILE_SIZE + 'px';
+        sImg.style.height = TILE_SIZE + 'px';
+        sImg.style.cursor = 'pointer';
+        sImg.style.zIndex = '5';
+        sImg.onclick = () => tryStartBattle(s.id);
+        studentsLayer.appendChild(sImg);
+    });
+    
+    container.appendChild(studentsLayer);
+    
+    // כפתור יציאה
+    const exitBtn = document.createElement('div');
+    exitBtn.style.position = 'absolute';
+    exitBtn.style.top = '10px';
+    exitBtn.style.left = '10px';
+    exitBtn.style.padding = '8px 16px';
+    exitBtn.style.background = '#f44336';
+    exitBtn.style.color = 'white';
+    exitBtn.style.borderRadius = '8px';
+    exitBtn.style.cursor = 'pointer';
+    exitBtn.style.zIndex = '100';
+    exitBtn.style.fontWeight = 'bold';
+    exitBtn.textContent = '🚪 יציאה';
+    exitBtn.onclick = exitHouse;
+    container.appendChild(exitBtn);
+}
+
+// ניסיון להתחיל קרב
+function tryStartBattle(targetId) {
+    const target = allStudents.find(s => s.id === targetId);
+    if (!target) return;
+    
+    const player = getPlayerCharacter();
+    if (player.level === 0) {
+        alert('אתה עדיין ביצה! התחל לשחק קודם.');
+        return;
+    }
+    
+    if (target.level === 0) {
+        alert(target.full_name + ' עדיין ביצה! אי אפשר להילחם נגדו.');
+        return;
+    }
+    
+    const html = `
+        <div style="text-align:center; padding:20px;">
+            <h2>⚔️ בקשת קרב</h2>
+            <p>אתה רוצה להתחיל קרב עם <b>${target.full_name}</b> (Lv.${target.level})?</p>
+            <div style="margin-top:20px; display:flex; gap:10px; justify-content:center;">
+                <button onclick="window.startBattleFromMap('${targetId}'); closeGenericModal();" style="padding:10px 20px; background:#f44336; color:white; border:none; border-radius:8px; cursor:pointer;">⚔️ התחל קרב</button>
+                <button onclick="closeGenericModal()" style="padding:10px 20px; background:#999; color:white; border:none; border-radius:8px; cursor:pointer;">ביטול</button>
+            </div>
+        </div>
+    `;
+    openGenericModal(html);
+}
+
+// פונקציה גלובלית להתחלת קרב מהמפה
+window.startBattleFromMap = function(targetId) {
+    const me = allStudents.find(s => s.id === currentUser);
+    const target = allStudents.find(s => s.id === targetId);
+    if (!me || !target) return;
+    
+    if (me.level === 0 || target.level === 0) {
+        alert('שניכם צריכים להיות לפחות ברמה 1!');
+        return;
+    }
+    
+    const html = `
+        <div style="text-align:center; padding:30px;">
+            <div style="display:flex; justify-content:center; align-items:center; gap:40px; margin-bottom:30px;">
+                <div>
+                    <img src="${me.level === 0 ? 'images/egg'+(me.egg||1)+'.png' : 'images/'+me.type+(me.level>=20?3:me.level>=10?2:1)+'.png'}" style="width:100px; height:100px;">
+                    <div><b>${me.full_name}</b></div>
+                    <div>Lv.${me.level}</div>
+                </div>
+                <div style="font-size:2em;">⚔️</div>
+                <div>
+                    <img src="${target.level === 0 ? 'images/egg'+(target.egg||1)+'.png' : 'images/'+target.type+(target.level>=20?3:target.level>=10?2:1)+'.png'}" style="width:100px; height:100px;">
+                    <div><b>${target.full_name}</b></div>
+                    <div>Lv.${target.level}</div>
+                </div>
+            </div>
+            <div style="color:#666; margin-bottom:20px;">
+                הקרב יתחיל! בחר את המגן שלך:
+            </div>
+            <div id="battle-shields-select" style="font-size:2em; margin-bottom:20px;"></div>
+        </div>
+    `;
+    openGenericModal(html);
+    
+    const shieldsCount = shieldsByLevel(me.level);
+    const shieldsDiv = document.getElementById('battle-shields-select');
+    shieldsDiv.innerHTML = Array.from({ length: shieldsCount }, (_, i) => 
+        `<span style="cursor:pointer; margin:0 10px;" onclick="confirmBattleFromMap('${targetId}', ${i})">🛡️</span>`
+    ).join('');
+};
+
+function confirmBattleFromMap(targetId, shieldIndex) {
+    closeGenericModal();
+    exitHouse();
+    alert('הקרב יתחיל! (טרם מושלם)');
+};
                 btn.onclick = () => enterHouse('house_sw');
             } else if (tileType === 5) {
                 btn.style.cursor = 'pointer';
@@ -211,13 +418,19 @@ function getPlayerEmoji() {
 function handleKeyDown(e) {
     if (!currentUser || currentUser === 'admin') return;
     
-    // מניעת גלילה וקפיצה
     if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) {
         e.preventDefault();
     }
     
-    let newX = playerPos.x;
-    let newY = playerPos.y;
+    let newX, newY;
+    
+    if (isIndoor) {
+        newX = indoorPos.x;
+        newY = indoorPos.y;
+    } else {
+        newX = playerPos.x;
+        newY = playerPos.y;
+    }
     
     switch(e.key) {
         case 'ArrowUp':
@@ -235,26 +448,40 @@ function handleKeyDown(e) {
         case 'ArrowLeft':
         case 'a':
         case 'A':
-            newX++;
+            newX--;
             playerDir = 'left';
             break;
         case 'ArrowRight':
         case 'd':
         case 'D':
-            newX--;
+            newX++;
             playerDir = 'right';
             break;
         default:
             return;
     }
     
-    // בדיקה אם אפשר לזוז
-    if (canMoveTo(newX, newY)) {
-        playerPos.x = newX;
-        playerPos.y = newY;
-        drawMap();
-        
-        // בדיקה אם נכנס לבית
+    if (isIndoor) {
+        if (canMoveIndoor(newX, newY)) {
+            indoorPos.x = newX;
+            indoorPos.y = newY;
+            drawMap();
+        }
+    } else {
+        if (canMoveTo(newX, newY)) {
+            playerPos.x = newX;
+            playerPos.y = newY;
+            drawMap();
+            checkHouseEntry();
+        }
+    }
+}
+
+// בדיקה אם אפשר לזוז בתוך הבית
+function canMoveIndoor(x, y) {
+    if (x < 0 || x >= INDOOR_GRID_COLS || y < 0 || y >= INDOOR_GRID_ROWS) return false;
+    return true;
+}
         checkHouseEntry();
     }
 }
@@ -280,14 +507,25 @@ function enterHouse(houseId) {
     const house = HOUSES[houseId];
     if (!house) return;
     
-    // אם זו החנות
-    if (houseId === 'house_ne') {
-        closeGenericModal();
-        openShop();
-        return;
-    }
+    closeGenericModal();
     
-    const studentsInHouse = house.students || [];
+    // שמירת מיקום חיצוני
+    outdoorPos = { x: playerPos.x, y: playerPos.y };
+    
+    // מעבר למצב פנימי
+    isIndoor = true;
+    currentIndoorType = houseId;
+    indoorPos = { x: 3, y: 3 }; // מיקום התחלתי בתוך הבית
+    
+    drawMap();
+}
+
+// יציאה מהבית
+function exitHouse() {
+    isIndoor = false;
+    playerPos = { x: outdoorPos.x, y: outdoorPos.y };
+    drawMap();
+}
     
     let html = `
         <div style="text-align:center; padding:20px;">
