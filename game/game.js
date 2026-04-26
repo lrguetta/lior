@@ -145,73 +145,52 @@ function drawOutdoorMap(container) {
         studentsInSameLocation = HOUSES[currentIndoorType]?.students || [];
     }
     
-    // מיקומי התלמידים בכיתה - רנדומליים ומפוזרים
-    const studentPositions = {};
-    if (isIndoor && studentsInSameLocation.length > 0) {
-        studentsInSameLocation.forEach((s, i) => {
-            if (s.id !== currentUser) {
-                const usedPositions = Object.values(studentPositions).map(p => p.x + ',' + p.y);
-                let attempts = 0;
-                let newX, newY;
-                do {
-                    newX = 10 + Math.floor(Math.random() * 40);
-                    newY = 8 + Math.floor(Math.random() * 20);
-                    attempts++;
-                } while (usedPositions.includes(newX + ',' + newY) && attempts < 100);
-                studentPositions[s.id] = { x: newX, y: newY };
+    const charSize = isIndoor ? '90%' : '80%';
+    const charMaxSize = isIndoor ? '60px' : '40px';
+    
+    for (let y = 0; y < GAME_MAP.length; y++) {
+        for (let x = 0; x < GAME_MAP[y].length; x++) {
+            const tile = document.createElement('div');
+            tile.style.display = 'flex';
+            tile.style.alignItems = 'center';
+            tile.style.justifyContent = 'center';
+            
+            let charToShow = null;
+            if (x === playerPos.x && y === playerPos.y) {
+                charToShow = getPlayerCharacter();
+            } else if (isIndoor) {
+                const sameClass = studentsInSameLocation.filter((s, i) => {
+                    const sx = 5 + (i % 45);
+                    const sy = 4 + Math.floor(i / 45) * 2;
+                    return sx === x && sy === y && s.id !== currentUser;
+                });
+                if (sameClass.length > 0) charToShow = sameClass[0];
             }
-        });
+            
+            if (charToShow) {
+                const img = document.createElement('img');
+                img.src = charToShow.level === 0 ? `images/egg${charToShow.egg || 1}.png` : `images/${charToShow.type}${(charToShow.level || 1) >= 20 ? 3 : (charToShow.level || 1) >= 10 ? 2 : 1}.png`;
+                img.style.width = charSize;
+                img.style.maxWidth = charMaxSize;
+                img.style.height = 'auto';
+                if (charToShow.id === currentUser) {
+                    img.style.filter = 'drop-shadow(0 0 8px #FFD700) drop-shadow(0 0 15px #FFA500)';
+                    img.style.zIndex = '10';
+                } else {
+                    img.style.filter = 'drop-shadow(0 0 5px #ff5722)';
+                    img.style.zIndex = '8';
+                    img.style.cursor = 'pointer';
+                }
+                img.style.position = 'relative';
+                tile.appendChild(img);
+                tile.style.zIndex = charToShow.id === currentUser ? '10' : '8';
+            }
+            
+            tilesLayer.appendChild(tile);
+        }
     }
     
-    // שכבת דמויות - משתמשת בpositioning יחסי
-    const charsLayer = document.createElement('div');
-    charsLayer.style.position = 'absolute';
-    charsLayer.style.top = '0';
-    charsLayer.style.left = '0';
-    charsLayer.style.width = '100%';
-    charsLayer.style.height = '100%';
-    charsLayer.style.pointerEvents = 'none';
-    
-    // הצגת השחקן
-    const player = getPlayerCharacter();
-    const playerCharDiv = document.createElement('div');
-    const playerSize = isIndoor ? '140px' : '60px';
-    const playerImg = document.createElement('img');
-    playerImg.src = player.level === 0 ? `images/egg${player.egg || 1}.png` : `images/${player.type}${(player.level || 1) >= 20 ? 3 : (player.level || 1) >= 10 ? 2 : 1}.png`;
-    playerImg.style.width = playerSize;
-    playerImg.style.height = 'auto';
-    playerImg.style.filter = 'drop-shadow(0 0 12px #FFD700) drop-shadow(0 0 25px #FFA500)';
-    playerImg.style.position = 'absolute';
-    playerCharDiv.style.left = (playerPos.x / 60 * 100) + '%';
-    playerCharDiv.style.top = (playerPos.y / 30 * 100) + '%';
-    playerCharDiv.style.transform = 'translate(-50%, -50%)';
-    playerCharDiv.style.zIndex = '100';
-    playerCharDiv.appendChild(playerImg);
-    charsLayer.appendChild(playerCharDiv);
-    
-    // הצגת תלמידים אחרים
-    Object.entries(studentPositions).forEach(([sid, pos]) => {
-        const s = studentsInSameLocation.find(stu => stu.id === sid);
-        if (!s) return;
-        const charSize = '130px';
-        const charDiv = document.createElement('div');
-        const img = document.createElement('img');
-        img.src = s.level === 0 ? `images/egg${s.egg || 1}.png` : `images/${s.type}${(s.level || 1) >= 20 ? 3 : (s.level || 1) >= 10 ? 2 : 1}.png`;
-        img.style.width = charSize;
-        img.style.height = 'auto';
-        img.style.filter = 'drop-shadow(0 0 8px #ff5722)';
-        img.style.cursor = 'pointer';
-        img.style.pointerEvents = 'auto';
-        charDiv.style.left = (pos.x / 60 * 100) + '%';
-        charDiv.style.top = (pos.y / 30 * 100) + '%';
-        charDiv.style.transform = 'translate(-50%, -50%)';
-        charDiv.style.position = 'absolute';
-        charDiv.style.zIndex = '50';
-        charDiv.appendChild(img);
-        charsLayer.appendChild(charDiv);
-    });
-    
-    container.appendChild(charsLayer);
+    container.appendChild(tilesLayer);
     
     // כפתור יציאה מהכיתה (רק כשבפנים)
     if (isIndoor) {
