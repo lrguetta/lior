@@ -146,6 +146,16 @@ function drawOutdoorMap(container) {
         studentsInSameLocation = HOUSES[currentIndoorType]?.students || [];
     }
     
+    // מיקומי התלמידים בכיתה - מפוזרים יותר טוב
+    const studentPositions = {};
+    studentsInSameLocation.forEach((s, i) => {
+        if (s.id !== currentUser) {
+            const sx = 20 + (i % 20);
+            const sy = 15 + Math.floor(i / 20) * 3 + 2;
+            studentPositions[s.id] = { x: sx, y: sy };
+        }
+    });
+    
     for (let y = 0; y < GAME_MAP.length; y++) {
         for (let x = 0; x < GAME_MAP[y].length; x++) {
             const tile = document.createElement('div');
@@ -157,19 +167,18 @@ function drawOutdoorMap(container) {
             if (x === playerPos.x && y === playerPos.y) {
                 charToShow = player;
             } else if (isIndoor) {
-                const sameClass = studentsInSameLocation.filter((s, i) => {
-                    const sx = 15 + (i % 10);
-                    const sy = 10 + Math.floor(i / 10);
-                    return sx === x && sy === y && s.id !== currentUser;
-                });
-                if (sameClass.length > 0) charToShow = sameClass[0];
+                const charId = Object.keys(studentPositions).find(id => studentPositions[id].x === x && studentPositions[id].y === y);
+                if (charId) {
+                    charToShow = studentsInSameLocation.find(s => s.id === charId);
+                }
             }
             
             if (charToShow) {
                 const img = document.createElement('img');
+                const charSize = isIndoor ? '100px' : '50px';
                 img.src = charToShow.level === 0 ? `images/egg${charToShow.egg || 1}.png` : `images/${charToShow.type}${(charToShow.level || 1) >= 20 ? 3 : (charToShow.level || 1) >= 10 ? 2 : 1}.png`;
-                img.style.width = '80%';
-                img.style.maxWidth = '50px';
+                img.style.width = isIndoor ? '90%' : '80%';
+                img.style.maxWidth = charSize;
                 img.style.height = 'auto';
                 if (charToShow.id === currentUser) {
                     img.style.filter = 'drop-shadow(0 0 8px #FFD700) drop-shadow(0 0 15px #FFA500)';
@@ -189,6 +198,26 @@ function drawOutdoorMap(container) {
     }
     
     container.appendChild(tilesLayer);
+    
+    // כפתור יציאה מהכיתה (רק כשבפנים)
+    if (isIndoor) {
+        const exitBtn = document.createElement('div');
+        exitBtn.style.position = 'absolute';
+        exitBtn.style.bottom = '30px';
+        exitBtn.style.left = '30px';
+        exitBtn.style.padding = '12px 24px';
+        exitBtn.style.background = '#e53935';
+        exitBtn.style.color = 'white';
+        exitBtn.style.borderRadius = '12px';
+        exitBtn.style.cursor = 'pointer';
+        exitBtn.style.zIndex = '1000';
+        exitBtn.style.fontWeight = 'bold';
+        exitBtn.style.fontSize = '16px';
+        exitBtn.style.boxShadow = '0 4px 15px rgba(0,0,0,0.3)';
+        exitBtn.textContent = '🚪 יציאה';
+        exitBtn.onclick = exitHouse;
+        container.appendChild(exitBtn);
+    }
     
     // שכבת בתים
     const housesLayer = document.createElement('div');
