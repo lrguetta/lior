@@ -56,7 +56,7 @@ const HOUSES = {
 // מיקום התחלתי - ליד הבית של השחקן
 let playerPos = { x: 26, y: 17 };
 let playerDir = 'up';
-const TILE_SIZE = 15;
+const TILE_SIZE = 50;
 
 // מיקום בתוך הבית
 let indoorPos = { x: 0, y: 0 };
@@ -124,14 +124,15 @@ function drawMap() {
 // מפה חיצונית
 function drawOutdoorMap(container) {
     container.style.display = 'block';
-    container.style.position = 'relative';
-    container.style.width = '250%';
-    container.style.maxWidth = '2752px';
-    container.style.height = 'auto';
-    container.style.aspectRatio = '16/9';
+    container.style.position = 'absolute';
+    container.style.top = '0';
+    container.style.left = '0';
+    container.style.width = '100%';
+    container.style.height = '100%';
     container.style.backgroundImage = 'url("images/newFarmBG1.jpeg")';
     container.style.backgroundSize = 'cover';
     container.style.backgroundRepeat = 'no-repeat';
+    container.style.backgroundPosition = 'center center';
     
     const tilesLayer = document.createElement('div');
     tilesLayer.style.position = 'absolute';
@@ -215,17 +216,19 @@ function drawIndoorMap(container) {
     
     const mapW = INDOOR_GRID_COLS * TILE_SIZE;
     const mapH = INDOOR_GRID_ROWS * TILE_SIZE;
-    const viewW = 640;
-    const viewH = 360;
+    const viewW = window.innerWidth;
+    const viewH = window.innerHeight;
     
     container.style.display = 'block';
-    container.style.position = 'relative';
-    container.style.width = viewW + 'px';
-    container.style.height = viewH + 'px';
+    container.style.position = 'absolute';
+    container.style.top = '0';
+    container.style.left = '0';
+    container.style.width = '100%';
+    container.style.height = '100%';
     container.style.overflow = 'hidden';
-    container.style.margin = '20px auto';
-    container.style.border = '3px solid #4CAF50';
-    container.style.borderRadius = '10px';
+    container.style.margin = '0';
+    container.style.border = 'none';
+    container.style.borderRadius = '0';
     
     // רקע הבית
     const bgLayer = document.createElement('div');
@@ -433,15 +436,15 @@ function handleKeyDown(e) {
             newY++;
             playerDir = 'down';
             break;
-        case 'ArrowLeft':
-        case 'a':
-        case 'A':
-            newX--;
-            playerDir = 'left';
-            break;
         case 'ArrowRight':
         case 'd':
         case 'D':
+            newX--;
+            playerDir = 'left';
+            break;
+        case 'ArrowLeft':
+        case 'a':
+        case 'A':
             newX++;
             playerDir = 'right';
             break;
