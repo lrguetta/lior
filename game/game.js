@@ -9,6 +9,7 @@
 let isIndoor = false;
 let currentIndoorType = null;
 let outdoorPos = { x: 26, y: 17 }; // שמירת מיקום חיצוני
+let currentBackground = 'url("images/newFarmBG1.jpeg")';
 
 const INDOOR_GRID_COLS = 8;
 const INDOOR_GRID_ROWS = 6;
@@ -113,12 +114,7 @@ function drawMap() {
     if (!container) return;
     
     container.innerHTML = '';
-    
-    if (isIndoor) {
-        drawIndoorMap(container);
-    } else {
-        drawOutdoorMap(container);
-    }
+    drawOutdoorMap(container);
 }
 
 // מפה חיצונית
@@ -129,7 +125,7 @@ function drawOutdoorMap(container) {
     container.style.left = '0';
     container.style.width = '100%';
     container.style.height = '100%';
-    container.style.backgroundImage = 'url("images/newFarmBG1.jpeg")';
+    container.style.backgroundImage = currentBackground;
     container.style.backgroundSize = 'cover';
     container.style.backgroundRepeat = 'no-repeat';
     container.style.backgroundPosition = 'center center';
@@ -145,6 +141,10 @@ function drawOutdoorMap(container) {
     tilesLayer.style.gridTemplateRows = `repeat(${GAME_MAP.length}, 1fr)`;
     
     const player = getPlayerCharacter();
+    let studentsInSameLocation = [];
+    if (isIndoor && currentIndoorType) {
+        studentsInSameLocation = HOUSES[currentIndoorType]?.students || [];
+    }
     
     for (let y = 0; y < GAME_MAP.length; y++) {
         for (let x = 0; x < GAME_MAP[y].length; x++) {
@@ -153,17 +153,35 @@ function drawOutdoorMap(container) {
             tile.style.alignItems = 'center';
             tile.style.justifyContent = 'center';
             
+            let charToShow = null;
             if (x === playerPos.x && y === playerPos.y) {
+                charToShow = player;
+            } else if (isIndoor) {
+                const sameClass = studentsInSameLocation.filter((s, i) => {
+                    const sx = 15 + (i % 10);
+                    const sy = 10 + Math.floor(i / 10);
+                    return sx === x && sy === y && s.id !== currentUser;
+                });
+                if (sameClass.length > 0) charToShow = sameClass[0];
+            }
+            
+            if (charToShow) {
                 const img = document.createElement('img');
-                img.src = player.img;
+                img.src = charToShow.level === 0 ? `images/egg${charToShow.egg || 1}.png` : `images/${charToShow.type}${(charToShow.level || 1) >= 20 ? 3 : (charToShow.level || 1) >= 10 ? 2 : 1}.png`;
                 img.style.width = '80%';
                 img.style.maxWidth = '50px';
                 img.style.height = 'auto';
-                img.style.filter = 'drop-shadow(0 0 8px #FFD700) drop-shadow(0 0 15px #FFA500)';
-                img.style.zIndex = '10';
+                if (charToShow.id === currentUser) {
+                    img.style.filter = 'drop-shadow(0 0 8px #FFD700) drop-shadow(0 0 15px #FFA500)';
+                    img.style.zIndex = '10';
+                } else {
+                    img.style.filter = 'drop-shadow(0 0 5px #ff5722)';
+                    img.style.zIndex = '8';
+                    img.style.cursor = 'pointer';
+                }
                 img.style.position = 'relative';
                 tile.appendChild(img);
-                tile.style.zIndex = '10';
+                tile.style.zIndex = charToShow.id === currentUser ? '10' : '8';
             }
             
             tilesLayer.appendChild(tile);
@@ -413,15 +431,8 @@ function handleKeyDown(e) {
         e.preventDefault();
     }
     
-    let newX, newY;
-    
-    if (isIndoor) {
-        newX = indoorPos.x;
-        newY = indoorPos.y;
-    } else {
-        newX = playerPos.x;
-        newY = playerPos.y;
-    }
+    let newX = playerPos.x;
+    let newY = playerPos.y;
     
     switch(e.key) {
         case 'ArrowUp':
@@ -452,19 +463,11 @@ function handleKeyDown(e) {
             return;
     }
     
-    if (isIndoor) {
-        if (canMoveIndoor(newX, newY)) {
-            indoorPos.x = newX;
-            indoorPos.y = newY;
-            drawMap();
-        }
-    } else {
-        if (canMoveTo(newX, newY)) {
-            playerPos.x = newX;
-            playerPos.y = newY;
-            drawMap();
-            checkHouseEntry();
-        }
+    if (canMoveTo(newX, newY)) {
+        playerPos.x = newX;
+        playerPos.y = newY;
+        drawMap();
+        checkHouseEntry();
     }
 }
 
@@ -500,10 +503,10 @@ function enterHouse(houseId) {
     // שמירת מיקום חיצוני
     outdoorPos = { x: playerPos.x, y: playerPos.y };
     
-    // מעבר למצב פנימי
+    // מעבר לרקע הבית
     isIndoor = true;
     currentIndoorType = houseId;
-    indoorPos = { x: 3, y: 3 }; // מיקום התחלתי בתוך הבית
+    currentBackground = HOUSE_BACKGROUNDS[houseId];
     
     drawMap();
 }
@@ -511,6 +514,7 @@ function enterHouse(houseId) {
 // יציאה מהבית
 function exitHouse() {
     isIndoor = false;
+    currentBackground = 'url("images/newFarmBG1.jpeg")';
     playerPos = { x: outdoorPos.x, y: outdoorPos.y };
     drawMap();
 }
