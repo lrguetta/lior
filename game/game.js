@@ -204,7 +204,7 @@ function drawIndoorMap(container) {
         const wrapper = document.createElement('div');
         wrapper.style.cssText = `position:absolute;left:${left}%;top:${top}%;
             display:flex;flex-direction:column;align-items:center;cursor:pointer;`;
-        wrapper.onclick = () => tryStartBattle(s.id);
+        wrapper.onclick = () => tryStartBattle(s.id); // לחיצה על דמות פותחת קרב
 
         const sImg = document.createElement('img');
         sImg.src = imgPath;
@@ -551,16 +551,12 @@ async function confirmMapAttack(targetId, attackName, shieldIndex) {
     }
 
     try {
-        // מציאת אינדקס המגן שנבחר (אקראי עבור היריב)
-        const totalShields = typeof shieldsByLevel === 'function' ? shieldsByLevel(target.level) : 1;
-        const mineIndex    = shieldIndex;
         const { error } = await supabase.from(TABLES.battles).insert([{
             attackerId: currentUser,
-            targetId: targetId,
+            targetId:   targetId,
             skill:      attackName,
-            mineIndex:  mineIndex,
+            mineIndex:  shieldIndex,
             status:     'pending',
-            created_at: new Date().toISOString(),
         }]);
 
         if (error) throw error;
