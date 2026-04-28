@@ -127,10 +127,10 @@ function drawOutdoorMap(container) {
 
             if (x === playerPos.x && y === playerPos.y) {
                 const me = getPlayerCharacter();
-                const img = document.createElement('img');
-                img.src = me.img;
-                img.style.cssText = 'width:80%;max-width:40px;height:auto;filter:drop-shadow(0 0 8px #FFD700) drop-shadow(0 0 15px #FFA500);position:relative;z-index:10;';
-                tile.appendChild(img);
+                 const img = document.createElement('img');
+                 img.src = me.img;
+                 img.style.cssText = 'width:60px;height:auto;filter:drop-shadow(0 0 8px #FFD700) drop-shadow(0 0 15px #FFA500);position:relative;z-index:10;';
+                 tile.appendChild(img);
             }
 
             tilesLayer.appendChild(tile);
@@ -191,11 +191,11 @@ function drawIndoorMap(container) {
     studentsLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;';
 
     students.forEach((s, i) => {
-        const cols = 6;
+        const cols = 5;
         const col  = i % cols;
         const row  = Math.floor(i / cols);
-        const left = 10 + col * 15;
-        const top  = 15 + row * 30;
+        const left = 10 + col * 17 + (i * 7 % 5);
+        const top  = 15 + row * 25 + (i * 11 % 5);
 
         const imgPath = s.level === 0
             ? `images/egg${s.egg || 1}.png`
@@ -204,11 +204,11 @@ function drawIndoorMap(container) {
         const wrapper = document.createElement('div');
         wrapper.style.cssText = `position:absolute;left:${left}%;top:${top}%;
             display:flex;flex-direction:column;align-items:center;cursor:pointer;`;
-        wrapper.onclick = () => tryStartBattle(s.id); // לחיצה על דמות פותחת קרב
+        wrapper.onclick = () => openStudentCard(s.id); // לחיצה על דמות פותחת כרטיס תלמיד
 
         const sImg = document.createElement('img');
         sImg.src = imgPath;
-        sImg.style.cssText = 'width:50px;height:50px;object-fit:contain;filter:drop-shadow(0 0 5px #ff5722);';
+        sImg.style.cssText = 'width:80px;height:80px;object-fit:contain;filter:drop-shadow(0 0 5px #ff5722);';
 
         const name = document.createElement('div');
         name.style.cssText = 'font-size:10px;font-weight:bold;color:white;text-shadow:0 1px 3px #000;margin-top:2px;text-align:center;max-width:60px;';

@@ -31,6 +31,78 @@ async function loadStudents() {
     }
 }
 
+function openStudentCard(studentId) {
+    const s = allStudents.find(x => x.id === studentId);
+    if (!s) return;
+
+    const isMine = currentUser === s.id;
+    const isAdminOrTeacher = currentUser === 'admin' || (currentUser && currentUser.startsWith('teacher_'));
+    
+    const eggNum = s.egg || 1;
+    const level = s.level || 0;
+    const type = s.type || 'dragon';
+    const imgPath = level === 0 ? `images/egg${eggNum}.png` : `images/${type}${level >= 20 ? 3 : level >= 10 ? 2 : 1}.png`;
+    
+    const historyObj = s.history || {};
+    const brokenShields = historyObj.shields_broken || [];
+    const sc = shieldsByLevel(level);
+
+    const histHtml = Object.values(historyObj)
+        .filter(h => h && h.msg)
+        .reverse()
+        .slice(0, 3)
+        .map(h => `<div class="history-item">✨ ${h.msg}: <b>+${h.xp}XP</b></div>`)
+        .join('');
+
+    const likes = s.likes || {};
+    const likeCount = Object.keys(likes).length;
+    const iLiked = likes[currentUser] === true;
+
+    const noteHtml = s.lastNote ? `<div style="background:#fff3e0;border-radius:6px;padding:8px;border-right:3px solid #ff9800;font-size:0.85em;color:#e65100;">📝 ${s.lastNote}</div>` : '';
+    const personalNoteHtml = s.personalNote ? `<div style="background:#e8f5e9;border-radius:6px;padding:8px;border-right:3px solid #4caf50;font-size:0.85em;color:#1b5e20;">💬 <b>על עצמי:</b> ${s.personalNote}</div>` : '';
+
+    const likeBtn = !isMine && !isAdminOrTeacher ? `<button class="like-btn ${iLiked ? 'liked' : ''}" onclick="toggleLike('${s.id}')">${iLiked ? '❤️' : '🤍'}</button>` : '';
+    const likeDisplay = isMine && likeCount > 0 ? `<span class="like-btn">❤️ ${likeCount}</span>` : isMine ? '<span style="font-size:0.8em;color:#ccc;">🤍</span>' : '';
+
+    const attackBtn = !isMine && !isAdminOrTeacher ? `<button onclick="tryStartBattle('${s.id}')" style="background:#f44336;color:white;border:none;border-radius:8px;padding:8px 16px;font-weight:bold;cursor:pointer;margin-top:10px;width:100%;box-shadow:0 2px 5px rgba(0,0,0,0.2);">⚔️ תקוף אותי!</button>` : '';
+
+    const html = `
+        <div style="direction:rtl; padding:10px; display:flex; justify-content:center;">
+            <div class="student-card my-creature" style="width:300px; margin:auto; cursor:default;">
+                <div class="card-inner">
+                    <div class="card-front" style="display:flex;flex-direction:column;justify-content:space-between;align-items:center;height:100%;padding:15px;box-sizing:border-box;">
+                        <div style="width:100%;display:flex;justify-content:space-between;align-items:flex-start;">
+                            <div class="level-text-badge">Lv.${level}</div>
+                            <div></div>
+                        </div>
+                        <div style="flex-grow:1;display:flex;flex-direction:column;justify-content:center;align-items:center;width:100%;">
+                            <img src="${imgPath}" class="creature-img" style="width:120px; height:120px; object-fit:contain;">
+                            <div style="font-weight:bold;font-size:1.3em;line-height:1.2;display:flex;align-items:center;gap:6px;">
+                                ${s.full_name} ${likeBtn} ${likeDisplay}
+                            </div>
+                            <div style="color:#666;font-size:0.95em;">כיתה ${s.className || ''}</div>
+                        </div>
+                        <div style="width:100%;margin-top:10px;">
+                            <div class="xp-container"><div class="xp-bar" style="width:${s.xp || 0}%;"></div></div>
+                            <div style="display:flex; gap:5px; margin-top:5px;">
+                                <div style="flex:1; font-size:0.75em;color:#1976d2;font-weight:bold;text-align:center;cursor:pointer;padding:4px;border:1px solid #1976d2;border-radius:6px;" 
+                                     onclick="openDeck('${s.full_name}', '${s.className || ''}')">🎴 מחסן</div>
+                                ${attackBtn}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-back" style="padding:12px;display:flex;flex-direction:column;gap:8px; border-top:1px solid #eee;">
+                        <h4 style="margin:0 0 6px 0;color:#2e7d32;border-bottom:1px solid #ccc;padding-bottom:5px;">יומן פעילות</h4>
+                        <div style="font-size:0.8em;color:#777;">${histHtml || 'אין פעילות'} ${noteHtml}</div>
+                        ${personalNoteHtml}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    openGenericModal(html);
+}
+
 function renderStudentSelect() {
     const sel = document.getElementById('studentSelect');
     if (!sel) return;
