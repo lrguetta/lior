@@ -468,6 +468,7 @@ async function switchActiveCharacter(newId, full_name) {
         }
 
         await loadStudents();
+        if (typeof loadStudentsToHouses === 'function') loadStudentsToHouses();
         if (typeof drawMap === 'function') drawMap();
         alert("הוחלף בהצלחה!");
     } catch(e) { console.error(e); alert("שגיאה: " + e.message); }
