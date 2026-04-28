@@ -280,12 +280,12 @@ function handleKeyDown(e) {
     const moves = {
         'ArrowUp':    { dx:  0, dy: -1, dir: 'up'    },
         'ArrowDown':  { dx:  0, dy:  1, dir: 'down'  },
-        'ArrowLeft':  { dx: -1, dy:  0, dir: 'left'  },  // תוקן
-        'ArrowRight': { dx:  1, dy:  0, dir: 'right' },  // תוקן
+        'ArrowLeft':  { dx:  1, dy:  0, dir: 'left'  },
+        'ArrowRight': { dx: -1, dy:  0, dir: 'right' },
         'w': { dx:  0, dy: -1, dir: 'up'    },
         's': { dx:  0, dy:  1, dir: 'down'  },
-        'a': { dx: -1, dy:  0, dir: 'left'  },
-        'd': { dx:  1, dy:  0, dir: 'right' },
+        'a': { dx:  1, dy:  0, dir: 'left'  },
+        'd': { dx: -1, dy:  0, dir: 'right' },
     };
 
     const move = moves[e.key];
