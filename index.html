@@ -1911,7 +1911,7 @@ async function handleItemUsage(entryId, itemName) {
             // Add 50 XP
             let newXP = me.xp + 50;
             let newLevel = me.level;
-            while (newXP >= 100) { newLevel++; newXP -= 100; }
+            while (newXP >= (newLevel * 80 + 20)) { newXP -= (newLevel * 80 + 20); newLevel++; }
             
             const { error } = await supabase
                 .from('students')
@@ -2237,16 +2237,16 @@ async function addXP(id) {
     // תוקן: שימוש ב- ?? כדי למנוע קפיצה אוטומטית לרמה 1 על הלחיצה הראשונה
     let nlv = s.level ?? 0; 
     
-    if (nxp >= 100) { 
-        nlv++; 
-        nxp -= 100; 
-        if (card) {
-            const t = document.createElement('div');
-            t.className = 'levelup'; t.innerText = 'LEVEL UP! ✨';
-            card.appendChild(t); 
-            setTimeout(() => t.remove(), 2000);
-        } 
-    }
+    while (nxp >= (nlv * 80 + 20)) { 
+    nxp -= (nlv * 80 + 20); 
+    nlv++;
+    if (card) {
+        const t = document.createElement('div');
+        t.className = 'levelup'; t.innerText = 'LEVEL UP! ✨';
+        card.appendChild(t); 
+        setTimeout(() => t.remove(), 2000);
+    } 
+}
     
     // עדכון DOM אופטימי (תצוגה מקומית מהירה)
     s.xp = nxp; 
@@ -3472,9 +3472,9 @@ async function approveSub(subId, studentId, mult = 1) {
         
         let newXp = (targetStudent.xp || 0) + xpToAdd;
         let newLevel = (targetStudent.level || 1);
-        while (newXp >= 100) {
-            newLevel++;
-            newXp -= 100;
+        while (newXp >= (newLevel * 80 + 20)) {
+    newXp -= (newLevel * 80 + 20);
+    newLevel++;
         }
 
         // חישוב היתרה החדשה בארנק
@@ -4902,7 +4902,7 @@ async function resolveDefense(chosen, battle) {
         if (isFinalBlocked) { 
             let nxp = me.xp + finalXpGain;
             let nlvl = me.level || 0;
-            while (nxp >= 100) { nlvl++; nxp -= 100; }
+            while (nxp >= (nlvl * 80 + 20)) { nxp -= (nlvl * 80 + 20); nlvl++; }
             ctx.me.history['block_'+Date.now()] = { msg: `חסמת את ${attackerName}! (+${finalXpGain}XP)`, xp: finalXpGain, time: Date.now() };
             await supabase.from(TABLES.students).update({ xp: nxp, level: nlvl, history: ctx.me.history }).eq('id', me.id);
             if (!isLastShield || !battle.extraData) alert(`✅ הצלחה! חסמת במדויק. (+${finalXpGain}XP)`);
@@ -4924,8 +4924,11 @@ async function resolveDefense(chosen, battle) {
                 const xpReward = Math.max(5, 10 * ((me.level || 1) - (att.level || 1)));
                 let ah = ctx.utils.getHistory(att);
                 let ax = att.xp + xpReward, al = att.level || 0;
-                while(ax >= 100){ al++; ax -= 100; }
+                while(ax >= (al * 80 + 20)){ ax -= (al * 80 + 20); al++; }
                 ah['win_'+Date.now()] = { msg: `הצלחת לפגוע ב-${me.full_name}! (+${xpReward}XP)`, xp: xpReward, time: Date.now() };
+                const levelsGained = al - (att.level || 0);
+                const cooldownMs = (60 + levelsGained * 60) * 60 * 1000;
+                localStorage.setItem('last_attack_' + att.id + '_' + battle.skill, Date.now() - (3600000 - cooldownMs));
                 await supabase.from(TABLES.students).update({ xp: ax, level: al, history: ah }).eq('id', att.id);
             }
 
