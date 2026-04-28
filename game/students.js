@@ -414,6 +414,7 @@ async function addStudent() {
 }
 
 async function openDeck(fullName, className) {
+    if (typeof closeGenericModal === 'function') closeGenericModal();
     document.getElementById('deck-student-name').innerText = className ? `${fullName} (${className})` : fullName;
     const deckList = document.getElementById('deck-list');
     
@@ -467,6 +468,7 @@ async function switchActiveCharacter(newId, full_name) {
         }
 
         await loadStudents();
+        if (typeof drawMap === 'function') drawMap();
         alert("הוחלף בהצלחה!");
     } catch(e) { console.error(e); alert("שגיאה: " + e.message); }
 }
