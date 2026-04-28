@@ -319,10 +319,10 @@ function drawIndoorMap(container) {
         const imgPath = s.level === 0 ? `images/egg${s.egg || 1}.png` : `images/${s.type}${s.level >= 20 ? 3 : s.level >= 10 ? 2 : 1}.png`;
         sImg.src = imgPath;
         sImg.style.position = 'absolute';
-        sImg.style.left = ((i % INDOOR_GRID_COLS) * TILE_SIZE) + 'px';
-        sImg.style.top = (Math.floor(i / INDOOR_GRID_COLS) * TILE_SIZE) + 'px';
-        sImg.style.width = TILE_SIZE + 'px';
-        sImg.style.height = TILE_SIZE + 'px';
+        sImg.style.left = ((i % INDOOR_GRID_COLS) * 120 + (i * 7 % 40)) + 'px';
+        sImg.style.top = (Math.floor(i / INDOOR_GRID_COLS) * 120 + (i * 13 % 40)) + 'px';
+        sImg.style.width = '80px';
+        sImg.style.height = '80px';
         sImg.style.cursor = 'pointer';
         sImg.style.zIndex = '5';
         sImg.onclick = () => tryStartBattle(s.id);
