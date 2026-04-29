@@ -233,9 +233,31 @@ button {
 
 /* --- רשת התלמידים --- */
 #farm-grid { 
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
-    gap: 20px; width: 90%; max-width: 1200px; justify-items: center;
+    display: block;
+    overflow-x: hidden;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    padding: 20px 0;
+    background: rgba(224, 247, 250, 0.7);
+    backdrop-filter: blur(8px);
+    border-top: 2px solid #81c784;
+}
+.farm-grid-inner {
+    display: flex;
+    gap: 20px;
+    width: max-content;
+    padding: 0 20px;
+    animation: scrollLoop 40s linear infinite;
+}
+.farm-grid-inner:hover {
+    animation-play-state: paused;
+}
+@keyframes scrollLoop {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
 }
 
 /* --- כרטיס תלמיד --- */
@@ -243,7 +265,8 @@ button {
     perspective: 1000px;
     width: 220px;
     height: 340px;
-    margin: 10px;
+    margin: 0;
+    flex-shrink: 0;
     background: transparent !important;
     box-shadow: none !important;
     border: none !important;
@@ -715,4 +738,92 @@ button {
 @keyframes attackPulse {
     from { box-shadow: 0 0 0 3px #e53935, 0 0 8px rgba(229,57,53,0.3); }
     to   { box-shadow: 0 0 0 3px #ff1744, 0 0 20px rgba(255,23,68,0.55); }
+}
+
+/* --- מסוע תלמידים (Conveyor Belt) --- */
+.conveyor-container {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 800px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(5px);
+    border-radius: 20px;
+    padding: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.conveyor-viewport {
+    overflow: hidden;
+    display: flex;
+    gap: 15px;
+    width: 100%;
+    justify-content: center;
+}
+
+.conveyor-arrow {
+    background: rgba(255, 255, 255, 0.8);
+    border: none;
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    margin: 0 10px;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+}
+
+.conveyor-arrow:hover {
+    transform: scale(1.1);
+    background: white;
+}
+
+.conveyor-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 8px;
+    border-radius: 12px;
+    min-width: 80px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.conveyor-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 12px rgba(0,0,0,0.2);
+}
+
+.conveyor-card img {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 3px rgba(0,0,0,0.2));
+}
+
+.conveyor-card .name {
+    font-size: 11px;
+    font-weight: bold;
+    color: #333;
+    margin-top: 5px;
+    text-align: center;
+    max-width: 70px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
