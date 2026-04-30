@@ -109,7 +109,7 @@ function logout() {
 // אתחול האפליקציה
 async function startApp() {
     document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('farm-grid').style.display = 'grid';
+    document.getElementById('farm-grid').style.display = 'flex';
     document.getElementById('tasks-area').style.display = 'block';
     
     const isTeacher = currentUser && currentUser.startsWith('teacher_');

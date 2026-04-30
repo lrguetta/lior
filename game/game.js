@@ -172,7 +172,8 @@ function enterHouse(houseId) {
     isIndoor        = true;
     currentIndoorType = houseId;
     currentBackground = HOUSE_BACKGROUNDS[houseId];
-    playerPos       = { x: 3, y: 4 }; // מיקום התחלתי בתוך החדר
+    playerPos       = { x: 3, y: 5 }; // מיקום התחלתי נוח יותר בחלק התחתון של החדר
+    if (typeof populateIndoorNPCs === 'function') populateIndoorNPCs(houseId);
     drawMap();
 }
 
@@ -221,6 +222,16 @@ function handleKeyDown(e) {
 function canMoveTo(x, y) {
     if (isIndoor) {
         if (y < 0 || y >= INDOOR_GRID_ROWS || x < 0 || x >= INDOOR_GRID_COLS) return false;
+        
+        // בדיקת מפגש עם תלמידים בכיתה
+        if (typeof indoorNPCs !== 'undefined') {
+            const npc = indoorNPCs.find(n => n.x === x && n.y === y);
+            if (npc) {
+                if (typeof openStudentCard === 'function') openStudentCard(npc.student.id);
+                return false; // חסימת תנועה כדי לא לעלות עליהם
+            }
+        }
+        
         return INDOOR_MAP[y][x] !== 1;
     } else {
         if (y < 0 || y >= GAME_MAP.length || x < 0 || x >= GAME_MAP[0].length) return false;
