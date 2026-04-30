@@ -254,8 +254,7 @@ button {
     box-shadow: none !important;
     border: none !important;
     cursor: pointer;
-    display: inline-block;
-    vertical-align: top;
+    display: block;
     overflow: visible;
 }
 .student-card.group-card .card-front {
