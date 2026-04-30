@@ -244,7 +244,8 @@ function updateView() {
                     <button onclick="savePersonalNote('${s.id}')" style="width:100%;margin-top:5px;background:#4caf50;padding:6px;font-size:0.85em;">שמור 💾</button>
                 </div>` : `<div style="font-size:0.75em;color:#999;text-align:center;margin-top:8px;">לחץ לחזרה</div>`}
             </div>
-         </div>`;
+         </div>
+        </div>`; 
     }).join('');
     grid.innerHTML = cardsHtml;
 }
