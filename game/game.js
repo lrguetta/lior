@@ -1,6 +1,10 @@
 /* ============================================
-   game.js - מפה ותנועה משולבת עם מערכת קרבות
-   ============================================ */
+    game.js - מפה ותנועה משולבת עם מערכת קרבות
+    ============================================ */
+
+function isAdminOrTeacher() {
+    return currentUser === 'admin' || (currentUser && currentUser.startsWith('teacher_'));
+}
 
 let isIndoor = false;
 let currentIndoorType = null;
@@ -9,6 +13,31 @@ let currentBackground = 'url("images/newFarmBG1.jpeg")';
 
 const INDOOR_GRID_COLS = 8;
 const INDOOR_GRID_ROWS = 6;
+
+const CLASSROOM_COLS = 60;
+const CLASSROOM_ROWS = 40;
+
+// מפת כיתה בסיסית (ריקה עם קירות)
+function generateClassroomMap() {
+    const map = [];
+    for (let y = 0; y < CLASSROOM_ROWS; y++) {
+        const row = [];
+        for (let x = 0; x < CLASSROOM_COLS; x++) {
+            if (y === 0 || y === CLASSROOM_ROWS - 1 || x === 0 || x === CLASSROOM_COLS - 1) {
+                row.push(1); // קיר
+            } else {
+                row.push(0); // רצפה
+            }
+        }
+        map.push(row);
+    }
+    // פתח יציאה
+    map[CLASSROOM_ROWS - 1][Math.floor(CLASSROOM_COLS / 2)] = 6;
+    return map;
+}
+
+const CLASSROOM_BASE_MAP = generateClassroomMap();
+let classroomMeetingPoints = []; // [{x, y, studentId}]
 
 const GAME_MAP = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
@@ -162,6 +191,14 @@ function drawOutdoorMap(container) {
 
 function drawIndoorMap(container) {
     const house    = HOUSES[currentIndoorType];
+    const isClass  = (currentIndoorType === 'house_sw' || currentIndoorType === 'house_nw');
+
+    if (isClass && !isAdminOrTeacher()) {
+        drawClassroomGrid(container);
+        addExitButton(container);
+        return;
+    }
+
     const students = house?.students || [];
 
     container.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;';
@@ -172,6 +209,7 @@ function drawIndoorMap(container) {
         background-image:${HOUSE_BACKGROUNDS[currentIndoorType]};
         background-size:cover;background-repeat:no-repeat;background-position:center;`;
     container.appendChild(bgLayer);
+
 
     // בית אישי — אין תלמידים, רק תמונה
     if (currentIndoorType === 'house_se') {
@@ -247,6 +285,64 @@ function addExitButton(container) {
     container.appendChild(exitBtn);
 }
 
+function drawClassroomGrid(container) {
+    container.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:#f5f5f5;overflow:hidden;';
+
+    const tilesLayer = document.createElement('div');
+    tilesLayer.style.cssText = `position:absolute;top:0;left:0;width:100%;height:100%;
+        display:grid;
+        grid-template-columns:repeat(${CLASSROOM_COLS}, 1fr);
+        grid-template-rows:repeat(${CLASSROOM_ROWS}, 1fr);`;
+
+    for (let y = 0; y < CLASSROOM_ROWS; y++) {
+        for (let x = 0; x < CLASSROOM_COLS; x++) {
+            const tile = document.createElement('div');
+            tile.className = 'classroom-tile';
+            
+            // שחקן
+            if (x === playerPos.x && y === playerPos.y) {
+                const me = getPlayerCharacter();
+                const img = document.createElement('img');
+                img.src = me.img;
+                img.style.cssText = 'width:90%;height:90%;object-fit:contain;filter:drop-shadow(0 0 5px gold);position:relative;z-index:10;';
+                tile.appendChild(img);
+            }
+
+            // תלמיד (נקודת מפגש)
+            const meetingPoint = classroomMeetingPoints.find(p => p.x === x && p.y === y);
+            if (meetingPoint) {
+                const s = allStudents.find(st => st.id === meetingPoint.studentId);
+                if (s) {
+                    const imgPath = s.level === 0
+                        ? `images/egg${s.egg || 1}.png`
+                        : `images/${s.type}${s.level >= 20 ? 3 : s.level >= 10 ? 2 : 1}.png`;
+                    const sImg = document.createElement('img');
+                    sImg.src = imgPath;
+                    sImg.style.cssText = 'width:90%;height:90%;object-fit:contain;filter:drop-shadow(0 0 5px #ff5722);';
+                    tile.appendChild(sImg);
+                }
+            }
+
+            // קירות
+            if (CLASSROOM_BASE_MAP[y][x] === 1) {
+                tile.style.backgroundColor = '#8d6e63';
+            }
+            // יציאה
+            if (CLASSROOM_BASE_MAP[y][x] === 6) {
+                tile.style.backgroundColor = '#f44336';
+                tile.innerHTML = '🚪';
+                tile.style.fontSize = '10px';
+                tile.style.display = 'flex';
+                tile.style.alignItems = 'center';
+                tile.style.justifyContent = 'center';
+            }
+
+            tilesLayer.appendChild(tile);
+        }
+    }
+    container.appendChild(tilesLayer);
+}
+
 // ============================================
 // כניסה / יציאה מבתים
 // ============================================
@@ -258,7 +354,42 @@ function enterHouse(houseId) {
     isIndoor        = true;
     currentIndoorType = houseId;
     currentBackground = HOUSE_BACKGROUNDS[houseId];
+
+    if ((houseId === 'house_sw' || houseId === 'house_nw') && !isAdminOrTeacher()) {
+        setupClassroomPoints(houseId);
+        playerPos = { x: Math.floor(CLASSROOM_COLS / 2), y: CLASSROOM_ROWS - 2 };
+    }
+
     drawMap();
+}
+
+function setupClassroomPoints(houseId) {
+    const house = HOUSES[houseId];
+    const students = [...(house?.students || [])];
+    classroomMeetingPoints = [];
+    
+    // בחר מקומות רנדומליים למפגש (למשל 20 מקומות)
+    const numPoints = Math.min(20, students.length);
+    const shuffledStudents = students.sort(() => 0.5 - Math.random());
+
+    for (let i = 0; i < numPoints; i++) {
+        let x, y;
+        let found = false;
+        let attempts = 0;
+        while (!found && attempts < 50) {
+            x = Math.floor(Math.random() * (CLASSROOM_COLS - 4)) + 2;
+            y = Math.floor(Math.random() * (CLASSROOM_ROWS - 10)) + 5; // רחוק מהכניסה
+            
+            // וודא שאין שם כבר תלמיד
+            if (!classroomMeetingPoints.some(p => p.x === x && p.y === y)) {
+                found = true;
+            }
+            attempts++;
+        }
+        if (found) {
+            classroomMeetingPoints.push({ x, y, studentId: shuffledStudents[i].id });
+        }
+    }
 }
 
 function exitHouse() {
@@ -291,6 +422,12 @@ function handleKeyDown(e) {
     const move = moves[e.key];
     if (!move) return;
 
+    // בתוך הבית, רק תלמיד בכיתה יכול לזוז
+    if (isIndoor) {
+        const isClass = (currentIndoorType === 'house_sw' || currentIndoorType === 'house_nw');
+        if (!isClass || isAdminOrTeacher()) return;
+    }
+
     playerDir = move.dir;
     const newX = playerPos.x + move.dx;
     const newY = playerPos.y + move.dy;
@@ -299,13 +436,36 @@ function handleKeyDown(e) {
         playerPos.x = newX;
         playerPos.y = newY;
         drawMap();
-        checkHouseEntry();
+        checkTileInteraction();
     }
 }
 
 function canMoveTo(x, y) {
+    if (isIndoor && (currentIndoorType === 'house_sw' || currentIndoorType === 'house_nw') && !isAdminOrTeacher()) {
+        if (y < 0 || y >= CLASSROOM_ROWS || x < 0 || x >= CLASSROOM_COLS) return false;
+        return CLASSROOM_BASE_MAP[y][x] !== 1;
+    }
+
     if (y < 0 || y >= GAME_MAP.length || x < 0 || x >= GAME_MAP[0].length) return false;
     return GAME_MAP[y][x] !== 1;
+}
+
+function checkTileInteraction() {
+    if (isIndoor && (currentIndoorType === 'house_sw' || currentIndoorType === 'house_nw') && !isAdminOrTeacher()) {
+        const tile = CLASSROOM_BASE_MAP[playerPos.y][playerPos.x];
+        if (tile === 6) {
+            exitHouse();
+            return;
+        }
+
+        // בדיקה אם נפגש עם תלמיד
+        const meetingPoint = classroomMeetingPoints.find(p => p.x === playerPos.x && p.y === playerPos.y);
+        if (meetingPoint) {
+            openStudentCard(meetingPoint.studentId);
+        }
+    } else {
+        checkHouseEntry();
+    }
 }
 
 function checkHouseEntry() {
@@ -352,6 +512,13 @@ function initJoystick() {
 
         const move = () => {
             if (!currentUser || currentUser === 'admin') return;
+
+            // בתוך הבית, רק תלמיד בכיתה יכול לזוז
+            if (isIndoor) {
+                const isClass = (currentIndoorType === 'house_sw' || currentIndoorType === 'house_nw');
+                if (!isClass || isAdminOrTeacher()) return;
+            }
+
             playerDir = b.dir;
             const newX = playerPos.x + b.dx;
             const newY = playerPos.y + b.dy;
@@ -359,7 +526,7 @@ function initJoystick() {
                 playerPos.x = newX;
                 playerPos.y = newY;
                 drawMap();
-                checkHouseEntry();
+                checkTileInteraction();
             }
         };
 
