@@ -383,8 +383,8 @@ function setupClassroomPoints(houseId) {
         let found = false;
         let attempts = 0;
         while (!found && attempts < 50) {
-            x = Math.floor(Math.random() * (CLASSROOM_COLS - 4)) + 2;
-            y = Math.floor(Math.random() * (CLASSROOM_ROWS - 10)) + 5; // רחוק מהכניסה
+            x = Math.floor(Math.random() * 30) + 5;  // עמודות 5 עד 34 (מרכז הכיתה)
+            y = Math.floor(Math.random() * 12) + 4;  // שורות 4 עד 15 (אזור השולחנות)
             
             // וודא שאין שם כבר תלמיד
             if (!classroomMeetingPoints.some(p => p.x === x && p.y === y)) {
