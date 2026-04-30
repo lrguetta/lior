@@ -246,6 +246,7 @@ button {
 
 /* --- כרטיס תלמיד --- */
 .student-card {
+    position: relative;
     perspective: 1000px;
     width: 200px;
     height: 320px;
@@ -258,6 +259,26 @@ button {
     display: block;
     overflow: visible;
 }
+
+.floating-xp {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #4caf50;
+    font-weight: bold;
+    font-size: 28px;
+    text-shadow: 0 0 10px white, 0 0 5px rgba(0,0,0,0.2);
+    pointer-events: none;
+    z-index: 1000;
+    animation: floatUpXP 1s ease-out forwards;
+}
+
+@keyframes floatUpXP {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+    100% { transform: translate(-50%, -150%) scale(1.5); opacity: 0; }
+}
+
 .student-card.group-card .card-front {
     background-color: #ffcc80 !important; 
     border-bottom: 5px solid #e65100 !important;

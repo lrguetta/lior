@@ -121,22 +121,19 @@ function renderStudentSelect() {
 }
 
 /**
- * Adds XP to a student (Teacher/Admin only)
+ * Adds XP to a student automatically (Teacher/Admin only)
  */
 async function addXP(studentId) {
     const s = allStudents.find(x => x.id === studentId);
     if (!s) return;
-    let amount = parseInt(prompt(`כמה XP להוסיף ל-${s.full_name}?`, "10"));
-    if (isNaN(amount) || amount === 0) return;
+    
+    const amount = 10;
     
     try {
         let newXP = (s.xp || 0) + amount;
         let newLevel = s.level || 0;
         
-        // Handle level ups/downs
         while (newXP >= 100) { newLevel++; newXP -= 100; }
-        while (newXP < 0 && newLevel > 0) { newLevel--; newXP += 100; }
-        if (newXP < 0) newXP = 0;
 
         const h = s.history || {};
         const timestamp = Date.now();
@@ -146,6 +143,9 @@ async function addXP(studentId) {
             time: timestamp 
         };
 
+        // Show floating animation immediately
+        showFloatingXP(studentId, amount);
+
         const { error } = await supabase
             .from(TABLES.students)
             .update({ xp: newXP, level: newLevel, history: h })
@@ -153,31 +153,47 @@ async function addXP(studentId) {
             
         if (error) throw error;
         
-        alert("XP עודכן בהצלחה! ✨");
+        // Update local data and view without full reload if possible, 
+        // but loadStudents is safer to keep everything in sync
         await loadStudents();
     } catch(e) { 
         console.error("Error adding XP:", e);
-        alert("שגיאה בעדכון XP: " + e.message); 
     }
 }
 
-function openDeck() {
+function showFloatingXP(studentId, amount) {
+    const card = document.querySelector(`.student-card[data-sid="${studentId}"]`);
+    if (!card) return;
+    
+    const float = document.createElement('div');
+    float.className = 'floating-xp';
+    float.textContent = `+${amount} XP`;
+    card.appendChild(float);
+    
+    setTimeout(() => float.remove(), 1000);
+}
+
+
+function openDeck(name, className) {
     const modal = document.getElementById('deck-modal');
     if (modal) {
         modal.style.display = 'block';
-        renderDeck();
+        renderDeck(name, className);
     }
 }
 
-function renderDeck() {
+function renderDeck(name, className) {
     const container = document.getElementById('deck-list');
     if (!container) return;
     
-    const me = allStudents.find(s => s.id === currentUser);
-    if (!me) return;
+    // If name/className are provided, use them. Otherwise use current user's.
+    let targetName = name;
+    if (!targetName) {
+        const me = allStudents.find(s => s.id === currentUser);
+        targetName = me ? me.full_name : '';
+    }
     
-    // Show all characters belonging to the same student name
-    const myCharacters = allStudents.filter(s => s.full_name === me.full_name);
+    const myCharacters = allStudents.filter(s => s.full_name === targetName);
     
     container.innerHTML = myCharacters.map(s => {
         const level = s.level || 0;
@@ -192,6 +208,7 @@ function renderDeck() {
         `;
     }).join('');
 }
+
 
 
 function updateView() {
