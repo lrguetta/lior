@@ -7,8 +7,7 @@ let currentIndoorType = null;
 let outdoorPos = { x: 26, y: 17 };
 let currentBackground = 'url("images/newFarmBG1.jpeg")';
 
-const INDOOR_GRID_COLS = 8;
-const INDOOR_GRID_ROWS = 6;
+
 
 const GAME_MAP = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
@@ -160,133 +159,7 @@ function drawOutdoorMap(container) {
     container.appendChild(housesLayer);
 }
 
-function drawIndoorMap(container) {
-    const house    = HOUSES[currentIndoorType];
-    const students = house?.students || [];
 
-    container.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;';
-
-    // רקע
-    const bgLayer = document.createElement('div');
-    bgLayer.style.cssText = `position:absolute;top:0;left:0;width:100%;height:100%;
-        background-image:${HOUSE_BACKGROUNDS[currentIndoorType]};
-        background-size:cover;background-repeat:no-repeat;background-position:center;`;
-    container.appendChild(bgLayer);
-
-    // בית אישי — אין תלמידים, רק תמונה
-    if (currentIndoorType === 'house_se') {
-        addExitButton(container);
-        return;
-    }
-
-    // חנות — פתח את החנות הקיימת
-    if (currentIndoorType === 'house_ne') {
-        addExitButton(container);
-        if (typeof openShop === 'function') openShop();
-        return;
-    }
-
-    // כיתות — הצגת תלמידים
-    const studentsLayer = document.createElement('div');
-    studentsLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;';
-
-    const validStudents = students.filter(s => !(s.is_group === true || s.is_group === 1 || s.is_group === 'true'));
-
-    if (validStudents.length > 0) {
-        let currentIndex = 0;
-        const visibleCount = 5; // Number of visible students in the belt
-
-        const conveyorContainer = document.createElement('div');
-        conveyorContainer.className = 'conveyor-container';
-
-        const btnRight = document.createElement('button');
-        btnRight.className = 'conveyor-arrow';
-        btnRight.innerHTML = '&#9654;'; // ▶
-        btnRight.title = 'הבא';
-
-        const btnLeft = document.createElement('button');
-        btnLeft.className = 'conveyor-arrow';
-        btnLeft.innerHTML = '&#9664;'; // ◀
-        btnLeft.title = 'הקודם';
-
-        const viewport = document.createElement('div');
-        viewport.className = 'conveyor-viewport';
-
-        function renderConveyor() {
-            viewport.innerHTML = '';
-            const toShow = Math.min(visibleCount, validStudents.length);
-            for (let i = 0; i < toShow; i++) {
-                const sIndex = (currentIndex + i) % validStudents.length;
-                const s = validStudents[sIndex];
-
-                const imgPath = s.level === 0
-                    ? `images/egg${s.egg || 1}.png`
-                    : `images/${s.type}${s.level >= 20 ? 3 : s.level >= 10 ? 2 : 1}.png`;
-
-                const card = document.createElement('div');
-                card.className = 'conveyor-card';
-                card.onclick = () => openStudentCard(s.id);
-
-                const img = document.createElement('img');
-                img.src = imgPath;
-
-                const nameDiv = document.createElement('div');
-                nameDiv.className = 'name';
-                nameDiv.textContent = s.full_name;
-
-                card.appendChild(img);
-                card.appendChild(nameDiv);
-                viewport.appendChild(card);
-            }
-        }
-
-        btnRight.onclick = () => {
-            currentIndex = (currentIndex - 1 + validStudents.length) % validStudents.length;
-            renderConveyor();
-        };
-
-        btnLeft.onclick = () => {
-            currentIndex = (currentIndex + 1) % validStudents.length;
-            renderConveyor();
-        };
-
-        renderConveyor();
-
-        // RTL: Right arrow on right, left on left
-        conveyorContainer.appendChild(btnRight);
-        conveyorContainer.appendChild(viewport);
-        conveyorContainer.appendChild(btnLeft);
-
-        studentsLayer.appendChild(conveyorContainer);
-    }
-
-    // השחקן עצמו
-    const me = getPlayerCharacter();
-    const meWrapper = document.createElement('div');
-    meWrapper.style.cssText = 'position:absolute;left:50%;top:60%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;';
-    const meImg = document.createElement('img');
-    meImg.src = me.img;
-    meImg.style.cssText = 'width:50px;height:50px;object-fit:contain;filter:drop-shadow(0 0 8px #FFD700) drop-shadow(0 0 15px #FFA500);';
-    const meName = document.createElement('div');
-    meName.style.cssText = 'font-size:11px;font-weight:bold;color:#FFD700;text-shadow:0 1px 3px #000;margin-top:2px;';
-    meName.textContent = me.full_name + ' (את/ה)';
-    meWrapper.appendChild(meImg);
-    meWrapper.appendChild(meName);
-    studentsLayer.appendChild(meWrapper);
-
-    container.appendChild(studentsLayer);
-    addExitButton(container);
-}
-
-function addExitButton(container) {
-    const exitBtn = document.createElement('div');
-    exitBtn.style.cssText = `position:absolute;top:10px;left:10px;padding:8px 16px;
-        background:#f44336;color:white;border-radius:8px;cursor:pointer;
-        z-index:100;font-weight:bold;font-size:15px;box-shadow:0 4px 15px rgba(0,0,0,0.3);`;
-    exitBtn.textContent = '🚪 יציאה';
-    exitBtn.onclick = exitHouse;
-    container.appendChild(exitBtn);
-}
 
 // ============================================
 // כניסה / יציאה מבתים
@@ -299,6 +172,7 @@ function enterHouse(houseId) {
     isIndoor        = true;
     currentIndoorType = houseId;
     currentBackground = HOUSE_BACKGROUNDS[houseId];
+    playerPos       = { x: 3, y: 4 }; // מיקום התחלתי בתוך החדר
     drawMap();
 }
 
@@ -345,8 +219,13 @@ function handleKeyDown(e) {
 }
 
 function canMoveTo(x, y) {
-    if (y < 0 || y >= GAME_MAP.length || x < 0 || x >= GAME_MAP[0].length) return false;
-    return GAME_MAP[y][x] !== 1;
+    if (isIndoor) {
+        if (y < 0 || y >= INDOOR_GRID_ROWS || x < 0 || x >= INDOOR_GRID_COLS) return false;
+        return INDOOR_MAP[y][x] !== 1;
+    } else {
+        if (y < 0 || y >= GAME_MAP.length || x < 0 || x >= GAME_MAP[0].length) return false;
+        return GAME_MAP[y][x] !== 1;
+    }
 }
 
 function checkHouseEntry() {

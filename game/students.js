@@ -247,7 +247,7 @@ function updateView() {
             </div>
          </div>`;
     }).join('');
-    grid.innerHTML = `<div class="farm-grid-inner">${cardsHtml}${cardsHtml}</div>`;
+    grid.innerHTML = cardsHtml;
 
     
     document.getElementById('deck-modal-overlay').style.display = 'block';
