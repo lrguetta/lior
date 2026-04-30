@@ -238,7 +238,7 @@ button {
     justify-content: center;
     gap: 20px;
     width: 100%;
-    max-width: 1200px;
+    max-width: 1300px;
     margin: 20px auto;
     padding: 20px;
     box-sizing: border-box;
@@ -247,8 +247,8 @@ button {
 /* --- כרטיס תלמיד --- */
 .student-card {
     perspective: 1000px;
-    width: 220px;
-    height: 340px;
+    width: 200px;
+    height: 320px;
     margin: 0;
     flex-shrink: 0;
     background: transparent !important;

@@ -193,3 +193,21 @@ function handleEventBannerClick(e) {
         overlay.style.display = 'block';
     }
 }
+
+function populateEventCreatureDropdown() {
+    const sel = document.getElementById('event-creature-type');
+    if (!sel) return;
+    
+    // Clear existing
+    sel.innerHTML = '<option value="">בחר דמות...</option>';
+    
+    // Use types from core.js
+    const types = CREATURE_TYPES || [];
+    types.forEach(tId => {
+        const data = CREATURE_SEED_DATA.find(d => d.typeId === tId);
+        const opt = document.createElement('option');
+        opt.value = tId;
+        opt.textContent = data ? data.label : tId;
+        sel.appendChild(opt);
+    });
+}

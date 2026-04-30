@@ -120,6 +120,80 @@ function renderStudentSelect() {
     });
 }
 
+/**
+ * Adds XP to a student (Teacher/Admin only)
+ */
+async function addXP(studentId) {
+    const s = allStudents.find(x => x.id === studentId);
+    if (!s) return;
+    let amount = parseInt(prompt(`כמה XP להוסיף ל-${s.full_name}?`, "10"));
+    if (isNaN(amount) || amount === 0) return;
+    
+    try {
+        let newXP = (s.xp || 0) + amount;
+        let newLevel = s.level || 0;
+        
+        // Handle level ups/downs
+        while (newXP >= 100) { newLevel++; newXP -= 100; }
+        while (newXP < 0 && newLevel > 0) { newLevel--; newXP += 100; }
+        if (newXP < 0) newXP = 0;
+
+        const h = s.history || {};
+        const timestamp = Date.now();
+        h['admin_' + timestamp] = { 
+            msg: `המורה הוסיף לך ${amount} XP`, 
+            xp: amount, 
+            time: timestamp 
+        };
+
+        const { error } = await supabase
+            .from(TABLES.students)
+            .update({ xp: newXP, level: newLevel, history: h })
+            .eq('id', studentId);
+            
+        if (error) throw error;
+        
+        alert("XP עודכן בהצלחה! ✨");
+        await loadStudents();
+    } catch(e) { 
+        console.error("Error adding XP:", e);
+        alert("שגיאה בעדכון XP: " + e.message); 
+    }
+}
+
+function openDeck() {
+    const modal = document.getElementById('deck-modal');
+    if (modal) {
+        modal.style.display = 'block';
+        renderDeck();
+    }
+}
+
+function renderDeck() {
+    const container = document.getElementById('deck-list');
+    if (!container) return;
+    
+    const me = allStudents.find(s => s.id === currentUser);
+    if (!me) return;
+    
+    // Show all characters belonging to the same student name
+    const myCharacters = allStudents.filter(s => s.full_name === me.full_name);
+    
+    container.innerHTML = myCharacters.map(s => {
+        const level = s.level || 0;
+        const type = s.type || 'cat';
+        const imgPath = level === 0 ? `images/egg${s.egg || 1}.png` : `images/${type}${level >= 20 ? 3 : level >= 10 ? 2 : 1}.png`;
+        return `
+            <div class="deck-item ${s.isActive ? 'active' : ''}" onclick="switchActiveCharacter('${s.id}', '${s.full_name}')">
+                <img src="${imgPath}" style="width:60px; height:60px; object-fit:contain;">
+                <div style="font-weight:bold; margin-top:5px;">Lv.${level}</div>
+                ${s.isActive ? '<div style="color:#ffd700; font-size:0.8em; font-weight:bold;">פעיל</div>' : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+
 function updateView() {
     const grid = document.getElementById('farm-grid');
     if (!grid || !currentUser) return;

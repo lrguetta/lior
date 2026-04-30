@@ -298,3 +298,22 @@ async function checkBattlesSchema() {
         console.log('Battles table ready');
     } catch (e) { console.log('Battles table check failed:', e); }
 }
+
+function renderCreatureTypesList() {
+    const container = document.getElementById('creature-types-list');
+    if (!container) return;
+    
+    container.innerHTML = CREATURE_SEED_DATA.map(d => {
+        return `
+            <div style="background:#f9f9f9; padding:10px; border-radius:8px; margin-top:10px; border:1px solid #ddd;">
+                <div style="display:flex; justify-content:space-between;">
+                    <strong>${d.label} (${d.typeId})</strong>
+                </div>
+                <div style="font-size:0.85em; color:#666; margin-top:5px;">
+                    1: ${d.attack1} | 2: ${d.attack2} | 3: ${d.attack3}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
