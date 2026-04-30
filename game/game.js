@@ -534,7 +534,7 @@ function toggleMap() {
 
     if (isVisible) {
         mapContainer.style.display = 'none';
-        farmGrid.style.display     = 'grid';
+        farmGrid.style.display     = 'flex';
         removeJoystick();
     } else {
         farmGrid.style.display     = 'none';
