@@ -7,7 +7,8 @@ let currentIndoorType = null;
 let outdoorPos = { x: 26, y: 17 };
 let currentBackground = 'url("images/newFarmBG1.jpeg")';
 
-
+const INDOOR_GRID_COLS = 8;
+const INDOOR_GRID_ROWS = 6;
 
 const GAME_MAP = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
@@ -18,18 +19,18 @@ const GAME_MAP = [
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,1,1,1,4,1,1,1,1,1,1,1,1,2,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,1,1,0,0,1,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,1,0,1,0,1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1,1,1,1,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,4,1,1,1,1,1,1,1,1,2,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,5,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
@@ -56,7 +57,7 @@ const HOUSE_BACKGROUNDS = {
     'house_ne': 'url("images/shop.png")',
 };
 
-let playerPos = { x: 54, y: 17 };
+let playerPos = { x: 26, y: 17 };
 let playerDir = 'up';
 const TILE_SIZE = 50;
 let indoorPos = { x: 0, y: 0 };
@@ -159,7 +160,92 @@ function drawOutdoorMap(container) {
     container.appendChild(housesLayer);
 }
 
+function drawIndoorMap(container) {
+    const house    = HOUSES[currentIndoorType];
+    const students = house?.students || [];
 
+    container.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;';
+
+    // רקע
+    const bgLayer = document.createElement('div');
+    bgLayer.style.cssText = `position:absolute;top:0;left:0;width:100%;height:100%;
+        background-image:${HOUSE_BACKGROUNDS[currentIndoorType]};
+        background-size:cover;background-repeat:no-repeat;background-position:center;`;
+    container.appendChild(bgLayer);
+
+    // בית אישי — אין תלמידים, רק תמונה
+    if (currentIndoorType === 'house_se') {
+        addExitButton(container);
+        return;
+    }
+
+    // חנות — פתח את החנות הקיימת
+    if (currentIndoorType === 'house_ne') {
+        addExitButton(container);
+        if (typeof openShop === 'function') openShop();
+        return;
+    }
+
+    // כיתות — הצגת תלמידים
+    const studentsLayer = document.createElement('div');
+    studentsLayer.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;';
+
+    students.forEach((s, i) => {
+        const cols = 10;
+        const col  = i % cols;
+        const row  = Math.floor(i / cols);
+        const left = 5 + col * 9;
+        const top  = 5 + row * 15;
+
+        const imgPath = s.level === 0
+            ? `images/egg${s.egg || 1}.png`
+            : `images/${s.type}${s.level >= 20 ? 3 : s.level >= 10 ? 2 : 1}.png`;
+
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = `position:absolute;left:${left}%;top:${top}%;
+            display:flex;flex-direction:column;align-items:center;cursor:pointer;`;
+        wrapper.onclick = () => openStudentCard(s.id); // לחיצה על דמות פותחת כרטיס תלמיד
+
+        const sImg = document.createElement('img');
+        sImg.src = imgPath;
+        sImg.style.cssText = 'width:80px;height:80px;object-fit:contain;filter:drop-shadow(0 0 5px #ff5722);';
+
+        const name = document.createElement('div');
+        name.style.cssText = 'font-size:10px;font-weight:bold;color:white;text-shadow:0 1px 3px #000;margin-top:2px;text-align:center;max-width:60px;';
+        name.textContent = s.full_name;
+
+        wrapper.appendChild(sImg);
+        wrapper.appendChild(name);
+        studentsLayer.appendChild(wrapper);
+    });
+
+    // השחקן עצמו
+    const me = getPlayerCharacter();
+    const meWrapper = document.createElement('div');
+    meWrapper.style.cssText = 'position:absolute;left:50%;top:60%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;';
+    const meImg = document.createElement('img');
+    meImg.src = me.img;
+    meImg.style.cssText = 'width:50px;height:50px;object-fit:contain;filter:drop-shadow(0 0 8px #FFD700) drop-shadow(0 0 15px #FFA500);';
+    const meName = document.createElement('div');
+    meName.style.cssText = 'font-size:11px;font-weight:bold;color:#FFD700;text-shadow:0 1px 3px #000;margin-top:2px;';
+    meName.textContent = me.full_name + ' (את/ה)';
+    meWrapper.appendChild(meImg);
+    meWrapper.appendChild(meName);
+    studentsLayer.appendChild(meWrapper);
+
+    container.appendChild(studentsLayer);
+    addExitButton(container);
+}
+
+function addExitButton(container) {
+    const exitBtn = document.createElement('div');
+    exitBtn.style.cssText = `position:absolute;top:10px;left:10px;padding:8px 16px;
+        background:#f44336;color:white;border-radius:8px;cursor:pointer;
+        z-index:100;font-weight:bold;font-size:15px;box-shadow:0 4px 15px rgba(0,0,0,0.3);`;
+    exitBtn.textContent = '🚪 יציאה';
+    exitBtn.onclick = exitHouse;
+    container.appendChild(exitBtn);
+}
 
 // ============================================
 // כניסה / יציאה מבתים
@@ -172,8 +258,6 @@ function enterHouse(houseId) {
     isIndoor        = true;
     currentIndoorType = houseId;
     currentBackground = HOUSE_BACKGROUNDS[houseId];
-    playerPos       = { x: 3, y: 5 }; // מיקום התחלתי נוח יותר בחלק התחתון של החדר
-    if (typeof populateIndoorNPCs === 'function') populateIndoorNPCs(houseId);
     drawMap();
 }
 
@@ -220,23 +304,8 @@ function handleKeyDown(e) {
 }
 
 function canMoveTo(x, y) {
-    if (isIndoor) {
-        if (y < 0 || y >= INDOOR_GRID_ROWS || x < 0 || x >= INDOOR_GRID_COLS) return false;
-        
-        // בדיקת מפגש עם תלמידים בכיתה
-        if (typeof indoorNPCs !== 'undefined') {
-            const npc = indoorNPCs.find(n => n.x === x && n.y === y);
-            if (npc) {
-                if (typeof openStudentCard === 'function') openStudentCard(npc.student.id);
-                return false; // חסימת תנועה כדי לא לעלות עליהם
-            }
-        }
-        
-        return INDOOR_MAP[y][x] !== 1;
-    } else {
-        if (y < 0 || y >= GAME_MAP.length || x < 0 || x >= GAME_MAP[0].length) return false;
-        return GAME_MAP[y][x] !== 1;
-    }
+    if (y < 0 || y >= GAME_MAP.length || x < 0 || x >= GAME_MAP[0].length) return false;
+    return GAME_MAP[y][x] !== 1;
 }
 
 function checkHouseEntry() {
@@ -534,7 +603,7 @@ function toggleMap() {
 
     if (isVisible) {
         mapContainer.style.display = 'none';
-        farmGrid.style.display     = 'flex';
+        farmGrid.style.display     = 'grid';
         removeJoystick();
     } else {
         farmGrid.style.display     = 'none';

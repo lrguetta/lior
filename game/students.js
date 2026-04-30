@@ -120,97 +120,6 @@ function renderStudentSelect() {
     });
 }
 
-/**
- * Adds XP to a student automatically (Teacher/Admin only)
- */
-async function addXP(studentId) {
-    const s = allStudents.find(x => x.id === studentId);
-    if (!s) return;
-    
-    const amount = 10;
-    
-    try {
-        let newXP = (s.xp || 0) + amount;
-        let newLevel = s.level || 0;
-        
-        while (newXP >= 100) { newLevel++; newXP -= 100; }
-
-        const h = s.history || {};
-        const timestamp = Date.now();
-        h['admin_' + timestamp] = { 
-            msg: `המורה הוסיף לך ${amount} XP`, 
-            xp: amount, 
-            time: timestamp 
-        };
-
-        // Show floating animation immediately
-        showFloatingXP(studentId, amount);
-
-        const { error } = await supabase
-            .from(TABLES.students)
-            .update({ xp: newXP, level: newLevel, history: h })
-            .eq('id', studentId);
-            
-        if (error) throw error;
-        
-        // Update local data and view without full reload if possible, 
-        // but loadStudents is safer to keep everything in sync
-        await loadStudents();
-    } catch(e) { 
-        console.error("Error adding XP:", e);
-    }
-}
-
-function showFloatingXP(studentId, amount) {
-    const card = document.querySelector(`.student-card[data-sid="${studentId}"]`);
-    if (!card) return;
-    
-    const float = document.createElement('div');
-    float.className = 'floating-xp';
-    float.textContent = `+${amount} XP`;
-    card.appendChild(float);
-    
-    setTimeout(() => float.remove(), 1000);
-}
-
-
-function openDeck(name, className) {
-    const modal = document.getElementById('deck-modal');
-    if (modal) {
-        modal.style.display = 'block';
-        renderDeck(name, className);
-    }
-}
-
-function renderDeck(name, className) {
-    const container = document.getElementById('deck-list');
-    if (!container) return;
-    
-    // If name/className are provided, use them. Otherwise use current user's.
-    let targetName = name;
-    if (!targetName) {
-        const me = allStudents.find(s => s.id === currentUser);
-        targetName = me ? me.full_name : '';
-    }
-    
-    const myCharacters = allStudents.filter(s => s.full_name === targetName);
-    
-    container.innerHTML = myCharacters.map(s => {
-        const level = s.level || 0;
-        const type = s.type || 'cat';
-        const imgPath = level === 0 ? `images/egg${s.egg || 1}.png` : `images/${type}${level >= 20 ? 3 : level >= 10 ? 2 : 1}.png`;
-        return `
-            <div class="deck-item ${s.isActive ? 'active' : ''}" onclick="switchActiveCharacter('${s.id}', '${s.full_name}')">
-                <img src="${imgPath}" style="width:60px; height:60px; object-fit:contain;">
-                <div style="font-weight:bold; margin-top:5px;">Lv.${level}</div>
-                ${s.isActive ? '<div style="color:#ffd700; font-size:0.8em; font-weight:bold;">פעיל</div>' : ''}
-            </div>
-        `;
-    }).join('');
-}
-
-
-
 function updateView() {
     const grid = document.getElementById('farm-grid');
     if (!grid || !currentUser) return;
@@ -256,7 +165,7 @@ function updateView() {
     if (sortBy === 'class1') filtered = filtered.filter(s => (s.className || '').endsWith('1'));
     if (sortBy === 'class2') filtered = filtered.filter(s => (s.className || '').endsWith('2'));
 
-    const cardsHtml = filtered.map(s => {
+    grid.innerHTML = filtered.map(s => {
         const isMine = currentUser === s.id;
         const isGroup = s.is_group === true || s.is_group === 1;
         const groupClass = isGroup ? 'group-card' : '';
@@ -335,10 +244,204 @@ function updateView() {
                     <button onclick="savePersonalNote('${s.id}')" style="width:100%;margin-top:5px;background:#4caf50;padding:6px;font-size:0.85em;">שמור 💾</button>
                 </div>` : `<div style="font-size:0.75em;color:#999;text-align:center;margin-top:8px;">לחץ לחזרה</div>`}
             </div>
-         </div>
-        </div>`; 
+            </div>
+        </div>`;
     }).join('');
-    grid.innerHTML = cardsHtml;
+
+    flippedIds.forEach(id => {
+        const card = document.querySelector(`.student-card[data-sid="${id}"]`);
+        if (card) card.classList.add('flipped');
+    });
+}
+
+function toggleCharacterZoom(imgSrc) {
+    let overlay = document.getElementById('character-zoom-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'character-zoom-overlay';
+        overlay.onclick = () => overlay.style.display = 'none';
+        const img = document.createElement('img');
+        img.id = 'zoomed-character-img';
+        overlay.appendChild(img);
+        document.body.appendChild(overlay);
+    }
+    document.getElementById('zoomed-character-img').src = imgSrc;
+    overlay.style.display = 'flex';
+}
+
+async function toggleLike(studentId) {
+    if (currentUser==='admin' || currentUser===studentId) return;
+    const s = allStudents.find(x=>x.id===studentId);
+    if (!s) return;
+    const likes = {...s.likes};
+    likes[currentUser] ? delete likes[currentUser] : (likes[currentUser]=true);
+    try { 
+        const { error } = await supabase.from(TABLES.students).update({ likes }).eq('id', studentId);
+        if (error) throw error;
+        await loadStudents(); 
+    } catch(e) { console.error(e); }
+}
+
+async function addXP(id) {
+    const isAdminOrTeacher = currentUser === 'admin' || (currentUser && currentUser.startsWith('teacher_'));
+    if (!isAdminOrTeacher) return;
+    
+    const s = allStudents.find(x => x.id === id);
+    if (!s) return;
+
+    const img = document.getElementById('img-' + id);
+    const card = img?.closest('.student-card');
+    
+    if (img) {
+        img.classList.remove('glow-effect');
+        requestAnimationFrame(() => img.classList.add('glow-effect'));
+        const f = document.createElement('div'); f.className = 'xp-float'; f.innerText = '+10 XP';
+        if (card) { card.appendChild(f); setTimeout(() => f.remove(), 800); }
+    }
+    
+    let nxp = (s.xp || 0) + 10;
+    let nlv = s.level ?? 0; 
+    
+    if (nxp >= 100) { 
+        nlv++; 
+        nxp -= 100; 
+        if (card) {
+            const t = document.createElement('div');
+            t.className = 'levelup'; t.innerText = 'LEVEL UP! ✨';
+            card.appendChild(t); setTimeout(() => t.remove(), 2000);
+        } 
+    }
+    
+    s.xp = nxp; s.level = nlv;
+    
+    const bar = card?.querySelector('.xp-bar');
+    if (bar) bar.style.width = nxp + '%';
+    const badge = card?.querySelector('.level-text-badge');
+    if (badge) badge.innerText = 'Lv.' + nlv;
+
+    if (img) {
+        const eggNum = s.egg || 1;
+        img.src = nlv === 0 ? `images/egg${eggNum}.png` : `images/${s.type}${nlv >= 20 ? 3 : nlv >= 10 ? 2 : 1}.png`;
+    }
+
+    const history = { ...s.history };
+    history['tap_' + Date.now()] = { msg: 'לחיצת מורה', xp: 10, time: Date.now() };
+    s.history = history;
+    
+    try {
+        const { error } = await supabase.from(TABLES.students).update({ xp: nxp, level: nlv, history }).eq('id', id);
+        if (error) throw error;
+    } catch (e) { console.error("שגיאה:", e); }
+}
+
+async function deleteStudent(id) {
+    if (!confirm('למחוק את הדמות?')) return;
+    try { 
+        const s = allStudents.find(x => x.id === id);
+        const { error: delError } = await supabase.from(TABLES.students).delete().eq('id', id);
+        if (delError) throw delError;
+        
+        if (s && s.isActive) {
+            const remaining = allStudents.filter(x => x.full_name === s.full_name && x.id !== id);
+            if (remaining.length > 0) {
+                await supabase.from(TABLES.students).update({ isActive: true }).eq('id', remaining[0].id);
+            }
+        }
+        
+        await loadStudents(); 
+    } catch(e) { console.error(e); }
+}
+
+async function savePersonalNote(id) {
+    const noteValue = document.getElementById('note-' + id).value.trim();
+    try { 
+        const { error } = await supabase.from(TABLES.students).update({ personalNote: noteValue }).eq('id', id);
+        if (error) throw error;
+        await loadStudents();
+        alert('הערה נשמרה!');
+    } catch(e) { console.error(e); }
+}
+
+async function addStudent() {
+    const nameInput = document.getElementById('studentName').value.trim();
+    const isGroupInput = document.getElementById('isGroupCheckbox')?.checked || false;
+    if (!nameInput) return;
+    
+    if (currentGrade && currentUser.startsWith('teacher_')) {
+        const classSelect = document.getElementById('studentClass');
+        const selectedClass = classSelect.value;
+        if (!selectedClass.startsWith(currentGrade)) {
+            alert('אתה יכול להוסיף רק לכיתה ' + currentGrade);
+            return;
+        }
+    }
+     
+    let creatureType, eggNum;
+    if (typeof currentActiveEvent !== 'undefined' && currentActiveEvent) {
+        creatureType = currentActiveEvent.creatureType;
+        eggNum = (currentActiveEvent.eggNum || 0) + 1;
+    } else {
+        creatureType = CREATURE_TYPES[Math.floor(Math.random() * CREATURE_TYPES.length)];
+        eggNum = Math.floor(Math.random() * 5);
+    }
+
+    const selectedClass = document.getElementById('studentClass').value;
+    const existingSameClass = allStudents.find(s => s.full_name === nameInput && s.className === selectedClass);
+    const isActive = !existingSameClass;
+
+    try {
+        const payload = {
+            full_name: nameInput,
+            className: selectedClass,
+            is_group: isGroupInput,
+            xp: 0, level: 0, type: creatureType, egg: eggNum, 
+            likes: {}, history: {}, isActive: isActive, password: null,
+            created_at: new Date().toISOString()
+        };
+
+        const { error } = await supabase.from(TABLES.students).insert([payload]);
+        if (error) throw error;
+        
+        document.getElementById('studentName').value = '';
+        if (document.getElementById('isGroupCheckbox')) document.getElementById('isGroupCheckbox').checked = false;
+        
+        await loadStudents();
+        alert('הדמות צורפה בהצלחה! ✨');
+    } catch(e) { 
+        console.error("שגיאה:", e);
+        alert('שגיאה: ' + e.message); 
+    }
+}
+
+async function openDeck(fullName, className) {
+    if (typeof closeGenericModal === 'function') closeGenericModal();
+    document.getElementById('deck-student-name').innerText = className ? `${fullName} (${className})` : fullName;
+    const deckList = document.getElementById('deck-list');
+    
+    const myCards = className 
+        ? allStudents.filter(s => s.full_name === fullName && s.className === className)
+        : allStudents.filter(s => s.full_name === fullName);
+    
+    if(myCards.length <= 1 && currentUser !== 'admin') {
+        alert("אין לך דמויות נוספות.");
+        return;
+    }
+    
+    deckList.innerHTML = myCards.map(s => {
+        const eggNum = s.egg || 1;
+        const imgPath = s.level === 0 ? `images/egg${eggNum}.png` : `images/${s.type}${s.level >= 20 ? 3 : s.level >= 10 ? 2 : 1}.png`;
+        return `
+        <div style="border:3px solid ${s.isActive ? '#4caf50' : '#ddd'}; border-radius:12px; padding:10px; min-width:110px; text-align:center; background:${s.isActive ? '#e8f5e9' : '#fff'}; position:relative;">
+            ${s.isActive ? '<div style="position:absolute; top:-10px; left:50%; transform:translateX(-50%); background:#4caf50; color:white; font-size:0.7em; padding:2px 6px; border-radius:10px; font-weight:bold;">פעיל</div>' : ''}
+            <img src="${imgPath}" style="height:70px; object-fit:contain; margin-bottom:8px;">
+            <div style="font-weight:bold; color:#333;">Lv.${s.level}</div>
+            <div style="font-size:0.85em; color:#666; margin-bottom:8px;">XP: ${s.xp}</div>
+            ${!s.isActive ? `<button onclick="switchActiveCharacter('${s.id}', '${fullName}')" style="font-size:0.8em; padding:5px 10px; width:100%;">בחר</button>` : `<button disabled style="font-size:0.8em; padding:5px 10px; width:100%; background:#ccc;">מוצג</button>`}
+        </div>`;
+    }).join('');
+    
+    document.getElementById('deck-modal-overlay').style.display = 'block';
+    document.getElementById('deck-modal').style.display = 'block';
 }
 
 function closeDeck() {
