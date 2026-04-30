@@ -14,8 +14,8 @@ let currentBackground = 'url("images/newFarmBG1.jpeg")';
 const INDOOR_GRID_COLS = 8;
 const INDOOR_GRID_ROWS = 6;
 
-const CLASSROOM_COLS = 60;
-const CLASSROOM_ROWS = 40;
+const CLASSROOM_COLS = 40;
+const CLASSROOM_ROWS = 20;
 
 // מפת כיתה בסיסית (ריקה עם קירות)
 function generateClassroomMap() {
@@ -36,7 +36,7 @@ function generateClassroomMap() {
     return map;
 }
 
-const CLASSROOM_BASE_MAP = generateClassroomMap();
+let classroomBaseMap = generateClassroomMap();
 let classroomMeetingPoints = []; // [{x, y, studentId}]
 
 const GAME_MAP = [
@@ -286,7 +286,11 @@ function addExitButton(container) {
 }
 
 function drawClassroomGrid(container) {
-    container.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:#f5f5f5;overflow:hidden;';
+    const bg = HOUSE_BACKGROUNDS[currentIndoorType] || '#f5f5f5';
+    container.style.cssText = `position:absolute;top:0;left:0;width:100%;height:100%;
+        background-image:${bg};
+        background-size:cover;background-repeat:no-repeat;background-position:center;
+        overflow:hidden;`;
 
     const tilesLayer = document.createElement('div');
     tilesLayer.style.cssText = `position:absolute;top:0;left:0;width:100%;height:100%;
@@ -304,7 +308,7 @@ function drawClassroomGrid(container) {
                 const me = getPlayerCharacter();
                 const img = document.createElement('img');
                 img.src = me.img;
-                img.style.cssText = 'width:90%;height:90%;object-fit:contain;filter:drop-shadow(0 0 5px gold);position:relative;z-index:10;';
+                img.style.cssText = 'width:120%;height:120%;object-fit:contain;filter:drop-shadow(0 0 5px gold);position:relative;z-index:10;';
                 tile.appendChild(img);
             }
 
@@ -318,23 +322,25 @@ function drawClassroomGrid(container) {
                         : `images/${s.type}${s.level >= 20 ? 3 : s.level >= 10 ? 2 : 1}.png`;
                     const sImg = document.createElement('img');
                     sImg.src = imgPath;
-                    sImg.style.cssText = 'width:90%;height:90%;object-fit:contain;filter:drop-shadow(0 0 5px #ff5722);';
+                    sImg.style.cssText = 'width:120%;height:120%;object-fit:contain;filter:drop-shadow(0 0 5px #ff5722);';
                     tile.appendChild(sImg);
                 }
             }
 
             // קירות
-            if (CLASSROOM_BASE_MAP[y][x] === 1) {
-                tile.style.backgroundColor = '#8d6e63';
+            if (classroomBaseMap[y][x] === 1) {
+                // לא מציגים קירות ויזואלית אם יש רקע, או שאפשר להשאיר שקוף
+                // tile.style.backgroundColor = 'rgba(141, 110, 99, 0.3)'; 
             }
             // יציאה
-            if (CLASSROOM_BASE_MAP[y][x] === 6) {
-                tile.style.backgroundColor = '#f44336';
+            if (classroomBaseMap[y][x] === 6) {
+                tile.style.backgroundColor = 'rgba(244, 67, 54, 0.5)';
                 tile.innerHTML = '🚪';
-                tile.style.fontSize = '10px';
+                tile.style.fontSize = '14px';
                 tile.style.display = 'flex';
                 tile.style.alignItems = 'center';
                 tile.style.justifyContent = 'center';
+                tile.style.borderRadius = '4px';
             }
 
             tilesLayer.appendChild(tile);
@@ -443,7 +449,7 @@ function handleKeyDown(e) {
 function canMoveTo(x, y) {
     if (isIndoor && (currentIndoorType === 'house_sw' || currentIndoorType === 'house_nw') && !isAdminOrTeacher()) {
         if (y < 0 || y >= CLASSROOM_ROWS || x < 0 || x >= CLASSROOM_COLS) return false;
-        return CLASSROOM_BASE_MAP[y][x] !== 1;
+        return classroomBaseMap[y][x] !== 1;
     }
 
     if (y < 0 || y >= GAME_MAP.length || x < 0 || x >= GAME_MAP[0].length) return false;
@@ -452,7 +458,7 @@ function canMoveTo(x, y) {
 
 function checkTileInteraction() {
     if (isIndoor && (currentIndoorType === 'house_sw' || currentIndoorType === 'house_nw') && !isAdminOrTeacher()) {
-        const tile = CLASSROOM_BASE_MAP[playerPos.y][playerPos.x];
+        const tile = classroomBaseMap[playerPos.y][playerPos.x];
         if (tile === 6) {
             exitHouse();
             return;
